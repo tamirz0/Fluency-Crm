@@ -46,6 +46,49 @@ public sealed record CreateContactoRequest
     public string? Observaciones { get; init; }
 }
 
+/// <summary>
+/// Payload para modificar un contacto existente. Solo los campos enviados (no nulos) se actualizan; el resto
+/// conserva su valor actual.
+/// </summary>
+public sealed record UpdateContactoRequest
+{
+    [MaxLength(100)]
+    public string? Nombre { get; init; }
+
+    [MaxLength(100)]
+    public string? Apellido { get; init; }
+
+    [MaxLength(150), EmailAddress]
+    public string? Correo { get; init; }
+
+    [MaxLength(20)]
+    public string? Documento { get; init; }
+
+    [MaxLength(100)]
+    public string? Cargo { get; init; }
+
+    [MaxLength(50)]
+    public string? Telefono { get; init; }
+
+    public int? IdEstado { get; init; }
+
+    public int? IdOrigen { get; init; }
+
+    public int? IdEmpresa { get; init; }
+
+    public string? Observaciones { get; init; }
+}
+
+/// <summary>Resultado posible de intentar modificar un contacto.</summary>
+public enum UpdateContactoOutcome
+{
+    Success,
+    NotFound
+}
+
+/// <summary>Envuelve el resultado de modificar un contacto y, si tuvo éxito, el contacto ya actualizado.</summary>
+public sealed record UpdateContactoResult(UpdateContactoOutcome Outcome, ContactoResponse? Contacto);
+
 /// <summary>Un cambio de etapa comercial registrado en el historial de una oportunidad del contacto.</summary>
 public sealed record HistorialEtapaResponse(
     int Id,

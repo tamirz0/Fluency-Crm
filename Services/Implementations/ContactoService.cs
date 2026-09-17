@@ -49,6 +49,52 @@ public sealed class ContactoService(FluencyLocalDbContext db) : IContactoService
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<ContactoResponse>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        return await db.Contactos
+            .AsNoTracking()
+            .OrderBy(c => c.Apellido)
+            .ThenBy(c => c.Nombre)
+            .Select(c => new ContactoResponse(
+                c.Id,
+                c.Nombre,
+                c.Apellido,
+                c.Documento,
+                c.Cargo,
+                c.Correo,
+                c.Telefono,
+                c.IdEstado,
+                c.IdOrigen,
+                c.IdEmpresa,
+                c.Observaciones))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<UpdateContactoResult> UpdateAsync(
+        int idContacto, UpdateContactoRequest request, CancellationToken cancellationToken)
+    {
+        var contacto = await db.Contactos.FirstOrDefaultAsync(c => c.Id == idContacto, cancellationToken);
+        if (contacto is null)
+        {
+            return new UpdateContactoResult(UpdateContactoOutcome.NotFound, null);
+        }
+
+        contacto.Nombre = request.Nombre ?? contacto.Nombre;
+        contacto.Apellido = request.Apellido ?? contacto.Apellido;
+        contacto.Correo = request.Correo ?? contacto.Correo;
+        contacto.Documento = request.Documento ?? contacto.Documento;
+        contacto.Cargo = request.Cargo ?? contacto.Cargo;
+        contacto.Telefono = request.Telefono ?? contacto.Telefono;
+        contacto.IdEstado = request.IdEstado ?? contacto.IdEstado;
+        contacto.IdOrigen = request.IdOrigen ?? contacto.IdOrigen;
+        contacto.IdEmpresa = request.IdEmpresa ?? contacto.IdEmpresa;
+        contacto.Observaciones = request.Observaciones ?? contacto.Observaciones;
+
+        await db.SaveChangesAsync(cancellationToken);
+
+        return new UpdateContactoResult(UpdateContactoOutcome.Success, ToResponse(contacto));
+    }
+
     public async Task<IReadOnlyList<HistorialEtapaResponse>?> GetHistorialEtapasAsync(
         int idContacto, CancellationToken cancellationToken)
     {
