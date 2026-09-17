@@ -38,6 +38,22 @@ Content-Type: application/json
 
 ###
 
+### Datos de una oportunidad
+GET {{FluencyAPI_HostAddress}}/Oportunidades/DatosOportunidad/1
+Accept: application/json
+
+###
+
+### Modificar una oportunidad
+POST {{FluencyAPI_HostAddress}}/Oportunidades/ModificarOportunidad/1
+Content-Type: application/json
+
+{
+  "observaciones": "Cliente pidió una cotización actualizada"
+}
+
+###
+
 ### Alta de contacto
 POST {{FluencyAPI_HostAddress}}/Contacto/AltaContacto
 Content-Type: application/json
@@ -63,6 +79,22 @@ Accept: application/json
 
 ###
 
+### Listado de contactos
+GET {{FluencyAPI_HostAddress}}/Contacto/ListadoContactos
+Accept: application/json
+
+###
+
+### Modificar un contacto
+POST {{FluencyAPI_HostAddress}}/Contacto/ModificarContacto/1
+Content-Type: application/json
+
+{
+  "telefono": "1155667788"
+}
+
+###
+
 ### Alta de empresa
 POST {{FluencyAPI_HostAddress}}/Empresa/AltaEmpresa
 Content-Type: application/json
@@ -78,6 +110,22 @@ Content-Type: application/json
 ### Datos de una empresa
 GET {{FluencyAPI_HostAddress}}/Empresa/DatosEmpresa/1
 Accept: application/json
+
+###
+
+### Listado de empresas
+GET {{FluencyAPI_HostAddress}}/Empresa/ListadoEmpresas
+Accept: application/json
+
+###
+
+### Modificar una empresa
+POST {{FluencyAPI_HostAddress}}/Empresa/ModificarEmpresa/1
+Content-Type: application/json
+
+{
+  "telefono": "1144445555"
+}
 
 ###
 
