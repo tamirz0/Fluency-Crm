@@ -19,9 +19,13 @@ public partial class Usuario
 
     public bool? Activo { get; set; }
 
+    public virtual ICollection<ActividadOportunidad> ActividadOportunidades { get; set; } = new List<ActividadOportunidad>();
+
     public virtual ICollection<HistorialEtapa> HistorialEtapas { get; set; } = new List<HistorialEtapa>();
 
-    public virtual ICollection<Oportunidad> Oportunidads { get; set; } = new List<Oportunidad>();
+    public virtual ICollection<LogOportunidadCambio> LogOportunidadCambios { get; set; } = new List<LogOportunidadCambio>();
 
-    public virtual ICollection<UsuarioRol> UsuarioRols { get; set; } = new List<UsuarioRol>();
+    public virtual ICollection<Oportunidad> Oportunidades { get; set; } = new List<Oportunidad>();
+
+    public virtual ICollection<UsuarioRol> UsuarioRoles { get; set; } = new List<UsuarioRol>();
 }

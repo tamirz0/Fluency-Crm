@@ -11,7 +11,7 @@ public partial class Rol
 
     public string? Descripcion { get; set; }
 
-    public virtual ICollection<PermisoRol> PermisoRols { get; set; } = new List<PermisoRol>();
+    public virtual ICollection<PermisoRol> PermisoRoles { get; set; } = new List<PermisoRol>();
 
-    public virtual ICollection<UsuarioRol> UsuarioRols { get; set; } = new List<UsuarioRol>();
+    public virtual ICollection<UsuarioRol> UsuarioRoles { get; set; } = new List<UsuarioRol>();
 }

@@ -23,6 +23,31 @@ USUARIO
   boolean activo
 }
 
+ROL
+{
+  int id PK
+  string nombre UK
+  string descripcion
+}
+
+PERMISO
+{
+  int id PK
+  string descripcion
+}
+
+USUARIO_ROL
+{
+  int id_usuario PK FK
+  int id_rol PK FK
+}
+
+PERMISO_ROL
+{
+  int id_rol PK FK
+  int id_permiso PK FK
+}
+
 ## Catálogos
 
 ORIGEN_COMERCIAL
@@ -44,6 +69,24 @@ NIVEL_INGLES
 }
 
 MODALIDAD
+{
+  int id PK
+  string descripcion
+}
+
+ESTADO_OPORTUNIDAD
+{
+  int id PK
+  string descripcion
+}
+
+MOTIVO_RECHAZO
+{
+  int id PK
+  string descripcion
+}
+
+ACTIVIDAD
 {
   int id PK
   string descripcion
@@ -137,6 +180,30 @@ HISTORIAL_ETAPAS
   string observacion
 }
 
+ACTIVIDAD_OPORTUNIDAD
+{
+  int id PK
+  int id_tipo_actividad FK
+  int id_usuario FK
+  int id_empresa FK
+  int id_contacto FK
+  int id_oportunidad FK
+  datetime fecha_hora
+  string descripcion
+  string resultado
+}
+
+LOG_OPORTUNIDAD_CAMBIO
+{
+  int id PK
+  int id_oportunidad FK
+  int id_usuario FK
+  string campo
+  string valor_anterior
+  string valor_nuevo
+  datetime fecha_hora
+}
+
 ## Relaciones
 
 * 1 Usuario puede ser responsable de muchas Oportunidades (`oportunidad.id_usuario`).
@@ -149,6 +216,11 @@ HISTORIAL_ETAPAS
   (`id_etapa_anterior` → `id_nueva_etapa`).
 * Empresa, Contacto y Oportunidad comparten los catálogos Origen_Comercial y Estado_Cliente.
 * Servicio se clasifica por Nivel_Ingles y Modalidad.
+* 1 Usuario puede tener muchos Roles y 1 Rol puede tener muchos Usuarios, a través de Usuario_Rol.
+* 1 Rol puede tener muchos Permisos y 1 Permiso puede pertenecer a muchos Roles, a través de Permiso_Rol.
+* Actividad_Oportunidad puede referenciar, todos opcionales, un Usuario, una Empresa, un Contacto y una
+  Oportunidad, además de su tipo (`id_tipo_actividad` → Actividad).
+* Log_Oportunidad_Cambio registra cambios de campo sobre 1 Oportunidad, junto con el Usuario que los hizo.
 
 ## Reglas generales del negocio
 
@@ -179,13 +251,17 @@ HISTORIAL_ETAPAS
 El esquema en `creacion-tablas.sql` todavía no modela por completo algunas de las reglas de arriba;
 quedan pendientes para una futura migración:
 
-* No existen tablas de roles/permisos (`ROL`, `PERMISO`, `USUARIO_ROL`, `PERMISO_ROL`): `usuario` es una
-  tabla plana sin ningún vínculo a roles, por lo que "los vendedores solo podrán acceder a la información
-  permitida por su rol" no está soportado a nivel de datos todavía.
-* No existe una tabla `MOTIVO_RECHAZO` ni una columna equivalente en `oportunidad`, por lo que el motivo de
-  pérdida de una oportunidad no tiene dónde persistirse.
-* No existen tablas de actividades (`ACTIVIDAD`, `ACTIVIDAD_OPORTUNIDAD`) ni de auditoría de cambios
-  (`LOG_OPORTUNIDAD_CAMBIO`).
+* Ya existen las tablas de roles/permisos (`ROL`, `PERMISO`, `USUARIO_ROL`, `PERMISO_ROL`) y `usuario` puede
+  vincularse a un rol a través de `usuario_rol`, pero ningún endpoint ni middleware valida todavía el rol del
+  usuario autenticado — "los vendedores solo podrán acceder a la información permitida por su rol" sigue sin
+  aplicarse a nivel de código. `docs/entrega-1.md` defiere explícitamente esta gestión completa de roles y
+  permisos a una entrega posterior.
+* Ya existe la tabla `MOTIVO_RECHAZO`, pero `oportunidad` todavía no tiene una columna que la referencie, por
+  lo que el motivo de pérdida de una oportunidad no tiene dónde persistirse todavía.
+* Ya existen las tablas de actividades (`ACTIVIDAD`, `ACTIVIDAD_OPORTUNIDAD`) y de auditoría de cambios
+  (`LOG_OPORTUNIDAD_CAMBIO`), pero ningún endpoint ni servicio escribe en ellas todavía — no hay registro de
+  actividades ni auditoría de cambios de verdad, solo el esquema preparado para cuando se implemente
+  (`docs/entrega-1.md` también defiere esto a una entrega posterior).
 * `oportunidad.id_empresa` y `oportunidad.id_contacto` son ambos nullable sin ningún `CHECK` que obligue a
   que al menos uno esté presente.
 * `etapa_comercial` no distingue explícitamente si una etapa es "abierta", "ganada" o "perdida" (solo tiene

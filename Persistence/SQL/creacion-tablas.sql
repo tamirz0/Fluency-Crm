@@ -19,6 +19,21 @@ CREATE TABLE Modalidad (
     descripcion VARCHAR(50) NOT NULL
 );
 
+CREATE TABLE Estado_Oportunidad (
+    id SERIAL PRIMARY KEY,
+    descripcion VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE Motivo_Rechazo (
+    id SERIAL PRIMARY KEY,
+    descripcion VARCHAR(200) NOT NULL
+);
+
+CREATE TABLE Actividad (
+    id SERIAL PRIMARY KEY,
+    descripcion VARCHAR(100) NOT NULL
+);
+
 CREATE TABLE Usuario (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
@@ -129,6 +144,28 @@ CREATE TABLE Historial_Etapas (
     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     id_usuario INT REFERENCES Usuario(id),
     observacion TEXT
+);
+
+CREATE TABLE Actividad_Oportunidad (
+    id SERIAL PRIMARY KEY,
+    id_tipo_actividad INT REFERENCES Actividad(id),
+    id_usuario INT REFERENCES Usuario(id),
+    id_empresa INT REFERENCES Empresa(id),
+    id_contacto INT REFERENCES Contacto(id),
+    id_oportunidad INT REFERENCES Oportunidad(id),
+    fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    descripcion TEXT,
+    resultado VARCHAR(200)
+);
+
+CREATE TABLE Log_Oportunidad_Cambio (
+    id SERIAL PRIMARY KEY,
+    id_oportunidad INT REFERENCES Oportunidad(id),
+    id_usuario INT REFERENCES Usuario(id),
+    campo VARCHAR(100) NOT NULL,
+    valor_anterior TEXT,
+    valor_nuevo TEXT,
+    fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- SEEDS INICIALES

@@ -13,5 +13,5 @@ public partial class OrigenComercial
 
     public virtual ICollection<Empresa> Empresas { get; set; } = new List<Empresa>();
 
-    public virtual ICollection<Oportunidad> Oportunidads { get; set; } = new List<Oportunidad>();
+    public virtual ICollection<Oportunidad> Oportunidades { get; set; } = new List<Oportunidad>();
 }

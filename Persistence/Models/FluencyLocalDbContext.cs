@@ -15,37 +15,47 @@ public partial class FluencyLocalDbContext : DbContext
     {
     }
 
+    public virtual DbSet<Actividad> Actividades { get; set; }
+
+    public virtual DbSet<ActividadOportunidad> ActividadOportunidades { get; set; }
+
     public virtual DbSet<Contacto> Contactos { get; set; }
 
     public virtual DbSet<Empresa> Empresas { get; set; }
 
     public virtual DbSet<EstadoCliente> EstadoClientes { get; set; }
 
-    public virtual DbSet<EtapaComercial> EtapaComercials { get; set; }
+    public virtual DbSet<EstadoOportunidad> EstadoOportunidades { get; set; }
+
+    public virtual DbSet<EtapaComercial> EtapaComerciales { get; set; }
 
     public virtual DbSet<HistorialEtapa> HistorialEtapas { get; set; }
 
-    public virtual DbSet<Modalidad> Modalidads { get; set; }
+    public virtual DbSet<LogOportunidadCambio> LogOportunidadCambios { get; set; }
 
-    public virtual DbSet<NivelIngle> NivelIngles { get; set; }
+    public virtual DbSet<Modalidad> Modalidades { get; set; }
 
-    public virtual DbSet<Oportunidad> Oportunidads { get; set; }
+    public virtual DbSet<MotivoRechazo> MotivoRechazos { get; set; }
+
+    public virtual DbSet<NivelIngles> NivelesIngles { get; set; }
+
+    public virtual DbSet<Oportunidad> Oportunidades { get; set; }
 
     public virtual DbSet<OportunidadItem> OportunidadItems { get; set; }
 
-    public virtual DbSet<OrigenComercial> OrigenComercials { get; set; }
+    public virtual DbSet<OrigenComercial> OrigenComerciales { get; set; }
 
     public virtual DbSet<Permiso> Permisos { get; set; }
 
-    public virtual DbSet<PermisoRol> PermisoRols { get; set; }
+    public virtual DbSet<PermisoRol> PermisoRoles { get; set; }
 
-    public virtual DbSet<Rol> Rols { get; set; }
+    public virtual DbSet<Rol> Roles { get; set; }
 
     public virtual DbSet<Servicio> Servicios { get; set; }
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
 
-    public virtual DbSet<UsuarioRol> UsuarioRols { get; set; }
+    public virtual DbSet<UsuarioRol> UsuarioRoles { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -60,6 +70,60 @@ public partial class FluencyLocalDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Actividad>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("actividad_pkey");
+
+            entity.ToTable("actividad");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(100)
+                .HasColumnName("descripcion");
+        });
+
+        modelBuilder.Entity<ActividadOportunidad>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("actividad_oportunidad_pkey");
+
+            entity.ToTable("actividad_oportunidad");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion");
+            entity.Property(e => e.FechaHora)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("fecha_hora");
+            entity.Property(e => e.IdContacto).HasColumnName("id_contacto");
+            entity.Property(e => e.IdEmpresa).HasColumnName("id_empresa");
+            entity.Property(e => e.IdOportunidad).HasColumnName("id_oportunidad");
+            entity.Property(e => e.IdTipoActividad).HasColumnName("id_tipo_actividad");
+            entity.Property(e => e.IdUsuario).HasColumnName("id_usuario");
+            entity.Property(e => e.Resultado)
+                .HasMaxLength(200)
+                .HasColumnName("resultado");
+
+            entity.HasOne(d => d.IdContactoNavigation).WithMany(p => p.ActividadOportunidades)
+                .HasForeignKey(d => d.IdContacto)
+                .HasConstraintName("actividad_oportunidad_id_contacto_fkey");
+
+            entity.HasOne(d => d.IdEmpresaNavigation).WithMany(p => p.ActividadOportunidades)
+                .HasForeignKey(d => d.IdEmpresa)
+                .HasConstraintName("actividad_oportunidad_id_empresa_fkey");
+
+            entity.HasOne(d => d.IdOportunidadNavigation).WithMany(p => p.ActividadOportunidades)
+                .HasForeignKey(d => d.IdOportunidad)
+                .HasConstraintName("actividad_oportunidad_id_oportunidad_fkey");
+
+            entity.HasOne(d => d.IdTipoActividadNavigation).WithMany(p => p.ActividadOportunidades)
+                .HasForeignKey(d => d.IdTipoActividad)
+                .HasConstraintName("actividad_oportunidad_id_tipo_actividad_fkey");
+
+            entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.ActividadOportunidades)
+                .HasForeignKey(d => d.IdUsuario)
+                .HasConstraintName("actividad_oportunidad_id_usuario_fkey");
+        });
+
         modelBuilder.Entity<Contacto>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("contacto_pkey");
@@ -152,6 +216,18 @@ public partial class FluencyLocalDbContext : DbContext
                 .HasColumnName("descripcion");
         });
 
+        modelBuilder.Entity<EstadoOportunidad>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("estado_oportunidad_pkey");
+
+            entity.ToTable("estado_oportunidad");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(50)
+                .HasColumnName("descripcion");
+        });
+
         modelBuilder.Entity<EtapaComercial>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("etapa_comercial_pkey");
@@ -200,6 +276,34 @@ public partial class FluencyLocalDbContext : DbContext
                 .HasConstraintName("historial_etapas_id_usuario_fkey");
         });
 
+        modelBuilder.Entity<LogOportunidadCambio>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("log_oportunidad_cambio_pkey");
+
+            entity.ToTable("log_oportunidad_cambio");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Campo)
+                .HasMaxLength(100)
+                .HasColumnName("campo");
+            entity.Property(e => e.FechaHora)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("fecha_hora");
+            entity.Property(e => e.IdOportunidad).HasColumnName("id_oportunidad");
+            entity.Property(e => e.IdUsuario).HasColumnName("id_usuario");
+            entity.Property(e => e.ValorAnterior).HasColumnName("valor_anterior");
+            entity.Property(e => e.ValorNuevo).HasColumnName("valor_nuevo");
+
+            entity.HasOne(d => d.IdOportunidadNavigation).WithMany(p => p.LogOportunidadCambios)
+                .HasForeignKey(d => d.IdOportunidad)
+                .HasConstraintName("log_oportunidad_cambio_id_oportunidad_fkey");
+
+            entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.LogOportunidadCambios)
+                .HasForeignKey(d => d.IdUsuario)
+                .HasConstraintName("log_oportunidad_cambio_id_usuario_fkey");
+        });
+
         modelBuilder.Entity<Modalidad>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("modalidad_pkey");
@@ -212,7 +316,19 @@ public partial class FluencyLocalDbContext : DbContext
                 .HasColumnName("descripcion");
         });
 
-        modelBuilder.Entity<NivelIngle>(entity =>
+        modelBuilder.Entity<MotivoRechazo>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("motivo_rechazo_pkey");
+
+            entity.ToTable("motivo_rechazo");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(200)
+                .HasColumnName("descripcion");
+        });
+
+        modelBuilder.Entity<NivelIngles>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("nivel_ingles_pkey");
 
@@ -247,31 +363,31 @@ public partial class FluencyLocalDbContext : DbContext
                 .HasMaxLength(150)
                 .HasColumnName("titulo");
 
-            entity.HasOne(d => d.IdContactoNavigation).WithMany(p => p.Oportunidads)
+            entity.HasOne(d => d.IdContactoNavigation).WithMany(p => p.Oportunidades)
                 .HasForeignKey(d => d.IdContacto)
                 .HasConstraintName("oportunidad_id_contacto_fkey");
 
-            entity.HasOne(d => d.IdEmpresaNavigation).WithMany(p => p.Oportunidads)
+            entity.HasOne(d => d.IdEmpresaNavigation).WithMany(p => p.Oportunidades)
                 .HasForeignKey(d => d.IdEmpresa)
                 .HasConstraintName("oportunidad_id_empresa_fkey");
 
-            entity.HasOne(d => d.IdEstadoNavigation).WithMany(p => p.Oportunidads)
+            entity.HasOne(d => d.IdEstadoNavigation).WithMany(p => p.Oportunidades)
                 .HasForeignKey(d => d.IdEstado)
                 .HasConstraintName("oportunidad_id_estado_fkey");
 
-            entity.HasOne(d => d.IdEtapaNavigation).WithMany(p => p.Oportunidads)
+            entity.HasOne(d => d.IdEtapaNavigation).WithMany(p => p.Oportunidades)
                 .HasForeignKey(d => d.IdEtapa)
                 .HasConstraintName("oportunidad_id_etapa_fkey");
 
-            entity.HasOne(d => d.IdOrigenNavigation).WithMany(p => p.Oportunidads)
+            entity.HasOne(d => d.IdOrigenNavigation).WithMany(p => p.Oportunidades)
                 .HasForeignKey(d => d.IdOrigen)
                 .HasConstraintName("oportunidad_id_origen_fkey");
 
-            entity.HasOne(d => d.IdServicioNavigation).WithMany(p => p.Oportunidads)
+            entity.HasOne(d => d.IdServicioNavigation).WithMany(p => p.Oportunidades)
                 .HasForeignKey(d => d.IdServicio)
                 .HasConstraintName("oportunidad_id_servicio_fkey");
 
-            entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.Oportunidads)
+            entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.Oportunidades)
                 .HasForeignKey(d => d.IdUsuario)
                 .HasConstraintName("oportunidad_id_usuario_fkey");
         });
@@ -338,11 +454,11 @@ public partial class FluencyLocalDbContext : DbContext
             entity.Property(e => e.IdRol).HasColumnName("id_rol");
             entity.Property(e => e.IdPermiso).HasColumnName("id_permiso");
 
-            entity.HasOne(d => d.IdPermisoNavigation).WithMany(p => p.PermisoRols)
+            entity.HasOne(d => d.IdPermisoNavigation).WithMany(p => p.PermisoRoles)
                 .HasForeignKey(d => d.IdPermiso)
                 .HasConstraintName("permiso_rol_id_permiso_fkey");
 
-            entity.HasOne(d => d.IdRolNavigation).WithMany(p => p.PermisoRols)
+            entity.HasOne(d => d.IdRolNavigation).WithMany(p => p.PermisoRoles)
                 .HasForeignKey(d => d.IdRol)
                 .HasConstraintName("permiso_rol_id_rol_fkey");
         });
@@ -434,11 +550,11 @@ public partial class FluencyLocalDbContext : DbContext
             entity.Property(e => e.IdUsuario).HasColumnName("id_usuario");
             entity.Property(e => e.IdRol).HasColumnName("id_rol");
 
-            entity.HasOne(d => d.IdRolNavigation).WithMany(p => p.UsuarioRols)
+            entity.HasOne(d => d.IdRolNavigation).WithMany(p => p.UsuarioRoles)
                 .HasForeignKey(d => d.IdRol)
                 .HasConstraintName("usuario_rol_id_rol_fkey");
 
-            entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.UsuarioRols)
+            entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.UsuarioRoles)
                 .HasForeignKey(d => d.IdUsuario)
                 .HasConstraintName("usuario_rol_id_usuario_fkey");
         });

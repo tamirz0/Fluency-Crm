@@ -27,11 +27,13 @@ public partial class Contacto
 
     public string? Observaciones { get; set; }
 
+    public virtual ICollection<ActividadOportunidad> ActividadOportunidades { get; set; } = new List<ActividadOportunidad>();
+
     public virtual Empresa? IdEmpresaNavigation { get; set; }
 
     public virtual EstadoCliente? IdEstadoNavigation { get; set; }
 
     public virtual OrigenComercial? IdOrigenNavigation { get; set; }
 
-    public virtual ICollection<Oportunidad> Oportunidads { get; set; } = new List<Oportunidad>();
+    public virtual ICollection<Oportunidad> Oportunidades { get; set; } = new List<Oportunidad>();
 }

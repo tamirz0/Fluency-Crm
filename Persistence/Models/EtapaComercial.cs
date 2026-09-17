@@ -17,5 +17,5 @@ public partial class EtapaComercial
 
     public virtual ICollection<HistorialEtapa> HistorialEtapaIdNuevaEtapaNavigations { get; set; } = new List<HistorialEtapa>();
 
-    public virtual ICollection<Oportunidad> Oportunidads { get; set; } = new List<Oportunidad>();
+    public virtual ICollection<Oportunidad> Oportunidades { get; set; } = new List<Oportunidad>();
 }

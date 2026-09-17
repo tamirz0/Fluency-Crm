@@ -23,9 +23,9 @@ public partial class Servicio
 
     public virtual Modalidad? IdModalidadNavigation { get; set; }
 
-    public virtual NivelIngle? IdNivelNavigation { get; set; }
+    public virtual NivelIngles? IdNivelNavigation { get; set; }
 
     public virtual ICollection<OportunidadItem> OportunidadItems { get; set; } = new List<OportunidadItem>();
 
-    public virtual ICollection<Oportunidad> Oportunidads { get; set; } = new List<Oportunidad>();
+    public virtual ICollection<Oportunidad> Oportunidades { get; set; } = new List<Oportunidad>();
 }
