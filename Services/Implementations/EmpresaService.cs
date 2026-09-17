@@ -47,6 +47,49 @@ public sealed class EmpresaService(FluencyLocalDbContext db) : IEmpresaService
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<EmpresaResponse>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        return await db.Empresas
+            .AsNoTracking()
+            .OrderBy(e => e.RazonSocial)
+            .Select(e => new EmpresaResponse(
+                e.Id,
+                e.RazonSocial,
+                e.Cuit,
+                e.Industria,
+                e.Correo,
+                e.Telefono,
+                e.Direccion,
+                e.IdEstado,
+                e.IdOrigen,
+                e.Observaciones))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<UpdateEmpresaResult> UpdateAsync(
+        int idEmpresa, UpdateEmpresaRequest request, CancellationToken cancellationToken)
+    {
+        var empresa = await db.Empresas.FirstOrDefaultAsync(e => e.Id == idEmpresa, cancellationToken);
+        if (empresa is null)
+        {
+            return new UpdateEmpresaResult(UpdateEmpresaOutcome.NotFound, null);
+        }
+
+        empresa.RazonSocial = request.RazonSocial ?? empresa.RazonSocial;
+        empresa.Cuit = request.Cuit ?? empresa.Cuit;
+        empresa.Industria = request.Industria ?? empresa.Industria;
+        empresa.Correo = request.Correo ?? empresa.Correo;
+        empresa.Telefono = request.Telefono ?? empresa.Telefono;
+        empresa.Direccion = request.Direccion ?? empresa.Direccion;
+        empresa.IdEstado = request.IdEstado ?? empresa.IdEstado;
+        empresa.IdOrigen = request.IdOrigen ?? empresa.IdOrigen;
+        empresa.Observaciones = request.Observaciones ?? empresa.Observaciones;
+
+        await db.SaveChangesAsync(cancellationToken);
+
+        return new UpdateEmpresaResult(UpdateEmpresaOutcome.Success, ToResponse(empresa));
+    }
+
     private static EmpresaResponse ToResponse(Empresa empresa) => new(
         empresa.Id,
         empresa.RazonSocial,
