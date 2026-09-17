@@ -103,3 +103,48 @@ public sealed record CreateOportunidadResult(
     CreateOportunidadOutcome Outcome,
     OportunidadResponse? Oportunidad,
     IReadOnlyList<string> Errors);
+
+/// <summary>
+/// Payload para modificar una oportunidad existente. Solo los campos enviados (no nulos) se actualizan; el
+/// resto conserva su valor actual. No incluye la etapa comercial: eso es responsabilidad exclusiva de
+/// <see cref="UpdateEtapaOportunidadRequest"/>.
+/// </summary>
+public sealed record UpdateOportunidadRequest
+{
+    [MaxLength(150)]
+    public string? Titulo { get; init; }
+
+    public int? IdUsuario { get; init; }
+
+    public int? IdEmpresa { get; init; }
+
+    public int? IdContacto { get; init; }
+
+    public int? IdServicio { get; init; }
+
+    public DateOnly? FechaEstimadaCierre { get; init; }
+
+    public int? IdOrigen { get; init; }
+
+    public int? IdEstado { get; init; }
+
+    public string? Observaciones { get; init; }
+}
+
+/// <summary>Resultado posible de intentar modificar una oportunidad.</summary>
+public enum UpdateOportunidadOutcome
+{
+    Success,
+    NotFound,
+    ValidationFailed
+}
+
+/// <summary>
+/// Envuelve el resultado de modificar una oportunidad: si falló la validación de negocio,
+/// <see cref="Errors"/> detalla cada motivo; si tuvo éxito, <see cref="Oportunidad"/> trae la oportunidad
+/// ya actualizada.
+/// </summary>
+public sealed record UpdateOportunidadResult(
+    UpdateOportunidadOutcome Outcome,
+    OportunidadResponse? Oportunidad,
+    IReadOnlyList<string> Errors);

@@ -15,4 +15,11 @@ public interface IOportunidadService
     Task<CreateOportunidadResult> CreateAsync(
         CreateOportunidadRequest request,
         CancellationToken cancellationToken);
+
+    Task<OportunidadResponse?> GetByIdAsync(int idOportunidad, CancellationToken cancellationToken);
+
+    Task<UpdateOportunidadResult> UpdateAsync(
+        int idOportunidad,
+        UpdateOportunidadRequest request,
+        CancellationToken cancellationToken);
 }
