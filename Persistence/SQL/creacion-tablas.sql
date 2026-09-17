@@ -29,6 +29,29 @@ CREATE TABLE Usuario (
     activo BOOLEAN DEFAULT true
 );
 
+CREATE TABLE Rol (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(50) UNIQUE NOT NULL,
+    descripcion VARCHAR(200)
+);
+
+CREATE TABLE Permiso (
+    id SERIAL PRIMARY KEY,
+    descripcion VARCHAR(200) NOT NULL
+);
+
+CREATE TABLE Usuario_Rol (
+    id_usuario INT REFERENCES Usuario(id),
+    id_rol INT REFERENCES Rol(id),
+    PRIMARY KEY (id_usuario, id_rol)
+);
+
+CREATE TABLE Permiso_Rol (
+    id_rol INT REFERENCES Rol(id),
+    id_permiso INT REFERENCES Permiso(id),
+    PRIMARY KEY (id_rol, id_permiso)
+);
+
 CREATE TABLE Empresa (
     id SERIAL PRIMARY KEY,
     razon_social VARCHAR(150) NOT NULL,

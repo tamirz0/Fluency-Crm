@@ -80,3 +80,28 @@ GET {{FluencyAPI_HostAddress}}/Empresa/DatosEmpresa/1
 Accept: application/json
 
 ###
+
+### Registro de usuario
+POST {{FluencyAPI_HostAddress}}/Login/Register
+Content-Type: application/json
+
+{
+  "nombre": "Ana",
+  "apellido": "Gomez",
+  "correo": "ana.gomez@example.com",
+  "username": "ana.gomez",
+  "password": "supersecreta"
+}
+
+###
+
+### Login
+POST {{FluencyAPI_HostAddress}}/Login/Login
+Content-Type: application/json
+
+{
+  "username": "ana.gomez",
+  "password": "supersecreta"
+}
+
+###

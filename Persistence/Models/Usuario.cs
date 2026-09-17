@@ -22,4 +22,6 @@ public partial class Usuario
     public virtual ICollection<HistorialEtapa> HistorialEtapas { get; set; } = new List<HistorialEtapa>();
 
     public virtual ICollection<Oportunidad> Oportunidads { get; set; } = new List<Oportunidad>();
+
+    public virtual ICollection<UsuarioRol> UsuarioRols { get; set; } = new List<UsuarioRol>();
 }

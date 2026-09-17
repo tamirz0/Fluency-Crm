@@ -35,9 +35,17 @@ public partial class FluencyLocalDbContext : DbContext
 
     public virtual DbSet<OrigenComercial> OrigenComercials { get; set; }
 
+    public virtual DbSet<Permiso> Permisos { get; set; }
+
+    public virtual DbSet<PermisoRol> PermisoRols { get; set; }
+
+    public virtual DbSet<Rol> Rols { get; set; }
+
     public virtual DbSet<Servicio> Servicios { get; set; }
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
+
+    public virtual DbSet<UsuarioRol> UsuarioRols { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -309,6 +317,53 @@ public partial class FluencyLocalDbContext : DbContext
                 .HasColumnName("descripcion");
         });
 
+        modelBuilder.Entity<Permiso>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("permiso_pkey");
+
+            entity.ToTable("permiso");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(200)
+                .HasColumnName("descripcion");
+        });
+
+        modelBuilder.Entity<PermisoRol>(entity =>
+        {
+            entity.HasKey(e => new { e.IdRol, e.IdPermiso }).HasName("permiso_rol_pkey");
+
+            entity.ToTable("permiso_rol");
+
+            entity.Property(e => e.IdRol).HasColumnName("id_rol");
+            entity.Property(e => e.IdPermiso).HasColumnName("id_permiso");
+
+            entity.HasOne(d => d.IdPermisoNavigation).WithMany(p => p.PermisoRols)
+                .HasForeignKey(d => d.IdPermiso)
+                .HasConstraintName("permiso_rol_id_permiso_fkey");
+
+            entity.HasOne(d => d.IdRolNavigation).WithMany(p => p.PermisoRols)
+                .HasForeignKey(d => d.IdRol)
+                .HasConstraintName("permiso_rol_id_rol_fkey");
+        });
+
+        modelBuilder.Entity<Rol>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("rol_pkey");
+
+            entity.ToTable("rol");
+
+            entity.HasIndex(e => e.Nombre, "rol_nombre_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(200)
+                .HasColumnName("descripcion");
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(50)
+                .HasColumnName("nombre");
+        });
+
         modelBuilder.Entity<Servicio>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("servicio_pkey");
@@ -368,6 +423,24 @@ public partial class FluencyLocalDbContext : DbContext
             entity.Property(e => e.Username)
                 .HasMaxLength(50)
                 .HasColumnName("username");
+        });
+
+        modelBuilder.Entity<UsuarioRol>(entity =>
+        {
+            entity.HasKey(e => new { e.IdUsuario, e.IdRol }).HasName("usuario_rol_pkey");
+
+            entity.ToTable("usuario_rol");
+
+            entity.Property(e => e.IdUsuario).HasColumnName("id_usuario");
+            entity.Property(e => e.IdRol).HasColumnName("id_rol");
+
+            entity.HasOne(d => d.IdRolNavigation).WithMany(p => p.UsuarioRols)
+                .HasForeignKey(d => d.IdRol)
+                .HasConstraintName("usuario_rol_id_rol_fkey");
+
+            entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.UsuarioRols)
+                .HasForeignKey(d => d.IdUsuario)
+                .HasConstraintName("usuario_rol_id_usuario_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);
