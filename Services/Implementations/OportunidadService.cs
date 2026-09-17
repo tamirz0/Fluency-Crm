@@ -22,8 +22,13 @@ public sealed class OportunidadService(FluencyLocalDbContext db) : IOportunidadS
                         o.Id,
                         o.Titulo,
                         o.IdEmpresa,
+                        o.IdEmpresaNavigation!.RazonSocial,
                         o.IdContacto,
+                        o.IdContactoNavigation!.Nombre,
+                        o.IdContactoNavigation!.Apellido,
                         o.IdUsuario,
+                        o.IdUsuarioNavigation!.Nombre,
+                        o.IdUsuarioNavigation!.Apellido,
                         o.FechaEstimadaCierre))
                     .ToList()))
             .ToListAsync(cancellationToken);
@@ -64,21 +69,8 @@ public sealed class OportunidadService(FluencyLocalDbContext db) : IOportunidadS
 
         await db.SaveChangesAsync(cancellationToken);
 
-        var response = new OportunidadResponse(
-            oportunidad.Id,
-            oportunidad.Titulo,
-            oportunidad.IdUsuario,
-            oportunidad.IdEmpresa,
-            oportunidad.IdContacto,
-            oportunidad.IdServicio,
-            oportunidad.IdEtapa,
-            oportunidad.FechaEstimadaCierre,
-            oportunidad.FechaCierre,
-            oportunidad.IdOrigen,
-            oportunidad.IdEstado,
-            oportunidad.Observaciones);
-
-        return new UpdateEtapaOportunidadResult(UpdateEtapaOportunidadOutcome.Success, response);
+        return new UpdateEtapaOportunidadResult(
+            UpdateEtapaOportunidadOutcome.Success, await GetByIdAsync(oportunidad.Id, cancellationToken));
     }
 
     public async Task<CreateOportunidadResult> CreateAsync(
@@ -154,21 +146,8 @@ public sealed class OportunidadService(FluencyLocalDbContext db) : IOportunidadS
         db.Oportunidades.Add(oportunidad);
         await db.SaveChangesAsync(cancellationToken);
 
-        var response = new OportunidadResponse(
-            oportunidad.Id,
-            oportunidad.Titulo,
-            oportunidad.IdUsuario,
-            oportunidad.IdEmpresa,
-            oportunidad.IdContacto,
-            oportunidad.IdServicio,
-            oportunidad.IdEtapa,
-            oportunidad.FechaEstimadaCierre,
-            oportunidad.FechaCierre,
-            oportunidad.IdOrigen,
-            oportunidad.IdEstado,
-            oportunidad.Observaciones);
-
-        return new CreateOportunidadResult(CreateOportunidadOutcome.Success, response, []);
+        return new CreateOportunidadResult(
+            CreateOportunidadOutcome.Success, await GetByIdAsync(oportunidad.Id, cancellationToken), []);
     }
 
     public async Task<OportunidadResponse?> GetByIdAsync(int idOportunidad, CancellationToken cancellationToken)
@@ -180,14 +159,23 @@ public sealed class OportunidadService(FluencyLocalDbContext db) : IOportunidadS
                 o.Id,
                 o.Titulo,
                 o.IdUsuario,
+                o.IdUsuarioNavigation!.Nombre,
+                o.IdUsuarioNavigation!.Apellido,
                 o.IdEmpresa,
+                o.IdEmpresaNavigation!.RazonSocial,
                 o.IdContacto,
+                o.IdContactoNavigation!.Nombre,
+                o.IdContactoNavigation!.Apellido,
                 o.IdServicio,
+                o.IdServicioNavigation!.Nombre,
                 o.IdEtapa,
+                o.IdEtapaNavigation!.Nombre,
                 o.FechaEstimadaCierre,
                 o.FechaCierre,
                 o.IdOrigen,
+                o.IdOrigenNavigation!.Descripcion,
                 o.IdEstado,
+                o.IdEstadoNavigation!.Descripcion,
                 o.Observaciones))
             .FirstOrDefaultAsync(cancellationToken);
     }
@@ -260,20 +248,7 @@ public sealed class OportunidadService(FluencyLocalDbContext db) : IOportunidadS
 
         await db.SaveChangesAsync(cancellationToken);
 
-        var response = new OportunidadResponse(
-            oportunidad.Id,
-            oportunidad.Titulo,
-            oportunidad.IdUsuario,
-            oportunidad.IdEmpresa,
-            oportunidad.IdContacto,
-            oportunidad.IdServicio,
-            oportunidad.IdEtapa,
-            oportunidad.FechaEstimadaCierre,
-            oportunidad.FechaCierre,
-            oportunidad.IdOrigen,
-            oportunidad.IdEstado,
-            oportunidad.Observaciones);
-
-        return new UpdateOportunidadResult(UpdateOportunidadOutcome.Success, response, []);
+        return new UpdateOportunidadResult(
+            UpdateOportunidadOutcome.Success, await GetByIdAsync(oportunidad.Id, cancellationToken), []);
     }
 }

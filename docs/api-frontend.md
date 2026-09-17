@@ -14,6 +14,11 @@
 - En los endpoints de "Modificar" (actualización parcial), **solo los campos enviados con un valor no nulo
   se actualizan**; si un campo se omite o se manda `null`, conserva su valor actual en la base de datos.
 - Los ids (`idEmpresa`, `idContacto`, `idUsuario`, etc.) son siempre `number` (enteros).
+- **Todas las respuestas que incluyen un id de otra tabla también incluyen, al lado, el dato legible de esa
+  tabla** — por ejemplo `idEstado: 1` viene acompañado de `estadoDescripcion: "Potencial"`, `idEmpresa: 3` de
+  `empresaRazonSocial: "Acme S.A."`, etc. Así el frontend no necesita otra consulta solo para mostrar un
+  nombre. Si el id es `null` (el campo es opcional y no se cargó), su campo `*Descripcion`/`*Nombre`/
+  `*Apellido`/`*RazonSocial` acompañante también viene `null`.
 
 ---
 
@@ -106,8 +111,10 @@ seguridad). Body en texto plano.
   "correo": "contacto@acme.com",
   "telefono": null,
   "direccion": null,
-  "idEstado": null,
-  "idOrigen": null,
+  "idEstado": 2,
+  "estadoDescripcion": "Cliente",
+  "idOrigen": 1,
+  "origenDescripcion": "Sitio Web",
   "observaciones": null
 }
 ```
@@ -164,8 +171,11 @@ Actualización parcial — mandá solo los campos que querés cambiar. Mismos ca
   "correo": "ana.gomez@example.com",
   "telefono": "1122334455",
   "idEstado": null,
+  "estadoDescripcion": null,
   "idOrigen": null,
+  "origenDescripcion": null,
   "idEmpresa": 1,
+  "empresaRazonSocial": "Acme S.A.",
   "observaciones": null
 }
 ```
@@ -201,10 +211,15 @@ al más antiguo).
   {
     "id": 3,
     "idOportunidad": 1,
+    "oportunidadTitulo": "Curso B1 para Acme S.A.",
     "idEtapaAnterior": 1,
+    "etapaAnteriorNombre": "Consulta Recibida",
     "idNuevaEtapa": 2,
+    "etapaNuevaNombre": "Examen de Nivelación",
     "fecha": "2025-09-17T20:49:32",
     "idUsuario": 2,
+    "usuarioNombre": "Vendedor",
+    "usuarioApellido": "Demo",
     "observacion": "Aprobó examen"
   }
 ]
@@ -252,14 +267,23 @@ obligatorio**, aunque cada uno individualmente sea opcional.
   "id": 1,
   "titulo": "Curso B1 para Acme S.A.",
   "idUsuario": 1,
+  "usuarioNombre": "Vendedor",
+  "usuarioApellido": "Demo",
   "idEmpresa": 1,
+  "empresaRazonSocial": "Acme S.A.",
   "idContacto": null,
+  "contactoNombre": null,
+  "contactoApellido": null,
   "idServicio": 1,
+  "servicioNombre": "Inglés General B1",
   "idEtapa": 1,
+  "etapaNombre": "Consulta Recibida",
   "fechaEstimadaCierre": null,
   "fechaCierre": null,
   "idOrigen": 1,
+  "origenDescripcion": "Sitio Web",
   "idEstado": null,
+  "estadoDescripcion": null,
   "observaciones": null
 }
 ```
@@ -292,8 +316,13 @@ etapa.
         "id": 1,
         "titulo": "Curso B1 para Acme S.A.",
         "idEmpresa": 1,
+        "empresaRazonSocial": "Acme S.A.",
         "idContacto": null,
+        "contactoNombre": null,
+        "contactoApellido": null,
         "idUsuario": 1,
+        "usuarioNombre": "Vendedor",
+        "usuarioApellido": "Demo",
         "fechaEstimadaCierre": null
       }
     ]

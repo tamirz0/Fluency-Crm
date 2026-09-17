@@ -2,7 +2,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Services.DTO;
 
-/// <summary>Datos de una empresa.</summary>
+/// <summary>
+/// Datos de una empresa. Los campos <c>*Descripcion</c> acompañan a su id correspondiente con el valor
+/// legible desde la tabla referenciada (por ejemplo, <see cref="EstadoDescripcion"/> es la descripción de
+/// <see cref="IdEstado"/>), para que el frontend no tenga que resolverlo con una consulta aparte.
+/// </summary>
 public sealed record EmpresaResponse(
     int Id,
     string RazonSocial,
@@ -12,7 +16,9 @@ public sealed record EmpresaResponse(
     string? Telefono,
     string? Direccion,
     int? IdEstado,
+    string? EstadoDescripcion,
     int? IdOrigen,
+    string? OrigenDescripcion,
     string? Observaciones);
 
 /// <summary>Payload para dar de alta una empresa.</summary>

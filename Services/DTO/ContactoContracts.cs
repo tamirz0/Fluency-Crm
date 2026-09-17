@@ -2,7 +2,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Services.DTO;
 
-/// <summary>Datos de un contacto.</summary>
+/// <summary>
+/// Datos de un contacto. Los campos <c>*Descripcion</c>/<c>*RazonSocial</c> acompañan a su id correspondiente
+/// con el valor legible desde la tabla referenciada, para que el frontend no tenga que resolverlo con una
+/// consulta aparte.
+/// </summary>
 public sealed record ContactoResponse(
     int Id,
     string Nombre,
@@ -12,8 +16,11 @@ public sealed record ContactoResponse(
     string Correo,
     string? Telefono,
     int? IdEstado,
+    string? EstadoDescripcion,
     int? IdOrigen,
+    string? OrigenDescripcion,
     int? IdEmpresa,
+    string? EmpresaRazonSocial,
     string? Observaciones);
 
 /// <summary>Payload para dar de alta un contacto.</summary>
@@ -93,8 +100,13 @@ public sealed record UpdateContactoResult(UpdateContactoOutcome Outcome, Contact
 public sealed record HistorialEtapaResponse(
     int Id,
     int? IdOportunidad,
+    string? OportunidadTitulo,
     int? IdEtapaAnterior,
+    string? EtapaAnteriorNombre,
     int? IdNuevaEtapa,
+    string? EtapaNuevaNombre,
     DateTime? Fecha,
     int? IdUsuario,
+    string? UsuarioNombre,
+    string? UsuarioApellido,
     string? Observacion);

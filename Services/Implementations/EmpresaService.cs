@@ -25,7 +25,7 @@ public sealed class EmpresaService(FluencyLocalDbContext db) : IEmpresaService
         db.Empresas.Add(empresa);
         await db.SaveChangesAsync(cancellationToken);
 
-        return ToResponse(empresa);
+        return (await GetByIdAsync(empresa.Id, cancellationToken))!;
     }
 
     public async Task<EmpresaResponse?> GetByIdAsync(int idEmpresa, CancellationToken cancellationToken)
@@ -42,7 +42,9 @@ public sealed class EmpresaService(FluencyLocalDbContext db) : IEmpresaService
                 e.Telefono,
                 e.Direccion,
                 e.IdEstado,
+                e.IdEstadoNavigation!.Descripcion,
                 e.IdOrigen,
+                e.IdOrigenNavigation!.Descripcion,
                 e.Observaciones))
             .FirstOrDefaultAsync(cancellationToken);
     }
@@ -61,7 +63,9 @@ public sealed class EmpresaService(FluencyLocalDbContext db) : IEmpresaService
                 e.Telefono,
                 e.Direccion,
                 e.IdEstado,
+                e.IdEstadoNavigation!.Descripcion,
                 e.IdOrigen,
+                e.IdOrigenNavigation!.Descripcion,
                 e.Observaciones))
             .ToListAsync(cancellationToken);
     }
@@ -87,18 +91,7 @@ public sealed class EmpresaService(FluencyLocalDbContext db) : IEmpresaService
 
         await db.SaveChangesAsync(cancellationToken);
 
-        return new UpdateEmpresaResult(UpdateEmpresaOutcome.Success, ToResponse(empresa));
+        return new UpdateEmpresaResult(
+            UpdateEmpresaOutcome.Success, (await GetByIdAsync(empresa.Id, cancellationToken))!);
     }
-
-    private static EmpresaResponse ToResponse(Empresa empresa) => new(
-        empresa.Id,
-        empresa.RazonSocial,
-        empresa.Cuit,
-        empresa.Industria,
-        empresa.Correo,
-        empresa.Telefono,
-        empresa.Direccion,
-        empresa.IdEstado,
-        empresa.IdOrigen,
-        empresa.Observaciones);
 }

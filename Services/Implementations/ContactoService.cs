@@ -26,7 +26,7 @@ public sealed class ContactoService(FluencyLocalDbContext db) : IContactoService
         db.Contactos.Add(contacto);
         await db.SaveChangesAsync(cancellationToken);
 
-        return ToResponse(contacto);
+        return (await GetByIdAsync(contacto.Id, cancellationToken))!;
     }
 
     public async Task<ContactoResponse?> GetByIdAsync(int idContacto, CancellationToken cancellationToken)
@@ -43,8 +43,11 @@ public sealed class ContactoService(FluencyLocalDbContext db) : IContactoService
                 c.Correo,
                 c.Telefono,
                 c.IdEstado,
+                c.IdEstadoNavigation!.Descripcion,
                 c.IdOrigen,
+                c.IdOrigenNavigation!.Descripcion,
                 c.IdEmpresa,
+                c.IdEmpresaNavigation!.RazonSocial,
                 c.Observaciones))
             .FirstOrDefaultAsync(cancellationToken);
     }
@@ -64,8 +67,11 @@ public sealed class ContactoService(FluencyLocalDbContext db) : IContactoService
                 c.Correo,
                 c.Telefono,
                 c.IdEstado,
+                c.IdEstadoNavigation!.Descripcion,
                 c.IdOrigen,
+                c.IdOrigenNavigation!.Descripcion,
                 c.IdEmpresa,
+                c.IdEmpresaNavigation!.RazonSocial,
                 c.Observaciones))
             .ToListAsync(cancellationToken);
     }
@@ -92,7 +98,8 @@ public sealed class ContactoService(FluencyLocalDbContext db) : IContactoService
 
         await db.SaveChangesAsync(cancellationToken);
 
-        return new UpdateContactoResult(UpdateContactoOutcome.Success, ToResponse(contacto));
+        return new UpdateContactoResult(
+            UpdateContactoOutcome.Success, (await GetByIdAsync(contacto.Id, cancellationToken))!);
     }
 
     public async Task<IReadOnlyList<HistorialEtapaResponse>?> GetHistorialEtapasAsync(
@@ -111,24 +118,16 @@ public sealed class ContactoService(FluencyLocalDbContext db) : IContactoService
             .Select(h => new HistorialEtapaResponse(
                 h.Id,
                 h.IdOportunidad,
+                h.IdOportunidadNavigation!.Titulo,
                 h.IdEtapaAnterior,
+                h.IdEtapaAnteriorNavigation!.Nombre,
                 h.IdNuevaEtapa,
+                h.IdNuevaEtapaNavigation!.Nombre,
                 h.Fecha,
                 h.IdUsuario,
+                h.IdUsuarioNavigation!.Nombre,
+                h.IdUsuarioNavigation!.Apellido,
                 h.Observacion))
             .ToListAsync(cancellationToken);
     }
-
-    private static ContactoResponse ToResponse(Contacto contacto) => new(
-        contacto.Id,
-        contacto.Nombre,
-        contacto.Apellido,
-        contacto.Documento,
-        contacto.Cargo,
-        contacto.Correo,
-        contacto.Telefono,
-        contacto.IdEstado,
-        contacto.IdOrigen,
-        contacto.IdEmpresa,
-        contacto.Observaciones);
 }

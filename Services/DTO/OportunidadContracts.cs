@@ -7,8 +7,13 @@ public sealed record OportunidadResumenResponse(
     int Id,
     string Titulo,
     int? IdEmpresa,
+    string? EmpresaRazonSocial,
     int? IdContacto,
+    string? ContactoNombre,
+    string? ContactoApellido,
     int? IdUsuario,
+    string? UsuarioNombre,
+    string? UsuarioApellido,
     DateOnly? FechaEstimadaCierre);
 
 /// <summary>Una etapa comercial junto con las oportunidades que se encuentran en ella.</summary>
@@ -18,19 +23,32 @@ public sealed record EtapaConOportunidadesResponse(
     int Orden,
     IReadOnlyList<OportunidadResumenResponse> Oportunidades);
 
-/// <summary>Detalle completo de una oportunidad.</summary>
+/// <summary>
+/// Detalle completo de una oportunidad. Los campos <c>*Nombre</c>/<c>*Apellido</c>/<c>*RazonSocial</c>/
+/// <c>*Descripcion</c> acompañan a su id correspondiente con el valor legible desde la tabla referenciada,
+/// para que el frontend no tenga que resolverlo con una consulta aparte.
+/// </summary>
 public sealed record OportunidadResponse(
     int Id,
     string Titulo,
     int? IdUsuario,
+    string? UsuarioNombre,
+    string? UsuarioApellido,
     int? IdEmpresa,
+    string? EmpresaRazonSocial,
     int? IdContacto,
+    string? ContactoNombre,
+    string? ContactoApellido,
     int? IdServicio,
+    string? ServicioNombre,
     int? IdEtapa,
+    string? EtapaNombre,
     DateOnly? FechaEstimadaCierre,
     DateTime? FechaCierre,
     int? IdOrigen,
+    string? OrigenDescripcion,
     int? IdEstado,
+    string? EstadoDescripcion,
     string? Observaciones);
 
 /// <summary>Payload para mover una oportunidad a una nueva etapa comercial.</summary>
