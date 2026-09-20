@@ -19,6 +19,7 @@ builder.Services.AddScoped<IOportunidadService, OportunidadService>();
 builder.Services.AddScoped<IContactoService, ContactoService>();
 builder.Services.AddScoped<IEmpresaService, EmpresaService>();
 builder.Services.AddScoped<ILoginService, LoginService>();
+builder.Services.AddScoped<IServicioService, ServicioService>();
 
 var app = builder.Build();
 

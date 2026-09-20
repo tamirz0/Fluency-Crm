@@ -229,6 +229,63 @@ al más antiguo).
 
 ---
 
+## Servicios
+
+### `GET /Servicios/ListadoServicios`
+
+Devuelve los servicios activos disponibles para seleccionar al crear o modificar una oportunidad.
+No recibe body ni parámetros y no requiere autenticación.
+
+**Respuesta `200 OK`**: array ordenado por `nombre` y luego por `id`. Solo incluye registros cuyo
+`activo` sea `true`; excluye `false` y `null`. Si no hay servicios activos, devuelve `[]`.
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `id` | number (entero) | Identificador que se envía como `idServicio` en la oportunidad |
+| `nombre` | string | Nombre para mostrar en el selector |
+| `descripcion` | string o null | Descripción opcional del servicio |
+| `precioReferencia` | number | Precio de referencia del catálogo |
+
+Ejemplo ilustrativo (los IDs y valores dependen de la base conectada):
+
+```json
+[
+  {
+    "id": 1,
+    "nombre": "Inglés General B1",
+    "descripcion": null,
+    "precioReferencia": 50000
+  }
+]
+```
+
+Para el frontend de la primera entrega, cargar este listado y enviar el `id` seleccionado como
+`idServicio` en `AltaOportunidad` o `ModificarOportunidad`. No asumir IDs iguales entre local y
+Supabase. Si el listado está vacío, informar que no hay servicios disponibles. Un error de conexión
+o una respuesta fallida debe mostrarse como error, no como catálogo vacío.
+
+Este endpoint no modifica el contrato de oportunidades: `idServicio` sigue siendo opcional en la API
+y su validación actual comprueba existencia, no actividad. En una modificación, omitirlo o enviar
+`null` conserva el servicio anterior. Un servicio previamente asociado que deje de estar activo no
+aparece en este selector; el detalle de la oportunidad sigue proporcionando `idServicio` y
+`servicioNombre` para mostrar el valor guardado.
+
+Contrato OpenAPI: operación `ListadoServicios`, respuesta `ServicioResponse[]`, disponible en
+`/openapi/v1.json` en desarrollo. Hay una petición de ejemplo en
+[`FluencyAPI.http`](../backend/FluencyAPI/FluencyAPI.http).
+
+**Verificación local — 20/09/2026:** API ejecutada contra el contenedor existente `fluency-postgres`
+en `127.0.0.1:5433`, con credenciales únicamente en el entorno del proceso. La llamada devolvió
+`200 OK`, `application/json` y dos servicios. Se comparó la respuesta completa con una consulta SQL
+de solo lectura (`activo IS TRUE`, orden por `nombre, id`): coincidieron campos, valores y orden.
+También se verificó la operación en OpenAPI. No se modificaron datos ni esquema.
+
+La base contenía dos servicios activos, ninguno inactivo y ninguno con actividad nula: la exclusión
+de esos casos y la respuesta vacía quedan pendientes de prueba con datos adecuados; el filtro está
+implementado en la consulta. Esta verificación no cubre Supabase ni cierra el hito 1 completo.
+
+---
+
 ## Oportunidades
 
 ### `POST /Oportunidades/AltaOportunidad`
