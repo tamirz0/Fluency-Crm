@@ -7,8 +7,16 @@ namespace Services.Implementations;
 
 public sealed class EmpresaService(FluencyLocalDbContext db) : IEmpresaService
 {
-    public async Task<EmpresaResponse> CreateAsync(CreateEmpresaRequest request, CancellationToken cancellationToken)
+    public async Task<CreateEmpresaResult> CreateAsync(
+        CreateEmpresaRequest request,
+        CancellationToken cancellationToken)
     {
+        var errors = await ValidateReferencesAsync(request.IdEstado, request.IdOrigen, cancellationToken);
+        if (errors.Count > 0)
+        {
+            return new CreateEmpresaResult(CreateEmpresaOutcome.ValidationFailed, null, errors);
+        }
+
         var empresa = new Empresa
         {
             RazonSocial = request.RazonSocial,
@@ -25,7 +33,10 @@ public sealed class EmpresaService(FluencyLocalDbContext db) : IEmpresaService
         db.Empresas.Add(empresa);
         await db.SaveChangesAsync(cancellationToken);
 
-        return (await GetByIdAsync(empresa.Id, cancellationToken))!;
+        return new CreateEmpresaResult(
+            CreateEmpresaOutcome.Success,
+            await GetByIdAsync(empresa.Id, cancellationToken),
+            []);
     }
 
     public async Task<EmpresaResponse?> GetByIdAsync(int idEmpresa, CancellationToken cancellationToken)
@@ -76,7 +87,13 @@ public sealed class EmpresaService(FluencyLocalDbContext db) : IEmpresaService
         var empresa = await db.Empresas.FirstOrDefaultAsync(e => e.Id == idEmpresa, cancellationToken);
         if (empresa is null)
         {
-            return new UpdateEmpresaResult(UpdateEmpresaOutcome.NotFound, null);
+            return new UpdateEmpresaResult(UpdateEmpresaOutcome.NotFound, null, []);
+        }
+
+        var errors = await ValidateReferencesAsync(request.IdEstado, request.IdOrigen, cancellationToken);
+        if (errors.Count > 0)
+        {
+            return new UpdateEmpresaResult(UpdateEmpresaOutcome.ValidationFailed, null, errors);
         }
 
         empresa.RazonSocial = request.RazonSocial ?? empresa.RazonSocial;
@@ -92,6 +109,28 @@ public sealed class EmpresaService(FluencyLocalDbContext db) : IEmpresaService
         await db.SaveChangesAsync(cancellationToken);
 
         return new UpdateEmpresaResult(
-            UpdateEmpresaOutcome.Success, (await GetByIdAsync(empresa.Id, cancellationToken))!);
+            UpdateEmpresaOutcome.Success, (await GetByIdAsync(empresa.Id, cancellationToken))!, []);
+    }
+
+    private async Task<IReadOnlyList<string>> ValidateReferencesAsync(
+        int? idEstado,
+        int? idOrigen,
+        CancellationToken cancellationToken)
+    {
+        var errors = new List<string>();
+
+        if (idEstado is int estado
+            && !await db.EstadoClientes.AnyAsync(e => e.Id == estado, cancellationToken))
+        {
+            errors.Add($"No existe el estado {estado}.");
+        }
+
+        if (idOrigen is int origen
+            && !await db.OrigenComerciales.AnyAsync(o => o.Id == origen, cancellationToken))
+        {
+            errors.Add($"No existe el origen comercial {origen}.");
+        }
+
+        return errors;
     }
 }

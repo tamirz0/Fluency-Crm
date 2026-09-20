@@ -55,6 +55,12 @@ public sealed class OportunidadService(FluencyLocalDbContext db) : IOportunidadS
             return new UpdateEtapaOportunidadResult(UpdateEtapaOportunidadOutcome.EtapaNotFound, null);
         }
 
+        if (request.IdUsuario is int idUsuario
+            && !await db.Usuarios.AnyAsync(u => u.Id == idUsuario, cancellationToken))
+        {
+            return new UpdateEtapaOportunidadResult(UpdateEtapaOportunidadOutcome.UsuarioNotFound, null);
+        }
+
         var idEtapaAnterior = oportunidad.IdEtapa;
         oportunidad.IdEtapa = request.IdNuevaEtapa;
 
@@ -127,6 +133,12 @@ public sealed class OportunidadService(FluencyLocalDbContext db) : IOportunidadS
         if (errors.Count > 0)
         {
             return new CreateOportunidadResult(CreateOportunidadOutcome.ValidationFailed, null, errors);
+        }
+
+        if (!await ContactoPerteneceAEmpresaAsync(request.IdEmpresa, request.IdContacto, cancellationToken))
+        {
+            return new CreateOportunidadResult(CreateOportunidadOutcome.ValidationFailed, null,
+                ["El contacto seleccionado no pertenece a la empresa de la oportunidad."]);
         }
 
         var oportunidad = new Oportunidad
@@ -236,6 +248,14 @@ public sealed class OportunidadService(FluencyLocalDbContext db) : IOportunidadS
             return new UpdateOportunidadResult(UpdateOportunidadOutcome.ValidationFailed, null, errors);
         }
 
+        var idEmpresaFinal = request.IdEmpresa ?? oportunidad.IdEmpresa;
+        var idContactoFinal = request.IdContacto ?? oportunidad.IdContacto;
+        if (!await ContactoPerteneceAEmpresaAsync(idEmpresaFinal, idContactoFinal, cancellationToken))
+        {
+            return new UpdateOportunidadResult(UpdateOportunidadOutcome.ValidationFailed, null,
+                ["El contacto seleccionado no pertenece a la empresa de la oportunidad."]);
+        }
+
         oportunidad.Titulo = request.Titulo ?? oportunidad.Titulo;
         oportunidad.IdUsuario = request.IdUsuario ?? oportunidad.IdUsuario;
         oportunidad.IdEmpresa = request.IdEmpresa ?? oportunidad.IdEmpresa;
@@ -250,5 +270,16 @@ public sealed class OportunidadService(FluencyLocalDbContext db) : IOportunidadS
 
         return new UpdateOportunidadResult(
             UpdateOportunidadOutcome.Success, await GetByIdAsync(oportunidad.Id, cancellationToken), []);
+    }
+    private async Task<bool> ContactoPerteneceAEmpresaAsync(
+        int? idEmpresa, int? idContacto, CancellationToken cancellationToken)
+    {
+        if (idEmpresa is null || idContacto is null)
+        {
+            return true;
+        }
+
+        return await db.Contactos.AnyAsync(
+            c => c.Id == idContacto && c.IdEmpresa == idEmpresa, cancellationToken);
     }
 }

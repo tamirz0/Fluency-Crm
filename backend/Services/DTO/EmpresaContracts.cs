@@ -48,6 +48,21 @@ public sealed record CreateEmpresaRequest
     public string? Observaciones { get; init; }
 }
 
+/// <summary>Resultado posible de intentar registrar una nueva empresa.</summary>
+public enum CreateEmpresaOutcome
+{
+    Success,
+    ValidationFailed
+}
+
+/// <summary>
+/// Envuelve el resultado de dar de alta una empresa y los errores de validación de referencias, si los hubo.
+/// </summary>
+public sealed record CreateEmpresaResult(
+    CreateEmpresaOutcome Outcome,
+    EmpresaResponse? Empresa,
+    IReadOnlyList<string> Errors);
+
 /// <summary>
 /// Payload para modificar una empresa existente. Solo los campos enviados (no nulos) se actualizan; el resto
 /// conserva su valor actual.
@@ -82,8 +97,14 @@ public sealed record UpdateEmpresaRequest
 public enum UpdateEmpresaOutcome
 {
     Success,
-    NotFound
+    NotFound,
+    ValidationFailed
 }
 
-/// <summary>Envuelve el resultado de modificar una empresa y, si tuvo éxito, la empresa ya actualizada.</summary>
-public sealed record UpdateEmpresaResult(UpdateEmpresaOutcome Outcome, EmpresaResponse? Empresa);
+/// <summary>
+/// Envuelve el resultado de modificar una empresa y los errores de validación de referencias, si los hubo.
+/// </summary>
+public sealed record UpdateEmpresaResult(
+    UpdateEmpresaOutcome Outcome,
+    EmpresaResponse? Empresa,
+    IReadOnlyList<string> Errors);

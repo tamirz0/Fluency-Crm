@@ -119,6 +119,9 @@ seguridad). Body en texto plano.
 }
 ```
 
+**`400 Bad Request`** si `idEstado` o `idOrigen` no existe. Devuelve
+`{ "errors": ["No existe el estado -1."] }` y no crea la empresa.
+
 ### `GET /Empresa/DatosEmpresa/{idEmpresa}`
 
 Devuelve una empresa por id. `200 OK` con el mismo shape de arriba, o `404 Not Found` (texto plano) si no
@@ -139,6 +142,8 @@ Actualización parcial — mandá solo los campos que querés cambiar. Mismos ca
 ```
 
 **`200 OK`** con la empresa ya actualizada (shape completo). **`404 Not Found`** si no existe la empresa.
+**`400 Bad Request`** con `{ "errors": [...] }` si `idEstado` o `idOrigen` no existe.
+Se validan todas las referencias enviadas antes de modificar campos: un rechazo conserva la empresa completa.
 
 ---
 
@@ -180,6 +185,9 @@ Actualización parcial — mandá solo los campos que querés cambiar. Mismos ca
 }
 ```
 
+**`400 Bad Request`** si `idEstado`, `idOrigen` o `idEmpresa` no existe. Devuelve
+`{ "errors": ["No existe la empresa -1."] }` y no crea el contacto.
+
 ### `GET /Contacto/DatosContacto/{idContacto}`
 
 `200 OK` con el shape de arriba, o `404 Not Found` (texto plano).
@@ -198,6 +206,8 @@ Actualización parcial, mismos campos que `AltaContacto`, todos opcionales.
 ```
 
 **`200 OK`** con el contacto actualizado. **`404 Not Found`** si no existe.
+**`400 Bad Request`** con `{ "errors": [...] }` si `idEstado`, `idOrigen` o `idEmpresa` no existe.
+Se validan todas las referencias enviadas antes de modificar campos: un rechazo conserva el contacto completo.
 
 ### `GET /Contacto/HistorialEtapas/{idContacto}`
 
@@ -306,6 +316,21 @@ implementado en la consulta. Esta verificación no cubre Supabase ni cierra el h
 \* **Regla de negocio: hay que mandar `idEmpresa` y/o `idContacto` — al menos uno de los dos es
 obligatorio**, aunque cada uno individualmente sea opcional.
 
+Si se envían empresa y contacto, el contacto debe pertenecer a esa empresa (`Contacto.idEmpresa`
+debe coincidir con `idEmpresa`). Un contacto sin empresa tampoco es válido para una oportunidad con
+empresa. Sin empresa, puede seleccionarse cualquier contacto existente; también se permite una
+oportunidad con empresa y sin contacto.
+
+Si la combinación es inválida, devuelve **`400 Bad Request`**, sin guardar la oportunidad:
+
+```json
+{ "errors": ["El contacto seleccionado no pertenece a la empresa de la oportunidad."] }
+```
+
+Para el selector del frontend, usar `GET /Contacto/ListadoContactos` y filtrar por `idEmpresa` cuando
+haya empresa seleccionada. Sin empresa, mostrar todos los contactos. La API valida la relación aunque
+el cliente no aplique el filtro.
+
 ```json
 {
   "titulo": "Curso B1 para Acme S.A.",
@@ -396,6 +421,12 @@ Actualización parcial de una oportunidad — **no** cambia la etapa comercial (
 abajo). Mismos campos que `AltaOportunidad` salvo `idEtapa`, todos opcionales, con las mismas validaciones de
 existencia si se envían.
 
+La relación empresa/contacto se valida sobre los valores finales: los enviados más los conservados.
+Cambiar solo la empresa o solo el contacto devuelve **400** si la combinación resultante es inválida,
+sin guardar ningún campo del request. Puede enviarse una nueva empresa y su contacto en la misma
+petición. Enviar `null` no desvincula ninguno de los dos: conserva su valor anterior.
+Una oportunidad previamente inconsistente debe corregirse con una pareja válida para poder modificarla.
+
 ```json
 { "observaciones": "Cliente pidió una cotización actualizada" }
 ```
@@ -411,7 +442,7 @@ Mueve la oportunidad a una nueva etapa comercial y deja el cambio asentado en el
 | Campo | Tipo | Obligatorio |
 |---|---|---|
 | `idNuevaEtapa` | number | sí — debe existir |
-| `idUsuario` | number | no — se guarda en el historial para saber quién hizo el cambio |
+| `idUsuario` | number | no — debe existir si se envía; se guarda en el historial para saber quién hizo el cambio |
 | `observacion` | string | no |
 
 ```json
@@ -419,4 +450,37 @@ Mueve la oportunidad a una nueva etapa comercial y deja el cambio asentado en el
 ```
 
 **`200 OK`** con la oportunidad ya actualizada (mismo shape que el detalle). **`404 Not Found`** si no existe
-la oportunidad. **`400 Bad Request`** (texto plano) si `idNuevaEtapa` no existe.
+la oportunidad. **`400 Bad Request`** (texto plano) si `idNuevaEtapa` o el `idUsuario` enviado no existe.
+Se conserva el formato de error de esta ruta: por ejemplo, `No existe el usuario -1.`.
+La validación ocurre antes de cambiar la etapa o agregar historial; un rechazo no guarda ninguno de esos cambios.
+Omitir `idUsuario` o enviarlo como `null` sigue permitido.
+
+## Verificación local de referencias — 20/09/2026
+
+Contra `fluency-postgres`, se ejecutaron 30 solicitudes POST con estados esperados y consultas GET
+de comprobación: registro/login válido e inválido, altas válidas y rechazadas de empresas/contactos,
+modificaciones rechazadas por cada referencia inexistente, recursos inexistentes (404), actualizaciones
+válidas y conservación de valores enviados como `null`. En oportunidades se probó servicio inexistente
+en el alta, referencias inválidas en la modificación y cambios de etapa con usuario/etapa inválidos,
+usuario válido y usuario omitido/nulo.
+
+Se compararon los recursos antes y después de los rechazos y el historial de cambios de etapa:
+no hubo altas ni modificaciones parciales en los casos ejecutados. Una lectura SQL confirmó la empresa,
+el contacto relacionado, la oportunidad y los dos registros de historial de cambios válidos.
+Los errores 400 de las cinco operaciones modificadas figuran en OpenAPI.
+
+Los registros nuevos de prueba se identifican con el prefijo `qa-ref-`; se conservaron sin borrar datos
+existentes. No se modificó el esquema. Estas pruebas no cubren eliminaciones concurrentes de referencias,
+reinicios, interfaz ni Supabase; no constituyen el cierre integral del hito 1.
+
+### Relación empresa/contacto de oportunidades
+
+Se verificaron 23 solicitudes POST y consultas GET contra PostgreSQL local, usando nuevos registros
+`qa-rel-*`: preparación de empresas/contactos/usuario, alta con pareja válida, rechazo de contacto de
+otra empresa y contacto sin empresa, alta solo con empresa o solo con contacto, modificaciones parciales
+incompatibles, cambio conjunto válido y conservación de valores nulos. Los rechazos no crearon
+oportunidades ni modificaron los datos existentes de los registros de prueba. Compilación sin errores
+ni advertencias. Esta nueva regla no fue probada por el agente contra Supabase.
+
+La validación se aplica al crear o modificar oportunidades; no repara registros históricos ni incorpora
+en este cambio restricciones a la reasignación de empresa desde la edición de un contacto.

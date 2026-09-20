@@ -7,8 +7,17 @@ namespace Services.Implementations;
 
 public sealed class ContactoService(FluencyLocalDbContext db) : IContactoService
 {
-    public async Task<ContactoResponse> CreateAsync(CreateContactoRequest request, CancellationToken cancellationToken)
+    public async Task<CreateContactoResult> CreateAsync(
+        CreateContactoRequest request,
+        CancellationToken cancellationToken)
     {
+        var errors = await ValidateReferencesAsync(
+            request.IdEstado, request.IdOrigen, request.IdEmpresa, cancellationToken);
+        if (errors.Count > 0)
+        {
+            return new CreateContactoResult(CreateContactoOutcome.ValidationFailed, null, errors);
+        }
+
         var contacto = new Contacto
         {
             Nombre = request.Nombre,
@@ -26,7 +35,10 @@ public sealed class ContactoService(FluencyLocalDbContext db) : IContactoService
         db.Contactos.Add(contacto);
         await db.SaveChangesAsync(cancellationToken);
 
-        return (await GetByIdAsync(contacto.Id, cancellationToken))!;
+        return new CreateContactoResult(
+            CreateContactoOutcome.Success,
+            await GetByIdAsync(contacto.Id, cancellationToken),
+            []);
     }
 
     public async Task<ContactoResponse?> GetByIdAsync(int idContacto, CancellationToken cancellationToken)
@@ -82,7 +94,14 @@ public sealed class ContactoService(FluencyLocalDbContext db) : IContactoService
         var contacto = await db.Contactos.FirstOrDefaultAsync(c => c.Id == idContacto, cancellationToken);
         if (contacto is null)
         {
-            return new UpdateContactoResult(UpdateContactoOutcome.NotFound, null);
+            return new UpdateContactoResult(UpdateContactoOutcome.NotFound, null, []);
+        }
+
+        var errors = await ValidateReferencesAsync(
+            request.IdEstado, request.IdOrigen, request.IdEmpresa, cancellationToken);
+        if (errors.Count > 0)
+        {
+            return new UpdateContactoResult(UpdateContactoOutcome.ValidationFailed, null, errors);
         }
 
         contacto.Nombre = request.Nombre ?? contacto.Nombre;
@@ -99,7 +118,7 @@ public sealed class ContactoService(FluencyLocalDbContext db) : IContactoService
         await db.SaveChangesAsync(cancellationToken);
 
         return new UpdateContactoResult(
-            UpdateContactoOutcome.Success, (await GetByIdAsync(contacto.Id, cancellationToken))!);
+            UpdateContactoOutcome.Success, (await GetByIdAsync(contacto.Id, cancellationToken))!, []);
     }
 
     public async Task<IReadOnlyList<HistorialEtapaResponse>?> GetHistorialEtapasAsync(
@@ -129,5 +148,34 @@ public sealed class ContactoService(FluencyLocalDbContext db) : IContactoService
                 h.IdUsuarioNavigation!.Apellido,
                 h.Observacion))
             .ToListAsync(cancellationToken);
+    }
+
+    private async Task<IReadOnlyList<string>> ValidateReferencesAsync(
+        int? idEstado,
+        int? idOrigen,
+        int? idEmpresa,
+        CancellationToken cancellationToken)
+    {
+        var errors = new List<string>();
+
+        if (idEstado is int estado
+            && !await db.EstadoClientes.AnyAsync(e => e.Id == estado, cancellationToken))
+        {
+            errors.Add($"No existe el estado {estado}.");
+        }
+
+        if (idOrigen is int origen
+            && !await db.OrigenComerciales.AnyAsync(o => o.Id == origen, cancellationToken))
+        {
+            errors.Add($"No existe el origen comercial {origen}.");
+        }
+
+        if (idEmpresa is int empresa
+            && !await db.Empresas.AnyAsync(e => e.Id == empresa, cancellationToken))
+        {
+            errors.Add($"No existe la empresa {empresa}.");
+        }
+
+        return errors;
     }
 }

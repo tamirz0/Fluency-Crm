@@ -53,6 +53,21 @@ public sealed record CreateContactoRequest
     public string? Observaciones { get; init; }
 }
 
+/// <summary>Resultado posible de intentar registrar un nuevo contacto.</summary>
+public enum CreateContactoOutcome
+{
+    Success,
+    ValidationFailed
+}
+
+/// <summary>
+/// Envuelve el resultado de dar de alta un contacto y los errores de validación de referencias, si los hubo.
+/// </summary>
+public sealed record CreateContactoResult(
+    CreateContactoOutcome Outcome,
+    ContactoResponse? Contacto,
+    IReadOnlyList<string> Errors);
+
 /// <summary>
 /// Payload para modificar un contacto existente. Solo los campos enviados (no nulos) se actualizan; el resto
 /// conserva su valor actual.
@@ -90,11 +105,17 @@ public sealed record UpdateContactoRequest
 public enum UpdateContactoOutcome
 {
     Success,
-    NotFound
+    NotFound,
+    ValidationFailed
 }
 
-/// <summary>Envuelve el resultado de modificar un contacto y, si tuvo éxito, el contacto ya actualizado.</summary>
-public sealed record UpdateContactoResult(UpdateContactoOutcome Outcome, ContactoResponse? Contacto);
+/// <summary>
+/// Envuelve el resultado de modificar un contacto y los errores de validación de referencias, si los hubo.
+/// </summary>
+public sealed record UpdateContactoResult(
+    UpdateContactoOutcome Outcome,
+    ContactoResponse? Contacto,
+    IReadOnlyList<string> Errors);
 
 /// <summary>Un cambio de etapa comercial registrado en el historial de una oportunidad del contacto.</summary>
 public sealed record HistorialEtapaResponse(

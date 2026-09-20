@@ -69,7 +69,8 @@ public enum UpdateEtapaOportunidadOutcome
 {
     Success,
     OportunidadNotFound,
-    EtapaNotFound
+    EtapaNotFound,
+    UsuarioNotFound
 }
 
 /// <summary>Envuelve el resultado de la operación y, si tuvo éxito, la oportunidad ya actualizada.</summary>
@@ -92,7 +93,7 @@ public sealed record CreateOportunidadRequest
     /// <summary>Empresa asociada. La oportunidad debe tener empresa y/o contacto.</summary>
     public int? IdEmpresa { get; init; }
 
-    /// <summary>Contacto asociado. La oportunidad debe tener empresa y/o contacto.</summary>
+    /// <summary>Contacto asociado. Si se indica empresa, el contacto debe pertenecer a ella. Sin empresa puede seleccionarse cualquier contacto existente.</summary>
     public int? IdContacto { get; init; }
 
     public int? IdServicio { get; init; }
@@ -126,6 +127,8 @@ public sealed record CreateOportunidadResult(
 /// Payload para modificar una oportunidad existente. Solo los campos enviados (no nulos) se actualizan; el
 /// resto conserva su valor actual. No incluye la etapa comercial: eso es responsabilidad exclusiva de
 /// <see cref="UpdateEtapaOportunidadRequest"/>.
+/// La combinación final de empresa y contacto debe ser compatible: si ambos están presentes,
+/// el contacto debe pertenecer a esa empresa, incluyendo los valores conservados al omitir campos.
 /// </summary>
 public sealed record UpdateOportunidadRequest
 {

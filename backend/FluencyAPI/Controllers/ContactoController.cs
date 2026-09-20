@@ -16,8 +16,15 @@ public sealed class ContactoController(IContactoService contactoService) : Contr
         [FromBody] CreateContactoRequest request,
         CancellationToken cancellationToken)
     {
-        var contacto = await contactoService.CreateAsync(request, cancellationToken);
-        return CreatedAtAction(nameof(DatosContacto), new { idContacto = contacto.Id }, contacto);
+        var result = await contactoService.CreateAsync(request, cancellationToken);
+
+        return result.Outcome switch
+        {
+            CreateContactoOutcome.Success => CreatedAtAction(
+                nameof(DatosContacto), new { idContacto = result.Contacto!.Id }, result.Contacto),
+            CreateContactoOutcome.ValidationFailed => BadRequest(new { errors = result.Errors }),
+            _ => Problem()
+        };
     }
 
     /// <summary>Obtiene los datos de un contacto por id.</summary>
@@ -42,6 +49,7 @@ public sealed class ContactoController(IContactoService contactoService) : Contr
     /// <summary>Modifica los datos de un contacto existente.</summary>
     [HttpPost("ModificarContacto/{idContacto:int}", Name = "ModificarContacto")]
     [ProducesResponseType(typeof(ContactoResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ContactoResponse>> ModificarContacto(
         int idContacto,
@@ -54,6 +62,7 @@ public sealed class ContactoController(IContactoService contactoService) : Contr
         {
             UpdateContactoOutcome.Success => Ok(result.Contacto),
             UpdateContactoOutcome.NotFound => NotFound($"No existe el contacto {idContacto}."),
+            UpdateContactoOutcome.ValidationFailed => BadRequest(new { errors = result.Errors }),
             _ => Problem()
         };
     }
