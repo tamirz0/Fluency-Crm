@@ -60,11 +60,13 @@ Cada incremento se prueba en local antes de comenzar el siguiente:
 
 Las pantallas incluyen estados de carga, listas vacías, confirmación de guardado y errores comprensibles. Se respeta la actualización parcial actual: no se ofrece eliminar un valor enviando `null` si el backend interpreta eso como conservarlo.
 
-Antes de retomar el frontend, se definirá en incrementos separados la sustitución de los POST de
-modificación por PUT y PATCH, con borrado explícito de valores opcionales, y la propagación atómica
-del cambio de empresa de un contacto a las oportunidades que coincidan con ese contacto y su empresa
-anterior. Los POST de alta, login y registro se conservan. El incremento de catálogos no modifica estos
-contratos; los casos de empresa anterior/nueva nula se definirán en el incremento correspondiente.
+Antes de retomar el frontend se agregan PATCH con borrado explícito de opcionales: omitir conserva,
+enviar null borra si el campo es opcional. Los POST de modificación se conservan para comparar
+compatibilidad antes de introducir PUT como reemplazo total. Los POST de alta, login y registro se conservan.
+La empresa de un contacto no puede cambiar mientras tenga oportunidades asociadas; esta regla sustituye
+la propagación automática considerada anteriormente. Reenviar la misma empresa está permitido.
+Toda oportunidad debe conservar al menos empresa o contacto; si tiene ambos, el contacto debe pertenecer
+a esa empresa. Se valida la combinación final, incluidos campos omitidos y borrados explícitos.
 
 **Criterio de salida:** todas las funcionalidades requeridas pueden operarse desde el frontend contra la base local, sin depender de peticiones manuales para el recorrido habitual.
 

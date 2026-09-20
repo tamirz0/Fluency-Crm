@@ -12,4 +12,7 @@ public interface IEmpresaService
 
     Task<UpdateEmpresaResult> UpdateAsync(
         int idEmpresa, UpdateEmpresaRequest request, CancellationToken cancellationToken);
+
+    Task<UpdateEmpresaResult> PatchAsync(
+        int idEmpresa, PatchEmpresaRequest request, CancellationToken cancellationToken);
 }

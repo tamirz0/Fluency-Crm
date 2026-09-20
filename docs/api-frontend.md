@@ -11,8 +11,10 @@
   autorización en el resto de los endpoints.
 - Todos los endpoints que reciben body esperan `Content-Type: application/json`.
 - Los campos marcados como "opcional" pueden omitirse del JSON o mandarse como `null`.
-- En los endpoints de "Modificar" (actualización parcial), **solo los campos enviados con un valor no nulo
+- En los endpoints **POST** de "Modificar" (actualización parcial), **solo los campos enviados con un valor no nulo
   se actualizan**; si un campo se omite o se manda `null`, conserva su valor actual en la base de datos.
+- En **PATCH de Empresa**, un campo omitido conserva su valor y un `null` explícito borra un campo
+  opcional. El POST se mantiene para comparar compatibilidad; todavía no hay PUT ni PATCH de otras entidades.
 - Los ids (`idEmpresa`, `idContacto`, `idUsuario`, etc.) son siempre `number` (enteros).
 - **Todas las respuestas que incluyen un id de otra tabla también incluyen, al lado, el dato legible de esa
   tabla** — por ejemplo `idEstado: 1` viene acompañado de `estadoDescripcion: "Potencial"`, `idEmpresa: 3` de
@@ -144,6 +146,60 @@ Actualización parcial — mandá solo los campos que querés cambiar. Mismos ca
 **`200 OK`** con la empresa ya actualizada (shape completo). **`404 Not Found`** si no existe la empresa.
 **`400 Bad Request`** con `{ "errors": [...] }` si `idEstado` o `idOrigen` no existe.
 Se validan todas las referencias enviadas antes de modificar campos: un rechazo conserva la empresa completa.
+
+---
+
+## PATCH de Empresa (incremento de actualización parcial)
+
+### `PATCH /Empresa/ModificarEmpresa/{idEmpresa}`
+
+Recibe un objeto JSON con **solo los campos a modificar**, usando `Content-Type: application/json`.
+No utiliza una lista de operaciones JSON Patch. La ruta coincide con el POST, pero cambia el verbo y
+la interpretación de `null`. El POST conserva íntegramente su comportamiento anterior.
+
+| Campo | Valor admitido cuando se envía | ¿Se borra con `null`? |
+|---|---|---|
+| `razonSocial` | string no vacío ni solo espacios, máximo 150 | No; devuelve 400 |
+| `cuit` | string, máximo 20 | Sí |
+| `industria` | string, máximo 100 | Sí |
+| `correo` | string con formato de email, máximo 150 | Sí |
+| `telefono` | string, máximo 50 | Sí |
+| `direccion` | string | Sí |
+| `idEstado` | ID de estado cliente existente | Sí, desvincula |
+| `idOrigen` | ID de origen comercial existente | Sí, desvincula |
+| `observaciones` | string | Sí |
+
+Todos pueden omitirse: lo omitido se conserva. `{}` devuelve la empresa sin cambios.
+Los campos ajenos a esta lista (incluido `id`) se rechazan con 400. Enviar `null` como cuerpo completo,
+un array o tipos incompatibles también devuelve 400. No se normalizan textos ni se usan strings vacíos
+como señal de borrado: para borrar un opcional se envía `null` explícito.
+
+```json
+{
+  "telefono": "1144445555",
+  "correo": null,
+  "idOrigen": null
+}
+```
+
+Este ejemplo reemplaza el teléfono, borra el correo y desvincula el origen; conserva todos los demás
+campos. La respuesta **`200 OK`** es la empresa completa, con el mismo formato de `DatosEmpresa`.
+**`404 Not Found`** (texto plano) si no existe la empresa y el cuerpo es válido.
+
+**`400 Bad Request`** por referencias inexistentes devuelve `{ "errors": ["No existe el estado -1."] }`.
+Errores de formato, campos desconocidos, longitudes, email o razón social devuelven el
+`ValidationProblemDetails` habitual de ASP.NET, con `errors` como diccionario por campo.
+Las validaciones se realizan antes de guardar y un rechazo no aplica cambios parciales.
+
+OpenAPI incluye la operación `PatchEmpresa` y el esquema `PatchEmpresaRequest`, separado del POST.
+La razón social se representa como propiedad opcional y su restricción condicional de no aceptar null
+está documentada y validada por el servidor.
+
+**Verificación local:** compilación sin errores ni advertencias; 38 solicitudes de prueba contra
+`fluency-postgres`, con empresa identificada por `qa-patch-0960462337` (ID 7). Se comprobaron omisión,
+borrado de los ocho opcionales, actualización combinada, `{}`, errores 400/404, ausencia de cambios
+parciales mediante GET y compatibilidad del POST. Se conservaron los datos de prueba y no se ejecutaron
+pruebas remotas. Contacto, Oportunidad y PUT quedan pendientes de un incremento posterior.
 
 ---
 

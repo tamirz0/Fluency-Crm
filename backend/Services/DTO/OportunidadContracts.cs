@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Services.DTO;
 
@@ -169,3 +170,61 @@ public sealed record UpdateOportunidadResult(
     UpdateOportunidadOutcome Outcome,
     OportunidadResponse? Oportunidad,
     IReadOnlyList<string> Errors);
+
+/// <summary>
+/// Actualización parcial de oportunidad. Un campo omitido conserva su valor y un null explícito borra un
+/// campo opcional. Titulo e IdUsuario no pueden borrarse. La etapa se modifica solo mediante su endpoint
+/// específico; FechaCierre queda fuera del contrato de actualización actual. No admite campos desconocidos.
+/// </summary>
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+public sealed record PatchOportunidadRequest : IValidatableObject
+{
+    private readonly HashSet<string> providedFields = [];
+
+    /// <summary>Título; si se envía, no puede ser null, vacío ni solo espacios.</summary>
+    [MaxLength(150)]
+    public string? Titulo { get; init { field = value; providedFields.Add(nameof(Titulo)); } }
+
+    /// <summary>Usuario responsable existente; si se envía no puede ser null.</summary>
+    public int? IdUsuario { get; init { field = value; providedFields.Add(nameof(IdUsuario)); } }
+
+    /// <summary>Empresa existente; null elimina la asociación si permanece un contacto.</summary>
+    public int? IdEmpresa { get; init { field = value; providedFields.Add(nameof(IdEmpresa)); } }
+
+    /// <summary>Contacto existente; null elimina la asociación si permanece una empresa.</summary>
+    public int? IdContacto { get; init { field = value; providedFields.Add(nameof(IdContacto)); } }
+
+    /// <summary>Servicio existente; null elimina la asociación.</summary>
+    public int? IdServicio { get; init { field = value; providedFields.Add(nameof(IdServicio)); } }
+
+    /// <summary>Fecha estimada de cierre; null elimina el valor guardado.</summary>
+    public DateOnly? FechaEstimadaCierre { get; init { field = value; providedFields.Add(nameof(FechaEstimadaCierre)); } }
+
+    /// <summary>Origen comercial existente; null elimina la asociación.</summary>
+    public int? IdOrigen { get; init { field = value; providedFields.Add(nameof(IdOrigen)); } }
+
+    /// <summary>Estado de cliente existente; null elimina la asociación.</summary>
+    public int? IdEstado { get; init { field = value; providedFields.Add(nameof(IdEstado)); } }
+
+    /// <summary>Observaciones; null elimina el valor guardado.</summary>
+    public string? Observaciones { get; init { field = value; providedFields.Add(nameof(Observaciones)); } }
+
+    /// <summary>Indica si el campo fue enviado, incluso si su valor es null.</summary>
+    public bool HasField(string propertyName) => providedFields.Contains(propertyName);
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (HasField(nameof(Titulo)) && string.IsNullOrWhiteSpace(Titulo))
+        {
+            yield return new ValidationResult(
+                "Titulo no puede ser nulo, vacío ni contener solo espacios.", [nameof(Titulo)]);
+        }
+
+        if (HasField(nameof(IdUsuario)) && IdUsuario is null)
+        {
+            yield return new ValidationResult(
+                "IdUsuario no puede ser nulo porque toda oportunidad debe tener un responsable.",
+                [nameof(IdUsuario)]);
+        }
+    }
+}

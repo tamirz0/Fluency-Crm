@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Services.DTO;
 
@@ -108,3 +109,94 @@ public sealed record UpdateEmpresaResult(
     UpdateEmpresaOutcome Outcome,
     EmpresaResponse? Empresa,
     IReadOnlyList<string> Errors);
+
+/// <summary>
+/// Actualización parcial de empresa: un campo omitido conserva su valor y un null explícito
+/// borra un campo opcional. RazonSocial no puede borrarse. No admite campos desconocidos.
+/// </summary>
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+public sealed record PatchEmpresaRequest : IValidatableObject
+{
+    private readonly HashSet<string> providedFields = [];
+
+    /// <summary>Razón social. Si se envía, no puede ser null, vacía ni contener solo espacios.</summary>
+    [MaxLength(150)]
+    public string? RazonSocial
+    {
+        get;
+        init { field = value; providedFields.Add(nameof(RazonSocial)); }
+    }
+
+    /// <summary>CUIT; null elimina el valor guardado.</summary>
+    [MaxLength(20)]
+    public string? Cuit
+    {
+        get;
+        init { field = value; providedFields.Add(nameof(Cuit)); }
+    }
+
+    /// <summary>Industria; null elimina el valor guardado.</summary>
+    [MaxLength(100)]
+    public string? Industria
+    {
+        get;
+        init { field = value; providedFields.Add(nameof(Industria)); }
+    }
+
+    /// <summary>Correo electrónico; null elimina el valor guardado.</summary>
+    [MaxLength(150), EmailAddress]
+    public string? Correo
+    {
+        get;
+        init { field = value; providedFields.Add(nameof(Correo)); }
+    }
+
+    /// <summary>Teléfono; null elimina el valor guardado.</summary>
+    [MaxLength(50)]
+    public string? Telefono
+    {
+        get;
+        init { field = value; providedFields.Add(nameof(Telefono)); }
+    }
+
+    /// <summary>Dirección; null elimina el valor guardado.</summary>
+    public string? Direccion
+    {
+        get;
+        init { field = value; providedFields.Add(nameof(Direccion)); }
+    }
+
+    /// <summary>Estado de cliente existente; null elimina la asociación.</summary>
+    public int? IdEstado
+    {
+        get;
+        init { field = value; providedFields.Add(nameof(IdEstado)); }
+    }
+
+    /// <summary>Origen comercial existente; null elimina la asociación.</summary>
+    public int? IdOrigen
+    {
+        get;
+        init { field = value; providedFields.Add(nameof(IdOrigen)); }
+    }
+
+    /// <summary>Observaciones; null elimina el valor guardado.</summary>
+    public string? Observaciones
+    {
+        get;
+        init { field = value; providedFields.Add(nameof(Observaciones)); }
+    }
+
+    /// <summary>Indica si el campo fue enviado, incluso si su valor es null.</summary>
+    public bool HasField(string propertyName) => providedFields.Contains(propertyName);
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (HasField(nameof(RazonSocial)) && string.IsNullOrWhiteSpace(RazonSocial))
+        {
+            yield return new ValidationResult(
+                "La razón social no puede ser nula, vacía ni contener solo espacios.",
+                [nameof(RazonSocial)]);
+        }
+    }
+}

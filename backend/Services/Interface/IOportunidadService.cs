@@ -22,4 +22,9 @@ public interface IOportunidadService
         int idOportunidad,
         UpdateOportunidadRequest request,
         CancellationToken cancellationToken);
+
+    Task<UpdateOportunidadResult> PatchAsync(
+        int idOportunidad,
+        PatchOportunidadRequest request,
+        CancellationToken cancellationToken);
 }

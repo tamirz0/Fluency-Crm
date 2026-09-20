@@ -1,5 +1,53 @@
 @FluencyAPI_HostAddress = http://localhost:5169
 
+# Reemplazar 0 por el ID de una empresa de prueba propia, nunca por una empresa real.
+@empresaPatchId = 0
+
+### PATCH Empresa: cambiar teléfono y borrar correo (200; 404 con ID 0)
+PATCH {{FluencyAPI_HostAddress}}/Empresa/ModificarEmpresa/{{empresaPatchId}}
+Content-Type: application/json
+
+{
+  "telefono": "1144445555",
+  "correo": null
+}
+
+### Consultar el resultado y comprobar que el resto se conserva
+GET {{FluencyAPI_HostAddress}}/Empresa/DatosEmpresa/{{empresaPatchId}}
+Accept: application/json
+
+### POST compatible: correo null conserva el correo guardado
+POST {{FluencyAPI_HostAddress}}/Empresa/ModificarEmpresa/{{empresaPatchId}}
+Content-Type: application/json
+
+{ "correo": null }
+
+### PATCH vacío: conserva todos los campos
+PATCH {{FluencyAPI_HostAddress}}/Empresa/ModificarEmpresa/{{empresaPatchId}}
+Content-Type: application/json
+
+{}
+
+### PATCH rechazado: razón social no se puede borrar (400, no cambia teléfono)
+PATCH {{FluencyAPI_HostAddress}}/Empresa/ModificarEmpresa/{{empresaPatchId}}
+Content-Type: application/json
+
+{ "razonSocial": null, "telefono": "NO GUARDAR" }
+
+### PATCH rechazado: campo fuera de la lista permitida (400)
+PATCH {{FluencyAPI_HostAddress}}/Empresa/ModificarEmpresa/{{empresaPatchId}}
+Content-Type: application/json
+
+{ "id": 123 }
+
+### PATCH rechazado: referencia inexistente (400 con empresa de prueba existente)
+PATCH {{FluencyAPI_HostAddress}}/Empresa/ModificarEmpresa/{{empresaPatchId}}
+Content-Type: application/json
+
+{ "idEstado": -1, "telefono": null }
+
+###
+
 ### Estados de cliente (200; [] si el catálogo está vacío)
 GET {{FluencyAPI_HostAddress}}/EstadosCliente/ListadoEstadosCliente
 Accept: application/json
