@@ -59,12 +59,10 @@ public partial class FluencyLocalDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        // Falls back to a local connection string only when the app didn't already configure one
-        // (e.g. via AddDbContext in Program.cs), so design-time tools like `dotnet ef` keep working
-        // while the running app is free to supply its own connection string from configuration.
         if (!optionsBuilder.IsConfigured)
         {
-            optionsBuilder.UseNpgsql("Host=localhost;Database=FluencyLocalDB;Username=postgres;Password=porotito");
+            throw new InvalidOperationException(
+                "Configure ConnectionStrings:FluencyLocalDB mediante User Secrets o variables de entorno.");
         }
     }
 

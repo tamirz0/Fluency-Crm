@@ -3,8 +3,23 @@ using Persistence.Models;
 using Scalar.AspNetCore;
 using Services.Implementations;
 using Services.Interface;
+using FluencyAPI.Bootstrap;
 
-var builder = WebApplication.CreateBuilder(args);
+var initializeDatabase = args.Contains("--initialize-database", StringComparer.Ordinal);
+var builder = WebApplication.CreateBuilder(
+    args.Where(arg => arg != "--initialize-database").ToArray());
+
+var connectionString = builder.Configuration.GetConnectionString("FluencyLocalDB");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    Console.Error.WriteLine("Falta ConnectionStrings:FluencyLocalDB. Configure User Secrets o ConnectionStrings__FluencyLocalDB.");
+    return 1;
+}
+
+if (initializeDatabase)
+{
+    return await DatabaseBootstrap.RunAsync(connectionString, builder.Configuration["Seed:DemoPassword"]);
+}
 
 // Add services to the container.
 
@@ -13,7 +28,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<FluencyLocalDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("FluencyLocalDB")));
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IOportunidadService, OportunidadService>();
 builder.Services.AddScoped<IContactoService, ContactoService>();
@@ -41,3 +56,4 @@ app.UseCors();
 app.MapControllers();
 
 app.Run();
+return 0;
