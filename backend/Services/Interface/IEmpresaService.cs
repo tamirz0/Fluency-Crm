@@ -4,7 +4,7 @@ namespace Services.Interface;
 
 public interface IEmpresaService
 {
-    Task<EmpresaResponse> CreateAsync(CreateEmpresaRequest request, CancellationToken cancellationToken);
+    Task<CreateEmpresaResult> CreateAsync(CreateEmpresaRequest request, CancellationToken cancellationToken);
 
     Task<EmpresaResponse?> GetByIdAsync(int idEmpresa, CancellationToken cancellationToken);
 

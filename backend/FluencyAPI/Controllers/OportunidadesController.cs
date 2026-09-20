@@ -87,6 +87,8 @@ public sealed class OportunidadesController(IOportunidadService oportunidadServi
                 => NotFound($"No existe la oportunidad {idOportunidad}."),
             UpdateEtapaOportunidadOutcome.EtapaNotFound
                 => BadRequest($"No existe la etapa comercial {request.IdNuevaEtapa}."),
+            UpdateEtapaOportunidadOutcome.UsuarioNotFound
+                => BadRequest($"No existe el usuario {request.IdUsuario}."),
             _ => Problem()
         };
     }

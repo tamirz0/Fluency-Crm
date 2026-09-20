@@ -16,8 +16,15 @@ public sealed class EmpresaController(IEmpresaService empresaService) : Controll
         [FromBody] CreateEmpresaRequest request,
         CancellationToken cancellationToken)
     {
-        var empresa = await empresaService.CreateAsync(request, cancellationToken);
-        return CreatedAtAction(nameof(DatosEmpresa), new { idEmpresa = empresa.Id }, empresa);
+        var result = await empresaService.CreateAsync(request, cancellationToken);
+
+        return result.Outcome switch
+        {
+            CreateEmpresaOutcome.Success => CreatedAtAction(
+                nameof(DatosEmpresa), new { idEmpresa = result.Empresa!.Id }, result.Empresa),
+            CreateEmpresaOutcome.ValidationFailed => BadRequest(new { errors = result.Errors }),
+            _ => Problem()
+        };
     }
 
     /// <summary>Obtiene los datos de una empresa por id.</summary>
@@ -42,6 +49,7 @@ public sealed class EmpresaController(IEmpresaService empresaService) : Controll
     /// <summary>Modifica los datos de una empresa existente.</summary>
     [HttpPost("ModificarEmpresa/{idEmpresa:int}", Name = "ModificarEmpresa")]
     [ProducesResponseType(typeof(EmpresaResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<EmpresaResponse>> ModificarEmpresa(
         int idEmpresa,
@@ -54,6 +62,7 @@ public sealed class EmpresaController(IEmpresaService empresaService) : Controll
         {
             UpdateEmpresaOutcome.Success => Ok(result.Empresa),
             UpdateEmpresaOutcome.NotFound => NotFound($"No existe la empresa {idEmpresa}."),
+            UpdateEmpresaOutcome.ValidationFailed => BadRequest(new { errors = result.Errors }),
             _ => Problem()
         };
     }
