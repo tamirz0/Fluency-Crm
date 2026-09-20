@@ -1,5 +1,0 @@
-<Solution>
-  <Project Path="../Persistence/Persistence.csproj" />
-  <Project Path="../Services/Services.csproj" Id="772bebb6-398f-45dc-9361-a9ea32ddafb5" />
-  <Project Path="FluencyAPI.csproj" />
-</Solution>
