@@ -1,5 +1,19 @@
 @FluencyAPI_HostAddress = http://localhost:5169
 
+### Estados de cliente (200; [] si el catálogo está vacío)
+GET {{FluencyAPI_HostAddress}}/EstadosCliente/ListadoEstadosCliente
+Accept: application/json
+
+### Orígenes comerciales (200; [] si el catálogo está vacío)
+GET {{FluencyAPI_HostAddress}}/OrigenesComerciales/ListadoOrigenesComerciales
+Accept: application/json
+
+### Etapas comerciales, sin oportunidades (200; [] si el catálogo está vacío)
+GET {{FluencyAPI_HostAddress}}/EtapasComerciales/ListadoEtapasComerciales
+Accept: application/json
+
+###
+
 ### Servicios activos para seleccionar en una oportunidad (200; [] si no hay activos)
 GET {{FluencyAPI_HostAddress}}/Servicios/ListadoServicios
 Accept: application/json
