@@ -19,10 +19,11 @@ La reorganización del backend ya está integrada en `master`. El trabajo de mig
 - Backend: ASP.NET Core 10 + EF Core como acceso a datos.
 - Base: PostgreSQL. **Usar EF Core no obliga a adoptar migraciones ahora.**
 - Rutas actuales: se conservan durante la primera entrega.
-- Formularios: campos indispensables, sin selectores de estado ni origen comercial.
+- Formularios: todos los campos descriptivos de empresas y contactos. Se incluyen selectores de estado cliente y origen comercial en empresas, contactos y oportunidades, según la ampliación de alcance acordada.
 - Productos o servicios y etapas pueden estar precargados; no se requiere construir su gestión completa ni configurarlos desde la aplicación.
 - Responsable de la oportunidad: usuario devuelto por el login.
 - Embudo: cambio de etapa mediante selector o acción, sin drag-and-drop.
+- Catálogos de solo lectura: estados de cliente, orígenes comerciales y etapas comerciales. No se incluye su gestión.
 - Acceso: validación de credenciales mediante el login existente. No crea una sesión autenticada ni protege los endpoints; sesiones, autorización y roles efectivos quedan pendientes.
 
 ### Ejecución prevista
@@ -41,7 +42,7 @@ Antes de crear el frontend:
 - Comprobar login; alta, modificación, listado y detalle de empresas y contactos; relaciones entre ambos; alta, modificación, detalle, listado por embudo y cambio de etapa de oportunidades.
 - Agregar `GET /Servicios/ListadoServicios`, devolviendo servicios activos y sus datos necesarios para la selección, con contrato documentado en OpenAPI.
 - Asegurar que exista al menos un usuario habilitado para la demostración. No se exige gestión completa de roles y permisos.
-- Obtener etapas desde el embudo y asignar como responsable al usuario devuelto por el login. No agregar gestión de usuarios ni selectores de estado y origen.
+- Consultar estados mediante `GET /EstadosCliente/ListadoEstadosCliente`, orígenes mediante `GET /OrigenesComerciales/ListadoOrigenesComerciales` y etapas mediante `GET /EtapasComerciales/ListadoEtapasComerciales`. Los listados incluyen todos los registros; el de etapas no incluye oportunidades. Asignar como responsable al usuario devuelto por el login. No agregar gestión de usuarios ni de catálogos.
 - Corregir defectos que bloqueen esos flujos, incluyendo errores de validación que terminen en fallos internos. Evitar rediseños generales del dominio.
 - Preparar un usuario válido mediante `Register`, sin depender del demo inválido del SQL ni implementar seeds automatizados.
 - Confirmar conexión y compatibilidad del esquema existente en Supabase antes de avanzar con las pantallas. Si se detectan diferencias, identificarlas y resolver su impacto antes de continuar, sin recrear tablas ni aplicar migraciones automáticamente.
@@ -58,6 +59,12 @@ Cada incremento se prueba en local antes de comenzar el siguiente:
 4. **Embudo:** agrupación por etapa y cambio mediante selector o acción, con actualización de los datos mostrados.
 
 Las pantallas incluyen estados de carga, listas vacías, confirmación de guardado y errores comprensibles. Se respeta la actualización parcial actual: no se ofrece eliminar un valor enviando `null` si el backend interpreta eso como conservarlo.
+
+Antes de retomar el frontend, se definirá en incrementos separados la sustitución de los POST de
+modificación por PUT y PATCH, con borrado explícito de valores opcionales, y la propagación atómica
+del cambio de empresa de un contacto a las oportunidades que coincidan con ese contacto y su empresa
+anterior. Los POST de alta, login y registro se conservan. El incremento de catálogos no modifica estos
+contratos; los casos de empresa anterior/nueva nula se definirán en el incremento correspondiente.
 
 **Criterio de salida:** todas las funcionalidades requeridas pueden operarse desde el frontend contra la base local, sin depender de peticiones manuales para el recorrido habitual.
 

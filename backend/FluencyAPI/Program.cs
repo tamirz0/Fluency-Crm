@@ -20,6 +20,9 @@ builder.Services.AddScoped<IContactoService, ContactoService>();
 builder.Services.AddScoped<IEmpresaService, EmpresaService>();
 builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<IServicioService, ServicioService>();
+builder.Services.AddScoped<IEstadoClienteService, EstadoClienteService>();
+builder.Services.AddScoped<IOrigenComercialService, OrigenComercialService>();
+builder.Services.AddScoped<IEtapaComercialService, EtapaComercialService>();
 
 var app = builder.Build();
 

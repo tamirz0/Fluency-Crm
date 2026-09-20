@@ -239,6 +239,50 @@ al más antiguo).
 
 ---
 
+## Catálogos de lectura
+
+Estos endpoints no reciben body ni parámetros y no requieren autenticación. Devuelven **`200 OK`**
+con todos los registros del catálogo, o `[]` si está vacío. No hay filtro de actividad: estas entidades
+no tienen ese campo. Los IDs se consultan en cada destino; no deben fijarse en el frontend.
+
+| Endpoint | Campos de cada elemento | Orden |
+|---|---|---|
+| `GET /EstadosCliente/ListadoEstadosCliente` | `id` (entero), `descripcion` (string) | Descripción e ID |
+| `GET /OrigenesComerciales/ListadoOrigenesComerciales` | `id` (entero), `descripcion` (string) | Descripción e ID |
+| `GET /EtapasComerciales/ListadoEtapasComerciales` | `id` (entero), `nombre` (string), `descripcion` (string o null), `orden` (entero) | Orden e ID |
+
+Ejemplos ilustrativos para estado, origen y etapa, respectivamente:
+
+```json
+[{ "id": 1, "descripcion": "Potencial" }]
+```
+
+```json
+[{ "id": 1, "descripcion": "Sitio Web" }]
+```
+
+```json
+[{ "id": 1, "nombre": "Consulta Recibida", "descripcion": null, "orden": 1 }]
+```
+
+Usar estados y orígenes en los selectores de empresas, contactos y oportunidades. Para seleccionar
+una etapa, usar el nuevo catálogo: incluye etapas sin oportunidades y nunca incluye las oportunidades
+como parte de la respuesta. El endpoint del embudo sigue disponible con su contrato actual.
+No se incorporan altas, modificaciones ni bajas de catálogos.
+
+Los esquemas OpenAPI son `EstadoClienteResponse`, `OrigenComercialResponse` y `EtapaComercialResponse`.
+Las operaciones se llaman como el último segmento de cada ruta. Hay ejemplos ejecutables en
+[`FluencyAPI.http`](../backend/FluencyAPI/FluencyAPI.http).
+
+**Verificación local:** los tres GET devolvieron 200 contra `fluency-postgres`: 3 estados, 3 orígenes
+y 4 etapas. Se contrastaron campos, valores, cantidad y orden con SQL de solo lectura. Las 4 etapas
+incluyeron las 2 sin oportunidades; la respuesta no contiene colecciones de oportunidades. Se verificaron
+los tres contratos en OpenAPI y la nulabilidad de la descripción de etapa. No había catálogos vacíos
+ni etapas con descripción nula: esos casos quedan pendientes de prueba con datos adecuados, sin alterar
+registros existentes. No se repitieron pruebas remotas.
+
+---
+
 ## Servicios
 
 ### `GET /Servicios/ListadoServicios`
