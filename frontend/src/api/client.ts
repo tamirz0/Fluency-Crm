@@ -4,6 +4,12 @@ import type { components, paths } from './schema'
 export const api = createClient<paths>({ baseUrl: '/api', fetch: (...args) => globalThis.fetch(...args) })
 export type AuthUser = components['schemas']['UsuarioResponse']
 export type LoginCredentials = components['schemas']['LoginRequest']
+export type Empresa = components['schemas']['EmpresaResponse']
+
+export const empresaQueryKeys = {
+  all: ['empresas'] as const,
+  detail: (idEmpresa: number) => ['empresas', idEmpresa] as const,
+}
 
 export class ApiRequestError extends Error {
   readonly status?: number
@@ -34,6 +40,28 @@ export function getApiErrorMessage(payload: unknown, status?: number): string {
 export async function loginRequest(credentials: LoginCredentials): Promise<AuthUser> {
   try {
     const { data, error, response } = await api.POST('/Login/Login', { body: credentials })
+    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
+    return data
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
+    throw new ApiRequestError('No pudimos conectar con la API.')
+  }
+}
+
+export async function getCompanies(): Promise<Empresa[]> {
+  try {
+    const { data, error, response } = await api.GET('/Empresa/ListadoEmpresas')
+    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
+    return data
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
+    throw new ApiRequestError('No pudimos conectar con la API.')
+  }
+}
+
+export async function getCompany(idEmpresa: number): Promise<Empresa> {
+  try {
+    const { data, error, response } = await api.GET('/Empresa/DatosEmpresa/{idEmpresa}', { params: { path: { idEmpresa } } })
     if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
     return data
   } catch (error) {
