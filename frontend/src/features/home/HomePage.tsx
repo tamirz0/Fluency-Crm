@@ -1,0 +1,3 @@
+import { Box, Typography } from '@mui/material'
+import { useAuth } from '../../auth/useAuth'
+export function HomePage() { const { user } = useAuth(); return <Box sx={{ maxWidth: 760, px: { xs: 3, sm: 5, lg: 8 }, py: { xs: 5, sm: 8 } }}><Typography component="h1" sx={{ mb: 1.5, color: '#17324D', fontSize: { xs: '2.35rem', sm: '3.25rem' }, fontWeight: 650, letterSpacing: '-0.05em', lineHeight: 1 }}>Hola, {user?.nombre}</Typography><Typography sx={{ maxWidth: '48ch', color: 'text.secondary', fontSize: '1.2rem', lineHeight: 1.55 }}>Este es tu espacio para seguir conversaciones comerciales y ordenar el trabajo del equipo. Las herramientas se irán incorporando en los próximos incrementos.</Typography></Box> }
