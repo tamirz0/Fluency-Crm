@@ -44,7 +44,7 @@ function ContactListSkeleton() {
 export function ContactsPage() {
   const { data, error, isPending, refetch } = useQuery({ queryKey: contactoQueryKeys.all, queryFn: getContacts })
   return <Box className="companies-page records-page">
-    <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Contactos</Typography><Typography className="companies-page-description">Personas vinculadas a las relaciones comerciales.</Typography></div></header>
+    <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Contactos</Typography><Typography className="companies-page-description">Personas vinculadas a las relaciones comerciales.</Typography></div><Button component={RouterLink} to="/contactos/nuevo" variant="contained">Nuevo contacto</Button></header>
     {isPending ? <ContactListSkeleton /> : error ? <section className="company-feedback" aria-labelledby="contacts-error-title">
       <Typography id="contacts-error-title" component="h2" className="company-feedback-title">No pudimos cargar los contactos</Typography><Typography color="text.secondary">Revisá la conexión e intentá de nuevo.</Typography><Button onClick={() => void refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button>
     </section> : data.length === 0 ? <section className="company-feedback" aria-labelledby="contacts-empty-title">

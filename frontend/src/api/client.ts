@@ -11,6 +11,15 @@ export type EtapaConOportunidades = components['schemas']['EtapaConOportunidades
 export type OportunidadResumenResponse = components['schemas']['OportunidadResumenResponse']
 export type EtapaComercial = components['schemas']['EtapaComercialResponse']
 export type UpdateEtapaOportunidadRequest = components['schemas']['UpdateEtapaOportunidadRequest']
+export type CreateEmpresaRequest = components['schemas']['CreateEmpresaRequest']
+export type PatchEmpresaRequest = components['schemas']['PatchEmpresaRequest']
+export type CreateContactoRequest = components['schemas']['CreateContactoRequest']
+export type PatchContactoRequest = components['schemas']['PatchContactoRequest']
+export type CreateOportunidadRequest = components['schemas']['CreateOportunidadRequest']
+export type PatchOportunidadRequest = components['schemas']['PatchOportunidadRequest']
+export type EstadoCliente = components['schemas']['EstadoClienteResponse']
+export type OrigenComercial = components['schemas']['OrigenComercialResponse']
+export type Servicio = components['schemas']['ServicioResponse']
 
 export type OportunidadResumen = OportunidadResumenResponse & {
   idEtapa: EtapaConOportunidades['idEtapa']
@@ -35,6 +44,9 @@ export const opportunityQueryKeys = {
 
 export const catalogQueryKeys = {
   commercialStages: ['catalogos', 'etapas-comerciales'] as const,
+  customerStates: ['catalogos', 'estados-cliente'] as const,
+  commercialOrigins: ['catalogos', 'origenes-comerciales'] as const,
+  services: ['catalogos', 'servicios'] as const,
 }
 
 export class ApiRequestError extends Error {
@@ -143,6 +155,95 @@ export async function getOpportunity(idOportunidad: number): Promise<Oportunidad
 export async function getCommercialStages(): Promise<EtapaComercial[]> {
   try {
     const { data, error, response } = await api.GET('/EtapasComerciales/ListadoEtapasComerciales')
+    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
+    return data
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
+    throw new ApiRequestError('No pudimos conectar con la API.')
+  }
+}
+
+async function getCatalog<T>(request: () => Promise<{ data?: T; error?: unknown; response: Response }>): Promise<T> {
+  try {
+    const { data, error, response } = await request()
+    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
+    return data
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
+    throw new ApiRequestError('No pudimos conectar con la API.')
+  }
+}
+
+export function getCustomerStates(): Promise<EstadoCliente[]> {
+  return getCatalog(() => api.GET('/EstadosCliente/ListadoEstadosCliente'))
+}
+
+export function getCommercialOrigins(): Promise<OrigenComercial[]> {
+  return getCatalog(() => api.GET('/OrigenesComerciales/ListadoOrigenesComerciales'))
+}
+
+export function getServices(): Promise<Servicio[]> {
+  return getCatalog(() => api.GET('/Servicios/ListadoServicios'))
+}
+
+export async function createCompany(body: CreateEmpresaRequest): Promise<Empresa> {
+  try {
+    const { data, error, response } = await api.POST('/Empresa/AltaEmpresa', { body })
+    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
+    return data
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
+    throw new ApiRequestError('No pudimos conectar con la API.')
+  }
+}
+
+export async function patchCompany(idEmpresa: number, body: PatchEmpresaRequest): Promise<Empresa> {
+  try {
+    const { data, error, response } = await api.PATCH('/Empresa/ModificarEmpresa/{idEmpresa}', { params: { path: { idEmpresa } }, body })
+    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
+    return data
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
+    throw new ApiRequestError('No pudimos conectar con la API.')
+  }
+}
+
+export async function createContact(body: CreateContactoRequest): Promise<Contacto> {
+  try {
+    const { data, error, response } = await api.POST('/Contacto/AltaContacto', { body })
+    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
+    return data
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
+    throw new ApiRequestError('No pudimos conectar con la API.')
+  }
+}
+
+export async function patchContact(idContacto: number, body: PatchContactoRequest): Promise<Contacto> {
+  try {
+    const { data, error, response } = await api.PATCH('/Contacto/ModificarContacto/{idContacto}', { params: { path: { idContacto } }, body })
+    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
+    return data
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
+    throw new ApiRequestError('No pudimos conectar con la API.')
+  }
+}
+
+export async function createOpportunity(body: CreateOportunidadRequest): Promise<OportunidadDetalle> {
+  try {
+    const { data, error, response } = await api.POST('/Oportunidades/AltaOportunidad', { body })
+    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
+    return data
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
+    throw new ApiRequestError('No pudimos conectar con la API.')
+  }
+}
+
+export async function patchOpportunity(idOportunidad: number, body: PatchOportunidadRequest): Promise<OportunidadDetalle> {
+  try {
+    const { data, error, response } = await api.PATCH('/Oportunidades/ModificarOportunidad/{idOportunidad}', { params: { path: { idOportunidad } }, body })
     if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
     return data
   } catch (error) {

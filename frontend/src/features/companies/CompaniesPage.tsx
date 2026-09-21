@@ -69,7 +69,7 @@ export function CompaniesPage() {
 
   return <Box className="companies-page">
     <header className="companies-page-header">
-      <div><Typography component="h1" className="companies-page-title">Empresas</Typography><Typography className="companies-page-description">Organizaciones vinculadas a la actividad comercial.</Typography></div>
+      <div><Typography component="h1" className="companies-page-title">Empresas</Typography><Typography className="companies-page-description">Organizaciones vinculadas a la actividad comercial.</Typography></div><Button component={RouterLink} to="/empresas/nueva" variant="contained">Nueva empresa</Button>
     </header>
 
     {isPending ? <CompanyListSkeleton /> : error ? <section className="company-feedback" aria-labelledby="companies-error-title">

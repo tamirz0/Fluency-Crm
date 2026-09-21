@@ -1,8 +1,8 @@
-import { ArrowBack, Refresh } from '@mui/icons-material'
-import { Box, Button, Chip, Link, Skeleton, Typography } from '@mui/material'
+import { ArrowBack, Edit, Refresh } from '@mui/icons-material'
+import { Alert, Box, Button, Chip, Link, Skeleton, Typography } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { Link as RouterLink, useParams } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useParams } from 'react-router-dom'
 import { ApiRequestError, getOpportunity, opportunityQueryKeys, type OportunidadDetalle } from '../../api/client'
 import { CompanyStatus } from '../companies/CompanyStatus'
 import { displayValue, formatCommercialDate, parsePositiveId } from '../shared/display'
@@ -42,6 +42,7 @@ function OpportunityDetails({ opportunity }: { opportunity: OportunidadDetalle }
 
 export function OpportunityDetailPage() {
   const { idOportunidad: routeId } = useParams()
+  const location = useLocation()
   const idOportunidad = parsePositiveId(routeId)
   const query = useQuery({ queryKey: opportunityQueryKeys.detail(idOportunidad ?? 0), queryFn: () => getOpportunity(idOportunidad as number), enabled: idOportunidad !== undefined })
 
@@ -52,7 +53,8 @@ export function OpportunityDetailPage() {
   const opportunity = query.data
   return <Box className="companies-page company-result-page records-page">
     <Link component={RouterLink} to="/oportunidades" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a oportunidades</Link>
-    <header className="company-detail-header"><div><Typography component="h1" className="companies-page-title">{opportunity.titulo}</Typography></div><Chip className="company-status company-status--prospect" label={displayValue(opportunity.etapaNombre)} size="small" /></header>
+    {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
+    <header className="company-detail-header"><div><Typography component="h1" className="companies-page-title">{opportunity.titulo}</Typography></div><div className="company-detail-header-actions"><Chip className="company-status company-status--prospect" label={displayValue(opportunity.etapaNombre)} size="small" /><Button component={RouterLink} to={`/oportunidades/${opportunity.id}/editar`} variant="contained" startIcon={<Edit />}>Editar oportunidad</Button></div></header>
     <OpportunityDetails opportunity={opportunity} />
   </Box>
 }

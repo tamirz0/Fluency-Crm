@@ -1,8 +1,9 @@
 import { ArrowBack, Refresh } from '@mui/icons-material'
-import { Box, Button, Link, Skeleton, Typography } from '@mui/material'
+import { Alert, Box, Button, Link, Skeleton, Typography } from '@mui/material'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { Link as RouterLink, useParams } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useParams } from 'react-router-dom'
+import { Edit } from '@mui/icons-material'
 import { ApiRequestError, contactoQueryKeys, getContact, type Contacto } from '../../api/client'
 import { CompanyStatus } from '../companies/CompanyStatus'
 import { contactFullName, displayValue, parsePositiveId } from '../shared/display'
@@ -49,6 +50,7 @@ function ContactDetails({ contact }: { contact: Contacto }) {
 
 export function ContactDetailPage() {
   const { idContacto: routeId } = useParams()
+  const location = useLocation()
   const idContacto = parsePositiveId(routeId)
   const queryClient = useQueryClient()
   const cachedContact = idContacto === undefined ? undefined : queryClient.getQueryData<Contacto[]>(contactoQueryKeys.all)?.find((contact) => String(contact.id) === String(idContacto))
@@ -61,7 +63,8 @@ export function ContactDetailPage() {
   const contact = query.data
   return <Box className="companies-page company-result-page records-page">
     <Link component={RouterLink} to="/contactos" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a contactos</Link>
-    <header className="company-detail-header"><div><Typography component="h1" className="companies-page-title">{contactFullName(contact)}</Typography></div><CompanyStatus value={contact.estadoDescripcion} /></header>
+    {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
+    <header className="company-detail-header"><div><Typography component="h1" className="companies-page-title">{contactFullName(contact)}</Typography></div><div className="company-detail-header-actions"><CompanyStatus value={contact.estadoDescripcion} /><Button component={RouterLink} to={`/contactos/${contact.id}/editar`} variant="contained" startIcon={<Edit />}>Editar contacto</Button></div></header>
     {query.isFetching && query.isPlaceholderData && <Typography className="company-detail-loading" role="status">Actualizando ficha…</Typography>}
     <ContactDetails contact={contact} />
   </Box>

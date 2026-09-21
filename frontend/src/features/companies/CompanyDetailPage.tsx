@@ -1,8 +1,8 @@
 import { ArrowBack, Refresh } from '@mui/icons-material'
-import { Box, Button, Link, Skeleton, Typography } from '@mui/material'
+import { Alert, Box, Button, Link, Skeleton, Typography } from '@mui/material'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { Link as RouterLink, useParams } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useParams } from 'react-router-dom'
 import { ApiRequestError, empresaQueryKeys, getCompany, type Empresa } from '../../api/client'
 import { CompanyStatus } from './CompanyStatus'
 import './companies.css'
@@ -35,6 +35,7 @@ function DetailSkeleton() {
 
 export function CompanyDetailPage() {
   const { idEmpresa: routeId } = useParams()
+  const location = useLocation()
   const idEmpresa = parseCompanyId(routeId)
   const queryClient = useQueryClient()
   const cachedCompany = idEmpresa === undefined ? undefined : queryClient.getQueryData<Empresa[]>(empresaQueryKeys.all)?.find((company) => String(company.id) === String(idEmpresa))
@@ -60,9 +61,10 @@ export function CompanyDetailPage() {
   const status = company.estadoDescripcion?.trim() || 'Sin informar'
   return <Box className="companies-page company-result-page">
     <Link component={RouterLink} to="/empresas" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a empresas</Link>
+    {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
     <header className="company-detail-header">
       <div><Typography component="h1" className="companies-page-title">{company.razonSocial}</Typography></div>
-      <CompanyStatus value={status} />
+      <div className="company-detail-header-actions"><CompanyStatus value={status} /><Button component={RouterLink} to={`/empresas/${company.id}/editar`} variant="contained">Editar empresa</Button></div>
     </header>
     {query.isFetching && query.isPlaceholderData && <Typography className="company-detail-loading" role="status">Actualizando ficha…</Typography>}
     <article className="company-sheet" aria-label={`Ficha de ${company.razonSocial}`}>

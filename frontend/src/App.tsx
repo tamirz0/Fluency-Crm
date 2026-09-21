@@ -10,6 +10,9 @@ import { ContactDetailPage } from './features/contacts/ContactDetailPage'
 import { OpportunitiesPage } from './features/opportunities/OpportunitiesPage'
 import { OpportunityDetailPage } from './features/opportunities/OpportunityDetailPage'
 import { FunnelPage } from './features/funnel/FunnelPage'
+import { EditCompanyPage, NewCompanyPage } from './features/companies/CompanyFormPage'
+import { EditContactPage, NewContactPage } from './features/contacts/ContactFormPage'
+import { EditOpportunityPage, NewOpportunityPage } from './features/opportunities/OpportunityFormPage'
 
 function App() {
   return (
@@ -19,10 +22,16 @@ function App() {
         <Route element={<AuthenticatedShell />}>
           <Route path="/inicio" element={<HomePage />} />
           <Route path="/empresas" element={<CompaniesPage />} />
+          <Route path="/empresas/nueva" element={<NewCompanyPage />} />
+          <Route path="/empresas/:idEmpresa/editar" element={<EditCompanyPage />} />
           <Route path="/empresas/:idEmpresa" element={<CompanyDetailPage />} />
           <Route path="/contactos" element={<ContactsPage />} />
+          <Route path="/contactos/nuevo" element={<NewContactPage />} />
+          <Route path="/contactos/:idContacto/editar" element={<EditContactPage />} />
           <Route path="/contactos/:idContacto" element={<ContactDetailPage />} />
           <Route path="/oportunidades" element={<OpportunitiesPage />} />
+          <Route path="/oportunidades/nueva" element={<NewOpportunityPage />} />
+          <Route path="/oportunidades/:idOportunidad/editar" element={<EditOpportunityPage />} />
           <Route path="/oportunidades/:idOportunidad" element={<OpportunityDetailPage />} />
           <Route path="/embudo" element={<FunnelPage />} />
         </Route>

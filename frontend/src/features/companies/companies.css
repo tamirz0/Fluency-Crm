@@ -130,6 +130,8 @@
 }
 
 .company-detail-header > div { min-width: 0; }
+.company-detail-header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
+.record-form-confirmation { margin: -4px 0 22px; }
 .company-detail-id { margin-top: 5px !important; color: #52616a; font-size: .95rem !important; }
 .company-detail-loading { margin: -18px 0 18px !important; color: #52616a; }
 
