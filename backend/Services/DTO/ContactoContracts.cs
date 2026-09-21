@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Services.DTO;
 
@@ -131,3 +132,71 @@ public sealed record HistorialEtapaResponse(
     string? UsuarioNombre,
     string? UsuarioApellido,
     string? Observacion);
+
+/// <summary>
+/// Actualización parcial de contacto: un campo omitido conserva su valor y un null explícito
+/// borra un campo opcional. Nombre, apellido y correo no pueden borrarse. No admite campos desconocidos.
+/// </summary>
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+public sealed record PatchContactoRequest : IValidatableObject
+{
+    private readonly HashSet<string> providedFields = [];
+
+    /// <summary>Nombre; si se envía, no puede ser null, vacío ni solo espacios.</summary>
+    [MaxLength(100)]
+    public string? Nombre { get; init { field = value; providedFields.Add(nameof(Nombre)); } }
+
+    /// <summary>Apellido; si se envía, no puede ser null, vacío ni solo espacios.</summary>
+    [MaxLength(100)]
+    public string? Apellido { get; init { field = value; providedFields.Add(nameof(Apellido)); } }
+
+    /// <summary>Correo; si se envía, debe tener formato de email y no puede ser null, vacío ni solo espacios.</summary>
+    [MaxLength(150), EmailAddress]
+    public string? Correo { get; init { field = value; providedFields.Add(nameof(Correo)); } }
+
+    /// <summary>Documento; null elimina el valor guardado.</summary>
+    [MaxLength(20)]
+    public string? Documento { get; init { field = value; providedFields.Add(nameof(Documento)); } }
+
+    /// <summary>Cargo; null elimina el valor guardado.</summary>
+    [MaxLength(100)]
+    public string? Cargo { get; init { field = value; providedFields.Add(nameof(Cargo)); } }
+
+    /// <summary>Teléfono; null elimina el valor guardado.</summary>
+    [MaxLength(50)]
+    public string? Telefono { get; init { field = value; providedFields.Add(nameof(Telefono)); } }
+
+    /// <summary>Estado de cliente existente; null elimina la asociación.</summary>
+    public int? IdEstado { get; init { field = value; providedFields.Add(nameof(IdEstado)); } }
+
+    /// <summary>Origen comercial existente; null elimina la asociación.</summary>
+    public int? IdOrigen { get; init { field = value; providedFields.Add(nameof(IdOrigen)); } }
+
+    /// <summary>Empresa existente; null elimina la asociación si el contacto no tiene oportunidades asociadas.</summary>
+    public int? IdEmpresa { get; init { field = value; providedFields.Add(nameof(IdEmpresa)); } }
+
+    /// <summary>Observaciones; null elimina el valor guardado.</summary>
+    public string? Observaciones { get; init { field = value; providedFields.Add(nameof(Observaciones)); } }
+
+    /// <summary>Indica si el campo fue enviado, incluso si su valor es null.</summary>
+    public bool HasField(string propertyName) => providedFields.Contains(propertyName);
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        foreach (var field in new[] { nameof(Nombre), nameof(Apellido), nameof(Correo) })
+        {
+            var value = field switch
+            {
+                nameof(Nombre) => Nombre,
+                nameof(Apellido) => Apellido,
+                _ => Correo
+            };
+
+            if (HasField(field) && string.IsNullOrWhiteSpace(value))
+            {
+                yield return new ValidationResult(
+                    $"{field} no puede ser nulo, vacío ni contener solo espacios.", [field]);
+            }
+        }
+    }
+}

@@ -13,6 +13,9 @@ public interface IContactoService
     Task<UpdateContactoResult> UpdateAsync(
         int idContacto, UpdateContactoRequest request, CancellationToken cancellationToken);
 
+    Task<UpdateContactoResult> PatchAsync(
+        int idContacto, PatchContactoRequest request, CancellationToken cancellationToken);
+
     Task<IReadOnlyList<HistorialEtapaResponse>?> GetHistorialEtapasAsync(
         int idContacto, CancellationToken cancellationToken);
 }

@@ -271,6 +271,63 @@ public sealed class OportunidadService(FluencyLocalDbContext db) : IOportunidadS
         return new UpdateOportunidadResult(
             UpdateOportunidadOutcome.Success, await GetByIdAsync(oportunidad.Id, cancellationToken), []);
     }
+
+    public async Task<UpdateOportunidadResult> PatchAsync(
+        int idOportunidad,
+        PatchOportunidadRequest request,
+        CancellationToken cancellationToken)
+    {
+        var oportunidad = await db.Oportunidades
+            .FirstOrDefaultAsync(o => o.Id == idOportunidad, cancellationToken);
+
+        if (oportunidad is null)
+        {
+            return new UpdateOportunidadResult(UpdateOportunidadOutcome.NotFound, null, []);
+        }
+
+        var errors = await ValidateReferencesAsync(
+            request.IdUsuario,
+            request.IdEmpresa,
+            request.IdContacto,
+            request.IdServicio,
+            request.IdOrigen,
+            request.IdEstado,
+            cancellationToken);
+        if (errors.Count > 0)
+        {
+            return new UpdateOportunidadResult(UpdateOportunidadOutcome.ValidationFailed, null, errors);
+        }
+
+        var idEmpresaFinal = request.HasField(nameof(request.IdEmpresa)) ? request.IdEmpresa : oportunidad.IdEmpresa;
+        var idContactoFinal = request.HasField(nameof(request.IdContacto)) ? request.IdContacto : oportunidad.IdContacto;
+        if (idEmpresaFinal is null && idContactoFinal is null)
+        {
+            return new UpdateOportunidadResult(UpdateOportunidadOutcome.ValidationFailed, null,
+                ["La oportunidad debe estar asociada a una empresa o a un contacto."]);
+        }
+
+        if (!await ContactoPerteneceAEmpresaAsync(idEmpresaFinal, idContactoFinal, cancellationToken))
+        {
+            return new UpdateOportunidadResult(UpdateOportunidadOutcome.ValidationFailed, null,
+                ["El contacto seleccionado no pertenece a la empresa de la oportunidad."]);
+        }
+
+        if (request.HasField(nameof(request.Titulo))) oportunidad.Titulo = request.Titulo!;
+        if (request.HasField(nameof(request.IdUsuario))) oportunidad.IdUsuario = request.IdUsuario;
+        if (request.HasField(nameof(request.IdEmpresa))) oportunidad.IdEmpresa = request.IdEmpresa;
+        if (request.HasField(nameof(request.IdContacto))) oportunidad.IdContacto = request.IdContacto;
+        if (request.HasField(nameof(request.IdServicio))) oportunidad.IdServicio = request.IdServicio;
+        if (request.HasField(nameof(request.FechaEstimadaCierre))) oportunidad.FechaEstimadaCierre = request.FechaEstimadaCierre;
+        if (request.HasField(nameof(request.IdOrigen))) oportunidad.IdOrigen = request.IdOrigen;
+        if (request.HasField(nameof(request.IdEstado))) oportunidad.IdEstado = request.IdEstado;
+        if (request.HasField(nameof(request.Observaciones))) oportunidad.Observaciones = request.Observaciones;
+
+        await db.SaveChangesAsync(cancellationToken);
+
+        return new UpdateOportunidadResult(
+            UpdateOportunidadOutcome.Success, await GetByIdAsync(oportunidad.Id, cancellationToken), []);
+    }
+
     private async Task<bool> ContactoPerteneceAEmpresaAsync(
         int? idEmpresa, int? idContacto, CancellationToken cancellationToken)
     {
@@ -281,5 +338,32 @@ public sealed class OportunidadService(FluencyLocalDbContext db) : IOportunidadS
 
         return await db.Contactos.AnyAsync(
             c => c.Id == idContacto && c.IdEmpresa == idEmpresa, cancellationToken);
+    }
+
+    private async Task<IReadOnlyList<string>> ValidateReferencesAsync(
+        int? idUsuario,
+        int? idEmpresa,
+        int? idContacto,
+        int? idServicio,
+        int? idOrigen,
+        int? idEstado,
+        CancellationToken cancellationToken)
+    {
+        var errors = new List<string>();
+
+        if (idUsuario is int usuario && !await db.Usuarios.AnyAsync(u => u.Id == usuario, cancellationToken))
+            errors.Add($"No existe el usuario {usuario}.");
+        if (idEmpresa is int empresa && !await db.Empresas.AnyAsync(e => e.Id == empresa, cancellationToken))
+            errors.Add($"No existe la empresa {empresa}.");
+        if (idContacto is int contacto && !await db.Contactos.AnyAsync(c => c.Id == contacto, cancellationToken))
+            errors.Add($"No existe el contacto {contacto}.");
+        if (idServicio is int servicio && !await db.Servicios.AnyAsync(s => s.Id == servicio, cancellationToken))
+            errors.Add($"No existe el servicio {servicio}.");
+        if (idOrigen is int origen && !await db.OrigenComerciales.AnyAsync(o => o.Id == origen, cancellationToken))
+            errors.Add($"No existe el origen comercial {origen}.");
+        if (idEstado is int estado && !await db.EstadoClientes.AnyAsync(e => e.Id == estado, cancellationToken))
+            errors.Add($"No existe el estado {estado}.");
+
+        return errors;
     }
 }

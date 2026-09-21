@@ -46,6 +46,32 @@ public sealed class ContactoController(IContactoService contactoService) : Contr
         CancellationToken cancellationToken)
         => Ok(await contactoService.GetAllAsync(cancellationToken));
 
+    /// <summary>Modifica solo los campos enviados de un contacto y permite borrar valores opcionales.</summary>
+    /// <remarks>
+    /// Un campo omitido conserva su valor. Un null explícito borra un campo opcional, pero no puede borrar
+    /// nombre, apellido ni correo. Un objeto vacío no cambia el contacto. Los campos desconocidos se rechazan.
+    /// El POST de esta misma ruta conserva su comportamiento anterior: null no modifica.
+    /// </remarks>
+    [HttpPatch("ModificarContacto/{idContacto:int}", Name = "PatchContacto")]
+    [ProducesResponseType(typeof(ContactoResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ContactoResponse>> PatchContacto(
+        int idContacto,
+        [FromBody] PatchContactoRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await contactoService.PatchAsync(idContacto, request, cancellationToken);
+
+        return result.Outcome switch
+        {
+            UpdateContactoOutcome.Success => Ok(result.Contacto),
+            UpdateContactoOutcome.NotFound => NotFound($"No existe el contacto {idContacto}."),
+            UpdateContactoOutcome.ValidationFailed => BadRequest(new { errors = result.Errors }),
+            _ => Problem()
+        };
+    }
+
     /// <summary>Modifica los datos de un contacto existente.</summary>
     [HttpPost("ModificarContacto/{idContacto:int}", Name = "ModificarContacto")]
     [ProducesResponseType(typeof(ContactoResponse), StatusCodes.Status200OK)]

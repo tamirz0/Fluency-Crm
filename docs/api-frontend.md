@@ -11,8 +11,11 @@
   autorización en el resto de los endpoints.
 - Todos los endpoints que reciben body esperan `Content-Type: application/json`.
 - Los campos marcados como "opcional" pueden omitirse del JSON o mandarse como `null`.
-- En los endpoints de "Modificar" (actualización parcial), **solo los campos enviados con un valor no nulo
+- En los endpoints **POST** de "Modificar" (actualización parcial), **solo los campos enviados con un valor no nulo
   se actualizan**; si un campo se omite o se manda `null`, conserva su valor actual en la base de datos.
+- En **PATCH de Empresa, Contacto y Oportunidad**, un campo omitido conserva su valor y un `null`
+  explícito borra un campo opcional, sujeto a las reglas de negocio detalladas abajo. Los POST de
+  actualización siguen disponibles para comparar compatibilidad. Todavía no hay PUT.
 - Los ids (`idEmpresa`, `idContacto`, `idUsuario`, etc.) son siempre `number` (enteros).
 - **Todas las respuestas que incluyen un id de otra tabla también incluyen, al lado, el dato legible de esa
   tabla** — por ejemplo `idEstado: 1` viene acompañado de `estadoDescripcion: "Potencial"`, `idEmpresa: 3` de
@@ -144,6 +147,61 @@ Actualización parcial — mandá solo los campos que querés cambiar. Mismos ca
 **`200 OK`** con la empresa ya actualizada (shape completo). **`404 Not Found`** si no existe la empresa.
 **`400 Bad Request`** con `{ "errors": [...] }` si `idEstado` o `idOrigen` no existe.
 Se validan todas las referencias enviadas antes de modificar campos: un rechazo conserva la empresa completa.
+
+---
+
+## PATCH de Empresa (incremento de actualización parcial)
+
+### `PATCH /Empresa/ModificarEmpresa/{idEmpresa}`
+
+Recibe un objeto JSON con **solo los campos a modificar**, usando `Content-Type: application/json`.
+No utiliza una lista de operaciones JSON Patch. La ruta coincide con el POST, pero cambia el verbo y
+la interpretación de `null`. El POST conserva íntegramente su comportamiento anterior.
+
+| Campo | Valor admitido cuando se envía | ¿Se borra con `null`? |
+|---|---|---|
+| `razonSocial` | string no vacío ni solo espacios, máximo 150 | No; devuelve 400 |
+| `cuit` | string, máximo 20 | Sí |
+| `industria` | string, máximo 100 | Sí |
+| `correo` | string con formato de email, máximo 150 | Sí |
+| `telefono` | string, máximo 50 | Sí |
+| `direccion` | string | Sí |
+| `idEstado` | ID de estado cliente existente | Sí, desvincula |
+| `idOrigen` | ID de origen comercial existente | Sí, desvincula |
+| `observaciones` | string | Sí |
+
+Todos pueden omitirse: lo omitido se conserva. `{}` devuelve la empresa sin cambios.
+Los campos ajenos a esta lista (incluido `id`) se rechazan con 400. Enviar `null` como cuerpo completo,
+un array o tipos incompatibles también devuelve 400. No se normalizan textos ni se usan strings vacíos
+como señal de borrado: para borrar un opcional se envía `null` explícito.
+
+```json
+{
+  "telefono": "1144445555",
+  "correo": null,
+  "idOrigen": null
+}
+```
+
+Este ejemplo reemplaza el teléfono, borra el correo y desvincula el origen; conserva todos los demás
+campos. La respuesta **`200 OK`** es la empresa completa, con el mismo formato de `DatosEmpresa`.
+**`404 Not Found`** (texto plano) si no existe la empresa y el cuerpo es válido.
+
+**`400 Bad Request`** por referencias inexistentes devuelve `{ "errors": ["No existe el estado -1."] }`.
+Errores de formato, campos desconocidos, longitudes, email o razón social devuelven el
+`ValidationProblemDetails` habitual de ASP.NET, con `errors` como diccionario por campo.
+Las validaciones se realizan antes de guardar y un rechazo no aplica cambios parciales.
+
+OpenAPI incluye la operación `PatchEmpresa` y el esquema `PatchEmpresaRequest`, separado del POST.
+La razón social se representa como propiedad opcional y su restricción condicional de no aceptar null
+está documentada y validada por el servidor.
+
+**Verificación local:** compilación sin errores ni advertencias; 38 solicitudes de prueba contra
+`fluency-postgres`, con empresa identificada por `qa-patch-0960462337` (ID 7). Se comprobaron omisión,
+borrado de los ocho opcionales, actualización combinada, `{}`, errores 400/404, ausencia de cambios
+parciales mediante GET y compatibilidad del POST. Se conservaron los datos de prueba y no se ejecutaron
+pruebas remotas. La verificación posterior de Contacto y Oportunidad se registra al final de esta guía;
+PUT sigue pendiente.
 
 ---
 
@@ -526,5 +584,104 @@ incompatibles, cambio conjunto válido y conservación de valores nulos. Los rec
 oportunidades ni modificaron los datos existentes de los registros de prueba. Compilación sin errores
 ni advertencias. Esta nueva regla no fue probada por el agente contra Supabase.
 
-La validación se aplica al crear o modificar oportunidades; no repara registros históricos ni incorpora
-en este cambio restricciones a la reasignación de empresa desde la edición de un contacto.
+La validación de pareja se aplica al crear o modificar oportunidades y no repara registros históricos.
+La edición de contactos incorpora ahora el bloqueo descrito en la siguiente sección.
+
+## PATCH de Contacto y Oportunidad
+
+### Contrato común
+
+- `PATCH /Contacto/ModificarContacto/{idContacto}` — operación OpenAPI `PatchContacto`, DTO `PatchContactoRequest`.
+- `PATCH /Oportunidades/ModificarOportunidad/{idOportunidad}` — operación `PatchOportunidad`, DTO `PatchOportunidadRequest`.
+
+Enviar `Content-Type: application/json` con un objeto que contenga únicamente los campos a modificar.
+No es una lista de operaciones JSON Patch. Campo omitido conserva, `null` explícito borra si está
+permitido. `{}` conserva el recurso si su estado cumple las reglas. La respuesta **200** contiene el
+detalle completo actualizado. **404** indica recurso inexistente con cuerpo válido.
+
+Los errores de negocio y referencias devuelven **400** con `{ "errors": ["mensaje"] }`.
+Los errores de formato, campos desconocidos o validación de propiedades devuelven **400** con
+`ValidationProblemDetails` y `errors` como diccionario. Un rechazo no guarda ningún cambio del request.
+No se permite modificar `id` ni campos que no figuren en los contratos siguientes.
+
+### Contacto
+
+| Campo | Restricción cuando se envía | ¿Admite null? |
+|---|---|---|
+| `nombre`, `apellido` | No vacíos ni solo espacios; máximo 100 caracteres | No |
+| `correo` | Email válido, no vacío; máximo 150 | No |
+| `documento` | Máximo 20 | Sí |
+| `cargo` | Máximo 100 | Sí |
+| `telefono` | Máximo 50 | Sí |
+| `idEstado`, `idOrigen` | Referencia existente si no es null | Sí |
+| `idEmpresa` | Empresa existente y regla de asociación indicada abajo | Condicional |
+| `observaciones` | Texto | Sí |
+
+**La empresa de un contacto no puede cambiar mientras tenga cualquier oportunidad asociada**, incluso
+si esa oportunidad no tiene empresa. Se rechazan reemplazar la empresa, borrarla y asignar una empresa
+a un contacto que antes no tenía una. Reenviar la misma empresa, omitirla o modificar otros campos
+está permitido. Sin oportunidades asociadas, puede asignarse, reemplazarse o borrarse mediante PATCH.
+No se propagan cambios automáticamente a oportunidades.
+
+Mensaje de rechazo:
+
+```json
+{ "errors": ["No se puede cambiar la empresa de un contacto que tiene oportunidades asociadas."] }
+```
+
+El POST de Contacto que se conserva en esta rama ya incluye ese bloqueo; mantiene su semántica histórica
+de `null` como conservar. No se volvió a modificar ese método durante el cierre de este incremento.
+
+### Oportunidad
+
+| Campo | Restricción cuando se envía | ¿Admite null? |
+|---|---|---|
+| `titulo` | No vacío ni solo espacios; máximo 150 | No |
+| `idUsuario` | Responsable existente | No |
+| `idEmpresa`, `idContacto` | Referencias existentes y combinación final válida | Condicional |
+| `idServicio`, `idOrigen`, `idEstado` | Referencias existentes | Sí |
+| `fechaEstimadaCierre` | Fecha `YYYY-MM-DD` | Sí |
+| `observaciones` | Texto | Sí |
+
+Una oportunidad conserva **0..1 empresa y 0..1 contacto, con al menos uno de los dos**:
+
+- Solo empresa: válido.
+- Solo contacto: válido, independientemente de la empresa del contacto.
+- Empresa y contacto: válido únicamente si `contacto.idEmpresa` coincide con la empresa seleccionada.
+- Ninguno: inválido.
+
+Estas reglas se comprueban sobre el estado final, combinando valores enviados, omitidos y borrados.
+Puede cambiarse la pareja en una única petición o borrar una asociación si permanece la otra.
+Si ambos quedan presentes y son incompatibles, no se guarda ningún campo.
+
+```json
+{ "idEmpresa": null, "observaciones": "Se continúa con el contacto" }
+```
+
+Ese ejemplo solo es válido si la oportunidad conserva un contacto. `idEtapa` no pertenece a este PATCH:
+se cambia mediante `UpdateEtapaOportunidad`. `fechaCierre` está fuera del contrato actual. El PATCH
+genérico no agrega historial de etapas. Los POST de actualización permanecen disponibles y sin cambios
+durante este cierre; no se implementó PUT.
+
+### Reglas para el futuro frontend
+
+Enviar únicamente campos modificados y usar null deliberadamente para borrar opcionales. Filtrar
+contactos por empresa cuando se seleccione una empresa y validar la pareja final antes de guardar.
+Sin empresa, permitir cualquier contacto. No ofrecer dejar la oportunidad sin ambas asociaciones.
+Bloquear el selector de empresa de un contacto con oportunidades asociadas; el listado del embudo
+permite detectar esas asociaciones por `idContacto`. El servidor sigue siendo la validación definitiva
+si los datos cambian mientras el formulario está abierto. Mostrar los errores sin perder el formulario.
+
+### Validación final local — 21/09/2026
+
+`dotnet build backend/FluencyAPI.slnx --no-restore`: 0 errores y 0 advertencias.
+Se ejecutaron **105 solicitudes** mediante PowerShell contra la API local conectada a `fluency-postgres`,
+además de GET de comprobación. Pasaron: null/omisión, opcionales, obligatorios, longitudes, formato,
+referencias, campos desconocidos, 404, parejas válidas/inválidas, bloqueo de empresa de contactos
+asociados, reasignación al quedar sin oportunidades, compatibilidad de POST y regresión de PATCH Empresa.
+Se compararon recursos antes/después de cada rechazo: sin cambios parciales. OpenAPI conserva PATCH y
+POST con sus contratos separados. El PATCH genérico no agregó historial de etapas.
+
+Datos identificables conservados: `qa-patch-rel-c2ddbd75ab`, contactos 12–14 y oportunidad principal 11.
+No se modificaron esquema ni registros ajenos a las pruebas. No se repitieron pruebas remotas ni se
+probaron carreras entre solicitudes concurrentes. xUnit queda para la siguiente fase.

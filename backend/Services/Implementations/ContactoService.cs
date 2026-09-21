@@ -104,6 +104,13 @@ public sealed class ContactoService(FluencyLocalDbContext db) : IContactoService
             return new UpdateContactoResult(UpdateContactoOutcome.ValidationFailed, null, errors);
         }
 
+        var idEmpresaFinal = request.IdEmpresa ?? contacto.IdEmpresa;
+        if (!await PuedeCambiarEmpresaAsync(contacto.Id, contacto.IdEmpresa, idEmpresaFinal, cancellationToken))
+        {
+            return new UpdateContactoResult(UpdateContactoOutcome.ValidationFailed, null,
+                ["No se puede cambiar la empresa de un contacto que tiene oportunidades asociadas."]);
+        }
+
         contacto.Nombre = request.Nombre ?? contacto.Nombre;
         contacto.Apellido = request.Apellido ?? contacto.Apellido;
         contacto.Correo = request.Correo ?? contacto.Correo;
@@ -114,6 +121,46 @@ public sealed class ContactoService(FluencyLocalDbContext db) : IContactoService
         contacto.IdOrigen = request.IdOrigen ?? contacto.IdOrigen;
         contacto.IdEmpresa = request.IdEmpresa ?? contacto.IdEmpresa;
         contacto.Observaciones = request.Observaciones ?? contacto.Observaciones;
+
+        await db.SaveChangesAsync(cancellationToken);
+
+        return new UpdateContactoResult(
+            UpdateContactoOutcome.Success, (await GetByIdAsync(contacto.Id, cancellationToken))!, []);
+    }
+
+    public async Task<UpdateContactoResult> PatchAsync(
+        int idContacto, PatchContactoRequest request, CancellationToken cancellationToken)
+    {
+        var contacto = await db.Contactos.FirstOrDefaultAsync(c => c.Id == idContacto, cancellationToken);
+        if (contacto is null)
+        {
+            return new UpdateContactoResult(UpdateContactoOutcome.NotFound, null, []);
+        }
+
+        var errors = await ValidateReferencesAsync(
+            request.IdEstado, request.IdOrigen, request.IdEmpresa, cancellationToken);
+        if (errors.Count > 0)
+        {
+            return new UpdateContactoResult(UpdateContactoOutcome.ValidationFailed, null, errors);
+        }
+
+        var idEmpresaFinal = request.HasField(nameof(request.IdEmpresa)) ? request.IdEmpresa : contacto.IdEmpresa;
+        if (!await PuedeCambiarEmpresaAsync(contacto.Id, contacto.IdEmpresa, idEmpresaFinal, cancellationToken))
+        {
+            return new UpdateContactoResult(UpdateContactoOutcome.ValidationFailed, null,
+                ["No se puede cambiar la empresa de un contacto que tiene oportunidades asociadas."]);
+        }
+
+        if (request.HasField(nameof(request.Nombre))) contacto.Nombre = request.Nombre!;
+        if (request.HasField(nameof(request.Apellido))) contacto.Apellido = request.Apellido!;
+        if (request.HasField(nameof(request.Correo))) contacto.Correo = request.Correo!;
+        if (request.HasField(nameof(request.Documento))) contacto.Documento = request.Documento;
+        if (request.HasField(nameof(request.Cargo))) contacto.Cargo = request.Cargo;
+        if (request.HasField(nameof(request.Telefono))) contacto.Telefono = request.Telefono;
+        if (request.HasField(nameof(request.IdEstado))) contacto.IdEstado = request.IdEstado;
+        if (request.HasField(nameof(request.IdOrigen))) contacto.IdOrigen = request.IdOrigen;
+        if (request.HasField(nameof(request.IdEmpresa))) contacto.IdEmpresa = request.IdEmpresa;
+        if (request.HasField(nameof(request.Observaciones))) contacto.Observaciones = request.Observaciones;
 
         await db.SaveChangesAsync(cancellationToken);
 
@@ -177,5 +224,19 @@ public sealed class ContactoService(FluencyLocalDbContext db) : IContactoService
         }
 
         return errors;
+    }
+
+    private async Task<bool> PuedeCambiarEmpresaAsync(
+        int idContacto,
+        int? idEmpresaOriginal,
+        int? idEmpresaFinal,
+        CancellationToken cancellationToken)
+    {
+        if (idEmpresaOriginal == idEmpresaFinal)
+        {
+            return true;
+        }
+
+        return !await db.Oportunidades.AnyAsync(o => o.IdContacto == idContacto, cancellationToken);
     }
 }

@@ -46,6 +46,32 @@ public sealed class EmpresaController(IEmpresaService empresaService) : Controll
         CancellationToken cancellationToken)
         => Ok(await empresaService.GetAllAsync(cancellationToken));
 
+    /// <summary>Modifica solo los campos enviados de una empresa y permite borrar valores opcionales.</summary>
+    /// <remarks>
+    /// Un campo omitido conserva su valor. Un null explícito borra un campo opcional, pero no puede borrar
+    /// razonSocial. Un objeto vacío no cambia la empresa. Los campos desconocidos se rechazan.
+    /// El POST de esta misma ruta conserva su comportamiento anterior: null no modifica.
+    /// </remarks>
+    [HttpPatch("ModificarEmpresa/{idEmpresa:int}", Name = "PatchEmpresa")]
+    [ProducesResponseType(typeof(EmpresaResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<EmpresaResponse>> PatchEmpresa(
+        int idEmpresa,
+        [FromBody] PatchEmpresaRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await empresaService.PatchAsync(idEmpresa, request, cancellationToken);
+
+        return result.Outcome switch
+        {
+            UpdateEmpresaOutcome.Success => Ok(result.Empresa),
+            UpdateEmpresaOutcome.NotFound => NotFound($"No existe la empresa {idEmpresa}."),
+            UpdateEmpresaOutcome.ValidationFailed => BadRequest(new { errors = result.Errors }),
+            _ => Problem()
+        };
+    }
+
     /// <summary>Modifica los datos de una empresa existente.</summary>
     [HttpPost("ModificarEmpresa/{idEmpresa:int}", Name = "ModificarEmpresa")]
     [ProducesResponseType(typeof(EmpresaResponse), StatusCodes.Status200OK)]

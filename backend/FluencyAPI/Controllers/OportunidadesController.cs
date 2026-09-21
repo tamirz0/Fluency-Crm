@@ -46,6 +46,33 @@ public sealed class OportunidadesController(IOportunidadService oportunidadServi
         return oportunidad is null ? NotFound($"No existe la oportunidad {idOportunidad}.") : Ok(oportunidad);
     }
 
+    /// <summary>Modifica solo los campos enviados de una oportunidad y permite borrar valores opcionales.</summary>
+    /// <remarks>
+    /// Un campo omitido conserva su valor. Un null explícito borra un campo opcional, pero no puede borrar
+    /// titulo ni idUsuario. Un objeto vacío no cambia la oportunidad. La etapa se actualiza exclusivamente
+    /// mediante su endpoint específico; fecha de cierre queda fuera del contrato actual. Los campos desconocidos
+    /// se rechazan.
+    /// </remarks>
+    [HttpPatch("ModificarOportunidad/{idOportunidad:int}", Name = "PatchOportunidad")]
+    [ProducesResponseType(typeof(OportunidadResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<OportunidadResponse>> PatchOportunidad(
+        int idOportunidad,
+        [FromBody] PatchOportunidadRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await oportunidadService.PatchAsync(idOportunidad, request, cancellationToken);
+
+        return result.Outcome switch
+        {
+            UpdateOportunidadOutcome.Success => Ok(result.Oportunidad),
+            UpdateOportunidadOutcome.NotFound => NotFound($"No existe la oportunidad {idOportunidad}."),
+            UpdateOportunidadOutcome.ValidationFailed => BadRequest(new { errors = result.Errors }),
+            _ => Problem()
+        };
+    }
+
     /// <summary>Modifica los datos de una oportunidad existente (no cambia su etapa comercial).</summary>
     [HttpPost("ModificarOportunidad/{idOportunidad:int}", Name = "ModificarOportunidad")]
     [ProducesResponseType(typeof(OportunidadResponse), StatusCodes.Status200OK)]

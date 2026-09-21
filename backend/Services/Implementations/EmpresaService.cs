@@ -112,6 +112,39 @@ public sealed class EmpresaService(FluencyLocalDbContext db) : IEmpresaService
             UpdateEmpresaOutcome.Success, (await GetByIdAsync(empresa.Id, cancellationToken))!, []);
     }
 
+    public async Task<UpdateEmpresaResult> PatchAsync(
+        int idEmpresa, PatchEmpresaRequest request, CancellationToken cancellationToken)
+    {
+        var empresa = await db.Empresas.FirstOrDefaultAsync(e => e.Id == idEmpresa, cancellationToken);
+        if (empresa is null)
+        {
+            return new UpdateEmpresaResult(UpdateEmpresaOutcome.NotFound, null, []);
+        }
+
+        var errors = await ValidateReferencesAsync(request.IdEstado, request.IdOrigen, cancellationToken);
+        if (errors.Count > 0)
+        {
+            return new UpdateEmpresaResult(UpdateEmpresaOutcome.ValidationFailed, null, errors);
+        }
+
+        // La presencia del campo, no su valor, decide qué se modifica en PATCH.
+        // Las validaciones del request y de referencias ocurren antes de mutar la entidad.
+        if (request.HasField(nameof(request.RazonSocial))) empresa.RazonSocial = request.RazonSocial!;
+        if (request.HasField(nameof(request.Cuit))) empresa.Cuit = request.Cuit;
+        if (request.HasField(nameof(request.Industria))) empresa.Industria = request.Industria;
+        if (request.HasField(nameof(request.Correo))) empresa.Correo = request.Correo;
+        if (request.HasField(nameof(request.Telefono))) empresa.Telefono = request.Telefono;
+        if (request.HasField(nameof(request.Direccion))) empresa.Direccion = request.Direccion;
+        if (request.HasField(nameof(request.IdEstado))) empresa.IdEstado = request.IdEstado;
+        if (request.HasField(nameof(request.IdOrigen))) empresa.IdOrigen = request.IdOrigen;
+        if (request.HasField(nameof(request.Observaciones))) empresa.Observaciones = request.Observaciones;
+
+        await db.SaveChangesAsync(cancellationToken);
+
+        return new UpdateEmpresaResult(
+            UpdateEmpresaOutcome.Success, (await GetByIdAsync(empresa.Id, cancellationToken))!, []);
+    }
+
     private async Task<IReadOnlyList<string>> ValidateReferencesAsync(
         int? idEstado,
         int? idOrigen,
