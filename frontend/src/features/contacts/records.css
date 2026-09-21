@@ -1,0 +1,19 @@
+.records-page { width: min(100%, 1440px); }
+.record-table-wrap { overflow-x: auto; }
+.record-table { min-width: 980px; }
+.record-table th:first-child,
+.record-table td:first-child { width: 17%; }
+.record-table th:last-child,
+.record-table td:last-child { width: 11%; }
+.contact-table th:nth-child(2), .contact-table td:nth-child(2) { width: 15%; }
+.contact-table th:nth-child(3), .contact-table td:nth-child(3) { width: 11%; }
+.contact-table th:nth-child(4), .contact-table td:nth-child(4) { width: 12%; }
+.contact-table th:nth-child(5), .contact-table td:nth-child(5) { width: 20%; }
+.contact-table th:nth-child(6), .contact-table td:nth-child(6) { width: 14%; }
+.opportunity-table th:first-child, .opportunity-table td:first-child { width: 22%; }
+.opportunity-table th:nth-child(2), .opportunity-table td:nth-child(2) { width: 15%; }
+.opportunity-table th:nth-child(3), .opportunity-table td:nth-child(3) { width: 20%; }
+.opportunity-table th:nth-child(4), .opportunity-table td:nth-child(4) { width: 16%; }
+.opportunity-table th:nth-child(5), .opportunity-table td:nth-child(5) { width: 16%; }
+.opportunity-table th:last-child, .opportunity-table td:last-child { width: 11%; }
+.record-contact-links { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: 2px; overflow-wrap: anywhere; }

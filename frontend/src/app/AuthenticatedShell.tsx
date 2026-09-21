@@ -1,22 +1,22 @@
 import { useState } from 'react'
 import { Box, Button, Divider, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography } from '@mui/material'
-import { Business, Logout, Menu, Timeline } from '@mui/icons-material'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Business, Contacts, Logout, Menu, Timeline, ViewKanban } from '@mui/icons-material'
+import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 
 const drawerWidth = 260
-const futureItems = ['Contactos', 'Oportunidades', 'Embudo']
 function NavigationContent({ onNavigate }: { onNavigate?: () => void }) {
   const { logout, user } = useAuth()
-  const location = useLocation()
   const fullName = `${user?.nombre ?? ''} ${user?.apellido ?? ''}`.trim()
   return <Box sx={{ display: 'flex', height: '100%', flexDirection: 'column' }}>
     <Box sx={{ px: 3, py: 3.25 }}><Typography sx={{ color: '#fff', fontSize: '1.35rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Fluency CRM</Typography></Box>
     <Divider sx={{ borderColor: 'rgba(255,255,255,0.18)' }} />
     <List sx={{ px: 1.5, py: 2 }} aria-label="Navegación principal">
-      <ListItemButton component={NavLink} to="/inicio" end selected={location.pathname === '/inicio'} onClick={onNavigate} sx={{ mb: .5, borderRadius: 1, color: '#fff', '&.Mui-selected': { background: '#2F7F7B' } }}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Timeline fontSize="small" /></ListItemIcon><ListItemText primary="Inicio" /></ListItemButton>
-      <ListItemButton component={NavLink} to="/empresas" selected={location.pathname.startsWith('/empresas')} onClick={onNavigate} sx={{ mb: .5, borderRadius: 1, color: '#fff', '&.Mui-selected': { background: '#2F7F7B' } }}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Business fontSize="small" /></ListItemIcon><ListItemText primary="Empresas" /></ListItemButton>
-      {futureItems.map((item) => <ListItemButton disabled key={item} aria-label={`${item}: disponible en próximos incrementos`} sx={{ borderRadius: 1, '&.Mui-disabled': { color: 'rgba(255,255,255,0.48)', '& .MuiListItemText-secondary': { color: 'inherit', fontSize: '.8rem' } } }}><ListItemText primary={item} secondary="Próximamente" /></ListItemButton>)}
+      <ListItemButton component={NavLink} to="/inicio" end onClick={onNavigate} sx={{ mb: .5, borderRadius: 1, color: '#fff', '&.active': { background: '#2F7F7B' } }}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Timeline fontSize="small" /></ListItemIcon><ListItemText primary="Inicio" /></ListItemButton>
+      <ListItemButton component={NavLink} to="/empresas" onClick={onNavigate} sx={{ mb: .5, borderRadius: 1, color: '#fff', '&.active': { background: '#2F7F7B' } }}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Business fontSize="small" /></ListItemIcon><ListItemText primary="Empresas" /></ListItemButton>
+      <ListItemButton component={NavLink} to="/contactos" onClick={onNavigate} sx={{ mb: .5, borderRadius: 1, color: '#fff', '&.active': { background: '#2F7F7B' } }}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Contacts fontSize="small" /></ListItemIcon><ListItemText primary="Contactos" /></ListItemButton>
+      <ListItemButton component={NavLink} to="/oportunidades" onClick={onNavigate} sx={{ mb: .5, borderRadius: 1, color: '#fff', '&.active': { background: '#2F7F7B' } }}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Timeline fontSize="small" /></ListItemIcon><ListItemText primary="Oportunidades" /></ListItemButton>
+      <ListItemButton component={NavLink} to="/embudo" onClick={onNavigate} sx={{ mb: .5, borderRadius: 1, color: '#fff', '&.active': { background: '#2F7F7B' } }}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><ViewKanban fontSize="small" /></ListItemIcon><ListItemText primary="Embudo" /></ListItemButton>
     </List>
     <Box sx={{ mt: 'auto', p: 2.25 }}><Divider sx={{ mb: 2, borderColor: 'rgba(255,255,255,0.18)' }} /><Typography sx={{ mb: 1.25, color: '#dce9eb', fontSize: '.95rem' }}>{fullName}</Typography><Button color="inherit" fullWidth startIcon={<Logout />} onClick={logout} sx={{ justifyContent: 'flex-start', color: '#fff' }}>Cerrar sesión</Button></Box>
   </Box>

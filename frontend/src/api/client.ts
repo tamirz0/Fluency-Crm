@@ -5,10 +5,36 @@ export const api = createClient<paths>({ baseUrl: '/api', fetch: (...args) => gl
 export type AuthUser = components['schemas']['UsuarioResponse']
 export type LoginCredentials = components['schemas']['LoginRequest']
 export type Empresa = components['schemas']['EmpresaResponse']
+export type Contacto = components['schemas']['ContactoResponse']
+export type OportunidadDetalle = components['schemas']['OportunidadResponse']
+export type EtapaConOportunidades = components['schemas']['EtapaConOportunidadesResponse']
+export type OportunidadResumenResponse = components['schemas']['OportunidadResumenResponse']
+export type EtapaComercial = components['schemas']['EtapaComercialResponse']
+export type UpdateEtapaOportunidadRequest = components['schemas']['UpdateEtapaOportunidadRequest']
+
+export type OportunidadResumen = OportunidadResumenResponse & {
+  idEtapa: EtapaConOportunidades['idEtapa']
+  etapaNombre: EtapaConOportunidades['nombre']
+  etapaOrden: EtapaConOportunidades['orden']
+}
 
 export const empresaQueryKeys = {
   all: ['empresas'] as const,
   detail: (idEmpresa: number) => ['empresas', idEmpresa] as const,
+}
+
+export const contactoQueryKeys = {
+  all: ['contactos'] as const,
+  detail: (idContacto: number) => ['contactos', idContacto] as const,
+}
+
+export const opportunityQueryKeys = {
+  pipeline: ['oportunidades', 'por-etapa'] as const,
+  detail: (idOportunidad: number) => ['oportunidades', idOportunidad] as const,
+}
+
+export const catalogQueryKeys = {
+  commercialStages: ['catalogos', 'etapas-comerciales'] as const,
 }
 
 export class ApiRequestError extends Error {
@@ -62,6 +88,78 @@ export async function getCompanies(): Promise<Empresa[]> {
 export async function getCompany(idEmpresa: number): Promise<Empresa> {
   try {
     const { data, error, response } = await api.GET('/Empresa/DatosEmpresa/{idEmpresa}', { params: { path: { idEmpresa } } })
+    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
+    return data
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
+    throw new ApiRequestError('No pudimos conectar con la API.')
+  }
+}
+
+export async function getContacts(): Promise<Contacto[]> {
+  try {
+    const { data, error, response } = await api.GET('/Contacto/ListadoContactos')
+    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
+    return data
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
+    throw new ApiRequestError('No pudimos conectar con la API.')
+  }
+}
+
+export async function getContact(idContacto: number): Promise<Contacto> {
+  try {
+    const { data, error, response } = await api.GET('/Contacto/DatosContacto/{idContacto}', { params: { path: { idContacto } } })
+    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
+    return data
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
+    throw new ApiRequestError('No pudimos conectar con la API.')
+  }
+}
+
+export async function getOpportunitiesByStage(): Promise<EtapaConOportunidades[]> {
+  try {
+    const { data, error, response } = await api.GET('/Oportunidades/OportunidadesPorEtapa')
+    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
+    return data
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
+    throw new ApiRequestError('No pudimos conectar con la API.')
+  }
+}
+
+export async function getOpportunity(idOportunidad: number): Promise<OportunidadDetalle> {
+  try {
+    const { data, error, response } = await api.GET('/Oportunidades/DatosOportunidad/{idOportunidad}', { params: { path: { idOportunidad } } })
+    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
+    return data
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
+    throw new ApiRequestError('No pudimos conectar con la API.')
+  }
+}
+
+export async function getCommercialStages(): Promise<EtapaComercial[]> {
+  try {
+    const { data, error, response } = await api.GET('/EtapasComerciales/ListadoEtapasComerciales')
+    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
+    return data
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
+    throw new ApiRequestError('No pudimos conectar con la API.')
+  }
+}
+
+export async function updateOpportunityStage(
+  idOportunidad: number,
+  body: UpdateEtapaOportunidadRequest & { idUsuario: number | string },
+): Promise<OportunidadDetalle> {
+  try {
+    const { data, error, response } = await api.POST('/Oportunidades/UpdateEtapaOportunidad/{idOportunidad}', {
+      params: { path: { idOportunidad } },
+      body,
+    })
     if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
     return data
   } catch (error) {
