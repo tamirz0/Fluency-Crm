@@ -1,6 +1,54 @@
 # Plan de primera entrega: Fluency CRM funcional e incremental
 
-Actualizado: 20/09/2026. Objetivo de entrega: 24/09/2026.
+Actualizado: 21/09/2026. Objetivo de entrega: 24/09/2026.
+
+## Estado confirmado para continuar en otro chat
+
+El backend de este incremento está integrado en `master`, incluido el PR #6 (merge `6cb2e28`).
+El usuario aprobó avanzar al frontend. No hay frontend implementado todavía.
+
+| Área | Estado | Evidencia y límites |
+|---|---|---|
+| Login y usuario habilitado | Verificado en local | Register y login válido/inválido probados mediante HTTP; sin sesiones ni autorización efectiva |
+| Empresas y contactos | Verificado en local | Altas, consultas, modificaciones, asociaciones y referencias inválidas |
+| Servicios activos | Verificado en local y aprobado manualmente | GET y contrato OpenAPI contrastados con SQL |
+| Estados, orígenes y etapas | Verificado en local | Tres GET, 3 estados, 3 orígenes y 4 etapas en el momento de la prueba; incluye etapas sin oportunidades |
+| Oportunidades y embudo | Verificado mediante HTTP local y aprobado manualmente | Alta, detalle, listado por etapas, modificación y cambio de etapa |
+| PATCH Empresa, Contacto y Oportunidad | Implementado y verificado en local | 38 solicitudes iniciales de Empresa y una verificación final de 105 solicitudes con GET posteriores; omisión/null, reglas de asociación, errores y ausencia de cambios parciales |
+| PostgreSQL compartido en Supabase | Validación manual informada por el usuario | El usuario confirmó funcionamiento del circuito y de la relación empresa/contacto; no atribuir al agente una auditoría de esquema o pruebas remotas de los últimos PATCH |
+| Frontend | Pendiente | Empezar por base y acceso; aprobar cada incremento antes de continuar |
+| Persistencia integral desde UI y reinicios | Pendiente | Los GET posteriores a escrituras no sustituyen la demostración desde UI ni las pruebas de reinicio |
+
+**Hito 1 aceptado para avanzar al frontend.** La evidencia detallada de contratos y pruebas está en
+[`api-frontend.md`](api-frontend.md). Las notas históricas de esa guía describen el alcance de cada
+verificación, no implican que deba repetirse todo el backend antes de empezar las pantallas.
+
+### Instrucciones para el próximo chat
+
+- Leer este plan, `api-frontend.md`, la sección Primera entrega del PDF y las instrucciones locales.
+- Trabajar desde `master` integrado, en una nueva rama por incremento, preservando cambios del usuario.
+  No integrar ni eliminar `feat/database-bootstrap`. No hacer commits o pushes sin autorización vigente.
+- Desarrollar frontend en `frontend/`, manteniendo la API nativa y el contenedor `fluency-postgres`
+  existente. Conexión local confirmada: `localhost:5433`; credenciales solo en configuración del backend.
+  API con perfil HTTP en `http://localhost:5169`; el navegador consume `/api` mediante proxy Vite.
+- Usar POST para altas/login; **PATCH para editar** empresas, contactos y oportunidades. Los POST de
+  modificación quedan para comparación, no como contrato elegido para los nuevos formularios.
+- No esperar PUT ni xUnit: están postergados y no bloquean este frontend. No implementarlos incidentalmente.
+- Diseño elegido por el usuario: CRM sobrio, tema claro, Material UI, navegación lateral y formularios
+  legibles. Conservar solo los datos del usuario en `sessionStorage` por pestaña, nunca la contraseña.
+  Al salir, limpiar usuario y caché de datos; esto es estado local, no una sesión autenticada.
+- Ofrecer todos los campos editables de empresas y contactos, incluidos estado y origen; incluir también
+  estado y origen en oportunidades. Los campos obligatorios y borrables están definidos en la guía API.
+- Usar el catálogo independiente de etapas para selectores y el embudo para listar/agrupar oportunidades.
+  No fijar IDs ni obtener credenciales de base desde el frontend.
+- Para crear oportunidades, asignar el responsable desde el login. Al editar una existente, conservar
+  su responsable salvo una decisión explícita posterior; no reasignarlo silenciosamente al usuario actual.
+- Las verificaciones del agente se realizan en PostgreSQL local. El usuario informó sus pruebas remotas
+  y pidió no repetirlas automáticamente. No convertir esa evidencia en una prueba remota del frontend.
+
+No se incorporan gestión de usuarios/catálogos, bajas, permisos, historial como pantalla, cierre completo,
+drag-and-drop, infraestructura, despliegue ni IA. El objetivo siguiente es únicamente el incremento
+**base y acceso**, luego empresas/contactos, oportunidades y embudo.
 
 ## 1. Objetivo y decisiones
 
@@ -58,9 +106,11 @@ Cada incremento se prueba en local antes de comenzar el siguiente:
 3. **Oportunidades:** creación, edición, detalle y listado; asociación con empresa o contacto, selección de servicio y responsable igual al usuario ingresado. El listado puede obtenerse a partir de la respuesta del embudo.
 4. **Embudo:** agrupación por etapa y cambio mediante selector o acción, con actualización de los datos mostrados.
 
-Las pantallas incluyen estados de carga, listas vacías, confirmación de guardado y errores comprensibles. Se respeta la actualización parcial actual: no se ofrece eliminar un valor enviando `null` si el backend interpreta eso como conservarlo.
+Las pantallas incluyen estados de carga, listas vacías, confirmación de guardado y errores comprensibles.
+En edición usar PATCH: enviar solo campos modificados; omitir conserva y null explícito borra un opcional
+si cumple las reglas de negocio. Los POST antiguos siguen interpretando null como conservar.
 
-Antes de retomar el frontend se agregan PATCH con borrado explícito de opcionales: omitir conserva,
+Ya se agregaron PATCH con borrado explícito de opcionales: omitir conserva,
 enviar null borra si el campo es opcional. Los POST de modificación se conservan para comparar
 compatibilidad antes de introducir PUT como reemplazo total. Los POST de alta, login y registro se conservan.
 La empresa de un contacto no puede cambiar mientras tenga oportunidades asociadas; esta regla sustituye
@@ -72,12 +122,17 @@ a esa empresa. Se valida la combinación final, incluidos campos omitidos y borr
 
 ## 4. Tercer hito: verificación integral y persistencia
 
-Tras comprobar al inicio la conexión y compatibilidad de Supabase, desarrollar cada incremento en local y repetir el flujo completo en ambos destinos antes de cerrar la entrega:
+Desarrollar y verificar cada incremento en local. El plan original contemplaba ambos destinos:
 
 - PostgreSQL del contenedor local.
 - PostgreSQL existente en Supabase, manteniendo frontend y API en la PC.
 
-### Lista de aceptación para ambos destinos
+**Ajuste acordado con el usuario:** no repetir automáticamente la verificación remota; el usuario informó
+que comprobó el backend contra la base compartida. La ejecución pendiente del agente para este hito es
+el recorrido integral desde el frontend contra PostgreSQL local, incluidos los reinicios. Una futura
+demostración remota de la UI se registrará por separado si el usuario la realiza o la solicita.
+
+### Lista de aceptación local (reutilizable si se solicita una prueba remota)
 
 - Completar la demostración requerida por el enunciado desde la interfaz, en este orden: (1) iniciar sesión, (2) registrar una empresa y un contacto y relacionarlos, (3) crear una oportunidad relacionada con la empresa o el contacto, con responsable y producto/servicio, (4) visualizarla en el embudo agrupada por etapa, (5) cambiarla de etapa y (6) comprobar que la información permanece guardada.
 - Confirmar que hay al menos un usuario habilitado y que el inicio de sesión funciona; comprobar también el rechazo de credenciales inválidas.
@@ -92,7 +147,11 @@ Tras comprobar al inicio la conexión y compatibilidad de Supabase, desarrollar 
 
 Usar datos de prueba identificables en Supabase, sin borrar registros existentes ni recrear el esquema. No ejecutar el SQL inicial sobre una base ya preparada. No asumir que los IDs de usuarios, servicios o etapas coinciden entre ambos destinos.
 
-**Criterio de salida:** la demostración de seis pasos y los demás casos aplicables pasan desde la interfaz en ambas bases, con persistencia comprobada; están documentados los comandos de ejecución local, la selección del destino de conexión y las limitaciones conocidas. Registrar los resultados de cada destino por separado; una prueba local no sustituye la comprobación en Supabase. La verificación final juzga el funcionamiento integral contra los requisitos de la primera entrega del enunciado y no condiciona la aceptación a funcionalidades de la entrega final, documentación adicional o una arquitectura específica.
+**Criterio de salida vigente:** la demostración de seis pasos y los demás casos aplicables pasan desde
+la interfaz contra la base local, con persistencia comprobada; están documentados los comandos de
+ejecución, la selección de conexión y las limitaciones conocidas. Separar pruebas locales ejecutadas,
+validación remota informada por el usuario y verificaciones pendientes; no afirmar una prueba remota
+de UI que no se realizó. La aceptación funcional sigue los requisitos de la primera entrega del PDF.
 
 ## 5. Trabajo posterior y límites
 
@@ -104,6 +163,8 @@ Postergar hasta completar el flujo funcional:
 - CI/CD y automatización del despliegue.
 - Refactorizaciones estructurales y alineación completa del dominio.
 - Sesiones, autorización y permisos efectivos.
+- Sustitución de los POST antiguos de modificación por PUT de reemplazo total.
+- Traslado de comprobaciones de integración a xUnit; el usuario lo pospuso para una fase posterior.
 
 Estas mejoras no son condiciones previas para comenzar el frontend ni para demostrar la primera entrega. Su implementación se planificará por separado cuando el flujo funcional esté validado y el equipo comprenda su operación.
 
