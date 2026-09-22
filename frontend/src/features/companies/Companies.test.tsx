@@ -80,6 +80,7 @@ describe('consulta de empresas', () => {
     renderAuthenticated()
 
     expect(screen.getByRole('status', { name: 'Cargando empresas' })).toBeTruthy()
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1))
     resolveRequest(jsonResponse([firstCompany]))
     expect(await (await loadedCompanyTable()).findByText('Acme Idiomas')).toBeTruthy()
   })
@@ -149,6 +150,7 @@ describe('consulta de empresas', () => {
     const table = await loadedCompanyTable()
     await userEvent.setup().click(await table.findByRole('link', { name: 'Ver detalle de Acme Idiomas' }))
     expect(await screen.findByRole('heading', { name: 'Acme Idiomas' })).toBeTruthy()
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2))
     expect(requestUrl(vi.mocked(fetch).mock.calls[1] ?? [])).toContain('/api/Empresa/DatosEmpresa/4')
     expect(screen.getByRole('link', { name: 'Empresas' }).getAttribute('aria-current')).toBe('page')
     expect(screen.getByRole('link', { name: 'Volver a empresas' })).toBeTruthy()

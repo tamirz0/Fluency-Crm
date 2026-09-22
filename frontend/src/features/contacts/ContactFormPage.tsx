@@ -2,12 +2,13 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { MenuItem, TextField } from '@mui/material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { Controller, useForm, type SubmitHandler } from 'react-hook-form'
+import { Controller, useForm, useWatch, type SubmitHandler } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { catalogQueryKeys, contactoQueryKeys, createContact, getCommercialOrigins, getContact, getCompanies, getCustomerStates, getOpportunitiesByStage, patchContact, type Contacto } from '../../api/client'
 import { buildDifferentialPatch, confirmationFor, normalizeId, normalizeText, saveErrorMessage } from '../shared/formUtils'
-import { CatalogMessage, FormSection, RecordFormPage } from '../shared/RecordForm'
+import { CatalogMessage, FormSection, RecordFormPage, RecordQueryState } from '../shared/RecordForm'
+import { parsePositiveId } from '../shared/display'
 import '../shared/recordForms.css'
 import { flattenOpportunitiesByStage } from '../opportunities/opportunityData'
 
@@ -19,6 +20,9 @@ const contactSchema = z.object({
   documento: optionalText(20), cargo: optionalText(100), telefono: optionalText(50), idEstado: z.string().optional(), idOrigen: z.string().optional(), idEmpresa: z.string().optional(), observaciones: z.string().optional(),
 })
 type ContactFormValues = z.input<typeof contactSchema>
+
+const contactPatchFields = ['nombre', 'apellido', 'correo', 'documento', 'cargo', 'telefono', 'idEstado', 'idOrigen', 'idEmpresa', 'observaciones'] as const
+const contactPatchIdFields = ['idEstado', 'idOrigen', 'idEmpresa'] as const
 
 function initialContactValues(contact?: Contacto): ContactFormValues {
   return { nombre: contact?.nombre ?? '', apellido: contact?.apellido ?? '', correo: contact?.correo ?? '', documento: contact?.documento ?? '', cargo: contact?.cargo ?? '', telefono: contact?.telefono ?? '', idEstado: contact?.idEstado == null ? '' : String(contact.idEstado), idOrigen: contact?.idOrigen == null ? '' : String(contact.idOrigen), idEmpresa: contact?.idEmpresa == null ? '' : String(contact.idEmpresa), observaciones: contact?.observaciones ?? '' }
@@ -35,6 +39,7 @@ function ContactEditor({ contact, mode }: { contact?: Contacto; mode: 'create' |
   const queryClient = useQueryClient()
   const baseline = initialContactValues(contact)
   const { register, handleSubmit, reset, setError, control, formState: { errors } } = useForm<ContactFormValues>({ defaultValues: baseline, mode: 'onBlur', resolver: zodResolver(contactSchema) })
+  const currentValues = useWatch({ control })
   const companiesQuery = useQuery({ queryKey: ['empresas'], queryFn: getCompanies })
   const stateQuery = useQuery({ queryKey: catalogQueryKeys.customerStates, queryFn: getCustomerStates })
   const originQuery = useQuery({ queryKey: catalogQueryKeys.commercialOrigins, queryFn: getCommercialOrigins })
@@ -47,7 +52,7 @@ function ContactEditor({ contact, mode }: { contact?: Contacto; mode: 'create' |
       Object.entries(optional).forEach(([key, value]) => { if (key.startsWith('id')) { if (value !== null) payload[key] = value } else if (normalizeText(value as string)) payload[key] = normalizeText(value as string) })
       return createContact(payload as never)
     }
-    const patch = buildDifferentialPatch(baseline as Record<string, unknown>, values as Record<string, unknown>, ['nombre', 'apellido', 'correo', 'documento', 'cargo', 'telefono', 'idEstado', 'idOrigen', 'idEmpresa', 'observaciones'], ['idEstado', 'idOrigen', 'idEmpresa'])
+    const patch = buildDifferentialPatch(baseline as Record<string, unknown>, values as Record<string, unknown>, [...contactPatchFields], [...contactPatchIdFields])
     return patchContact(Number(contact?.id), patch as never)
   }, onSuccess: (saved) => {
     queryClient.setQueryData(contactoQueryKeys.detail(Number(saved.id)), saved)
@@ -56,10 +61,15 @@ function ContactEditor({ contact, mode }: { contact?: Contacto; mode: 'create' |
     navigate(`/contactos/${saved.id}`, { state: { confirmation: confirmationFor('Contacto', mode === 'create' ? 'creado' : 'actualizado') } })
   }, onError: (error) => setError('root.serverError', { message: saveErrorMessage(error) }) })
   useEffect(() => { reset(initialContactValues(contact)) }, [contact, reset])
-  const submit: SubmitHandler<ContactFormValues> = (values) => { if (!mutation.isPending) mutation.mutate(values) }
+  const differential = mode === 'edit' ? buildDifferentialPatch(baseline as Record<string, unknown>, currentValues as Record<string, unknown>, [...contactPatchFields], [...contactPatchIdFields]) : undefined
+  const canSubmit = mode === 'create' || Boolean(differential && Object.keys(differential).length > 0)
+  const submit: SubmitHandler<ContactFormValues> = (values) => {
+    if (mutation.isPending || (mode === 'edit' && !Object.keys(buildDifferentialPatch(baseline as Record<string, unknown>, values as Record<string, unknown>, [...contactPatchFields], [...contactPatchIdFields])).length)) return
+    mutation.mutate(values)
+  }
   const companyDisabled = mode === 'edit' && (funnelQuery.isPending || funnelQuery.isError || relatedOpportunity)
   const companyMessage = relatedOpportunity ? 'La empresa no puede cambiarse porque el contacto tiene oportunidades asociadas.' : funnelQuery.isError ? 'No se pudo verificar si tiene oportunidades asociadas. El selector queda bloqueado; reintentá para habilitar la verificación.' : funnelQuery.isPending ? 'Verificando oportunidades asociadas…' : undefined
-  return <RecordFormPage backLabel={mode === 'create' ? 'Volver a contactos' : 'Volver al contacto'} backTo={mode === 'create' ? '/contactos' : `/contactos/${contact?.id ?? ''}`} title={mode === 'create' ? 'Nuevo contacto' : 'Editar contacto'} description={mode === 'create' ? 'Registrá una persona para relacionarla con una organización y sus oportunidades.' : 'Actualizá los datos del contacto y conservá sus relaciones comerciales.'} onSubmit={() => { void handleSubmit(submit)() }} submitLabel={mode === 'create' ? 'Crear contacto' : 'Guardar cambios'} submitting={mutation.isPending} error={errors.root?.serverError?.message}>
+  return <RecordFormPage backLabel={mode === 'create' ? 'Volver a contactos' : 'Volver al contacto'} backTo={mode === 'create' ? '/contactos' : `/contactos/${contact?.id ?? ''}`} title={mode === 'create' ? 'Nuevo contacto' : 'Editar contacto'} description={mode === 'create' ? 'Registrá una persona para relacionarla con una organización y sus oportunidades.' : 'Actualizá los datos del contacto y conservá sus relaciones comerciales.'} onSubmit={() => { if (canSubmit) void handleSubmit(submit)() }} submitLabel={mode === 'create' ? 'Crear contacto' : 'Guardar cambios'} submitting={mutation.isPending} disabled={!canSubmit} error={errors.root?.serverError?.message}>
     <FormSection title="Identificación" description="Usá el nombre con el que el equipo reconoce a la persona.">
       <TextField {...register('nombre')} label="Nombre" required fullWidth error={Boolean(errors.nombre)} helperText={errors.nombre?.message} />
       <TextField {...register('apellido')} label="Apellido" required fullWidth error={Boolean(errors.apellido)} helperText={errors.apellido?.message} />
@@ -81,9 +91,8 @@ export function NewContactPage() { return <ContactEditor mode="create" /> }
 
 export function EditContactPage() {
   const { idContacto } = useParams()
-  const id = Number(idContacto)
-  const query = useQuery({ queryKey: contactoQueryKeys.detail(id), queryFn: () => getContact(id), enabled: Number.isSafeInteger(id) && id > 0 })
-  if (query.isPending) return <div className="companies-page" role="status">Cargando contacto…</div>
-  if (query.isError || !query.data) return <div className="companies-page"><p>No pudimos cargar el contacto.</p></div>
+  const id = parsePositiveId(idContacto)
+  const query = useQuery({ queryKey: contactoQueryKeys.detail(id ?? 0), queryFn: () => getContact(id as number), enabled: id !== undefined })
+  if (id === undefined || query.isPending || query.isError || !query.data) return <RecordQueryState noun="contacto" backLabel="Volver a contactos" backTo="/contactos" loading={query.isPending} invalid={id === undefined} error={query.error} onRetry={() => void query.refetch()} />
   return <ContactEditor mode="edit" contact={query.data} />
 }

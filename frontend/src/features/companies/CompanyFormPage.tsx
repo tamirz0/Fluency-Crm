@@ -2,12 +2,13 @@ import { MenuItem, TextField } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { Controller, useForm, type SubmitHandler } from 'react-hook-form'
+import { Controller, useForm, useWatch, type SubmitHandler } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { catalogQueryKeys, createCompany, empresaQueryKeys, getCommercialOrigins, getCompany, getCustomerStates, patchCompany, type Empresa } from '../../api/client'
 import { buildDifferentialPatch, confirmationFor, normalizeId, normalizeText, saveErrorMessage } from '../shared/formUtils'
-import { CatalogMessage, FormSection, RecordFormPage } from '../shared/RecordForm'
+import { CatalogMessage, FormSection, RecordFormPage, RecordQueryState } from '../shared/RecordForm'
+import { parsePositiveId } from '../shared/display'
 import '../shared/recordForms.css'
 
 const optionalText = (max: number) => z.string().max(max, `Máximo ${max} caracteres.`).optional()
@@ -17,6 +18,9 @@ const companySchema = z.object({
   cuit: optionalText(20), industria: optionalText(100), correo: emailText, telefono: optionalText(50), direccion: z.string().optional(), idEstado: z.string().optional(), idOrigen: z.string().optional(), observaciones: z.string().optional(),
 })
 type CompanyFormValues = z.input<typeof companySchema>
+
+const companyPatchFields = ['razonSocial', 'cuit', 'industria', 'correo', 'telefono', 'direccion', 'idEstado', 'idOrigen', 'observaciones'] as const
+const companyPatchIdFields = ['idEstado', 'idOrigen'] as const
 
 function initialCompanyValues(company?: Empresa): CompanyFormValues {
   return { razonSocial: company?.razonSocial ?? '', cuit: company?.cuit ?? '', industria: company?.industria ?? '', correo: company?.correo ?? '', telefono: company?.telefono ?? '', direccion: company?.direccion ?? '', idEstado: company?.idEstado == null ? '' : String(company.idEstado), idOrigen: company?.idOrigen == null ? '' : String(company.idOrigen), observaciones: company?.observaciones ?? '' }
@@ -34,6 +38,7 @@ function CompanyEditor({ company, mode }: { company?: Empresa; mode: 'create' | 
   const queryClient = useQueryClient()
   const baseline = initialCompanyValues(company)
   const { register, handleSubmit, reset, setError, control, formState: { errors } } = useForm<CompanyFormValues>({ defaultValues: baseline, mode: 'onBlur', resolver: zodResolver(companySchema) })
+  const currentValues = useWatch({ control })
   const stateQuery = useQuery({ queryKey: catalogQueryKeys.customerStates, queryFn: getCustomerStates })
   const originQuery = useQuery({ queryKey: catalogQueryKeys.commercialOrigins, queryFn: getCommercialOrigins })
   const mutation = useMutation({ mutationFn: (values: CompanyFormValues) => {
@@ -43,7 +48,7 @@ function CompanyEditor({ company, mode }: { company?: Empresa; mode: 'create' | 
       Object.entries(optional).forEach(([key, value]) => { if (key.startsWith('id')) { if (value !== null) payload[key] = value } else if (normalizeText(value as string)) payload[key] = normalizeText(value as string) })
       return createCompany(payload as never)
     }
-    const patch = buildDifferentialPatch(baseline as Record<string, unknown>, values as Record<string, unknown>, ['razonSocial', 'cuit', 'industria', 'correo', 'telefono', 'direccion', 'idEstado', 'idOrigen', 'observaciones'], ['idEstado', 'idOrigen'])
+    const patch = buildDifferentialPatch(baseline as Record<string, unknown>, values as Record<string, unknown>, [...companyPatchFields], [...companyPatchIdFields])
     return patchCompany(Number(company?.id), patch as never)
   }, onSuccess: (saved) => {
     queryClient.setQueryData(empresaQueryKeys.detail(Number(saved.id)), saved)
@@ -53,9 +58,14 @@ function CompanyEditor({ company, mode }: { company?: Empresa; mode: 'create' | 
     navigate(`/empresas/${saved.id}`, { state: { confirmation: confirmationFor('Empresa', mode === 'create' ? 'creada' : 'actualizada') } })
   }, onError: (error) => setError('root.serverError', { message: saveErrorMessage(error) }) })
   useEffect(() => { reset(initialCompanyValues(company)) }, [company, reset])
-  const submit: SubmitHandler<CompanyFormValues> = (values) => { if (!mutation.isPending) mutation.mutate(values) }
+  const differential = mode === 'edit' ? buildDifferentialPatch(baseline as Record<string, unknown>, currentValues as Record<string, unknown>, [...companyPatchFields], [...companyPatchIdFields]) : undefined
+  const canSubmit = mode === 'create' || Boolean(differential && Object.keys(differential).length > 0)
+  const submit: SubmitHandler<CompanyFormValues> = (values) => {
+    if (mutation.isPending || (mode === 'edit' && !Object.keys(buildDifferentialPatch(baseline as Record<string, unknown>, values as Record<string, unknown>, [...companyPatchFields], [...companyPatchIdFields])).length)) return
+    mutation.mutate(values)
+  }
   const formError = errors.root?.serverError?.message
-  return <RecordFormPage backLabel={mode === 'create' ? 'Volver a empresas' : 'Volver a la empresa'} backTo={mode === 'create' ? '/empresas' : `/empresas/${company?.id ?? ''}`} title={mode === 'create' ? 'Nueva empresa' : 'Editar empresa'} description={mode === 'create' ? 'Registrá una organización para sumarla a tu actividad comercial.' : 'Actualizá los datos de la organización sin perder el contexto comercial.'} onSubmit={() => { void handleSubmit(submit)() }} submitLabel={mode === 'create' ? 'Crear empresa' : 'Guardar cambios'} submitting={mutation.isPending} error={formError}>
+  return <RecordFormPage backLabel={mode === 'create' ? 'Volver a empresas' : 'Volver a la empresa'} backTo={mode === 'create' ? '/empresas' : `/empresas/${company?.id ?? ''}`} title={mode === 'create' ? 'Nueva empresa' : 'Editar empresa'} description={mode === 'create' ? 'Registrá una organización para sumarla a tu actividad comercial.' : 'Actualizá los datos de la organización sin perder el contexto comercial.'} onSubmit={() => { if (canSubmit) void handleSubmit(submit)() }} submitLabel={mode === 'create' ? 'Crear empresa' : 'Guardar cambios'} submitting={mutation.isPending} disabled={!canSubmit} error={formError}>
     <FormSection title="Identificación" description="Los datos que ayudan a reconocer la organización.">
       <TextField {...register('razonSocial')} label="Razón social" required fullWidth error={Boolean(errors.razonSocial)} helperText={errors.razonSocial?.message} />
       <TextField {...register('cuit')} label="CUIT" fullWidth error={Boolean(errors.cuit)} helperText={errors.cuit?.message} />
@@ -76,9 +86,8 @@ export function NewCompanyPage() { return <CompanyEditor mode="create" /> }
 
 export function EditCompanyPage() {
   const { idEmpresa } = useParams()
-  const id = Number(idEmpresa)
-  const query = useQuery({ queryKey: empresaQueryKeys.detail(id), queryFn: () => getCompany(id), enabled: Number.isSafeInteger(id) && id > 0 })
-  if (query.isPending) return <div className="companies-page" role="status">Cargando empresa…</div>
-  if (query.isError || !query.data) return <div className="companies-page"><p>No pudimos cargar la empresa.</p></div>
+  const id = parsePositiveId(idEmpresa)
+  const query = useQuery({ queryKey: empresaQueryKeys.detail(id ?? 0), queryFn: () => getCompany(id as number), enabled: id !== undefined })
+  if (id === undefined || query.isPending || query.isError || !query.data) return <RecordQueryState noun="empresa" backLabel="Volver a empresas" backTo="/empresas" loading={query.isPending} invalid={id === undefined} error={query.error} onRetry={() => void query.refetch()} />
   return <CompanyEditor mode="edit" company={query.data} />
 }

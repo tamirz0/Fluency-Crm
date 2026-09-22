@@ -1,6 +1,6 @@
 import { ArrowBack, Refresh } from '@mui/icons-material'
 import { Alert, Box, Button, Link, Skeleton, Typography } from '@mui/material'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { Link as RouterLink, useLocation, useParams } from 'react-router-dom'
 import { ApiRequestError, empresaQueryKeys, getCompany, type Empresa } from '../../api/client'
@@ -37,13 +37,10 @@ export function CompanyDetailPage() {
   const { idEmpresa: routeId } = useParams()
   const location = useLocation()
   const idEmpresa = parseCompanyId(routeId)
-  const queryClient = useQueryClient()
-  const cachedCompany = idEmpresa === undefined ? undefined : queryClient.getQueryData<Empresa[]>(empresaQueryKeys.all)?.find((company) => String(company.id) === String(idEmpresa))
   const query = useQuery({
     queryKey: empresaQueryKeys.detail(idEmpresa ?? 0),
     queryFn: () => getCompany(idEmpresa as number),
     enabled: idEmpresa !== undefined,
-    placeholderData: cachedCompany,
   })
 
   if (idEmpresa === undefined || (query.isError && query.error instanceof ApiRequestError && query.error.status === 404)) {
