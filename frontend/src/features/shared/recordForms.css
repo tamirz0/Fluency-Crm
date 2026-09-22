@@ -2,18 +2,22 @@
 .record-form-header { max-width: 760px; margin: 0 0 30px; }
 .record-form-header .companies-page-title { margin-bottom: 8px; }
 .record-form-api-error { margin-bottom: 20px; white-space: pre-line; }
-.record-form { border-top: 1px solid #cbd4d2; }
-.record-form-section { padding: 25px 0 28px; border-bottom: 1px solid #d9e0de; }
+.record-form { border-top: 1px solid #2a3d48; }
+.record-form-section { padding: 25px 0 28px; border-bottom: 1px solid #2a3d48; }
 .record-form-section-heading { margin-bottom: 20px; }
-.record-form-section-heading h2 { margin: 0; color: #17324d; font-size: 1.22rem; font-weight: 650; letter-spacing: -.02em; }
-.record-form-section-heading p { max-width: 72ch; margin: 5px 0 0; color: #52616a; line-height: 1.45; }
+.record-form-section-heading h2 { margin: 0; color: #e7eff1; font-size: 1.22rem; font-weight: 650; letter-spacing: -.02em; }
+.record-form-section-heading p { max-width: 72ch; margin: 5px 0 0; color: #aabbc1; line-height: 1.45; }
 .record-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 28px; }
 .record-form-grid > * { min-width: 0; }
 .record-form-grid .record-form-wide { grid-column: 1 / -1; }
 .record-form-grid .MuiFormControl-root { margin: 0; }
 .record-form-error { margin: 4px 0 0; color: #b3261e; font-size: .84rem; line-height: 1.35; }
-.record-form-note { margin: 5px 0 0; color: #52616a; font-size: .88rem; line-height: 1.4; }
+.record-form-note { margin: 5px 0 0; color: #aabbc1; font-size: .88rem; line-height: 1.4; }
 .record-form-note--warning { color: #7a4d00; }
 .record-form-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 25px 0 10px; }
 .record-form-actions .MuiButton-root { min-width: 132px; }
 .record-form-select-error { margin: 4px 0 0 14px !important; }
+.readonly-value { display: grid; align-content: start; min-height: 56px; gap: 3px; padding: 3px 0; }
+.readonly-value h3 { margin: 0; color: #aabbc1; font-size: .78rem; font-weight: 600; }
+.readonly-value > p:nth-child(2) { color: #e7eff1; font-size: 1rem; line-height: 1.5; }
+.readonly-value > p:nth-child(3) { font-size: .82rem; line-height: 1.4; }

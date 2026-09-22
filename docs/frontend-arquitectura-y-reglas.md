@@ -223,17 +223,22 @@ Todos los formularios siguen las mismas reglas:
 
 ## 8. Presentación y accesibilidad
 
-La identidad visual vigente utiliza:
+La identidad visual es exclusivamente oscura y utiliza:
 
-- Azul tinta `#17324D` para marca, navegación y jerarquía principal.
-- Verde agua `#2F7F7B` para acciones, selección y foco.
-- Fondo `#F5F7F6`, papel blanco y grafito `#26343D`.
+- Noche `#0B1118` como fondo, tinta `#101C28` para navegación y pizarra `#162631` para superficies.
+- Borde `#2A3D48`, niebla `#E7EFF1` como texto principal y verde agua `#62BDB5` para acciones, selección y foco.
 - Source Sans 3 como familia tipográfica.
+
+No existe selector ni variante clara. Los valores de solo lectura, incluidos Responsable y Etapa actual en la edición de oportunidades, se presentan como información semántica, nunca como inputs.
+
+Las fechas se muestran siempre como `dd/mm/yyyy`. La frontera con la API convierte estrictamente entre ese formato y el ISO `yyyy-mm-dd`, sin aplicar conversiones horarias.
+
+Inicio reutiliza las consultas y claves de caché de empresas, contactos y oportunidades por etapa. Su pulso comercial cuenta oportunidades totales y empresas/contactos activos; activo significa exclusivamente estado `Cliente` o `Potencial`, ignorando espacios y mayúsculas. `Inactivo`, vacío y `Sin informar` se excluyen.
 
 Mantener una interfaz sobria y operativa:
 
 - Texto alineado a la izquierda y líneas de lectura breves.
-- Sin gradientes, sombras decorativas, mayúsculas espaciadas ni colecciones de tarjetas idénticas sin función.
+- Sin gradientes, sombras decorativas, mayúsculas espaciadas ni colecciones de tarjetas idénticas sin función. Las superficies, estados y foco deben conservar contraste suficiente en oscuro; `Inactivo` tiene un tono explícito.
 - Estados de carga mediante skeleton o indicador con `role="status"`.
 - Estados vacíos que expliquen qué aparecerá o qué acción puede realizarse.
 - Errores con causa comprensible y una acción concreta cuando sea posible.
@@ -299,4 +304,3 @@ Al trabajar en el repositorio:
 4. Implementar y probar un recorrido vertical completo.
 5. Revisar el diff y ejecutar todas las verificaciones.
 6. No crear ramas, commits ni hacer push salvo que se solicite expresamente.
-

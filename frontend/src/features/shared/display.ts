@@ -18,10 +18,19 @@ export function opportunityContactName(contact: { contactoApellido?: string | nu
 
 export function formatCommercialDate(value: string | null | undefined): string {
   if (!value?.trim()) return 'Sin informar'
-  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
-  const date = dateOnly
-    ? new Date(Date.UTC(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3])))
-    : new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Sin informar'
-  return new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }).format(date)
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim())
+  if (!dateOnly) return 'Sin informar'
+  return `${dateOnly[3]}/${dateOnly[2]}/${dateOnly[1]}`
+}
+
+export function isoToCommercialDate(value: string | null | undefined): string { return formatCommercialDate(value) === 'Sin informar' ? '' : formatCommercialDate(value) }
+
+export function commercialDateToIso(value: string): { value?: string; error?: 'format' | 'invalid' } {
+  if (!value.trim()) return {}
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value)
+  if (!match) return { error: 'format' }
+  const [, day, month, year] = match
+  const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)))
+  if (date.getUTCFullYear() !== Number(year) || date.getUTCMonth() !== Number(month) - 1 || date.getUTCDate() !== Number(day)) return { error: 'invalid' }
+  return { value: `${year}-${month}-${day}` }
 }
