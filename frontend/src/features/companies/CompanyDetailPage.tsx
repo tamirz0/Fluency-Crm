@@ -1,10 +1,11 @@
 import { ArrowBack, Refresh } from '@mui/icons-material'
 import { Alert, Box, Button, Link, Skeleton, Typography } from '@mui/material'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { Link as RouterLink, useLocation, useParams } from 'react-router-dom'
 import { ApiRequestError, empresaQueryKeys, getCompany, type Empresa } from '../../api/client'
 import { CompanyStatus } from './CompanyStatus'
+import { displayValue } from '../shared/display'
 import './companies.css'
 
 function parseCompanyId(value: string | undefined): number | undefined {
@@ -14,14 +15,15 @@ function parseCompanyId(value: string | undefined): number | undefined {
 }
 
 function CompanyField({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
-  return <div className={className}><dt>{label}</dt><dd>{children || <span className="company-muted">Sin informar</span>}</dd></div>
+  const shownValue = typeof children === 'string' ? displayValue(children) : children ?? '-'
+  return <div className={className}><dt>{label}</dt><dd>{shownValue}</dd></div>
 }
 
 function CompanyContactLinks({ company }: { company: Empresa }) {
   return <span className="company-detail-contact">
     {company.correo?.trim() && <Link href={`mailto:${company.correo}`} underline="hover">{company.correo}</Link>}
     {company.telefono?.trim() && <Link href={`tel:${company.telefono}`} underline="hover">{company.telefono}</Link>}
-    {!company.correo?.trim() && !company.telefono?.trim() && <span className="company-muted">Sin informar</span>}
+    {!company.correo?.trim() && !company.telefono?.trim() && '-'}
   </span>
 }
 
@@ -37,13 +39,10 @@ export function CompanyDetailPage() {
   const { idEmpresa: routeId } = useParams()
   const location = useLocation()
   const idEmpresa = parseCompanyId(routeId)
-  const queryClient = useQueryClient()
-  const cachedCompany = idEmpresa === undefined ? undefined : queryClient.getQueryData<Empresa[]>(empresaQueryKeys.all)?.find((company) => String(company.id) === String(idEmpresa))
   const query = useQuery({
     queryKey: empresaQueryKeys.detail(idEmpresa ?? 0),
     queryFn: () => getCompany(idEmpresa as number),
     enabled: idEmpresa !== undefined,
-    placeholderData: cachedCompany,
   })
 
   if (idEmpresa === undefined || (query.isError && query.error instanceof ApiRequestError && query.error.status === 404)) {
@@ -58,7 +57,7 @@ export function CompanyDetailPage() {
   </Box>
 
   const company = query.data
-  const status = company.estadoDescripcion?.trim() || 'Sin informar'
+  const status = company.estadoDescripcion
   return <Box className="companies-page company-result-page">
     <Link component={RouterLink} to="/empresas" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a empresas</Link>
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
@@ -73,7 +72,7 @@ export function CompanyDetailPage() {
         <dl className="company-detail-fields">
           <CompanyField label="CUIT">{company.cuit?.trim()}</CompanyField>
           <CompanyField label="Industria">{company.industria?.trim()}</CompanyField>
-          <CompanyField label="Estado">{status}</CompanyField>
+          <CompanyField label="Estado" className="company-detail-commercial-field"><CompanyStatus value={status} /></CompanyField>
           <CompanyField label="Origen">{company.origenDescripcion?.trim()}</CompanyField>
         </dl>
       </section>
@@ -86,7 +85,7 @@ export function CompanyDetailPage() {
       </section>
       <section className="company-detail-section" aria-labelledby="company-notes-heading">
         <Typography component="h2" id="company-notes-heading" className="company-section-heading">Observaciones</Typography>
-        <p className="company-observations">{company.observaciones?.trim() || <span className="company-muted">Sin informar</span>}</p>
+        <p className="company-observations">{displayValue(company.observaciones)}</p>
       </section>
     </article>
   </Box>

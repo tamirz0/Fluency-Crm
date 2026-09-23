@@ -10,7 +10,8 @@ import '../contacts/records.css'
 import '../companies/companies.css'
 
 function OpportunityField({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
-  return <div className={className}><dt>{label}</dt><dd>{children || <span className="company-muted">Sin informar</span>}</dd></div>
+  const shownValue = typeof children === 'string' ? displayValue(children) : children ?? '-'
+  return <div className={className}><dt>{label}</dt><dd>{shownValue}</dd></div>
 }
 
 function OpportunitySkeleton() {
@@ -23,20 +24,20 @@ function OpportunityDetails({ opportunity }: { opportunity: OportunidadDetalle }
     <section className="company-detail-section" aria-labelledby="opportunity-relations-heading"><Typography component="h2" id="opportunity-relations-heading" className="company-section-heading">Relación comercial</Typography>
       <dl className="company-detail-fields">
         <OpportunityField label="Empresa">{opportunity.idEmpresa ? <Link component={RouterLink} to={`/empresas/${opportunity.idEmpresa}`} underline="hover">{displayValue(opportunity.empresaRazonSocial)}</Link> : opportunity.empresaRazonSocial?.trim()}</OpportunityField>
-        <OpportunityField label="Contacto">{opportunity.idContacto ? <Link component={RouterLink} to={`/contactos/${opportunity.idContacto}`} underline="hover">{[opportunity.contactoApellido?.trim(), opportunity.contactoNombre?.trim()].filter(Boolean).join(', ') || 'Sin informar'}</Link> : [opportunity.contactoApellido?.trim(), opportunity.contactoNombre?.trim()].filter(Boolean).join(', ')}</OpportunityField>
+        <OpportunityField label="Contacto">{opportunity.idContacto ? <Link component={RouterLink} to={`/contactos/${opportunity.idContacto}`} underline="hover">{[opportunity.contactoApellido?.trim(), opportunity.contactoNombre?.trim()].filter(Boolean).join(', ') || '-'}</Link> : [opportunity.contactoApellido?.trim(), opportunity.contactoNombre?.trim()].filter(Boolean).join(', ')}</OpportunityField>
       </dl>
     </section>
     <section className="company-detail-section" aria-labelledby="opportunity-management-heading"><Typography component="h2" id="opportunity-management-heading" className="company-section-heading">Gestión</Typography>
       <dl className="company-detail-fields">
-        <OpportunityField label="Responsable">{responsible}</OpportunityField><OpportunityField label="Servicio">{opportunity.servicioNombre?.trim()}</OpportunityField>
-        <OpportunityField label="Etapa"><Chip className="company-status company-status--prospect" label={displayValue(opportunity.etapaNombre)} size="small" /></OpportunityField><OpportunityField label="Estado"><CompanyStatus value={opportunity.estadoDescripcion} /></OpportunityField>
+        <OpportunityField label="Responsable">{responsible}</OpportunityField><OpportunityField className="company-detail-commercial-field" label="Servicio">{opportunity.servicioNombre?.trim()}</OpportunityField>
+        <OpportunityField className="company-detail-commercial-field" label="Etapa"><Chip className="company-status company-status--prospect" label={displayValue(opportunity.etapaNombre)} size="small" /></OpportunityField><OpportunityField className="company-detail-commercial-field" label="Estado"><CompanyStatus value={opportunity.estadoDescripcion} /></OpportunityField>
         <OpportunityField label="Origen">{opportunity.origenDescripcion?.trim()}</OpportunityField>
       </dl>
     </section>
     <section className="company-detail-section" aria-labelledby="opportunity-dates-heading"><Typography component="h2" id="opportunity-dates-heading" className="company-section-heading">Fechas</Typography>
       <dl className="company-detail-fields"><OpportunityField label="Cierre estimado">{formatCommercialDate(opportunity.fechaEstimadaCierre)}</OpportunityField><OpportunityField label="Cierre real">{formatCommercialDate(opportunity.fechaCierre)}</OpportunityField></dl>
     </section>
-    <section className="company-detail-section" aria-labelledby="opportunity-notes-heading"><Typography component="h2" id="opportunity-notes-heading" className="company-section-heading">Observaciones</Typography><p className="company-observations">{opportunity.observaciones?.trim() || <span className="company-muted">Sin informar</span>}</p></section>
+    <section className="company-detail-section" aria-labelledby="opportunity-notes-heading"><Typography component="h2" id="opportunity-notes-heading" className="company-section-heading">Observaciones</Typography><p className="company-observations">{displayValue(opportunity.observaciones)}</p></section>
   </article>
 }
 

@@ -5,23 +5,35 @@ export function parsePositiveId(value: string | undefined): number | undefined {
 }
 
 export function displayValue(value: string | null | undefined): string {
-  return value?.trim() || 'Sin informar'
+  return value?.trim() || '-'
 }
 
 export function contactFullName(contact: { nombre?: string | null; apellido?: string | null }): string {
-  return [contact.apellido?.trim(), contact.nombre?.trim()].filter(Boolean).join(', ') || 'Sin informar'
+  return [contact.apellido?.trim(), contact.nombre?.trim()].filter(Boolean).join(', ') || '-'
 }
 
 export function opportunityContactName(contact: { contactoApellido?: string | null; contactoNombre?: string | null }): string {
-  return [contact.contactoApellido?.trim(), contact.contactoNombre?.trim()].filter(Boolean).join(', ') || 'Sin informar'
+  return [contact.contactoApellido?.trim(), contact.contactoNombre?.trim()].filter(Boolean).join(', ') || '-'
 }
 
 export function formatCommercialDate(value: string | null | undefined): string {
-  if (!value?.trim()) return 'Sin informar'
-  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
-  const date = dateOnly
-    ? new Date(Date.UTC(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3])))
-    : new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Sin informar'
-  return new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }).format(date)
+  if (!value?.trim()) return '-'
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim())
+  if (!dateOnly) return '-'
+  return `${dateOnly[3]}/${dateOnly[2]}/${dateOnly[1]}`
+}
+
+export function isoToCommercialDate(value: string | null | undefined): string {
+  if (!value?.trim() || !/^\d{4}-\d{2}-\d{2}/.test(value.trim())) return ''
+  return formatCommercialDate(value)
+}
+
+export function commercialDateToIso(value: string): { value?: string; error?: 'format' | 'invalid' } {
+  if (!value.trim()) return {}
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value)
+  if (!match) return { error: 'format' }
+  const [, day, month, year] = match
+  const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)))
+  if (date.getUTCFullYear() !== Number(year) || date.getUTCMonth() !== Number(month) - 1 || date.getUTCDate() !== Number(day)) return { error: 'invalid' }
+  return { value: `${year}-${month}-${day}` }
 }

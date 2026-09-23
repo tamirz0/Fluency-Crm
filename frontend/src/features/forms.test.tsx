@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { BrowserRouter } from 'react-router-dom'
@@ -18,18 +18,18 @@ const stages = [{ id: 3, nombre: 'Propuesta', descripcion: null, orden: 3 }]
 
 function jsonResponse(body: unknown, status = 200) { return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }) }
 function renderAuthenticated(path: string) { sessionStorage.setItem(SESSION_KEY, JSON.stringify(user)); window.history.pushState({}, '', path); const queryClient = createQueryClient(); const Wrapper = ({ children }: { children: ReactNode }) => <AppProviders queryClient={queryClient}><BrowserRouter><AuthProvider>{children}</AuthProvider></BrowserRouter></AppProviders>; return render(<App />, { wrapper: Wrapper }) }
-function catalogResponse(url: string): Response | undefined {
+function catalogResponse(url: string, services = [{ id: 2, nombre: 'Capacitación', descripcion: null, precioReferencia: 10 }]): Response | undefined {
   if (url.includes('ListadoEstadosCliente')) return jsonResponse([{ id: 1, descripcion: 'Cliente' }])
   if (url.includes('ListadoOrigenesComerciales')) return jsonResponse([{ id: 2, descripcion: 'Referido' }])
   if (url.includes('ListadoEtapasComerciales')) return jsonResponse(stages)
-  if (url.includes('ListadoServicios')) return jsonResponse([{ id: 2, nombre: 'Capacitación', descripcion: null, precioReferencia: 10 }])
+  if (url.includes('ListadoServicios')) return jsonResponse(services)
   return undefined
 }
 function requestUrl(input: RequestInfo | URL) { if (typeof input === 'object' && input !== null && 'input' in input) return String(input.input); if (typeof input === 'object' && input !== null && 'url' in input) return String(input.url); return String(input) }
-function installCatalogApi() {
+function installCatalogApi(options: { services?: { id: number; nombre: string; descripcion: string | null; precioReferencia: number }[] } = {}) {
   vi.mocked(fetch).mockImplementation(async (input) => {
     const url = requestUrl(input)
-    const catalog = catalogResponse(url)
+    const catalog = catalogResponse(url, options.services)
     if (catalog) return catalog
     if (url.includes('ListadoEmpresas')) return jsonResponse([company, { ...company, id: 8, razonSocial: 'Otra empresa' }])
     if (url.includes('ListadoContactos')) return jsonResponse([contact, secondContact])
@@ -71,6 +71,28 @@ describe('altas y ediciones', () => {
     expect(call).toBeTruthy(); expect(await requestBody(call!)).toEqual({ industria: 'Servicios' })
   })
 
+  it('deshabilita una edición de empresa limpia y vuelve a deshabilitarla al restaurar el valor original', async () => {
+    installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/empresas/4/editar')
+    await screen.findByRole('heading', { name: 'Editar empresa' })
+    const save = screen.getByRole('button', { name: 'Guardar cambios' })
+    expect((save as HTMLButtonElement).disabled).toBe(true)
+    const industry = screen.getByRole('textbox', { name: 'Industria' })
+    await actor.clear(industry); await actor.type(industry, 'Servicios')
+    expect((save as HTMLButtonElement).disabled).toBe(false)
+    await actor.clear(industry); await actor.type(industry, 'Educación')
+    expect((save as HTMLButtonElement).disabled).toBe(true)
+    expect(vi.mocked(fetch).mock.calls.some(([input]) => requestUrl(input).includes('ModificarEmpresa'))).toBe(false)
+  })
+
+  it('envía null al limpiar un opcional de empresa', async () => {
+    installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/empresas/4/editar')
+    await screen.findByRole('heading', { name: 'Editar empresa' })
+    await actor.clear(screen.getByRole('textbox', { name: 'CUIT' })); await actor.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await screen.findByText('Empresa actualizada')
+    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('ModificarEmpresa'))
+    expect(await requestBody(call!)).toEqual({ cuit: null })
+  })
+
   it('conserva los valores al recibir un error de API', async () => {
     installCatalogApi(); vi.mocked(fetch).mockImplementation(async (input) => requestUrl(input).includes('AltaEmpresa') ? jsonResponse({ detail: 'La empresa ya existe.' }, 400) : catalogResponse(requestUrl(input)) ?? jsonResponse([]))
     const actor = userEvent.setup(); renderAuthenticated('/empresas/nueva'); await screen.findByRole('heading', { name: 'Nueva empresa' })
@@ -83,6 +105,17 @@ describe('altas y ediciones', () => {
     await actor.type(screen.getByRole('textbox', { name: 'Nombre' }), 'Ana'); await actor.type(screen.getByRole('textbox', { name: 'Apellido' }), 'García'); await actor.type(screen.getByRole('textbox', { name: 'Correo' }), 'ana@example.com'); await actor.click(screen.getByRole('button', { name: 'Crear contacto' }))
     await screen.findByText('Contacto creado'); const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('AltaContacto'))
     expect(call).toBeTruthy(); expect(await requestBody(call!)).toEqual({ nombre: 'Ana', apellido: 'García', correo: 'ana@example.com' })
+  })
+
+  it('deshabilita una edición de contacto limpia y envía null al limpiar un opcional', async () => {
+    installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/contactos/14/editar')
+    await screen.findByRole('heading', { name: 'Editar contacto' })
+    const save = screen.getByRole('button', { name: 'Guardar cambios' })
+    expect((save as HTMLButtonElement).disabled).toBe(true)
+    await actor.clear(screen.getByRole('textbox', { name: 'Documento' })); expect((save as HTMLButtonElement).disabled).toBe(false)
+    await actor.click(save); await screen.findByText('Contacto actualizado')
+    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('ModificarContacto'))
+    expect(await requestBody(call!)).toEqual({ documento: null })
   })
 
   it('bloquea el selector de empresa del contacto cuando tiene oportunidades', async () => {
@@ -101,7 +134,134 @@ describe('altas y ediciones', () => {
     const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('AltaOportunidad')); expect(call).toBeTruthy(); expect(await requestBody(call!)).toMatchObject({ titulo: 'Nueva venta', idUsuario: 7, idEtapa: 3, idEmpresa: 4, idContacto: 14 })
   })
 
+  it('acepta el cierre escrito DD/MM/AAAA y envía una fecha ISO', async () => {
+    installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/nueva'); await screen.findByRole('heading', { name: 'Nueva oportunidad' })
+    await actor.type(screen.getByRole('textbox', { name: 'Título' }), 'Cierre escrito')
+    await actor.click(screen.getByRole('combobox', { name: 'Etapa inicial' })); await actor.click(await screen.findByRole('option', { name: 'Propuesta' }))
+    await actor.click(screen.getByRole('combobox', { name: 'Empresa' })); await actor.click(await screen.findByRole('option', { name: 'Acme Idiomas' }))
+    const date = within(screen.getByRole('group', { name: 'Fecha estimada de cierre' }))
+    await actor.type(date.getByRole('spinbutton', { name: 'Dia' }), '15')
+    await actor.type(date.getByRole('spinbutton', { name: 'Mes' }), '08')
+    await actor.type(date.getByRole('spinbutton', { name: 'Año' }), '2027')
+    expect(date.getByRole('spinbutton', { name: 'Dia' }).getAttribute('aria-valuenow')).toBe('15')
+    expect(date.getByRole('spinbutton', { name: 'Mes' }).getAttribute('aria-valuenow')).toBe('8')
+    expect(date.getByRole('spinbutton', { name: 'Año' }).getAttribute('aria-valuenow')).toBe('2027')
+    await actor.click(screen.getByRole('button', { name: 'Crear oportunidad' })); await screen.findByText('Oportunidad creada')
+    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('AltaOportunidad'))
+    expect(await requestBody(call!)).toMatchObject({ fechaEstimadaCierre: '2027-08-15' })
+  })
+
+  it('permite elegir el cierre en calendario y envía una fecha ISO', async () => {
+    installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/nueva'); await screen.findByRole('heading', { name: 'Nueva oportunidad' })
+    await actor.type(screen.getByRole('textbox', { name: 'Título' }), 'Cierre por calendario')
+    await actor.click(screen.getByRole('combobox', { name: 'Etapa inicial' })); await actor.click(await screen.findByRole('option', { name: 'Propuesta' }))
+    await actor.click(screen.getByRole('combobox', { name: 'Empresa' })); await actor.click(await screen.findByRole('option', { name: 'Acme Idiomas' }))
+    const date = within(screen.getByRole('group', { name: 'Fecha estimada de cierre' }))
+    await actor.click(date.getByRole('button', { name: 'Elige fecha' }))
+    const calendar = within(await screen.findByRole('dialog', { name: 'Fecha estimada de cierre' }))
+    await actor.click(calendar.getByRole('gridcell', { name: /^1$/ }))
+    expect(date.getByRole('spinbutton', { name: 'Dia' }).getAttribute('aria-valuenow')).toBe('1')
+    await actor.click(screen.getByRole('button', { name: 'Crear oportunidad' })); await screen.findByText('Oportunidad creada')
+    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('AltaOportunidad'))
+    expect(await requestBody(call!)).toMatchObject({ fechaEstimadaCierre: /^\d{4}-\d{2}-01$/ })
+  })
+
+  it('bloquea una fecha imposible ingresada manualmente', async () => {
+    installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/nueva'); await screen.findByRole('heading', { name: 'Nueva oportunidad' })
+    await actor.type(screen.getByRole('textbox', { name: 'Título' }), 'Fecha inválida')
+    await actor.click(screen.getByRole('combobox', { name: 'Etapa inicial' })); await actor.click(await screen.findByRole('option', { name: 'Propuesta' }))
+    await actor.click(screen.getByRole('combobox', { name: 'Empresa' })); await actor.click(await screen.findByRole('option', { name: 'Acme Idiomas' }))
+    const date = within(screen.getByRole('group', { name: 'Fecha estimada de cierre' }))
+    await actor.type(date.getByRole('spinbutton', { name: 'Dia' }), '31')
+    await actor.type(date.getByRole('spinbutton', { name: 'Mes' }), '02')
+    await actor.type(date.getByRole('spinbutton', { name: 'Año' }), '2026')
+    expect(await screen.findByText('Ingresá una fecha válida.')).toBeTruthy()
+    expect((screen.getByRole('button', { name: 'Crear oportunidad' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(vi.mocked(fetch).mock.calls.some(([input]) => requestUrl(input).includes('AltaOportunidad'))).toBe(false)
+  })
+
   it('no permite crear una oportunidad sin empresa ni contacto', async () => {
     installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/nueva'); await screen.findByRole('heading', { name: 'Nueva oportunidad' }); await actor.type(screen.getByRole('textbox', { name: 'Título' }), 'Sin relación'); await actor.click(screen.getByRole('button', { name: 'Crear oportunidad' })); expect(await screen.findByText('Seleccioná una empresa o un contacto.')).toBeTruthy(); expect(vi.mocked(fetch).mock.calls.some(([input]) => requestUrl(input).includes('AltaOportunidad'))).toBe(false)
+  })
+
+  it('exige la etapa inicial antes de crear una oportunidad', async () => {
+    installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/nueva'); await screen.findByRole('heading', { name: 'Nueva oportunidad' })
+    await actor.type(screen.getByRole('textbox', { name: 'Título' }), 'Sin etapa')
+    await actor.click(screen.getByRole('combobox', { name: 'Empresa' })); await actor.click(await screen.findByRole('option', { name: 'Acme Idiomas' }))
+    await actor.click(screen.getByRole('button', { name: 'Crear oportunidad' }))
+    expect(await screen.findByText('Seleccioná la etapa inicial.')).toBeTruthy()
+    expect(vi.mocked(fetch).mock.calls.some(([input]) => requestUrl(input).includes('AltaOportunidad'))).toBe(false)
+  })
+
+  it('crea una oportunidad con solo empresa o solo contacto', async () => {
+    for (const relation of ['Empresa', 'Contacto'] as const) {
+      cleanup(); vi.mocked(fetch).mockClear(); installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/nueva'); await screen.findByRole('heading', { name: 'Nueva oportunidad' })
+      await actor.type(screen.getByRole('textbox', { name: 'Título' }), `Solo ${relation}`)
+      await actor.click(screen.getByRole('combobox', { name: 'Etapa inicial' })); await actor.click(await screen.findByRole('option', { name: 'Propuesta' }))
+      await actor.click(screen.getByRole('combobox', { name: relation })); await actor.click(await screen.findByRole('option', { name: relation === 'Empresa' ? 'Acme Idiomas' : 'Pérez, Lucía' }))
+      await actor.click(screen.getByRole('button', { name: 'Crear oportunidad' })); await screen.findByText('Oportunidad creada')
+      const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('AltaOportunidad')); expect(call).toBeTruthy()
+      const body = await requestBody(call!); expect(body.idEmpresa).toBe(relation === 'Empresa' ? 4 : undefined); expect(body.idContacto).toBe(relation === 'Contacto' ? 14 : undefined)
+    }
+  })
+
+  it('envía un PATCH exacto de oportunidad sin responsable ni etapa y no envía el servicio sin cambios', async () => {
+    installCatalogApi({ services: [{ id: 3, nombre: 'Consultoría', descripcion: null, precioReferencia: 10 }] }); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/91/editar')
+    await screen.findByRole('heading', { name: 'Editar oportunidad' })
+    expect((screen.getByRole('button', { name: 'Guardar cambios' }) as HTMLButtonElement).disabled).toBe(true)
+    const date = within(screen.getByRole('group', { name: 'Fecha estimada de cierre' }))
+    expect(date.getByRole('spinbutton', { name: 'Dia' }).getAttribute('aria-valuenow')).toBe('31')
+    expect(date.getByRole('spinbutton', { name: 'Mes' }).getAttribute('aria-valuenow')).toBe('12')
+    expect(date.getByRole('spinbutton', { name: 'Año' }).getAttribute('aria-valuenow')).toBe('2026')
+    await actor.clear(screen.getByRole('textbox', { name: 'Título' })); await actor.type(screen.getByRole('textbox', { name: 'Título' }), 'Renovación extendida'); await actor.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await screen.findByText('Oportunidad actualizada')
+    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('ModificarOportunidad'))
+    expect(await requestBody(call!)).toEqual({ titulo: 'Renovación extendida' })
+  })
+
+  it('envía en ISO una fecha de cierre modificada en una oportunidad existente', async () => {
+    installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/91/editar')
+    await screen.findByRole('heading', { name: 'Editar oportunidad' })
+    const date = within(screen.getByRole('group', { name: 'Fecha estimada de cierre' }))
+    await actor.click(date.getByRole('button', { name: /Elige fecha/ }))
+    const calendar = within(await screen.findByRole('dialog', { name: 'Fecha estimada de cierre' }))
+    await actor.click(calendar.getByRole('gridcell', { name: /^30$/ }))
+    expect(date.getByRole('spinbutton', { name: 'Dia' }).getAttribute('aria-valuenow')).toBe('30')
+    await actor.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await screen.findByText('Oportunidad actualizada')
+    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('ModificarOportunidad'))
+    expect(await requestBody(call!)).toEqual({ fechaEstimadaCierre: '2026-12-30' })
+  })
+
+  it('permite quitar un servicio inactivo de una oportunidad enviando null', async () => {
+    installCatalogApi({ services: [{ id: 3, nombre: 'Consultoría', descripcion: null, precioReferencia: 10 }] }); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/91/editar')
+    await screen.findByRole('heading', { name: 'Editar oportunidad' })
+    const service = screen.getByRole('combobox', { name: 'Servicio' })
+    expect(within(service).getByText(/Capacitación \(No disponible\)/)).toBeTruthy()
+    await actor.click(service); await actor.click(screen.getByRole('option', { name: '-' })); await actor.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await screen.findByText('Oportunidad actualizada')
+    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('ModificarOportunidad'))
+    expect(await requestBody(call!)).toEqual({ idServicio: null })
+  })
+
+  it('bloquea el alta de oportunidad cuando fallan los catálogos indispensables', async () => {
+    vi.mocked(fetch).mockRejectedValue(new TypeError('Network error')); renderAuthenticated('/oportunidades/nueva')
+    await screen.findByRole('heading', { name: 'Nueva oportunidad' })
+    expect((await screen.findAllByText(/catálogo necesario para crear este registro/i)).length).toBeGreaterThan(0)
+    expect((screen.getByRole('button', { name: 'Crear oportunidad' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(vi.mocked(fetch).mock.calls.some(([input]) => requestUrl(input).includes('AltaOportunidad'))).toBe(false)
+  })
+
+  it.each([
+    ['/empresas/abc', 'No encontramos esa empresa'],
+    ['/empresas/0', 'No encontramos esa empresa'],
+    ['/empresas/-2', 'No encontramos esa empresa'],
+    ['/empresas/1.5', 'No encontramos esa empresa'],
+    ['/contactos/abc', 'No encontramos ese contacto'],
+    ['/oportunidades/0', 'No encontramos esa oportunidad'],
+  ])('representa el ID inválido %s sin consultar la API', async (path, title) => {
+    renderAuthenticated(path)
+    expect(await screen.findByRole('heading', { name: title })).toBeTruthy()
+    expect(fetch).not.toHaveBeenCalled()
   })
 })

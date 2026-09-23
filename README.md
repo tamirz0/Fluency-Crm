@@ -1,39 +1,124 @@
 # Fluency - CRM
-Proyecto universitario.
 
-## Ejecutar el backend en local
+Proyecto universitario compuesto por una API en ASP.NET Core y una aplicación web en React + Vite.
 
-### Requisitos
+## Requisitos
 
+- Git.
+- Node.js 20 o superior y npm.
 - .NET SDK 10.0.
-- Visual Studio 2026 con la carga de trabajo **ASP.NET y desarrollo web**, o la CLI de .NET.
 - PostgreSQL instalado y en ejecución.
+- Visual Studio 2026 con la carga de trabajo **ASP.NET y desarrollo web** (opcional, si no se usa la CLI de .NET).
 
-### 1. Iniciar PostgreSQL y preparar la base
+## Ejecutar el proyecto completo en local
 
-Inicia el servicio de PostgreSQL (en Windows, desde **Servicios** o el instalador de PostgreSQL) y conéctate con pgAdmin o `psql`. Crea una base llamada `FluencyLocalDB` y ejecuta una vez el script [`backend/Persistence/SQL/creacion-tablas.sql`](backend/Persistence/SQL/creacion-tablas.sql) sobre esa base. El script crea las tablas e inserta datos iniciales.
+### 1. Clonar el repositorio
 
-### 2. Configurar la conexión local
+```powershell
+git clone https://github.com/tamirz0/Fluency-Crm.git
+cd Fluency-Crm
+```
 
-La API obtiene la conexión de `ConnectionStrings:FluencyLocalDB`. Guarda las credenciales localmente con **User Secrets** (no las agregues a `appsettings.json` ni las subas al repositorio). Desde una terminal, ejecuta:
+### 2. Preparar PostgreSQL
+
+Inicia el servicio de PostgreSQL y crea una base de datos llamada `FluencyLocalDB`. Luego ejecuta una vez el script [`backend/Persistence/SQL/creacion-tablas.sql`](backend/Persistence/SQL/creacion-tablas.sql) sobre esa base usando pgAdmin o `psql`. El script crea las tablas e inserta los datos iniciales.
+
+### 3. Agregar las credenciales del backend
+
+La API lee la conexión desde `ConnectionStrings:FluencyLocalDB`. Configúrala con **User Secrets** para no guardar credenciales en `appsettings.json` ni subirlas al repositorio:
 
 ```powershell
 cd backend/FluencyAPI
 dotnet user-secrets init
 dotnet user-secrets set "ConnectionStrings:FluencyLocalDB" "Host=localhost;Port=5432;Database=FluencyLocalDB;Username=postgres;Password=TU_CLAVE_LOCAL"
 ```
-> Para usar la cadena de conexión de la DB en supabase ver nuestro Discord. NO agregar al repo.
 
-Reemplaza `Username` y `Password` por el usuario y la contraseña de tu instalación de PostgreSQL. User Secrets es local a cada máquina; cada integrante configura sus propios valores.
+Reemplaza `Username` y `Password` con los datos de tu instalación de PostgreSQL. Cada integrante debe configurar sus propios User Secrets en su máquina.
 
-### 3. Ejecutar la API
+> Si usas otra instancia o una base remota, ajusta `Host`, `Port`, `Database`, `Username` y `Password` en el comando anterior. No agregues la cadena con credenciales al repositorio.
 
-**Desde Visual Studio:** abre `backend/FluencyAPI.slnx`, configura `FluencyAPI` como proyecto de inicio y ejecuta el perfil `https` o `http`.
+### 4. Instalar las dependencias del frontend
 
-**Desde la terminal:** estando en `backend/FluencyAPI`, ejecuta:
+Desde la raíz del repositorio:
+
+```powershell
+cd frontend
+npm install
+```
+
+### 5. Ejecutar el backend
+
+Abre una terminal en `backend/FluencyAPI` y ejecuta:
 
 ```powershell
 dotnet run
 ```
 
-En el perfil `https`, la API escucha en `https://localhost:7028` y `http://localhost:5169`. En desarrollo se abre Scalar en [`https://localhost:7028/scalar/v1`](https://localhost:7028/scalar/v1) (o `http://localhost:5169/scalar/v1` con el perfil HTTP).
+También puedes abrir `backend/FluencyAPI.slnx` en Visual Studio, seleccionar `FluencyAPI` como proyecto de inicio y ejecutar el perfil `https` o `http`.
+
+Con los perfiles actuales, la API queda disponible en:
+
+- `https://localhost:7028`
+- `http://localhost:5169`
+- Documentación Scalar: `https://localhost:7028/scalar/v1` o `http://localhost:5169/scalar/v1`
+
+### 6. Ejecutar el frontend
+
+En otra terminal, desde `frontend`:
+
+```powershell
+npm run dev
+```
+
+Vite mostrará la URL local, normalmente `http://localhost:5173`. Mantén el backend ejecutándose al mismo tiempo: el frontend usa `/api` y Vite lo redirige mediante proxy a `http://localhost:5169`.
+
+Para regenerar los tipos TypeScript desde el OpenAPI del backend:
+
+```powershell
+npm run api:types
+```
+
+Este comando requiere que la API esté ejecutándose en `http://localhost:5169`.
+
+## Tests, lint y builds
+
+### Frontend
+
+Ejecuta estos comandos desde `frontend`:
+
+```powershell
+# Tests en modo interactivo
+npm test
+
+# Tests de una sola ejecución (CI)
+npm run test:run
+
+# Linter
+npm run lint
+
+# Build de producción (TypeScript + Vite)
+npm run build
+
+# Previsualizar el build generado
+npm run preview
+```
+
+El build se genera en `frontend/dist`.
+
+### Backend
+
+Desde la raíz del repositorio:
+
+```powershell
+dotnet restore backend/FluencyAPI.slnx
+dotnet build backend/FluencyAPI.slnx
+```
+
+Actualmente no hay un proyecto de tests automatizados .NET en el repositorio. Los tests disponibles están en `frontend/src` y se ejecutan con los comandos indicados arriba.
+
+## Estructura principal
+
+- `backend/FluencyAPI`: API ASP.NET Core, controladores y configuración de ejecución.
+- `backend/Persistence`: modelos, `DbContext` y script SQL inicial.
+- `backend/Services`: contratos y servicios de negocio.
+- `frontend`: aplicación React, configuración de Vite, tests y build.
