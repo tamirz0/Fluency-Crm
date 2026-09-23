@@ -11,7 +11,8 @@ import '../companies/companies.css'
 import './records.css'
 
 function ContactField({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
-  return <div className={className}><dt>{label}</dt><dd>{children || <span className="company-muted">Sin informar</span>}</dd></div>
+  const shownValue = typeof children === 'string' ? displayValue(children) : children ?? '-'
+  return <div className={className}><dt>{label}</dt><dd>{shownValue}</dd></div>
 }
 
 function ContactSkeleton() {
@@ -31,11 +32,11 @@ function ContactDetails({ contact }: { contact: Contacto }) {
     </section>
     <section className="company-detail-section" aria-labelledby="contact-commercial-heading">
       <Typography component="h2" id="contact-commercial-heading" className="company-section-heading">Datos comerciales</Typography>
-      <dl className="company-detail-fields"><ContactField label="Estado"><CompanyStatus value={contact.estadoDescripcion} /></ContactField><ContactField label="Origen">{contact.origenDescripcion?.trim()}</ContactField></dl>
+      <dl className="company-detail-fields"><ContactField label="Estado" className="company-detail-commercial-field"><CompanyStatus value={contact.estadoDescripcion} /></ContactField><ContactField label="Origen">{contact.origenDescripcion?.trim()}</ContactField></dl>
     </section>
     <section className="company-detail-section" aria-labelledby="contact-method-heading">
       <Typography component="h2" id="contact-method-heading" className="company-section-heading">Contacto</Typography>
-      <dl className="company-detail-fields"><ContactField label="Correo y teléfono"><span className="record-contact-links">{hasEmail && <Link href={`mailto:${contact.correo}`} underline="hover">{contact.correo}</Link>}{hasPhone && <Link href={`tel:${contact.telefono}`} underline="hover">{contact.telefono}</Link>}{!hasEmail && !hasPhone && 'Sin informar'}</span></ContactField></dl>
+      <dl className="company-detail-fields"><ContactField label="Correo y teléfono"><span className="record-contact-links">{hasEmail && <Link href={`mailto:${contact.correo}`} underline="hover">{contact.correo}</Link>}{hasPhone && <Link href={`tel:${contact.telefono}`} underline="hover">{contact.telefono}</Link>}{!hasEmail && !hasPhone && '-'}</span></ContactField></dl>
     </section>
     <section className="company-detail-section" aria-labelledby="contact-company-heading">
       <Typography component="h2" id="contact-company-heading" className="company-section-heading">Empresa relacionada</Typography>
@@ -43,7 +44,7 @@ function ContactDetails({ contact }: { contact: Contacto }) {
     </section>
     <section className="company-detail-section" aria-labelledby="contact-notes-heading">
       <Typography component="h2" id="contact-notes-heading" className="company-section-heading">Observaciones</Typography>
-      <p className="company-observations">{contact.observaciones?.trim() || <span className="company-muted">Sin informar</span>}</p>
+      <p className="company-observations">{displayValue(contact.observaciones)}</p>
     </section>
   </article>
 }

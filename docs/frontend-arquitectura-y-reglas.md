@@ -8,6 +8,7 @@ Para el detalle exacto de endpoints y contratos consultar [`api-frontend.md`](./
 
 - React 19, TypeScript y Vite.
 - Material UI para componentes base, tema y accesibilidad.
+- MUI X Date Pickers con Day.js para elegir o escribir fechas en los formularios.
 - React Router para navegación.
 - TanStack Query para datos remotos y caché.
 - React Hook Form y Zod para formularios y validación.
@@ -92,6 +93,7 @@ Las páginas funcionales se cargan con `React.lazy` y `Suspense`. Vite separa Re
 - Una ruta desconocida redirige a `/inicio`; la protección decide luego si debe ir a login.
 - Los parámetros de entidad deben validarse con `parsePositiveId`. Un ID inválido no dispara una consulta.
 - Un `404` muestra un estado de registro inexistente. Otros errores de carga muestran una acción de reintento.
+- La navegación lateral usa iconos y resalta de forma consistente la sección activa, también cuando se abre una ficha o formulario de esa entidad.
 
 ## 4. Autenticación y sesión
 
@@ -185,6 +187,12 @@ Todos los formularios siguen las mismas reglas:
 - Un catálogo indispensable para crear el registro bloquea el envío y ofrece `Reintentar`.
 - Una respuesta vacía no equivale a un error de conexión y debe tener un mensaje propio cuando sea relevante.
 
+### Fechas y valores ausentes
+
+- La fecha estimada de cierre de una oportunidad se puede escribir en formato `DD/MM/AAAA` o elegir en el calendario de MUI X. El control usa `LocalizationProvider` con Day.js y textos en español.
+- El formulario valida la fecha antes de guardar; el body conserva el formato ISO `yyyy-mm-dd`. Una fecha ausente permanece vacía en el editor.
+- `-` es **sólo la representación visual** de un dato ausente o no presentable. Nunca se envía a la API como sustituto de `null` o de un campo omitido: las reglas de POST y PATCH anteriores siguen vigentes.
+
 ## 7. Reglas por entidad
 
 ### Empresa
@@ -210,30 +218,41 @@ Todos los formularios siguen las mismas reglas:
 - En el alta, el responsable es el usuario autenticado.
 - En edición, responsable y etapa son de sólo lectura y no se incluyen en el PATCH.
 - La etapa se modifica exclusivamente desde el embudo.
+- El alta exige una etapa inicial y, además, al menos una empresa o un contacto. La validación aparece en el formulario antes de enviar la petición.
 - El catálogo de servicios muestra servicios activos. Si el servicio actual dejó de estar disponible, debe seguir apareciendo como `No disponible` para poder conservarlo o quitarlo.
 
 ### Embudo
 
-- Las etapas se muestran según su propiedad `orden`.
+- Las etapas se muestran según su propiedad `orden`, con una paleta discreta compartida por dashboard, grilla y embudo. El nombre visible acompaña siempre al color.
+- Contraer una etapa reduce el ancho de la columna y conserva visibles el nombre y el contador.
 - El listado general de oportunidades se obtiene aplanando la respuesta agrupada del embudo.
 - Una oportunidad no puede moverse a su etapa actual.
 - El cambio de etapa usa al usuario autenticado y admite una observación opcional normalizada con `trim`.
 - Si falla la mutación, el diálogo permanece abierto, conserva la selección y muestra el error.
 - Si no puede cargarse el catálogo de etapas, el embudo continúa visible pero la acción de cambio queda deshabilitada.
+- Las etapas empiezan desplegadas y cada tarjeta empieza compacta. Los dos niveles se pueden contraer o expandir de forma independiente mediante controles con `aria-expanded`.
+- La tarjeta compacta muestra título, Empresa y Contacto en filas con etiqueta y valor separados; los nombres largos pueden ocupar varias líneas y los vínculos ausentes se muestran como `-`. Al expandirla muestra Cierre estimado, Responsable y la acción de cambiar etapa.
+- El resumen del embudo no incluye Servicio en el contrato actual; ese dato sólo se presenta donde se consulta el detalle completo.
 
 ## 8. Presentación y accesibilidad
 
 La identidad visual es exclusivamente oscura y utiliza:
 
 - Noche `#0B1118` como fondo, tinta `#101C28` para navegación y pizarra `#162631` para superficies.
-- Borde `#2A3D48`, niebla `#E7EFF1` como texto principal y verde agua `#62BDB5` para acciones, selección y foco.
+- Borde `#344A55`, niebla `#E7EFF1` como texto principal y verde agua `#62BDB5` para acciones, selección y foco.
 - Source Sans 3 como familia tipográfica.
+- Las cabeceras y los datos de las grillas se centran. Las cabeceras usan un fondo y borde inferior discretos para distinguirlas de los registros. Los nombres principales de Empresa, Contacto y Oportunidad usan un poco más de peso y contraste, más un subrayado tenue en su enlace.
+- Los íconos del dashboard conservan un tono propio por entidad. Las etapas comerciales usan una paleta discreta compartida por dashboard, grilla y embudo, siempre junto con su nombre.
 
 No existe selector ni variante clara. Los valores de solo lectura, incluidos Responsable y Etapa actual en la edición de oportunidades, se presentan como información semántica, nunca como inputs.
 
-Las fechas se muestran siempre como `dd/mm/yyyy`. La frontera con la API convierte estrictamente entre ese formato y el ISO `yyyy-mm-dd`, sin aplicar conversiones horarias.
+Las fechas informadas se muestran como `dd/mm/yyyy`; un valor ausente o no presentable se muestra como `-`. La frontera con la API convierte estrictamente entre ese formato y el ISO `yyyy-mm-dd`, sin aplicar conversiones horarias. Los selectores opcionales muestran `-` como opción vacía, sin convertir ese carácter en un valor de negocio.
 
-Inicio reutiliza las consultas y claves de caché de empresas, contactos y oportunidades por etapa. Su pulso comercial cuenta oportunidades totales y empresas/contactos activos; activo significa exclusivamente estado `Cliente` o `Potencial`, ignorando espacios y mayúsculas. `Inactivo`, vacío y `Sin informar` se excluyen.
+Inicio reutiliza las consultas y claves de caché de empresas, contactos y oportunidades por etapa. Cada tarjeta del pulso comercial integra el **total de registros** y su desglose: oportunidades por etapa y empresas/contactos por estado. Los valores ausentes o vacíos se agrupan como `-`, incluidas las etapas que devuelve la API sin nombre; el conteo de `-` forma parte del total y cada desglose suma exactamente el total de su entidad. Esta categoría es sólo de presentación: no modifica los valores `null` enviados o recibidos por la API.
+
+Los listados de las tres entidades usan `ListSearch` y `matchesSearch` para filtrar en memoria los campos visibles, ignorando mayúsculas y acentos. La búsqueda muestra resultados sobre el total y permite limpiar el filtro cuando no hay coincidencias. No existe un endpoint de búsqueda ni paginación para esos listados.
+
+Las tres grillas omiten la columna Acción. En escritorio, un clic sobre la fila abre la ficha; el nombre o título sigue siendo un enlace accesible por teclado. Los enlaces de relación, correo y teléfono detienen la navegación de la fila para conservar su destino propio. Empresas ubica Estado en la segunda columna; la grilla de contactos también ubica Estado en la segunda columna. Ambas grillas se ordenan alfabéticamente por estado con el mismo criterio, y los estados ausentes o vacíos quedan al final conservando entre sí el orden recibido. Empresas y contactos separan Correo y Teléfono en columnas independientes; ambos campos siguen incluidos en la búsqueda. Oportunidades separa Empresa y Contacto en columnas independientes, busca ambos vínculos y usa el encabezado «Cierre estimado»; vínculos faltantes muestran `-`. Una etapa ausente también muestra `-` como texto normal, sin chip; las etapas informadas usan chips con la paleta compartida. Los nombres de etapa siempre acompañan el color.
 
 Mantener una interfaz sobria y operativa:
 
@@ -242,7 +261,7 @@ Mantener una interfaz sobria y operativa:
 - Estados de carga mediante skeleton o indicador con `role="status"`.
 - Estados vacíos que expliquen qué aparecerá o qué acción puede realizarse.
 - Errores con causa comprensible y una acción concreta cuando sea posible.
-- Valores faltantes representados de forma consistente como `Sin informar`.
+- Valores faltantes representados como `-` en fichas, grillas, tarjetas y campos compartidos; distinguirlos de mensajes de estado como `Sin oportunidades` o `No disponible`.
 - Navegación por teclado, etiquetas accesibles, contraste suficiente y foco visible.
 - Respetar `prefers-reduced-motion`.
 - Los botones principales mantienen una altura mínima de 44 px.
@@ -263,6 +282,13 @@ Las pruebas se organizan por comportamiento, no por detalles internos. Deben cub
 - Invalidaciones de caché que cambien datos visibles.
 - Reglas de relación entre empresa, contacto y oportunidad.
 - Servicio inactivo y cambio de etapa.
+- Fecha estimada escrita, elegida en calendario, inválida y convertida a ISO.
+- Búsqueda en los tres listados, incluido el caso sin coincidencias, y apertura de fichas desde las filas.
+- Expansión de tarjetas y etapas del embudo, con Contacto en la vista compacta.
+- Totales y desgloses del inicio, incluidos estados ausentes.
+- Desglose de oportunidades que incluye etapas ausentes y suma exactamente el total de registros.
+- Vínculos de Empresa y Contacto en oportunidades, búsqueda por ambos campos y presentación de relaciones ausentes.
+- Colapso de etapas que conserva nombre y contador; la tarjeta expandida mantiene Cierre estimado y el cambio de etapa.
 - IDs de ruta inválidos sin llamadas a la API.
 
 No usar snapshots grandes como sustituto de pruebas de interacción. Consultar por rol, nombre accesible y texto visible siempre que sea posible.

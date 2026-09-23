@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { BrowserRouter } from 'react-router-dom'
@@ -134,18 +134,103 @@ describe('altas y ediciones', () => {
     const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('AltaOportunidad')); expect(call).toBeTruthy(); expect(await requestBody(call!)).toMatchObject({ titulo: 'Nueva venta', idUsuario: 7, idEtapa: 3, idEmpresa: 4, idContacto: 14 })
   })
 
+  it('acepta el cierre escrito DD/MM/AAAA y envía una fecha ISO', async () => {
+    installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/nueva'); await screen.findByRole('heading', { name: 'Nueva oportunidad' })
+    await actor.type(screen.getByRole('textbox', { name: 'Título' }), 'Cierre escrito')
+    await actor.click(screen.getByRole('combobox', { name: 'Etapa inicial' })); await actor.click(await screen.findByRole('option', { name: 'Propuesta' }))
+    await actor.click(screen.getByRole('combobox', { name: 'Empresa' })); await actor.click(await screen.findByRole('option', { name: 'Acme Idiomas' }))
+    const date = within(screen.getByRole('group', { name: 'Fecha estimada de cierre' }))
+    await actor.type(date.getByRole('spinbutton', { name: 'Dia' }), '15')
+    await actor.type(date.getByRole('spinbutton', { name: 'Mes' }), '08')
+    await actor.type(date.getByRole('spinbutton', { name: 'Año' }), '2027')
+    expect(date.getByRole('spinbutton', { name: 'Dia' }).getAttribute('aria-valuenow')).toBe('15')
+    expect(date.getByRole('spinbutton', { name: 'Mes' }).getAttribute('aria-valuenow')).toBe('8')
+    expect(date.getByRole('spinbutton', { name: 'Año' }).getAttribute('aria-valuenow')).toBe('2027')
+    await actor.click(screen.getByRole('button', { name: 'Crear oportunidad' })); await screen.findByText('Oportunidad creada')
+    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('AltaOportunidad'))
+    expect(await requestBody(call!)).toMatchObject({ fechaEstimadaCierre: '2027-08-15' })
+  })
+
+  it('permite elegir el cierre en calendario y envía una fecha ISO', async () => {
+    installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/nueva'); await screen.findByRole('heading', { name: 'Nueva oportunidad' })
+    await actor.type(screen.getByRole('textbox', { name: 'Título' }), 'Cierre por calendario')
+    await actor.click(screen.getByRole('combobox', { name: 'Etapa inicial' })); await actor.click(await screen.findByRole('option', { name: 'Propuesta' }))
+    await actor.click(screen.getByRole('combobox', { name: 'Empresa' })); await actor.click(await screen.findByRole('option', { name: 'Acme Idiomas' }))
+    const date = within(screen.getByRole('group', { name: 'Fecha estimada de cierre' }))
+    await actor.click(date.getByRole('button', { name: 'Elige fecha' }))
+    const calendar = within(await screen.findByRole('dialog', { name: 'Fecha estimada de cierre' }))
+    await actor.click(calendar.getByRole('gridcell', { name: /^1$/ }))
+    expect(date.getByRole('spinbutton', { name: 'Dia' }).getAttribute('aria-valuenow')).toBe('1')
+    await actor.click(screen.getByRole('button', { name: 'Crear oportunidad' })); await screen.findByText('Oportunidad creada')
+    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('AltaOportunidad'))
+    expect(await requestBody(call!)).toMatchObject({ fechaEstimadaCierre: /^\d{4}-\d{2}-01$/ })
+  })
+
+  it('bloquea una fecha imposible ingresada manualmente', async () => {
+    installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/nueva'); await screen.findByRole('heading', { name: 'Nueva oportunidad' })
+    await actor.type(screen.getByRole('textbox', { name: 'Título' }), 'Fecha inválida')
+    await actor.click(screen.getByRole('combobox', { name: 'Etapa inicial' })); await actor.click(await screen.findByRole('option', { name: 'Propuesta' }))
+    await actor.click(screen.getByRole('combobox', { name: 'Empresa' })); await actor.click(await screen.findByRole('option', { name: 'Acme Idiomas' }))
+    const date = within(screen.getByRole('group', { name: 'Fecha estimada de cierre' }))
+    await actor.type(date.getByRole('spinbutton', { name: 'Dia' }), '31')
+    await actor.type(date.getByRole('spinbutton', { name: 'Mes' }), '02')
+    await actor.type(date.getByRole('spinbutton', { name: 'Año' }), '2026')
+    expect(await screen.findByText('Ingresá una fecha válida.')).toBeTruthy()
+    expect((screen.getByRole('button', { name: 'Crear oportunidad' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(vi.mocked(fetch).mock.calls.some(([input]) => requestUrl(input).includes('AltaOportunidad'))).toBe(false)
+  })
+
   it('no permite crear una oportunidad sin empresa ni contacto', async () => {
     installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/nueva'); await screen.findByRole('heading', { name: 'Nueva oportunidad' }); await actor.type(screen.getByRole('textbox', { name: 'Título' }), 'Sin relación'); await actor.click(screen.getByRole('button', { name: 'Crear oportunidad' })); expect(await screen.findByText('Seleccioná una empresa o un contacto.')).toBeTruthy(); expect(vi.mocked(fetch).mock.calls.some(([input]) => requestUrl(input).includes('AltaOportunidad'))).toBe(false)
+  })
+
+  it('exige la etapa inicial antes de crear una oportunidad', async () => {
+    installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/nueva'); await screen.findByRole('heading', { name: 'Nueva oportunidad' })
+    await actor.type(screen.getByRole('textbox', { name: 'Título' }), 'Sin etapa')
+    await actor.click(screen.getByRole('combobox', { name: 'Empresa' })); await actor.click(await screen.findByRole('option', { name: 'Acme Idiomas' }))
+    await actor.click(screen.getByRole('button', { name: 'Crear oportunidad' }))
+    expect(await screen.findByText('Seleccioná la etapa inicial.')).toBeTruthy()
+    expect(vi.mocked(fetch).mock.calls.some(([input]) => requestUrl(input).includes('AltaOportunidad'))).toBe(false)
+  })
+
+  it('crea una oportunidad con solo empresa o solo contacto', async () => {
+    for (const relation of ['Empresa', 'Contacto'] as const) {
+      cleanup(); vi.mocked(fetch).mockClear(); installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/nueva'); await screen.findByRole('heading', { name: 'Nueva oportunidad' })
+      await actor.type(screen.getByRole('textbox', { name: 'Título' }), `Solo ${relation}`)
+      await actor.click(screen.getByRole('combobox', { name: 'Etapa inicial' })); await actor.click(await screen.findByRole('option', { name: 'Propuesta' }))
+      await actor.click(screen.getByRole('combobox', { name: relation })); await actor.click(await screen.findByRole('option', { name: relation === 'Empresa' ? 'Acme Idiomas' : 'Pérez, Lucía' }))
+      await actor.click(screen.getByRole('button', { name: 'Crear oportunidad' })); await screen.findByText('Oportunidad creada')
+      const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('AltaOportunidad')); expect(call).toBeTruthy()
+      const body = await requestBody(call!); expect(body.idEmpresa).toBe(relation === 'Empresa' ? 4 : undefined); expect(body.idContacto).toBe(relation === 'Contacto' ? 14 : undefined)
+    }
   })
 
   it('envía un PATCH exacto de oportunidad sin responsable ni etapa y no envía el servicio sin cambios', async () => {
     installCatalogApi({ services: [{ id: 3, nombre: 'Consultoría', descripcion: null, precioReferencia: 10 }] }); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/91/editar')
     await screen.findByRole('heading', { name: 'Editar oportunidad' })
     expect((screen.getByRole('button', { name: 'Guardar cambios' }) as HTMLButtonElement).disabled).toBe(true)
+    const date = within(screen.getByRole('group', { name: 'Fecha estimada de cierre' }))
+    expect(date.getByRole('spinbutton', { name: 'Dia' }).getAttribute('aria-valuenow')).toBe('31')
+    expect(date.getByRole('spinbutton', { name: 'Mes' }).getAttribute('aria-valuenow')).toBe('12')
+    expect(date.getByRole('spinbutton', { name: 'Año' }).getAttribute('aria-valuenow')).toBe('2026')
     await actor.clear(screen.getByRole('textbox', { name: 'Título' })); await actor.type(screen.getByRole('textbox', { name: 'Título' }), 'Renovación extendida'); await actor.click(screen.getByRole('button', { name: 'Guardar cambios' }))
     await screen.findByText('Oportunidad actualizada')
     const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('ModificarOportunidad'))
     expect(await requestBody(call!)).toEqual({ titulo: 'Renovación extendida' })
+  })
+
+  it('envía en ISO una fecha de cierre modificada en una oportunidad existente', async () => {
+    installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/91/editar')
+    await screen.findByRole('heading', { name: 'Editar oportunidad' })
+    const date = within(screen.getByRole('group', { name: 'Fecha estimada de cierre' }))
+    await actor.click(date.getByRole('button', { name: /Elige fecha/ }))
+    const calendar = within(await screen.findByRole('dialog', { name: 'Fecha estimada de cierre' }))
+    await actor.click(calendar.getByRole('gridcell', { name: /^30$/ }))
+    expect(date.getByRole('spinbutton', { name: 'Dia' }).getAttribute('aria-valuenow')).toBe('30')
+    await actor.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await screen.findByText('Oportunidad actualizada')
+    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('ModificarOportunidad'))
+    expect(await requestBody(call!)).toEqual({ fechaEstimadaCierre: '2026-12-30' })
   })
 
   it('permite quitar un servicio inactivo de una oportunidad enviando null', async () => {
@@ -153,7 +238,7 @@ describe('altas y ediciones', () => {
     await screen.findByRole('heading', { name: 'Editar oportunidad' })
     const service = screen.getByRole('combobox', { name: 'Servicio' })
     expect(within(service).getByText(/Capacitación \(No disponible\)/)).toBeTruthy()
-    await actor.click(service); await actor.click(screen.getByRole('option', { name: 'Sin informar' })); await actor.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await actor.click(service); await actor.click(screen.getByRole('option', { name: '-' })); await actor.click(screen.getByRole('button', { name: 'Guardar cambios' }))
     await screen.findByText('Oportunidad actualizada')
     const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('ModificarOportunidad'))
     expect(await requestBody(call!)).toEqual({ idServicio: null })

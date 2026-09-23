@@ -26,10 +26,10 @@ function initialCompanyValues(company?: Empresa): CompanyFormValues {
   return { razonSocial: company?.razonSocial ?? '', cuit: company?.cuit ?? '', industria: company?.industria ?? '', correo: company?.correo ?? '', telefono: company?.telefono ?? '', direccion: company?.direccion ?? '', idEstado: company?.idEstado == null ? '' : String(company.idEstado), idOrigen: company?.idOrigen == null ? '' : String(company.idOrigen), observaciones: company?.observaciones ?? '' }
 }
 
-function CatalogSelect({ label, name, value, onChange, options, error, disabled }: { label: string; name: string; value: string; onChange: (value: string) => void; options: { id: number | string; descripcion: string }[]; error?: string; disabled?: boolean }) {
+function CatalogSelect({ label, name, value, onChange, options, error, disabled, className }: { label: string; name: string; value: string; onChange: (value: string) => void; options: { id: number | string; descripcion: string }[]; error?: string; disabled?: boolean; className?: string }) {
   const displayOptions = value && !options.some((option) => String(option.id) === value) ? [{ id: value, descripcion: 'Cargando…' }, ...options] : options
-  return <TextField select fullWidth label={label} name={name} value={value} onChange={(event) => onChange(event.target.value)} disabled={disabled} error={Boolean(error)} helperText={error}>
-    <MenuItem value="">Sin informar</MenuItem>{displayOptions.map((option) => <MenuItem key={option.id} value={String(option.id)}>{option.descripcion}</MenuItem>)}
+  return <TextField select fullWidth className={className} label={label} name={name} value={value} onChange={(event) => onChange(event.target.value)} disabled={disabled} error={Boolean(error)} helperText={error}>
+    <MenuItem value="">-</MenuItem>{displayOptions.map((option) => <MenuItem key={option.id} value={String(option.id)}>{option.descripcion}</MenuItem>)}
   </TextField>
 }
 
@@ -72,11 +72,13 @@ function CompanyEditor({ company, mode }: { company?: Empresa; mode: 'create' | 
       <TextField {...register('industria')} label="Industria" fullWidth error={Boolean(errors.industria)} helperText={errors.industria?.message} />
       <TextField {...register('direccion')} className="record-form-wide" label="Dirección" fullWidth error={Boolean(errors.direccion)} helperText={errors.direccion?.message} />
     </FormSection>
-    <FormSection title="Datos comerciales" description="Podés completar estos datos ahora o agregarlos más adelante.">
-      <div><Controller name="idEstado" control={control} render={({ field, fieldState }) => <CatalogSelect label="Estado" name={field.name} value={field.value ?? ''} onChange={field.onChange} options={stateQuery.data ?? []} error={fieldState.error?.message} />} />{stateQuery.isError && <CatalogMessage error={stateQuery.error} onRetry={() => void stateQuery.refetch()} />}</div>
-      <div><Controller name="idOrigen" control={control} render={({ field, fieldState }) => <CatalogSelect label="Origen" name={field.name} value={field.value ?? ''} onChange={field.onChange} options={originQuery.data ?? []} error={fieldState.error?.message} />} />{originQuery.isError && <CatalogMessage error={originQuery.error} onRetry={() => void originQuery.refetch()} />}</div>
+    <FormSection title="Contacto" description="Elegí cómo se comunica el equipo con la organización.">
       <TextField {...register('correo')} label="Correo" type="email" fullWidth error={Boolean(errors.correo)} helperText={errors.correo?.message} />
       <TextField {...register('telefono')} label="Teléfono" fullWidth error={Boolean(errors.telefono)} helperText={errors.telefono?.message} />
+    </FormSection>
+    <FormSection title="Datos comerciales" description="Definí el estado y el origen de la relación.">
+      <div><Controller name="idEstado" control={control} render={({ field, fieldState }) => <CatalogSelect className="record-form-emphasis" label="Estado" name={field.name} value={field.value ?? ''} onChange={field.onChange} options={stateQuery.data ?? []} error={fieldState.error?.message} />} />{stateQuery.isError && <CatalogMessage error={stateQuery.error} onRetry={() => void stateQuery.refetch()} />}</div>
+      <div><Controller name="idOrigen" control={control} render={({ field, fieldState }) => <CatalogSelect label="Origen" name={field.name} value={field.value ?? ''} onChange={field.onChange} options={originQuery.data ?? []} error={fieldState.error?.message} />} />{originQuery.isError && <CatalogMessage error={originQuery.error} onRetry={() => void originQuery.refetch()} />}</div>
     </FormSection>
     <FormSection title="Observaciones"><TextField {...register('observaciones')} className="record-form-wide" label="Observaciones" fullWidth multiline minRows={4} /></FormSection>
   </RecordFormPage>

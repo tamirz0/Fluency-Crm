@@ -1,54 +1,66 @@
 import { Business, Refresh } from '@mui/icons-material'
 import { Box, Button, Link, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link as RouterLink } from 'react-router-dom'
+import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import { empresaQueryKeys, getCompanies, type Empresa } from '../../api/client'
+import { displayValue } from '../shared/display'
 import { CompanyStatus } from './CompanyStatus'
+import { ListSearch, NoSearchResults } from '../shared/ListSearch'
+import { matchesSearch } from '../shared/searchText'
+import { sortByStatus } from '../shared/sortByStatus'
 import './companies.css'
-
-function displayValue(value: string | null | undefined) {
-  return value?.trim() ? value : 'Sin informar'
-}
 
 function CompanyContact({ company }: { company: Empresa }) {
   const hasEmail = Boolean(company.correo?.trim())
   const hasPhone = Boolean(company.telefono?.trim())
-  if (!hasEmail && !hasPhone) return <span className="company-muted">Sin informar</span>
+  if (!hasEmail && !hasPhone) return <span className="company-muted">-</span>
   return <span className="company-contact-links">
-    {hasEmail && <Link href={`mailto:${company.correo}`} underline="hover">{company.correo}</Link>}
-    {hasPhone && <Link href={`tel:${company.telefono}`} underline="hover">{company.telefono}</Link>}
+    {hasEmail && <Link href={`mailto:${company.correo}`} underline="hover" onClick={(event) => event.stopPropagation()}>{company.correo}</Link>}
+    {hasPhone && <Link href={`tel:${company.telefono}`} underline="hover" onClick={(event) => event.stopPropagation()}>{company.telefono}</Link>}
   </span>
 }
 
-function DesktopRows({ companies }: { companies: Empresa[] }) {
+function CompanyEmail({ company }: { company: Empresa }) {
+  return company.correo?.trim()
+    ? <Link href={`mailto:${company.correo}`} underline="hover" onClick={(event) => event.stopPropagation()}>{company.correo}</Link>
+    : <span className="company-muted">-</span>
+}
+
+function CompanyPhone({ company }: { company: Empresa }) {
+  return company.telefono?.trim()
+    ? <Link href={`tel:${company.telefono}`} underline="hover" onClick={(event) => event.stopPropagation()}>{company.telefono}</Link>
+    : <span className="company-muted">-</span>
+}
+
+function DesktopRows({ companies, onOpen }: { companies: Empresa[]; onOpen: (id: string | number) => void }) {
   return <TableContainer className="company-table-wrap">
-    <Table aria-label="Empresas" className="company-table">
+    <Table aria-label="Empresas" className="company-table company-list-table">
       <caption className="visually-hidden">Listado de empresas</caption>
       <TableHead><TableRow>
-        <TableCell>Razón social</TableCell><TableCell>Estado</TableCell><TableCell>Industria</TableCell><TableCell>Contacto</TableCell><TableCell>Origen</TableCell><TableCell align="right">Acción</TableCell>
+        <TableCell>Razón social</TableCell><TableCell>Estado</TableCell><TableCell>Industria</TableCell><TableCell>Correo</TableCell><TableCell>Teléfono</TableCell><TableCell>Origen</TableCell>
       </TableRow></TableHead>
-      <TableBody>{companies.map((company) => <TableRow key={company.id}>
-        <TableCell className="company-name-cell">{company.razonSocial}</TableCell>
+      <TableBody>{companies.map((company) => <TableRow key={company.id} className="company-clickable-row" onClick={() => onOpen(company.id)}>
+        <TableCell className="company-name-cell"><Link component={RouterLink} to={`/empresas/${company.id}`} aria-label={`Abrir ficha de ${company.razonSocial}`} underline="hover" onClick={(event) => event.stopPropagation()}>{company.razonSocial}</Link></TableCell>
         <TableCell><CompanyStatus value={company.estadoDescripcion} /></TableCell>
         <TableCell>{displayValue(company.industria)}</TableCell>
-        <TableCell><CompanyContact company={company} /></TableCell>
+        <TableCell><CompanyEmail company={company} /></TableCell>
+        <TableCell><CompanyPhone company={company} /></TableCell>
         <TableCell>{displayValue(company.origenDescripcion)}</TableCell>
-        <TableCell align="right"><Link component={RouterLink} to={`/empresas/${company.id}`} aria-label={`Ver detalle de ${company.razonSocial}`} underline="hover">Ver detalle</Link></TableCell>
       </TableRow>)}</TableBody>
     </Table>
   </TableContainer>
 }
 
-function MobileRecords({ companies }: { companies: Empresa[] }) {
+function MobileRecords({ companies, onOpen }: { companies: Empresa[]; onOpen: (id: string | number) => void }) {
   return <ul className="company-record-list" aria-label="Empresas">
-    {companies.map((company) => <li className="company-record" key={company.id}>
-      <div className="company-record-heading"><h2>{company.razonSocial}</h2><CompanyStatus value={company.estadoDescripcion} /></div>
+    {companies.map((company) => <li className="company-record company-clickable-record" key={company.id} onClick={() => onOpen(company.id)}>
+      <div className="company-record-heading"><h2><Link component={RouterLink} to={`/empresas/${company.id}`} aria-label={`Abrir ficha de ${company.razonSocial}`} underline="hover" onClick={(event) => event.stopPropagation()}>{company.razonSocial}</Link></h2><CompanyStatus value={company.estadoDescripcion} /></div>
       <dl className="company-record-fields">
         <div><dt>Industria</dt><dd>{displayValue(company.industria)}</dd></div>
         <div><dt>Origen</dt><dd>{displayValue(company.origenDescripcion)}</dd></div>
         <div className="company-record-contact"><dt>Contacto</dt><dd><CompanyContact company={company} /></dd></div>
       </dl>
-      <Link component={RouterLink} to={`/empresas/${company.id}`} aria-label={`Ver detalle de ${company.razonSocial}`} underline="hover" className="company-record-action">Ver detalle</Link>
     </li>)}
   </ul>
 }
@@ -56,7 +68,7 @@ function MobileRecords({ companies }: { companies: Empresa[] }) {
 function CompanyListSkeleton() {
   return <div className="companies-loading" role="status" aria-label="Cargando empresas">
     <TableContainer className="company-table-wrap company-skeleton-table">
-      <Table aria-hidden="true"><TableHead><TableRow>{['Razón social', 'Estado', 'Industria', 'Contacto', 'Origen', 'Acción'].map((heading) => <TableCell key={heading}>{heading}</TableCell>)}</TableRow></TableHead>
+      <Table aria-hidden="true" className="company-list-table"><TableHead><TableRow>{['Razón social', 'Estado', 'Industria', 'Correo', 'Teléfono', 'Origen'].map((heading) => <TableCell key={heading}>{heading}</TableCell>)}</TableRow></TableHead>
         <TableBody>{[0, 1, 2, 3].map((row) => <TableRow key={row}>{[0, 1, 2, 3, 4, 5].map((cell) => <TableCell key={cell}><Skeleton width={cell === 0 ? '85%' : '70%'} /></TableCell>)}</TableRow>)}</TableBody>
       </Table>
     </TableContainer>
@@ -65,7 +77,15 @@ function CompanyListSkeleton() {
 }
 
 export function CompaniesPage() {
+  const navigate = useNavigate()
+  const openCompany = (id: string | number) => navigate(`/empresas/${id}`)
   const { data, error, isPending, refetch } = useQuery({ queryKey: empresaQueryKeys.all, queryFn: getCompanies })
+  const [search, setSearch] = useState('')
+  const filteredCompanies = useMemo(() => sortByStatus((data ?? []).filter((company) => matchesSearch([
+    company.razonSocial, displayValue(company.estadoDescripcion), displayValue(company.industria),
+    company.correo, company.telefono,
+    displayValue(company.origenDescripcion),
+  ], search))), [data, search])
 
   return <Box className="companies-page">
     <header className="companies-page-header">
@@ -81,8 +101,11 @@ export function CompaniesPage() {
       <Typography id="companies-empty-title" component="h2" className="company-feedback-title">Todavía no hay empresas</Typography>
       <Typography color="text.secondary">Las empresas registradas van a aparecer en este listado.</Typography>
     </section> : <>
-      <div className="company-list-desktop"><DesktopRows companies={data} /></div>
-      <div className="company-list-mobile"><MobileRecords companies={data} /></div>
+      <ListSearch label="empresas" query={search} onQueryChange={setSearch} resultCount={filteredCompanies.length} totalCount={data.length} />
+      {filteredCompanies.length === 0 ? <NoSearchResults query={search} onClear={() => setSearch('')} /> : <>
+        <div className="company-list-desktop"><DesktopRows companies={filteredCompanies} onOpen={openCompany} /></div>
+        <div className="company-list-mobile"><MobileRecords companies={filteredCompanies} onOpen={openCompany} /></div>
+      </>}
     </>}
   </Box>
 }

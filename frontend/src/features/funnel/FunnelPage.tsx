@@ -1,20 +1,20 @@
-import { Refresh } from '@mui/icons-material'
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, InputLabel, MenuItem, Select, Snackbar, TextField, Typography } from '@mui/material'
+import { ChevronRight, ExpandMore, Refresh } from '@mui/icons-material'
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, IconButton, InputLabel, MenuItem, Select, Snackbar, TextField, Typography } from '@mui/material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import { catalogQueryKeys, getCommercialStages, getOpportunitiesByStage, opportunityQueryKeys, updateOpportunityStage, type EtapaConOportunidades, type OportunidadResumen } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { displayValue, formatCommercialDate, opportunityContactName } from '../shared/display'
-import { orderStagesByPosition } from '../opportunities/opportunityData'
+import { orderStagesByPosition, stageToneClass } from '../opportunities/opportunityData'
 import './funnel.css'
 
 function opportunityCustomer(opportunity: OportunidadResumen) {
-  return opportunity.empresaRazonSocial?.trim() || opportunityContactName(opportunity)
+  return opportunity.idEmpresa ? displayValue(opportunity.empresaRazonSocial) : '-'
 }
 
 function opportunityResponsible(opportunity: OportunidadResumen) {
-  return [opportunity.usuarioNombre?.trim(), opportunity.usuarioApellido?.trim()].filter(Boolean).join(' ') || 'Sin informar'
+  return displayValue([opportunity.usuarioNombre?.trim(), opportunity.usuarioApellido?.trim()].filter(Boolean).join(' '))
 }
 
 function countLabel(count: number) {
@@ -34,14 +34,30 @@ function OpportunityCard({ opportunity, disabled, disabledReason, onChangeStage 
   disabledReason: string
   onChangeStage: (opportunity: OportunidadResumen) => void
 }) {
-  return <article className="funnel-opportunity">
-    <h3><RouterLink to={`/oportunidades/${opportunity.id}`}>{displayValue(opportunity.titulo)}</RouterLink></h3>
-    <dl className="funnel-card-fields">
-      <div><dt>Cliente</dt><dd>{opportunityCustomer(opportunity)}</dd></div>
-      <div><dt>Responsable</dt><dd>{opportunityResponsible(opportunity)}</dd></div>
-      <div><dt>Cierre estimado</dt><dd>{formatCommercialDate(opportunity.fechaEstimadaCierre)}</dd></div>
-    </dl>
-    <Button size="small" variant="outlined" disabled={disabled} title={disabled ? disabledReason : undefined} onClick={() => onChangeStage(opportunity)}>Cambiar etapa</Button>
+  const [expanded, setExpanded] = useState(false)
+  const detailsId = `opportunity-details-${opportunity.id}`
+  const contactName = opportunityContactName(opportunity)
+
+  return <article className={`funnel-opportunity${expanded ? ' is-expanded' : ''}`}>
+    <div className="funnel-opportunity-summary">
+      <div className="funnel-opportunity-main">
+        <h3><RouterLink to={`/oportunidades/${opportunity.id}`}>{displayValue(opportunity.titulo)}</RouterLink></h3>
+        <dl className="funnel-card-fields funnel-card-fields--compact">
+          <div><dt>Empresa</dt><dd>{opportunity.idEmpresa ? <RouterLink className="funnel-related-link" to={`/empresas/${opportunity.idEmpresa}`}>{opportunityCustomer(opportunity)}</RouterLink> : '-'}</dd></div>
+          <div><dt>Contacto</dt><dd>{opportunity.idContacto ? <RouterLink className="funnel-related-link" to={`/contactos/${opportunity.idContacto}`}>{contactName}</RouterLink> : '-'}</dd></div>
+        </dl>
+      </div>
+      <IconButton className="funnel-expand-button" aria-label={`${expanded ? 'Contraer' : 'Expandir'} oportunidad ${displayValue(opportunity.titulo)}`} aria-expanded={expanded} aria-controls={detailsId} onClick={() => setExpanded((current) => !current)} size="small">
+        {expanded ? <ExpandMore fontSize="small" /> : <ChevronRight fontSize="small" />}
+      </IconButton>
+    </div>
+    <div id={detailsId} className="funnel-opportunity-details" hidden={!expanded}>
+      <dl className="funnel-card-fields funnel-card-fields--details">
+        <div><dt>Cierre estimado</dt><dd>{formatCommercialDate(opportunity.fechaEstimadaCierre)}</dd></div>
+        <div><dt>Responsable</dt><dd>{opportunityResponsible(opportunity)}</dd></div>
+      </dl>
+      <Button size="small" variant="outlined" disabled={disabled} title={disabled ? disabledReason : undefined} onClick={() => onChangeStage(opportunity)}>Cambiar etapa</Button>
+    </div>
   </article>
 }
 
@@ -54,6 +70,7 @@ export function FunnelPage() {
   const [newStageId, setNewStageId] = useState('')
   const [observation, setObservation] = useState('')
   const [confirmed, setConfirmed] = useState(false)
+  const [collapsedStages, setCollapsedStages] = useState<Set<number | string>>(() => new Set())
 
   const mutation = useMutation({
     mutationFn: (input: { idOportunidad: number; idNuevaEtapa: number | string; observacion?: string }) => updateOpportunityStage(input.idOportunidad, {
@@ -111,11 +128,27 @@ export function FunnelPage() {
       {stagesQuery.isError && <Alert className="funnel-catalog-message" severity="warning" action={<Button color="inherit" size="small" onClick={() => void stagesQuery.refetch()}>Reintentar</Button>}>No pudimos cargar las etapas comerciales. El embudo está disponible, pero no se pueden cambiar etapas por ahora.</Alert>}
       {!stagesQuery.isError && !stagesQuery.isPending && catalogStages.length === 0 && <Alert className="funnel-catalog-message" severity="info">No hay etapas comerciales disponibles. El embudo está disponible, pero no se pueden cambiar etapas.</Alert>}
       {totalOpportunities === 0 && <p className="funnel-empty-summary">No hay oportunidades en el embudo.</p>}
-      {stages.length === 0 ? <section className="company-feedback"><Typography component="h2" className="company-feedback-title">No hay etapas para mostrar</Typography><Typography color="text.secondary">Cuando haya etapas comerciales, van a aparecer en este embudo.</Typography></section> : <div className="funnel-board-scroll" role="region" aria-label="Etapas del embudo comercial" tabIndex={0}><div className="funnel-board" style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(270px, 1fr))` }}>
-        {stages.map((stage) => <section className="funnel-stage" key={stage.idEtapa} aria-labelledby={`stage-${stage.idEtapa}`}>
-          <header className="funnel-stage-heading"><div><h2 id={`stage-${stage.idEtapa}`}>{stage.nombre}</h2><p>{countLabel(stage.oportunidades.length)}</p></div></header>
-          {stage.oportunidades.length === 0 ? <p className="funnel-stage-empty">Sin oportunidades</p> : <div className="funnel-stage-opportunities">{stage.oportunidades.map((opportunity) => <OpportunityCard key={opportunity.id} opportunity={{ ...opportunity, idEtapa: stage.idEtapa, etapaNombre: stage.nombre, etapaOrden: stage.orden }} disabled={catalogUnavailable || stagesQuery.isPending || mutation.isPending} disabledReason={actionDisabledReason} onChangeStage={openDialog} />)}</div>}
-        </section>)}
+      {stages.length === 0 ? <section className="company-feedback"><Typography component="h2" className="company-feedback-title">No hay etapas para mostrar</Typography><Typography color="text.secondary">Cuando haya etapas comerciales, van a aparecer en este embudo.</Typography></section> : <div className="funnel-board-scroll" role="region" aria-label="Etapas del embudo comercial" tabIndex={0}><div className="funnel-board" style={{ gridTemplateColumns: stages.map((stage) => collapsedStages.has(stage.idEtapa) ? 'minmax(160px, .58fr)' : 'minmax(270px, 1fr)').join(' ') }}>
+        {stages.map((stage, stageIndex) => {
+          const collapsed = collapsedStages.has(stage.idEtapa)
+          const stageContentId = `stage-content-${stage.idEtapa}`
+          return <section className={`funnel-stage ${stageToneClass(stageIndex)}${collapsed ? ' is-collapsed' : ''}`} key={stage.idEtapa} aria-labelledby={`stage-${stage.idEtapa}`}>
+            <header className="funnel-stage-heading">
+              <div className="funnel-stage-copy"><h2 id={`stage-${stage.idEtapa}`}>{displayValue(stage.nombre)}</h2><p className="funnel-stage-count">{countLabel(stage.oportunidades.length)}</p></div>
+              <IconButton className="funnel-stage-collapse" type="button" size="small" aria-expanded={!collapsed} aria-controls={stageContentId} aria-label={`${collapsed ? 'Expandir' : 'Contraer'} etapa ${stage.nombre}`} onClick={() => setCollapsedStages((current) => {
+                const next = new Set(current)
+                if (next.has(stage.idEtapa)) next.delete(stage.idEtapa)
+                else next.add(stage.idEtapa)
+                return next
+              })}>
+                {collapsed ? <ChevronRight fontSize="small" /> : <ExpandMore fontSize="small" />}
+              </IconButton>
+            </header>
+            <div id={stageContentId} className="funnel-stage-content" hidden={collapsed}>
+              {stage.oportunidades.length === 0 ? <p className="funnel-stage-empty">Sin oportunidades</p> : <div className="funnel-stage-opportunities">{stage.oportunidades.map((opportunity) => <OpportunityCard key={opportunity.id} opportunity={{ ...opportunity, idEtapa: stage.idEtapa, etapaNombre: stage.nombre, etapaOrden: stage.orden }} disabled={catalogUnavailable || stagesQuery.isPending || mutation.isPending} disabledReason={actionDisabledReason} onChangeStage={openDialog} />)}</div>}
+            </div>
+          </section>
+        })}
       </div></div>}
     </>}
 

@@ -9,6 +9,10 @@ export function flattenOpportunitiesByStage(stages: EtapaConOportunidades[]): Op
   })))
 }
 
+export function stageToneClass(index: number): string {
+  return `stage-tone-${(index % 5) + 1}`
+}
+
 export function orderStagesByPosition(stages: EtapaConOportunidades[]): EtapaConOportunidades[] {
   return stages.map((stage, index) => ({ stage, index }))
     .sort((left, right) => Number(left.stage.orden) - Number(right.stage.orden) || left.index - right.index)

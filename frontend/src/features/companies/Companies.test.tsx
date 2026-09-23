@@ -96,8 +96,8 @@ describe('consulta de empresas', () => {
     expect(requestUrl(vi.mocked(fetch).mock.calls[0] ?? [])).toContain('/api/Empresa/ListadoEmpresas')
   })
 
-  it('muestra todos los campos y conserva el orden recibido por la API', async () => {
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([firstCompany, secondCompany]))
+  it('ubica Estado en la segunda columna, ordena por estado y deja los vacíos al final', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([secondCompany, firstCompany]))
     renderAuthenticated()
 
     const table = await loadedCompanyTable()
@@ -106,19 +106,28 @@ describe('consulta de empresas', () => {
     expect(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(table.getByText('Potencial')).toBeTruthy()
     expect(table.getByText('Educación')).toBeTruthy()
+    expect(table.getByRole('columnheader', { name: 'Correo' })).toBeTruthy()
+    expect(table.getByRole('columnheader', { name: 'Teléfono' })).toBeTruthy()
     expect(table.getByRole('link', { name: 'contacto@acme.com' }).getAttribute('href')).toBe('mailto:contacto@acme.com')
     expect(table.getByRole('link', { name: '1144445555' }).getAttribute('href')).toBe('tel:1144445555')
+    const companyRow = table.getByRole('row', { name: /Acme Idiomas/ })
+    const companyCells = Array.from(companyRow.querySelectorAll('td'))
+    expect(companyCells[1]?.textContent).toContain('Potencial')
+    expect(companyCells[3]?.textContent).toBe('contacto@acme.com')
+    expect(companyCells[4]?.textContent).toBe('1144445555')
+    expect(Array.from(table.getAllByRole('row')).slice(1).map((row) => row.textContent?.includes('Beta Cursos'))).toEqual([false, true])
     expect(table.getByText('Referido')).toBeTruthy()
-    expect(table.getByRole('link', { name: 'Ver detalle de Acme Idiomas' })).toBeTruthy()
+    expect(table.getByRole('link', { name: 'Abrir ficha de Acme Idiomas' })).toBeTruthy()
+    expect(table.queryByRole('columnheader', { name: 'Acción' })).toBeNull()
   })
 
-  it('reemplaza valores nulos con Sin informar', async () => {
+  it('representa los valores nulos con guiones', async () => {
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([secondCompany]))
     renderAuthenticated()
 
     const table = await loadedCompanyTable()
     await table.findByText('Beta Cursos')
-    expect(table.getAllByText('Sin informar').length).toBeGreaterThanOrEqual(4)
+    expect(table.getAllByText('-').length).toBeGreaterThanOrEqual(4)
   })
 
   it('explica el estado vacío sin ofrecer un alta todavía', async () => {
@@ -141,14 +150,14 @@ describe('consulta de empresas', () => {
     expect(fetch).toHaveBeenCalledTimes(2)
   })
 
-  it('navega al detalle sin abandonar la aplicación y consulta el id solicitado', async () => {
+  it('abre la ficha al seleccionar una celda de la fila y consulta el id solicitado', async () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(jsonResponse([firstCompany]))
       .mockResolvedValueOnce(jsonResponse(firstCompany))
     renderAuthenticated()
 
     const table = await loadedCompanyTable()
-    await userEvent.setup().click(await table.findByRole('link', { name: 'Ver detalle de Acme Idiomas' }))
+    await userEvent.setup().click(await table.findByText('Potencial'))
     expect(await screen.findByRole('heading', { name: 'Acme Idiomas' })).toBeTruthy()
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2))
     expect(requestUrl(vi.mocked(fetch).mock.calls[1] ?? [])).toContain('/api/Empresa/DatosEmpresa/4')
@@ -185,7 +194,7 @@ describe('consulta de empresas', () => {
 
     await screen.findByRole('heading', { name: 'Acme Idiomas' })
     await userEvent.setup().click(screen.getByRole('link', { name: 'Volver a empresas' }))
-    expect(await (await loadedCompanyTable()).findByRole('link', { name: 'Ver detalle de Acme Idiomas' })).toBeTruthy()
+    expect(await (await loadedCompanyTable()).findByRole('link', { name: 'Abrir ficha de Acme Idiomas' })).toBeTruthy()
     expect(requestUrl(vi.mocked(fetch).mock.calls[1] ?? [])).toContain('/api/Empresa/ListadoEmpresas')
   })
 
@@ -241,10 +250,10 @@ describe('consulta de empresas', () => {
     expect(screen.getByRole('link', { name: 'Empresas' }).getAttribute('aria-current')).toBeNull()
   })
 
-  it('permite llegar con Tab a la acción Ver detalle', async () => {
+  it('permite llegar con Tab al nombre enlazado de la empresa', async () => {
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([firstCompany]))
     renderAuthenticated()
-    const detailLink = await (await loadedCompanyTable()).findByRole('link', { name: 'Ver detalle de Acme Idiomas' })
+    const detailLink = await (await loadedCompanyTable()).findByRole('link', { name: 'Abrir ficha de Acme Idiomas' })
     const actor = userEvent.setup()
     for (let index = 0; index < 16 && document.activeElement !== detailLink; index += 1) await actor.tab()
     await waitFor(() => expect(document.activeElement).toBe(detailLink))

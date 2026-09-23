@@ -5,25 +5,28 @@ export function parsePositiveId(value: string | undefined): number | undefined {
 }
 
 export function displayValue(value: string | null | undefined): string {
-  return value?.trim() || 'Sin informar'
+  return value?.trim() || '-'
 }
 
 export function contactFullName(contact: { nombre?: string | null; apellido?: string | null }): string {
-  return [contact.apellido?.trim(), contact.nombre?.trim()].filter(Boolean).join(', ') || 'Sin informar'
+  return [contact.apellido?.trim(), contact.nombre?.trim()].filter(Boolean).join(', ') || '-'
 }
 
 export function opportunityContactName(contact: { contactoApellido?: string | null; contactoNombre?: string | null }): string {
-  return [contact.contactoApellido?.trim(), contact.contactoNombre?.trim()].filter(Boolean).join(', ') || 'Sin informar'
+  return [contact.contactoApellido?.trim(), contact.contactoNombre?.trim()].filter(Boolean).join(', ') || '-'
 }
 
 export function formatCommercialDate(value: string | null | undefined): string {
-  if (!value?.trim()) return 'Sin informar'
+  if (!value?.trim()) return '-'
   const dateOnly = /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim())
-  if (!dateOnly) return 'Sin informar'
+  if (!dateOnly) return '-'
   return `${dateOnly[3]}/${dateOnly[2]}/${dateOnly[1]}`
 }
 
-export function isoToCommercialDate(value: string | null | undefined): string { return formatCommercialDate(value) === 'Sin informar' ? '' : formatCommercialDate(value) }
+export function isoToCommercialDate(value: string | null | undefined): string {
+  if (!value?.trim() || !/^\d{4}-\d{2}-\d{2}/.test(value.trim())) return ''
+  return formatCommercialDate(value)
+}
 
 export function commercialDateToIso(value: string): { value?: string; error?: 'format' | 'invalid' } {
   if (!value.trim()) return {}

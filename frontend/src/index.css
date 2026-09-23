@@ -1,8 +1,9 @@
 @import '@fontsource-variable/source-sans-3';
-:root { font-family: 'Source Sans 3 Variable', 'Source Sans 3', sans-serif; color: #e7eff1; background: #0b1118; font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+:root { font-family: 'Source Sans 3 Variable', 'Source Sans 3', sans-serif; color: #e7eff1; background: #0b1118; font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; --stage-tone-1: #86c8bd; --stage-tone-2: #8fb7d6; --stage-tone-3: #d2b979; --stage-tone-4: #b4a4d1; --stage-tone-5: #d39d92; }
 * { box-sizing: border-box; }
 body { min-width: 320px; min-height: 100svh; margin: 0; }
 button, input { font: inherit; }
 #root { min-height: 100svh; }
 ::selection { color: #0b1118; background: #62bdb5; }
+button:focus-visible, a:focus-visible, [role='button']:focus-visible, [role='tab']:focus-visible { outline: 2px solid #8adbd3; outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }

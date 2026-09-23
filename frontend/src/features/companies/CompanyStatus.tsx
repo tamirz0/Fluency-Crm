@@ -1,4 +1,5 @@
 import { Chip } from '@mui/material'
+import { displayValue } from '../shared/display'
 
 function companyStatusTone(value: string | null | undefined) {
   const normalized = value?.toLocaleLowerCase('es') ?? ''
@@ -9,7 +10,8 @@ function companyStatusTone(value: string | null | undefined) {
 }
 
 export function CompanyStatus({ value }: { value: string | null | undefined }) {
-  const label = value?.trim() || 'Sin informar'
+  const label = displayValue(value)
   const tone = companyStatusTone(value)
+  
   return <Chip className={`company-status company-status--${tone}`} label={label} size="small" />
 }
