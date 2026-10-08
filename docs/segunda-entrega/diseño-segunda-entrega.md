@@ -6,12 +6,14 @@
 >
 > **Propósito:** ser la referencia funcional del próximo incremento del CRM de la academia. Define el modelo E-R, el circuito comercial, sus excepciones y las decisiones que el frontend y el backend deben respetar. No es un plan técnico de implementación.
 
+> **Complemento confirmado el 08/10/2026:** [decisiones de la entrevista](decisiones-confirmadas.md), que concretan roles, lectura compartida, modificaciones por responsable, reapertura, usuarios iniciales, sesiones y entornos sin sustituir las reglas del circuito.
+
 ## 1. Cómo utilizar este documento
 
 Este documento consolida las decisiones finales de la conversación de diseño. Las propuestas iniciales fueron revisadas: no deben recuperarse reglas descartadas solamente porque aparezcan en un plan anterior, en el código de la primera entrega o en documentación previa.
 
 - Para el **comportamiento objetivo de la segunda entrega**, esta es la referencia funcional acordada.
-- [Modelo de dominio anterior](modelo-dominio.md), [documentación de la primera entrega](entrega-1.md) y [contratos anteriores](api-frontend.md) sirven como contexto del estado previo. No reemplazan estas decisiones.
+- [Modelo de dominio anterior](../primera-entrega/modelo-dominio.md), [documentación de la primera entrega](../primera-entrega/entrega-1.md) y [contratos anteriores](../primera-entrega/api-frontend.md) sirven como contexto del estado previo. No reemplazan estas decisiones.
 - El enunciado sigue siendo la referencia de los requisitos académicos. Las simplificaciones y limitaciones adoptadas aquí se declaran expresamente; no se presentan como requisitos textuales de la profesora.
 - Los futuros agentes deben implementar el comportamiento indicado, no volver a decidir las reglas funcionales ni incorporar mejoras futuras como si estuvieran aprobadas.
 - Una decisión técnica posterior —por ejemplo, rutas HTTP, autenticación, organización de archivos o mecanismo de persistencia— no debe alterar estas reglas.
@@ -20,10 +22,10 @@ Este documento consolida las decisiones finales de la conversación de diseño. 
 
 Se analizaron las cuatro consignas:
 
-- [Consigna del trabajo práctico](../Enunciado/Consigna_Trabajo_Practico.pdf): alcance, roles y especialización del CRM; especialmente páginas 4–6.
-- [Definiciones generales](../Enunciado/Definiciones-Generales.pdf): entidades, conservación del historial y reglas generales; especialmente páginas 2–5.
-- [Módulos principales](../Enunciado/Modulos_Principales.pdf): clientes, oportunidades, etapas, actividades e historial; páginas 1–7.
-- [Entregas CRM](../Enunciado/Entregas-CRM.pdf): diferencia entre primera entrega y entrega final; páginas 2–3.
+- [Consigna del trabajo práctico](../../Enunciado/Consigna_Trabajo_Practico.pdf): alcance, roles y especialización del CRM; especialmente páginas 4–6.
+- [Definiciones generales](../../Enunciado/Definiciones-Generales.pdf): entidades, conservación del historial y reglas generales; especialmente páginas 2–5.
+- [Módulos principales](../../Enunciado/Modulos_Principales.pdf): clientes, oportunidades, etapas, actividades e historial; páginas 1–7.
+- [Entregas CRM](../../Enunciado/Entregas-CRM.pdf): diferencia entre primera entrega y entrega final; páginas 2–3.
 
 También se tomó la aclaración transmitida por el usuario: una oportunidad se organiza mediante un embudo; deja de tener una relación directa con servicios o líneas de servicios.
 
