@@ -19,4 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="../FluencyAPI/FluencyAPI.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="../Persistence/SQL/segunda-entrega-*.sql" Link="SQL/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
