@@ -428,9 +428,14 @@ public partial class FluencyLocalDbContext : DbContext
 
             entity.ToTable("permiso");
 
-            entity.Property(e => e.Id).HasColumnName("id");
+            entity.HasIndex(e => e.Codigo, "permiso_codigo_key").IsUnique();
+
+            entity.Property(e => e.Id).UseIdentityAlwaysColumn().HasColumnName("id");
+            entity.Property(e => e.Codigo)
+                .HasMaxLength(100)
+                .HasColumnName("codigo");
             entity.Property(e => e.Descripcion)
-                .HasMaxLength(200)
+                .HasColumnType("text")
                 .HasColumnName("descripcion");
         });
 
@@ -445,10 +450,12 @@ public partial class FluencyLocalDbContext : DbContext
 
             entity.HasOne(d => d.IdPermisoNavigation).WithMany(p => p.PermisoRoles)
                 .HasForeignKey(d => d.IdPermiso)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("permiso_rol_id_permiso_fkey");
 
             entity.HasOne(d => d.IdRolNavigation).WithMany(p => p.PermisoRoles)
                 .HasForeignKey(d => d.IdRol)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("permiso_rol_id_rol_fkey");
         });
 
@@ -460,12 +467,12 @@ public partial class FluencyLocalDbContext : DbContext
 
             entity.HasIndex(e => e.Nombre, "rol_nombre_key").IsUnique();
 
-            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Id).UseIdentityAlwaysColumn().HasColumnName("id");
             entity.Property(e => e.Descripcion)
-                .HasMaxLength(200)
+                .HasColumnType("text")
                 .HasColumnName("descripcion");
             entity.Property(e => e.Nombre)
-                .HasMaxLength(50)
+                .HasMaxLength(100)
                 .HasColumnName("nombre");
         });
 
@@ -505,13 +512,11 @@ public partial class FluencyLocalDbContext : DbContext
 
             entity.ToTable("usuario");
 
-            entity.HasIndex(e => e.Correo, "usuario_correo_key").IsUnique();
-
-            entity.HasIndex(e => e.Username, "usuario_username_key").IsUnique();
-
-            entity.Property(e => e.Id).HasColumnName("id");
+            // The expression indexes lower(btrim(...)) are defined only by the SQL.
+            entity.Property(e => e.Id).UseIdentityAlwaysColumn().HasColumnName("id");
             entity.Property(e => e.Activo)
                 .HasDefaultValue(true)
+                .HasSentinel(true)
                 .HasColumnName("activo");
             entity.Property(e => e.Apellido)
                 .HasMaxLength(100)
@@ -523,7 +528,7 @@ public partial class FluencyLocalDbContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("nombre");
             entity.Property(e => e.PasswordHash)
-                .HasMaxLength(255)
+                .HasMaxLength(150)
                 .HasColumnName("password_hash");
             entity.Property(e => e.Username)
                 .HasMaxLength(50)
@@ -541,10 +546,12 @@ public partial class FluencyLocalDbContext : DbContext
 
             entity.HasOne(d => d.IdRolNavigation).WithMany(p => p.UsuarioRoles)
                 .HasForeignKey(d => d.IdRol)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("usuario_rol_id_rol_fkey");
 
             entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.UsuarioRoles)
                 .HasForeignKey(d => d.IdUsuario)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("usuario_rol_id_usuario_fkey");
         });
 

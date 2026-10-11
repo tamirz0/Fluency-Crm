@@ -17,7 +17,7 @@ public partial class Usuario
 
     public string PasswordHash { get; set; } = null!;
 
-    public bool? Activo { get; set; }
+    public bool Activo { get; set; } = true;
 
     public virtual ICollection<ActividadOportunidad> ActividadOportunidades { get; set; } = new List<ActividadOportunidad>();
 
