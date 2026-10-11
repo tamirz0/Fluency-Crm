@@ -1,10 +1,42 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Persistence.Models;
 using Scalar.AspNetCore;
 using Services.Implementations;
 using Services.Interface;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var connectionString = builder.Configuration.GetConnectionString("SegundaEntregaDB");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Falta configurar ConnectionStrings:SegundaEntregaDB mediante User Secrets o variables de entorno.");
+}
+
+NpgsqlConnectionStringBuilder connectionSettings;
+try
+{
+    connectionSettings = new NpgsqlConnectionStringBuilder(connectionString);
+}
+catch (ArgumentException)
+{
+    throw new InvalidOperationException("La configuración ConnectionStrings:SegundaEntregaDB no es válida.");
+}
+
+if (string.IsNullOrWhiteSpace(connectionSettings.Host)
+    || string.IsNullOrWhiteSpace(connectionSettings.Database))
+{
+    throw new InvalidOperationException(
+        "La configuración ConnectionStrings:SegundaEntregaDB debe indicar Host y Database no vacíos.");
+}
+
+if (builder.Environment.IsDevelopment()
+    && connectionSettings.Host is not ("localhost" or "127.0.0.1" or "::1"))
+{
+    throw new InvalidOperationException(
+        "En Development, ConnectionStrings:SegundaEntregaDB debe usar un único host local: localhost, 127.0.0.1 o ::1.");
+}
 
 // Add services to the container.
 
@@ -13,7 +45,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<FluencyLocalDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("FluencyLocalDB")));
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IOportunidadService, OportunidadService>();
 builder.Services.AddScoped<IContactoService, ContactoService>();

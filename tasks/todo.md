@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 11/10/2026. **Plan y especificación aprobados; planificación cerrada; T01 ejecutada, T02–T49 pendientes.** La línea de base tiene deuda registrada, no todos los controles verdes. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
+Plan del 08/10/2026, actualizado el 11/10/2026. **Plan y especificación aprobados; planificación cerrada; T01–T02 ejecutadas, T03–T49 pendientes.** La línea de base tiene deuda registrada, no todos los controles verdes. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -9,7 +9,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 ## Índice
 
 - [x] [T01 — Actualizar la línea de base y los comandos de control](#t01)
-- [ ] [T02 — Aislar la configuración de base local](#t02)
+- [x] [T02 — Aislar la configuración de base local](#t02)
 - [ ] [T03 — Preparar pruebas HTTP con PostgreSQL aislado](#t03)
 - [ ] [T04 — Escribir el esquema objetivo de segunda entrega](#t04)
 - [ ] [T05 — Mapear la identidad y los tres roles fijos](#t05)
@@ -90,15 +90,22 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 
 **Archivos probables:** `backend/Persistence/Models/FluencyLocalDbContext.cs`; `backend/FluencyAPI/Program.cs`; `docs/segunda-entrega/entorno-local.md (nuevo)`.
 
+**Subdivisión al iniciar (11/10/2026):** la elección conjunta de User Secrets agrega `FluencyAPI.csproj`; junto con guía, evidencia y seguimiento, el total supera cinco archivos. Se conserva T02 como tarea padre y se ejecuta secuencialmente:
+
+- [x] **T02.a — Configuración explícita:** habilitar User Secrets; quitar respaldo del DbContext; validar la nueva clave `ConnectionStrings:SegundaEntregaDB` y destino local en Development. Áreas: csproj, Program.cs y DbContext; build y diagnóstico sin configuración.
+- [x] **T02.b — Entorno local y evidencia:** identificar/crear la base vacía acordada `fluency_segunda_entrega_dev`, configurar el secreto fuera de Git, comprobar destino/ausencia de cambios de esquema y documentar operación en `docs/segunda-entrega/entorno-local.md` y `tasks/verificaciones/verificacion-t02.md`. Actualizar seguimiento solo con evidencia real.
+
+Decisiones del usuario: User Secrets de .NET y base nueva `fluency_segunda_entrega_dev` en el PostgreSQL local existente, usando sus credenciales. Conservar `appsettings.json` y la base anterior; no ejecutar esquema hasta T04. Base de pruebas y fixture corresponden a T03.
+
 **Aceptación:**
 
-- [ ] Eliminar la conexión con contraseña de respaldo del código; configuración ausente produce diagnóstico sin secretos.
-- [ ] Identificar host/puerto locales del contenedor autorizado y una base de desarrollo separada; no modificar la conexión local ajena ni recrear la primera entrega.
-- [ ] Documentar variables y destinos con valores de ejemplo inocuos; distinguir desarrollo de pruebas y prohibir fallback a Azure.
+- [x] Eliminar la conexión con contraseña de respaldo del código; configuración ausente produce diagnóstico sin secretos.
+- [x] Identificar host/puerto locales del contenedor autorizado y una base de desarrollo separada; no modificar la conexión local ajena ni recrear la primera entrega.
+- [x] Documentar variables y destinos con valores de ejemplo inocuos; distinguir desarrollo de pruebas y prohibir fallback a Azure.
 
 **Verificación:** B + D; arranque local sin configuración falla de forma clara; revisión redactada del destino. Si falta información de acceso, pedir solo ese dato.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia (11/10/2026):** [comandos, resultados, duraciones y límites](verificaciones/verificacion-t02.md). Build sin errores/advertencias; siete rechazos de configuración comprobados antes de escuchar y sin revelar valores ficticios. API y proxy OpenAPI 200. Conexión TCP con User Secrets confirma `localhost:5433` y base acordada sin tablas; propietario verificado. Contraseña de respaldo eliminada; configuración local ajena preservada fuera del cambio. Revisión independiente sin bloqueantes y árbol escaneado sin secretos nuevos; queda la credencial local preexistente. T03 prepara el fixture y T04 el esquema. Integración pendiente del OK del usuario; no se hizo merge ni publicación.
 
 <a id="t03"></a>
 
