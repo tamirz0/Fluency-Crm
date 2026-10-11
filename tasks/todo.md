@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 11/10/2026. **Plan y especificación aprobados; planificación cerrada; T01–T02 ejecutadas e integradas en `segunda-entrega`, T03–T49 pendientes.** El usuario confirmó el push. Siguiente paso: T03 y CP01, decidiendo juntos la base de pruebas y su limpieza antes de escrituras. La línea de base tiene deuda registrada, no todos los controles verdes. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
+Plan del 08/10/2026, actualizado el 11/10/2026. **Plan y especificación aprobados; planificación cerrada; T01–T02 integradas en `segunda-entrega`; T03 y CP01 ejecutadas en `segunda-entrega-t03-pruebas-aisladas`, pendientes del OK de integración. T04–T49 pendientes.** El usuario confirmó el push de T01/T02. Siguiente paso tras integrar: T04, esquema comercial; desarrollo permanece vacío. La línea de base conserva deuda identificada. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -10,7 +10,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 
 - [x] [T01 — Actualizar la línea de base y los comandos de control](#t01)
 - [x] [T02 — Aislar la configuración de base local](#t02)
-- [ ] [T03 — Preparar pruebas HTTP con PostgreSQL aislado](#t03)
+- [x] [T03 — Preparar pruebas HTTP con PostgreSQL aislado](#t03)
 - [ ] [T04 — Escribir el esquema objetivo de segunda entrega](#t04)
 - [ ] [T05 — Mapear la identidad y los tres roles fijos](#t05)
 - [ ] [T06 — Crear el administrador mediante inicialización explícita](#t06)
@@ -117,20 +117,26 @@ Decisiones del usuario: User Secrets de .NET y base nueva `fluency_segunda_entre
 
 **Archivos probables:** `backend/FluencyAPI.Tests/FluencyAPI.Tests.csproj (nuevo)`; `backend/FluencyAPI.Tests/LocalApiFactory.cs (nuevo)`; `backend/FluencyAPI.Tests/DatabaseIsolationTests.cs (nuevo)`; `backend/FluencyAPI.slnx`; `backend/FluencyAPI/Program.cs`.
 
+**Subdivisión antes de implementar (11/10/2026):** el inventario incluye también guía y evidencia, por lo que se divide en T03.a (proyecto, fixture, pruebas y wiring) y T03.b (configuración local, guía, evidencia y CP01). Las comprobaciones de destino y ciclo de vida podrán separarse dentro del proyecto de tests para mantener archivos legibles.
+
+**Decisiones del usuario:** base exclusiva `fluency_segunda_entrega_test` en `localhost:5433`; esquema único y una tabla de infraestructura por ejecución. Limpieza limitada a esos objetos, sin cascadas ni eliminación de la base; tras una interrupción los restos requieren revisión, sin barridos automáticos. Desarrollo permanece vacío hasta T04. Configuración exclusiva de tests mediante User Secrets, clave `ConnectionStrings:SegundaEntregaTestDB`, sin respaldo en la conexión de desarrollo.
+
 **Aceptación:**
 
-- [ ] Crear proyecto xUnit/WebApplicationFactory compatible y base de tests identificada, separada de desarrollo; la conexión nunca hereda Azure ni la conexión habitual.
-- [ ] El fixture comprueba host, base y propiedad antes de preparar/limpiar sus datos; sin configuración falla explícitamente, sin skip ni InMemory.
-- [ ] Demostrar una escritura/lectura real y limpieza limitada al recurso creado por tests; documentar el mecanismo de aislamiento para ejecuciones repetidas.
+- [x] Crear proyecto xUnit/WebApplicationFactory compatible y base de tests identificada, separada de desarrollo; la conexión nunca hereda Azure ni la conexión habitual.
+- [x] El fixture comprueba host, base y propiedad antes de preparar/limpiar sus datos; sin configuración falla explícitamente, sin skip ni InMemory.
+- [x] Demostrar una escritura/lectura real y limpieza limitada al recurso creado por tests; documentar el mecanismo de aislamiento para ejecuciones repetidas.
 
 **Verificación:** B + API(DatabaseIsolationTests) + D; un destino no permitido se rechaza antes de escribir.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia T03 (11/10/2026):** [verificacion-t03.md](verificaciones/verificacion-t03.md). Código en `c78dcc3`; 26/26 tests backend sin omisiones y segunda ejecución aislada 5/5; build sin errores/advertencias, auditoría .NET de cuatro proyectos sin hallazgos, revisión independiente sin bloqueantes. Base nueva y propietario verificados, clave exclusiva configurada e importación Windows Terminal confirmada por el usuario. Limpieza propia comprobada y desarrollo vacío. Sin esquema comercial ni cambios de contrato; pendiente de integración con OK.
 
 ### CP01 — Entorno local
 
-- [ ] Comprobar línea de base actual, rechazo de conexión no local y fixture aislado. No avanzar a SQL contra una base de destino desconocida.
-- [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+- [x] Comprobar línea de base actual, rechazo de conexión no local y fixture aislado. No avanzar a SQL contra una base de destino desconocida.
+- [x] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+
+**Evidencia CP01:** [verificacion-t03.md](verificaciones/verificacion-t03.md). Arranque remoto rechazado antes de escuchar; OpenAPI/HTML/proxy locales 200. Frontend build/lint correctos, advertencia previa conservada; suite 71/71 (207,54 s). B7 no se reprodujo, sin corregir su causa; B8 sigue pendiente, sin nueva auditoría npm. Desarrollo y tests terminaron sin tablas ni esquemas de fixture. Inicio y documentación HTTP habilitados; login y operaciones comerciales del modelo nuevo siguen pendientes de sus tareas.
 
 <a id="t04"></a>
 
