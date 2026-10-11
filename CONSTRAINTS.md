@@ -22,7 +22,7 @@ Acuerdos de producto y permisos confirmados el 08/10/2026: [decisiones de la ent
 - No rebajar estas condiciones ni inventar excepciones. Una excepción nueva requiere un acuerdo explícito, alcance, motivo, responsable y vencimiento o hito de revisión.
 - Revisar también archivos nuevos y cambios staged; `git diff` por sí solo no cubre todo el trabajo. Los diffs sensibles se inspeccionan con valores redactados.
 
-Estado de aplicación: reglas escritas para revisión de cada cambio; no hay guard automático ni hooks instalados. Las exclusiones preexistentes se registran como deuda, no como permiso para copiar el patrón. T01 (11/10/2026) ejecutó los controles y acotó el script lint; evidencia y comandos actuales en [verificacion-t01.md](docs/segunda-entrega/verificacion-t01.md). Esto no incorpora un guard automático ni acredita que todos los controles estén verdes.
+Estado de aplicación: reglas escritas para revisión de cada cambio; no hay guard automático ni hooks instalados. Las exclusiones preexistentes se registran como deuda, no como permiso para copiar el patrón. T01 (11/10/2026) ejecutó los controles y acotó el script lint; evidencia y comandos actuales en [verificacion-t01.md](tasks/verificaciones/verificacion-t01.md). Esto no incorpora un guard automático ni acredita que todos los controles estén verdes.
 
 ## 3. Controles disponibles
 
