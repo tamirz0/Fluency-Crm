@@ -83,7 +83,7 @@ Base: `segunda-entrega` / `f9fde15` más cambios locales de configuración y URL
 
 ### 6.1. Línea de base actual: T01, 11/10/2026
 
-La tabla anterior conserva el relevamiento histórico, no los resultados actuales. Base actual: `ae4cc2e` más la modificación local ajena de `appsettings.json`. Ver [evidencia reproducible](docs/segunda-entrega/verificacion-t01.md).
+La tabla anterior conserva el relevamiento histórico, no los resultados actuales. Base actual: `ae4cc2e` más la modificación local ajena de `appsettings.json`. Ver [evidencia reproducible](tasks/verificaciones/verificacion-t01.md).
 
 - B1: los tres fallos de URL no se reprodujeron; las pruebas de empresas pasaron usando `/api`.
 - B2: el script lint queda acotado al código propio, sin cambiar reglas ni exclusiones.
