@@ -206,4 +206,55 @@ La limpieza compara identidad/propietario de la base y los OID/propietarios de l
 dotnet test backend/FluencyAPI.Tests/FluencyAPI.Tests.csproj --no-restore --filter 'FullyQualifiedName~SchemaTests'
 ```
 
-Este incremento prepara persistencia, no habilita los recorridos comerciales del modelo nuevo. Los mapeos y permisos se adaptan en las tareas siguientes; roles/permisos iniciales corresponden a T05 y administrador inicial a T06. Fuentes de operación: [transacciones y errores de psql](https://www.postgresql.org/docs/17/app-psql.html), [dependencias y RESTRICT](https://www.postgresql.org/docs/17/ddl-depend.html).
+T04 prepara persistencia, sin habilitar recorridos comerciales nuevos. T05 alinea los mapeos de identidad y prepara roles/permisos; el administrador inicial corresponde a T06 y la sesión efectiva a tareas posteriores. Fuentes de operación: [transacciones y errores de psql](https://www.postgresql.org/docs/17/app-psql.html), [dependencias y RESTRICT](https://www.postgresql.org/docs/17/ddl-depend.html).
+
+## Preparación explícita de roles y permisos: T05
+
+`backend/Persistence/SQL/segunda-entrega-roles.sql` se ejecuta después del esquema y catálogos de T04, **antes** del bootstrap de T06, en una transacción externa con destino/esquema explícitos. En una primera instalación pueden aplicarse los tres archivos en ese orden dentro de una misma transacción. Si T04 ya está instalado, ejecutar únicamente la semilla de roles; no repetir la creación de tablas.
+
+Los nombres estables de rol son `ADMINISTRADOR`, `RESPONSABLE_COMERCIAL` y `VENDEDOR`; `descripcion` contiene su etiqueta. No se añade una columna ni migración de rol. Permisos: `ConsultarComercial`, `GestionarClientes`, `GestionarOportunidad`, `GestionarActividad` para los tres perfiles; `ReabrirOportunidad` también para administrador/responsable; `AdministrarUsuarios` y `AdministrarConfiguracion` solo para administrador. Resultado esperado: tres roles, siete permisos y dieciséis asociaciones, sin usuarios. El alcance propio/total respeta los roles y su precedencia; los permisos no anulan las reglas del circuito.
+
+La semilla verifica las cinco tablas de identidad del esquema destino y rechaza datos existentes en ellas. Las bloquea durante la transacción para evitar una inicialización simultánea. No contiene borrados ni upserts para corregir definiciones ajenas; una segunda ejecución se rechaza y conserva lo instalado. Crear usuarios y administrar sus roles asignados son tareas posteriores; no hay CRUD para redefinir roles/permisos.
+
+Procedimiento para el desarrollo local ya preparado en T04, desde la raíz y después de revisar SQL/pruebas:
+
+```powershell
+$ErrorActionPreference = 'Stop'
+$taskContainer = '968c3a20d1e55ae43fa73f0c27ff3fcc08f38c00a22ae27105c8b227cd14a964'
+$taskState = docker inspect --format '{{.State.Status}}' $taskContainer
+if ($LASTEXITCODE -ne 0 -or $taskState -ne 'running') {
+    throw 'El contenedor local identificado no está disponible.'
+}
+$taskPorts = docker inspect --format '{{json .NetworkSettings.Ports}}' $taskContainer |
+    ConvertFrom-Json
+if ($LASTEXITCODE -ne 0 -or @($taskPorts.'5432/tcp').Count -ne 1 -or
+    $taskPorts.'5432/tcp'[0].HostIp -ne '127.0.0.1' -or
+    $taskPorts.'5432/tcp'[0].HostPort -ne '5433') {
+    throw 'La publicación del PostgreSQL local no coincide con el destino acordado.'
+}
+$taskPreamble = @'
+BEGIN;
+SET LOCAL search_path = public;
+SET LOCAL fluency.target_database = 'fluency_segunda_entrega_dev';
+DO $$
+BEGIN
+    IF current_database() <> 'fluency_segunda_entrega_dev'
+       OR current_user <> session_user
+       OR current_user <> (SELECT pg_get_userbyid(datdba)
+                           FROM pg_database WHERE datname = current_database()) THEN
+        RAISE EXCEPTION 'Destino o propietario de desarrollo inesperado';
+    END IF;
+END $$;
+'@
+$taskSql = $taskPreamble + "`n" +
+    (Get-Content -LiteralPath 'backend/Persistence/SQL/segunda-entrega-roles.sql' -Raw) +
+    "`nCOMMIT;"
+$taskOutput = $taskSql | docker exec -e PGOPTIONS= -i $taskContainer sh -c `
+    'exec psql -X -w -h /var/run/postgresql -p 5432 -U "$POSTGRES_USER" -d fluency_segunda_entrega_dev -v ON_ERROR_STOP=1'
+if ($LASTEXITCODE -ne 0) {
+    throw 'Preparación de roles rechazada; revisar destino y restricciones sin borrar datos.'
+}
+'Roles y permisos preparados en desarrollo; sin cuentas creadas.'
+```
+
+Procedimiento ejecutado una vez al cerrar T05 (11/10/2026), después de revisión estática, suite backend 58/58 y build correcto, con SQL guardado en `5e38d60`. Consulta final: 20 tablas, tres roles/siete permisos/dieciséis asociaciones, cero usuarios/roles asignados y cero servicios/embudos/oportunidades. La base de tests quedó sin tablas ni esquemas propios. No volver a ejecutarlo sobre esta instalación; ver [evidencia](../../tasks/verificaciones/verificacion-t05.md). No se ejecuta al arrancar la API. El rollback del código no retira semillas ya confirmadas ni borra datos. La revisión Supabase permanece para el final de CP02; este bloque se limita al Docker local y no sirve como procedimiento remoto.

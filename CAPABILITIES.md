@@ -1,6 +1,6 @@
 # Mapa de capacidades: segunda entrega
 
-Estado al 11/10/2026: mapa, especificaciones técnicas y plan aprobados explícitamente por el usuario el 08/10. Planificación cerrada; T01–T03 y CP01 integradas en `segunda-entrega` / `333d946`, confirmado por el usuario y comprobado en Git. T04 completada en su rama, pendiente de integración con OK; sigue T05 tras integrar; las funcionalidades de los módulos todavía están pendientes. El [plan aprobado](tasks/plan.md) y las [tareas verificables](tasks/todo.md) guían la ejecución.
+Estado al 11/10/2026: mapa, especificaciones técnicas y plan aprobados explícitamente por el usuario el 08/10. Planificación cerrada; T01–T04 y CP01 integradas en `segunda-entrega` / `a639f76`, con merge/push confirmado por el usuario y comprobación local en Git. T05 completada en `segunda-entrega-t05-identidad-roles`, pendiente del OK de integración; sigue T06, administrador inicial. Las capacidades calculadas de T05 aún no acreditan sesión ni autorización HTTP. El [plan aprobado](tasks/plan.md) y las [tareas verificables](tasks/todo.md), incluida la revisión Supabase al finalizar CP02, guían la ejecución.
 
 Fuentes: [diseño](docs/segunda-entrega/diseño-segunda-entrega.md), [decisiones confirmadas](docs/segunda-entrega/decisiones-confirmadas.md), [contexto](docs/segunda-entrega/contexto-segunda-entrega.md) y [constraints](CONSTRAINTS.md).
 

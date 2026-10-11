@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 11/10/2026. **Plan y especificación aprobados; planificación cerrada; T01–T03 y CP01 integradas en `segunda-entrega`, confirmado por el usuario y comprobado en `333d946`. T04 completada en `segunda-entrega-t04-esquema-comercial`, pendiente del OK de integración; T05–T49 pendientes.** Desarrollo tiene esquema/catálogos de T04, sin usuarios ni datos comerciales. Sigue T05 después de integrar. La línea de base conserva deuda identificada. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
+Plan del 08/10/2026, actualizado el 11/10/2026. **Plan y especificación aprobados; planificación cerrada; T01–T04 y CP01 integradas en `segunda-entrega` / `a639f76`, con merge/push confirmado por el usuario y comprobación local en Git. T05 completada en `segunda-entrega-t05-identidad-roles`, pendiente del OK de integración; T06–T49 pendientes.** Desarrollo tiene esquema/catálogos de T04 y roles/permisos de T05, sin usuarios ni datos comerciales. Sigue T06 tras integrar. La revisión Supabase sigue pendiente para el final de CP02. La línea de base conserva deuda identificada. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -12,7 +12,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T02 — Aislar la configuración de base local](#t02)
 - [x] [T03 — Preparar pruebas HTTP con PostgreSQL aislado](#t03)
 - [x] [T04 — Escribir el esquema objetivo de segunda entrega](#t04)
-- [ ] [T05 — Mapear la identidad y los tres roles fijos](#t05)
+- [x] [T05 — Mapear la identidad y los tres roles fijos](#t05)
 - [ ] [T06 — Crear el administrador mediante inicialización explícita](#t06)
 - [ ] [T07 — Preparar contrato HTTP y corte de rutas anteriores](#t07)
 - [ ] [T08 — Autenticar por cookie y validar el actor en servidor](#t08)
@@ -165,6 +165,8 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Evidencia (11/10/2026):** [verificacion-t04.md](verificaciones/verificacion-t04.md). Código `287c71b`; SchemaTests 20/20 y suite backend completa 46/46, cero omitidas; build sin errores/advertencias. Mutación representativa detectada y SQL restaurado exactamente. Revisión independiente sin hallazgos requeridos; escaneo de código sin secretos detectados. Desarrollo preparado explícitamente: 20 tablas, catálogos y cero usuarios/roles/permisos/servicios/embudos; tests sin tablas ni esquemas de fixture. No se probaron recorridos comerciales HTTP nuevos ni se repitió frontend/auditorías de dependencias. Incremento pendiente del OK de integración; T05 sigue después, CP02 aún pendiente.
 
+**Integración posterior de T04 (11/10/2026):** el usuario confirmó merge/push; código y cierre incluidos en `segunda-entrega` / `a639f76`, junto con el pendiente Supabase de CP02. Comprobación local al iniciar T05, sin repetir controles de T04 ni consultar nuevamente el remoto.
+
 <a id="t05"></a>
 
 ### T05 — Mapear la identidad y los tres roles fijos
@@ -175,15 +177,21 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Archivos probables:** `backend/Persistence/Models/Usuario.cs`; `backend/Persistence/Models/Rol.cs`; `backend/Persistence/Models/Permiso.cs`; `backend/Persistence/Models/FluencyLocalDbContext.cs`; `backend/Persistence/SQL/segunda-entrega-roles.sql (nuevo)`.
 
+**Subdivisión al iniciar (11/10/2026):** el inventario real, incluidas pruebas y documentación, excede cinco archivos. Un único implementador conserva los archivos compartidos y ejecuta secuencialmente; el orquestador coordina revisión y cierre:
+
+- [x] **T05.a — Mapeo de identidad:** `Usuario.cs`, `Permiso.cs`, bloques de identidad de `FluencyLocalDbContext.cs` y `IdentityTests.cs` nuevo; persistencia PostgreSQL real, activo obligatorio y unicidad normalizada. `Rol` y las uniones conservan su forma N:M, sin edición física innecesaria. RED de metadata ejecutado antes de implementar; GREEN 3/3 y commit local `59a9b4d`.
+- [x] **T05.b — Roles y permisos fijos:** SQL explícito `segunda-entrega-roles.sql`, códigos/capacidades simples en `Services/Acceso/CodigosAcceso.cs` y ampliación de `IdentityTests.cs`; tres roles, unión y precedencia superior, cero cuentas automáticas. Fixture comercial de T04 conservado; cada prueba aplica las semillas explícitamente. RED previo a SQL/helper, GREEN 11/11 y caso adicional de guardas de rol 1/1; revisión estática sin hallazgos requeridos.
+- [x] **T05.c — Operación, revisión y evidencia:** guía local, evidencia/seguimiento y continuidad (dos grupos de hasta cuatro documentos); preparación explícita de roles en desarrollo después de revisión, consulta sin hashes, controles finales y revisión independiente. No incluye bootstrap de T06, sesión HTTP ni conexión Supabase.
+
 **Aceptación:**
 
-- [ ] Conservar N:M usuario/rol/permiso, códigos estables y unión de permisos; administrador/responsable comercial prevalecen sobre restricciones de vendedor.
-- [ ] Usuario activo y unicidad normalizada de username/correo coinciden con SQL; no existe UI ni API para editar definiciones de roles.
-- [ ] Mapear y sembrar tres roles con permisos acordados; no crear cuentas adicionales ni inferir identidad de formularios.
+- [x] Conservar N:M usuario/rol/permiso, códigos estables y unión de permisos; administrador/responsable comercial prevalecen sobre restricciones de vendedor.
+- [x] Usuario activo y unicidad normalizada de username/correo coinciden con SQL; no existe UI ni API para editar definiciones de roles.
+- [x] Mapear y sembrar tres roles con permisos acordados; no crear cuentas adicionales ni inferir identidad de formularios.
 
-**Verificación:** B + API(SchemaTests) ampliados para semillas y unicidad; consulta local de roles/permisos sin imprimir hashes + D.
+**Verificación:** B + API(SchemaTests e IdentityTests) para semillas, mapeos y unicidad; consulta local de roles/permisos sin imprimir hashes + D.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia (11/10/2026):** [verificacion-t05.md](verificaciones/verificacion-t05.md), código `59a9b4d`/`5e38d60`. Backend completo 58/58, incluidos IdentityTests 12/12 y SchemaTests 20/20, cero omitidas; build sin errores/advertencias, mutación detectada/restaurada, auditoría .NET de cuatro proyectos sin vulnerabilidades reportadas. Revisión independiente sin hallazgos requeridos, sugerencia de cobertura de guardas de rol atendida. Desarrollo: 20 tablas, tres roles/siete permisos/dieciséis asociaciones y cero usuarios/datos comerciales; tests sin tablas ni esquemas propios. No se repitió frontend/auditorías npm ni se habilitó sesión/autorización HTTP; deuda previa conservada. Incremento pendiente del OK de integración. Sigue T06, bootstrap de administrador; CP02 y su revisión Supabase aún pendientes.
 
 <a id="t06"></a>
 
