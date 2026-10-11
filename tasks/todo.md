@@ -209,6 +209,7 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 - [ ] Esquema/roles/bootstrap reproducibles y sin datos comerciales automáticos; controles completos de persistencia inicial.
 - [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+- [ ] **Revisión solicitada por el usuario (11/10/2026), al terminar CP02/T04–T06:** evaluar y verificar la conexión de la API local a una base de prueba nueva en Supabase que creará el usuario. Confirmar destino/aislamiento, preparar explícitamente esquema/catálogos/roles/bootstrap y comprobar únicamente los recorridos ya habilitados en ese momento. Revisar connection string en almacenamiento seguro, endpoint directo o pooler, TLS, permisos/exposición del esquema y entorno de ejecución: actualmente `Development` rechaza hosts remotos en `Program.cs`, por lo que no basta sustituir el secreto. Conservar esa protección y definir una configuración explícita para el ensayo remoto. Las suites automatizadas y su limpieza siguen siendo exclusivamente locales; no redirigir `SegundaEntregaTestDB` a Supabase ni borrar/recrear bases remotas. No conectar ni escribir en la nube durante T04/T05/T06; ejecutar la revisión al final, cuando la base de prueba esté disponible, registrando evidencia y pendientes. Esta revisión no autoriza merges ni publicaciones.
 
 <a id="t07"></a>
 
