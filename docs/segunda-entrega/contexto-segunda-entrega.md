@@ -6,6 +6,8 @@ Relevamiento: 07/10/2026. Base inspeccionada: rama `segunda-entrega`, commit `f9
 
 ## 1. Fuentes y autoridad
 
+**Actualización de ejecución del 11/10/2026:** T01 comenzó desde `ae4cc2e` en `segunda-entrega-t01-linea-base`. La [evidencia actual de T01](verificacion-t01.md) sustituye los resultados históricos de §7 como línea de base: builds correctos, lint con una advertencia previa, suite frontend 70/71 y auditorías completadas con deuda identificada. Solo `backend/FluencyAPI/appsettings.json` estaba modificado al comenzar y se conserva fuera del cambio. El cliente usa `/api` con proxy local; los tres fallos históricos de URL no se reprodujeron. T02 y siguientes permanecen pendientes; esta tarea no implementa autenticación ni cambia el esquema.
+
 | Fuente | Para qué usarla |
 |---|---|
 | [Entregas CRM](../../Enunciado/Entregas-CRM.pdf), pp. 2–3 | Requisitos de la entrega final, prevista para el 12/11 según la consigna. Se evalúa funcionamiento integral; no exige arquitectura específica ni documentación adicional. |

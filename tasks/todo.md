@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Fecha: 08/10/2026. **Plan y especificación aprobados; planificación cerrada; todas las tareas de implementación están pendientes.** El usuario solicitó cerrar esta etapa y retomar la implementación posteriormente. Al iniciarla, no pedir de nuevo aprobación del mismo plan; comenzar por T01–T03 salvo indicación distinta. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
+Plan del 08/10/2026, actualizado el 11/10/2026. **Plan y especificación aprobados; planificación cerrada; T01 ejecutada, T02–T49 pendientes.** La línea de base tiene deuda registrada, no todos los controles verdes. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -8,7 +8,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 
 ## Índice
 
-- [ ] [T01 — Actualizar la línea de base y los comandos de control](#t01)
+- [x] [T01 — Actualizar la línea de base y los comandos de control](#t01)
 - [ ] [T02 — Aislar la configuración de base local](#t02)
 - [ ] [T03 — Preparar pruebas HTTP con PostgreSQL aislado](#t03)
 - [ ] [T04 — Escribir el esquema objetivo de segunda entrega](#t04)
@@ -72,13 +72,13 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 
 **Aceptación:**
 
-- [ ] Registrar resultados actuales de build, lint y suite existente, separando cada fallo previo de uno nuevo; no reutilizar el resultado histórico de la URL remota.
-- [ ] Acotar lint a código propio y dejar invocaciones reproducibles de pruebas y auditorías, sin suprimir reglas ni pruebas.
-- [ ] Inventariar dependencias y secretos con resultados redactados; si la herramienta o la red impiden un control, identificarlo como pendiente.
+- [x] Registrar resultados actuales de build, lint y suite existente, separando cada fallo previo de uno nuevo; no reutilizar el resultado histórico de la URL remota.
+- [x] Acotar lint a código propio y dejar invocaciones reproducibles de pruebas y auditorías, sin suprimir reglas ni pruebas.
+- [x] Inventariar dependencias y secretos con resultados redactados; si la herramienta o la red impiden un control, identificarlo como pendiente.
 
 **Verificación:** B + F + suite frontend completa + S + D. Medir duración; la medición inicial es un checkpoint y puede superar 90 s.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia (11/10/2026):** [comandos, resultados, duraciones, inventario y limitaciones](../docs/segunda-entrega/verificacion-t01.md). Builds correctos; lint normalizado con una advertencia previa; frontend 70/71 y reproducción aislada del fallo de carga diferida, ambos antes de editar. Auditorías completadas: npm raíz y .NET sin vulnerabilidades reportadas; frontend un alto preexistente en `source-map-js@1.2.1`. Gitleaks + revisión estática: credencial de configuración local ajena y fallback de DbContext, sin valores publicados ni secretos añadidos al cambio. Docker/API/Vite iniciados y tres GET locales correctos, sin mutaciones ni pruebas de persistencia. T01 completa la medición y los comandos, no corrige la deuda registrada B7/B8 ni las tareas T02+. Integración a `segunda-entrega` pendiente del OK del usuario; no se hizo merge ni publicación.
 
 <a id="t02"></a>
 

@@ -22,14 +22,14 @@ Acuerdos de producto y permisos confirmados el 08/10/2026: [decisiones de la ent
 - No rebajar estas condiciones ni inventar excepciones. Una excepción nueva requiere un acuerdo explícito, alcance, motivo, responsable y vencimiento o hito de revisión.
 - Revisar también archivos nuevos y cambios staged; `git diff` por sí solo no cubre todo el trabajo. Los diffs sensibles se inspeccionan con valores redactados.
 
-Estado de aplicación: reglas escritas para revisión de cada cambio; no hay guard automático ni hooks instalados. Las exclusiones preexistentes se registran como deuda, no como permiso para copiar el patrón.
+Estado de aplicación: reglas escritas para revisión de cada cambio; no hay guard automático ni hooks instalados. Las exclusiones preexistentes se registran como deuda, no como permiso para copiar el patrón. T01 (11/10/2026) ejecutó los controles y acotó el script lint; evidencia y comandos actuales en [verificacion-t01.md](docs/segunda-entrega/verificacion-t01.md). Esto no incorpora un guard automático ni acredita que todos los controles estén verdes.
 
 ## 3. Controles disponibles
 
 | Control | Criterio | Comando / mecanismo | Cuándo y estado |
 |---|---|---|---|
-| Tipos y build frontend | Cero errores nuevos; la configuración existente debe seguir compilando. | `npm run build` desde `frontend`. | Cierre de tarea que cambie frontend y cierre de módulo. Pasó en el relevamiento. No equivale a `strict: true`. |
-| Lint de código propio | Cero errores nuevos, sin ocultarlos ni añadir supresiones. Registrar nuevas advertencias y resolver o justificar su causa. | `npm run lint -- src vite.config.ts` desde `frontend`. | Tareas frontend. Pasó con una advertencia previa. La selección explícita evita recorrer dependencias en este entorno. |
+| Tipos y build frontend | Cero errores nuevos; la configuración existente debe seguir compilando. | `npm run build` desde `frontend`. | Pasó nuevamente en T01. No equivale a `strict: true`. |
+| Lint de código propio | Cero errores nuevos, sin ocultarlos ni añadir supresiones. Registrar nuevas advertencias y resolver o justificar su causa. | `npm run lint` desde `frontend`; el script ahora ejecuta `oxlint src vite.config.ts`. | T01 conserva la advertencia previa. El alcance explícito evita recorrer dependencias. |
 | Tests frontend | Cero fallos nuevos en pruebas pertinentes; conservar comprobaciones de comportamiento. | `npm run test:run -- <ruta-del-test>` para un archivo pertinente; `npm run test:run` para suite completa. | Por tarea: pruebas afectadas. Por módulo: suite completa. Adaptación de temporales documentada en el contexto. |
 | Build backend | Cero errores nuevos. | `dotnet build backend/FluencyAPI.slnx --no-restore -m:1` desde raíz, después de restaurar dependencias si faltan. | Tareas backend y cierre de módulo. Variante diagnóstica con `-v:normal` pasó. |
 | Higiene del diff | Sin errores de whitespace en los cambios propios ni alteraciones ajenas a la tarea. | `git diff --check`; revisión de archivos modificados, staged y nuevos. | Cada entrega de cambios. Para archivos nuevos, inspeccionarlos además: Git aún no los incluye en el diff normal. |
@@ -37,15 +37,15 @@ Estado de aplicación: reglas escritas para revisión de cada cambio; no hay gua
 
 No basta comparar cantidades de fallos: revisar su identidad y causa. Sustituir un fallo previo por uno nuevo no satisface “no empeorar”. Los fallos esperados por una regla funcional deliberadamente cambiada requieren actualizar la prueba con evidencia, no eliminarlos de la suite.
 
-## 4. Seguridad: criterios acordados y activación pendiente
+## 4. Seguridad: criterios acordados y controles manuales
 
 | Dimensión | Criterio acordado | Mecanismo de verificación | Estado real |
 |---|---|---|---|
-| Dependencias npm | Cero nuevos hallazgos altos/críticos en dependencias directas o transitivas. | `npm audit --audit-level=high` en `frontend` y en raíz; revisar resultados contra la base previa. No usar `audit fix` automáticamente. | npm disponible. Se intentó `npm audit --json --ignore-scripts` en frontend y falló por DNS (`ENOTFOUND registry.npmjs.org`). No existe todavía inventario válido de vulnerabilidades. |
-| Dependencias .NET | Mismo criterio de severidad; el fallo de consulta no cuenta como análisis limpio. | `dotnet list backend/FluencyAPI.slnx package --vulnerable --include-transitive --no-restore --format json`; inspeccionar severidades del resultado. | CLI y opciones comprobadas en ayuda local; consulta de vulnerabilidades pendiente. El comando no constituye por sí solo un bloqueo automático por severidad. |
-| Secretos | Cero nuevos secretos; no imprimir valores detectados. | Revisión redactada de cambios. Propuesta para automatizar: Gitleaks con redacción, cubriendo archivos nuevos y cambios de trabajo además del historial que corresponda. | Gitleaks no encontrado en PATH; no instalado ni ejecutado. No hay un escaneo completo ni un resultado “sin secretos”. |
+| Dependencias npm | Cero nuevos hallazgos altos/críticos en dependencias directas o transitivas. | `npm audit --audit-level=high` en `frontend` y en raíz; revisar resultados contra la base previa. No usar `audit fix` automáticamente. | T01 completó ambas consultas: raíz sin hallazgos; frontend con un alto preexistente en `source-map-js@1.2.1`. No se cambiaron lockfiles. |
+| Dependencias .NET | Mismo criterio de severidad; el fallo de consulta no cuenta como análisis limpio. | `dotnet list backend/FluencyAPI.slnx package --vulnerable --include-transitive --no-restore --format json`; inspeccionar severidades del resultado. | T01 completó la consulta de los tres proyectos, sin vulnerabilidades reportadas. El comando no constituye por sí solo un bloqueo automático por severidad. |
+| Secretos | Cero nuevos secretos; no imprimir valores detectados. | Revisión estática y Gitleaks con redacción, cubriendo archivos de trabajo, nuevos, staged e historial. Comandos en la evidencia de T01. | Gitleaks 8.30.1 ejecutado desde temporales ignorados, sin instalación global. Detectó la configuración local preexistente de `appsettings.json`; la revisión estática confirma además B4. No equivale a ausencia de secretos. |
 
-Los controles de dependencias usan bases externas de vulnerabilidades; aportan verificación independiente de los tests propios. Su activación y comparación reproducible quedan pendientes de implementación. Sin un análisis exitoso inicial no se puede afirmar que un hallazgo sea nuevo o previo.
+Los controles de dependencias usan bases externas de vulnerabilidades; aportan verificación independiente de los tests propios. T01 deja su primera ejecución válida y comandos reproducibles como línea de base manual para comparar futuros hallazgos. No se implementó automatización. Una consulta fallida no sustituye esa comparación ni acredita ausencia de vulnerabilidades.
 
 Para una tarea que cambie dependencias o autenticación, una revisión faltante debe quedar expresamente pendiente y no presentarse como validada. Esto no bloquea preparar documentación de contexto ni obliga a instalar herramientas en esta etapa.
 
@@ -81,6 +81,17 @@ Base: `segunda-entrega` / `f9fde15` más cambios locales de configuración y URL
 | B5 | Sin autenticación/autorización efectiva de backend, tests .NET ni controles completos de seguridad. | Brechas del objetivo. No considerar permisos validados por pasar la suite frontend. |
 | B6 | Primera ejecución de Vitest falló al cargar temporales del sandbox. La repetición con TEMP/TMP dentro de `frontend/node_modules/.tmp` y un worker completó en 177,51 s. | Problema de entorno distinguido de B1. La suite completa supera el presupuesto por tarea y queda para cierre de módulo; no se cambia aislamiento ni se recortan pruebas para bajar el tiempo. |
 
+### 6.1. Línea de base actual: T01, 11/10/2026
+
+La tabla anterior conserva el relevamiento histórico, no los resultados actuales. Base actual: `ae4cc2e` más la modificación local ajena de `appsettings.json`. Ver [evidencia reproducible](docs/segunda-entrega/verificacion-t01.md).
+
+- B1: los tres fallos de URL no se reprodujeron; las pruebas de empresas pasaron usando `/api`.
+- B2: el script lint queda acotado al código propio, sin cambiar reglas ni exclusiones.
+- B3–B5: continúa la deuda previa de advertencia/supresiones, credencial de respaldo y acceso sin protección efectiva. La credencial de la configuración local se preserva fuera del commit.
+- B6: se usaron temporales locales y un worker sin desactivar aislamiento. La suite completa tardó 234,42 s incluyendo la invocación; no se recortaron pruebas.
+- B7: suite actual 70/71; falla `forms.test.tsx:128`, caso «filtra contactos por empresa y crea una oportunidad con responsable y etapa», al esperar el encabezado durante la carga diferida. Reproducción aislada también fallida antes de editar archivos. Causa definitiva y corrección pendientes; no es un fallo introducido por T01 ni el antiguo problema de URL.
+- B8: `source-map-js@1.2.1`, transitiva de herramientas de desarrollo (Vite/PostCSS y jsdom/css-tree), tiene un hallazgo alto `GHSA-68fv-2mgg-jv7q`, con corrección disponible según npm. No se evaluó como explotable el producto publicado ni se modificaron dependencias. Reevaluar y corregir en el trabajo de seguridad, como máximo antes del cierre T47; registrar la deuda no autoriza a introducir hallazgos nuevos.
+
 No hay excepciones nuevas aprobadas. La deuda se vuelve a evaluar al trabajar sobre el área afectada y antes de declarar completa la entrega final. Responsable de decidir su aceptación: usuario/equipo del trabajo práctico, sin asignar obligaciones a personas no consultadas.
 
 ## 7. Cierre y continuidad
@@ -89,4 +100,4 @@ Por tarea informar archivos cambiados, controles ejecutados y resultados, fallos
 
 Por módulo ejecutar la suite pertinente completa y verificar el recorrido real contra un entorno de prueba identificado. La consigna evalúa funcionamiento integral y persistencia, que un build no demuestra.
 
-Actualización del 08/10/2026: especificación técnica y [plan](tasks/plan.md) aprobados; planificación cerrada y [tareas verificables](tasks/todo.md) pendientes de implementación. Este contrato de calidad no cambia con la aprobación. No se agregaron scripts, dependencias, CI, tests ni cambios funcionales en esta preparación.
+Actualización del 11/10/2026: T01 registra la primera ejecución de los controles y normaliza lint, sin dependencias nuevas, CI, cambios funcionales ni alteración del nivel de calidad. El seguimiento y los pendientes están en [tasks/todo.md](tasks/todo.md).
