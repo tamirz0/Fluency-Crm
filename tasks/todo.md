@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 11/10/2026. **Plan y especificación aprobados; planificación cerrada; T01–T02 integradas en `segunda-entrega`; T03 y CP01 ejecutadas en `segunda-entrega-t03-pruebas-aisladas`, pendientes del OK de integración. T04–T49 pendientes.** El usuario confirmó el push de T01/T02. Siguiente paso tras integrar: T04, esquema comercial; desarrollo permanece vacío. La línea de base conserva deuda identificada. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
+Plan del 08/10/2026, actualizado el 11/10/2026. **Plan y especificación aprobados; planificación cerrada; T01–T03 y CP01 integradas en `segunda-entrega`, confirmado por el usuario y comprobado en `333d946`. T04 completada en `segunda-entrega-t04-esquema-comercial`, pendiente del OK de integración; T05–T49 pendientes.** Desarrollo tiene esquema/catálogos de T04, sin usuarios ni datos comerciales. Sigue T05 después de integrar. La línea de base conserva deuda identificada. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -11,7 +11,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T01 — Actualizar la línea de base y los comandos de control](#t01)
 - [x] [T02 — Aislar la configuración de base local](#t02)
 - [x] [T03 — Preparar pruebas HTTP con PostgreSQL aislado](#t03)
-- [ ] [T04 — Escribir el esquema objetivo de segunda entrega](#t04)
+- [x] [T04 — Escribir el esquema objetivo de segunda entrega](#t04)
 - [ ] [T05 — Mapear la identidad y los tres roles fijos](#t05)
 - [ ] [T06 — Crear el administrador mediante inicialización explícita](#t06)
 - [ ] [T07 — Preparar contrato HTTP y corte de rutas anteriores](#t07)
@@ -129,7 +129,7 @@ Decisiones del usuario: User Secrets de .NET y base nueva `fluency_segunda_entre
 
 **Verificación:** B + API(DatabaseIsolationTests) + D; un destino no permitido se rechaza antes de escribir.
 
-**Evidencia T03 (11/10/2026):** [verificacion-t03.md](verificaciones/verificacion-t03.md). Código en `c78dcc3`; 26/26 tests backend sin omisiones y segunda ejecución aislada 5/5; build sin errores/advertencias, auditoría .NET de cuatro proyectos sin hallazgos, revisión independiente sin bloqueantes. Base nueva y propietario verificados, clave exclusiva configurada e importación Windows Terminal confirmada por el usuario. Limpieza propia comprobada y desarrollo vacío. Sin esquema comercial ni cambios de contrato; pendiente de integración con OK.
+**Evidencia T03 (11/10/2026):** [verificacion-t03.md](verificaciones/verificacion-t03.md). Código en `c78dcc3`; 26/26 tests backend sin omisiones y segunda ejecución aislada 5/5; build sin errores/advertencias, auditoría .NET de cuatro proyectos sin hallazgos, revisión independiente sin bloqueantes. Base nueva y propietario verificados, clave exclusiva configurada e importación Windows Terminal confirmada por el usuario. Limpieza propia comprobada y desarrollo vacío. Sin esquema comercial ni cambios de contrato. Integración posterior confirmada por el usuario y comprobada en `segunda-entrega` / `333d946`.
 
 ### CP01 — Entorno local
 
@@ -148,15 +148,22 @@ Decisiones del usuario: User Secrets de .NET y base nueva `fluency_segunda_entre
 
 **Archivos probables:** `backend/Persistence/SQL/segunda-entrega-esquema.sql (nuevo)`; `backend/Persistence/SQL/segunda-entrega-catalogos.sql (nuevo)`; `backend/FluencyAPI.Tests/SchemaTests.cs (nuevo)`.
 
+**Subdivisión al iniciar (11/10/2026):** T01–T03/CP01 ya están integradas en `segunda-entrega` / `333d946`, comprobado antes de comenzar, con árbol limpio. El esquema comercial requiere ampliar la preparación/limpieza del fixture, además de guía y evidencia; se conserva T04 como padre:
+
+- [x] **T04.a — SQL y pruebas:** DDL completo y catálogos acordados; preparación transaccional en esquema propio de tests; limpieza explícita de sus objetos verificados con RESTRICT; pruebas PostgreSQL de inicialización, rechazo de reejecución y restricciones fundamentales. No modificar todavía los mapeos EF comerciales ni implementar T05/T06.
+- [x] **T04.b — Preparación local y cierre:** aplicación explícita en desarrollo vacío después de verificar destino y SQL, guía reproducible, actualización del estado de integración, evidencia y revisión independiente. No borrar bases, barrer restos ni aplicar sobre la primera entrega; merge/publicación pendientes del OK específico.
+
+T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimiento, y actualización del estado de integración en AGENTS, CAPABILITIES, contexto y CONSTRAINTS. Esta actualización no cambia el plan ni el nivel de calidad.
+
 **Aceptación:**
 
-- [ ] DDL versionado expresa el E-R acordado, tipos monetarios/fechas, FKs restrictivas, checks e índices parciales; no crea líneas, log genérico ni FKs derivables en oportunidad.
-- [ ] Inicializar catálogos fijos y configurables acordados sin usuarios de demo, servicios ni embudos; no duplicar fuente con EF migrations.
-- [ ] Aplicación explícita sobre base nueva; rechazar tablas preexistentes sin borrar datos y comprobar restricciones representativas en PostgreSQL.
+- [x] DDL versionado expresa el E-R acordado, tipos monetarios/fechas, FKs restrictivas, checks e índices parciales; no crea líneas, log genérico ni FKs derivables en oportunidad.
+- [x] Inicializar catálogos fijos y configurables acordados sin usuarios de demo, servicios ni embudos; no duplicar fuente con EF migrations.
+- [x] Aplicación explícita sobre base nueva; rechazar tablas preexistentes sin borrar datos y comprobar restricciones representativas en PostgreSQL.
 
 **Verificación:** API(SchemaTests) + D: esquema desde cero en base de tests, rechazo de reejecución destructiva, cero usuarios y restricciones efectivas. No aplicar sobre la base anterior.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia (11/10/2026):** [verificacion-t04.md](verificaciones/verificacion-t04.md). Código `287c71b`; SchemaTests 20/20 y suite backend completa 46/46, cero omitidas; build sin errores/advertencias. Mutación representativa detectada y SQL restaurado exactamente. Revisión independiente sin hallazgos requeridos; escaneo de código sin secretos detectados. Desarrollo preparado explícitamente: 20 tablas, catálogos y cero usuarios/roles/permisos/servicios/embudos; tests sin tablas ni esquemas de fixture. No se probaron recorridos comerciales HTTP nuevos ni se repitió frontend/auditorías de dependencias. Incremento pendiente del OK de integración; T05 sigue después, CP02 aún pendiente.
 
 <a id="t05"></a>
 

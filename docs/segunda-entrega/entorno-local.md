@@ -11,13 +11,13 @@ Acuerdos con el usuario y ejecución inicial: 11/10/2026, T02. Evidencia en [ver
 | Pruebas automatizadas | PostgreSQL local, `localhost:5433`, base exclusiva `fluency_segunda_entrega_test`; clave `ConnectionStrings:SegundaEntregaTestDB` en el mismo almacén User Secrets de la API. No reutilizar desarrollo ni heredar su conexión. |
 | Producción | Configuración explícita `ConnectionStrings__SegundaEntregaDB` en el hosting, sin User Secrets. Azure y su publicación siguen pendientes; no se probaron. |
 
-Contenedor informado y comprobado: `968c3a20d1e55ae43fa73f0c27ff3fcc08f38c00a22ae27105c8b227cd14a964`. El 11/10/2026 estaba en ejecución y publicaba `127.0.0.1:5433` hacia `5432/tcp`. Comprobar nuevamente si cambia el entorno:
+Contenedor informado y comprobado: `968c3a20d1e55ae43fa73f0c27ff3fcc08f38c00a22ae27105c8b227cd14a964`. El 11/10/2026 estaba en ejecución y publicaba `127.0.0.1:5433` hacia `5432/tcp`; al iniciar T04 se volvió a comprobar y PostgreSQL informó versión 17.11. Comprobar nuevamente si cambia el entorno:
 
 ```powershell
 docker inspect --format '{{.State.Status}} {{json .NetworkSettings.Ports}}' 968c3a20d1e55ae43fa73f0c27ff3fcc08f38c00a22ae27105c8b227cd14a964
 ```
 
-La base de desarrollo se creó explícitamente en T02 después de comprobar que no existía. Pertenece al usuario de conexión y tiene cero tablas de aplicación. En T03 el usuario eligió `fluency_segunda_entrega_test`, creada también tras comprobar su ausencia y propietario; se guardó su conexión bajo una clave exclusiva, conservando el secreto de desarrollo. Ambas usan las credenciales locales proporcionadas por el usuario; no se copian aquí. No se borró, migró ni alteró la base anterior. El esquema comercial se prepara en T04: arrancar la API no crea tablas, datos ni usuarios.
+La base de desarrollo se creó explícitamente en T02 después de comprobar que no existía. Pertenece al usuario de conexión y tenía cero tablas al iniciar T04; T04 aplicó explícitamente las 20 tablas y catálogos, sin usuarios ni datos comerciales de demostración. En T03 el usuario eligió `fluency_segunda_entrega_test`, creada también tras comprobar su ausencia y propietario; se guardó su conexión bajo una clave exclusiva, conservando el secreto de desarrollo. Ambas usan las credenciales locales proporcionadas por el usuario; no se copian aquí. No se borró, migró ni alteró la base anterior. El esquema comercial se preparó explícitamente en T04: arrancar la API no crea tablas, datos ni usuarios.
 
 ## Secretos de desarrollo
 
@@ -98,7 +98,7 @@ La API valida la configuración antes de registrar el DbContext y escuchar:
 
 La validación de arranque no abre conexiones ni certifica que PostgreSQL esté disponible. T02 verificó por separado el acceso TCP, la identidad de la base y su ausencia de tablas. Production exige configuración válida/expresa, pero no tiene la restricción de host local; no interpretar esto como autorización para probar Azure. T03 añadirá sus propios controles de aislamiento antes de preparar datos.
 
-Con la base vacía funcionan el inicio y OpenAPI, **todavía no los recorridos comerciales ni el login contra el modelo nuevo**. No apuntar a la primera entrega para disimular esa transición. No usar `EnsureCreated`, `EnsureDeleted`, restauraciones ni scripts destructivos al arrancar. La creación del esquema y los recorridos siguientes se habilitan en las tareas correspondientes.
+Inicio y OpenAPI se comprobaron en T03 con la base vacía. T04 prepara esquema/catálogos, **todavía no los recorridos comerciales ni el login contra el modelo nuevo**; los mapeos, roles y administrador se adaptan en las tareas siguientes. No apuntar a la primera entrega para disimular esa transición. No usar `EnsureCreated`, `EnsureDeleted`, restauraciones ni scripts destructivos al arrancar.
 
 ## Pruebas HTTP y PostgreSQL: T03
 
@@ -140,4 +140,70 @@ Antes de conectar, el fixture exige un host local único (`localhost`, `127.0.0.
 
 Cada instancia crea un esquema `t03_<GUID>` y su tabla `probe`, en una transacción. El host de pruebas se configura explícitamente como Development y recibe la conexión ya validada antes de que `Program` la lea; no modifica variables globales de entorno ni añade rutas de prueba al producto. Este orden usa [`ConfigureHostConfiguration` de WebApplicationFactory](https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-10.0#customize-the-webapplicationfactory-with-test-configurations), ya que `ConfigureAppConfiguration` llega después de `Build`.
 
-Al usar `await using` y finalizar la instancia, cierra el host, vuelve a comprobar destino, propietario y OID de sus recursos, y elimina exclusivamente `probe` y su esquema con `RESTRICT`, en transacción. Un objeto o dependencia inesperados impiden la limpieza y se informa el esquema para revisarlo. **Una interrupción puede dejar restos; la siguiente ejecución no los borra.** No hay barridos por prefijo, `DROP DATABASE`, `CASCADE`, `EnsureCreated` ni `EnsureDeleted`. `search_path` separa nombres, no limita los permisos del rol: se conserva el usuario local elegido y no se crearon roles nuevos. La futura preparación/limpieza del esquema comercial debe concretarse en T04. Referencias: [esquemas PostgreSQL](https://www.postgresql.org/docs/current/ddl-schemas.html), [parámetros Npgsql](https://www.npgsql.org/doc/connection-string-parameters.html).
+Al usar `await using` y finalizar la instancia, cierra el host, vuelve a comprobar destino, propietario y OID de sus recursos, y elimina exclusivamente `probe` y su esquema con `RESTRICT`, en transacción. Un objeto o dependencia inesperados impiden la limpieza y se informa el esquema para revisarlo. **Una interrupción puede dejar restos; la siguiente ejecución no los borra.** No hay barridos por prefijo, `DROP DATABASE`, `CASCADE`, `EnsureCreated` ni `EnsureDeleted`. `search_path` separa nombres, no limita los permisos del rol: se conserva el usuario local elegido y no se crearon roles nuevos. La preparación/limpieza del esquema comercial de tests está concretada en T04, en la sección siguiente. Referencias: [esquemas PostgreSQL](https://www.postgresql.org/docs/current/ddl-schemas.html), [parámetros Npgsql](https://www.npgsql.org/doc/connection-string-parameters.html).
+
+## Preparación explícita del esquema comercial: T04
+
+Los archivos `backend/Persistence/SQL/segunda-entrega-esquema.sql` y `segunda-entrega-catalogos.sql` son la fuente del esquema nuevo. Git registra su evolución; no hay migraciones EF en paralelo. Se aplican en ese orden y en **una única transacción externa**, con destino declarado en `fluency.target_database` y `search_path` explícito. No contienen `BEGIN`/`COMMIT` propios ni borran objetos previos. El DDL rechaza un esquema ocupado; los catálogos iniciales no son un mecanismo para actualizar una instalación existente.
+
+El procedimiento siguiente está limitado a la base de desarrollo nueva acordada, dentro del contenedor local identificado. Usa `psql` por el socket de ese contenedor; el acceso TCP con la clave exclusiva se prueba por separado en la suite de tests. No configura secretos ni usa la base anterior. Ejecutarlo desde la raíz **solo para la primera preparación**, después de revisar SQL y resultados de tests. Si falla, la conexión se cierra sin confirmar la transacción; no reintentar borrando tablas.
+
+```powershell
+$ErrorActionPreference = 'Stop'
+$taskContainer = '968c3a20d1e55ae43fa73f0c27ff3fcc08f38c00a22ae27105c8b227cd14a964'
+$taskState = docker inspect --format '{{.State.Status}}' $taskContainer
+if ($LASTEXITCODE -ne 0 -or $taskState -ne 'running') {
+    throw 'El contenedor local identificado no está disponible.'
+}
+$taskPorts = docker inspect --format '{{json .NetworkSettings.Ports}}' $taskContainer |
+    ConvertFrom-Json
+if ($LASTEXITCODE -ne 0 -or @($taskPorts.'5432/tcp').Count -ne 1 -or
+    $taskPorts.'5432/tcp'[0].HostIp -ne '127.0.0.1' -or
+    $taskPorts.'5432/tcp'[0].HostPort -ne '5433') {
+    throw 'La publicación del PostgreSQL local no coincide con el destino acordado.'
+}
+$taskPreamble = @'
+BEGIN;
+SET LOCAL search_path = public;
+SET LOCAL fluency.target_database = 'fluency_segunda_entrega_dev';
+DO $$
+BEGIN
+    IF current_database() <> 'fluency_segunda_entrega_dev'
+       OR current_user <> session_user
+       OR current_user <> (SELECT pg_get_userbyid(datdba)
+                           FROM pg_database WHERE datname = current_database()) THEN
+        RAISE EXCEPTION 'Destino o propietario de desarrollo inesperado';
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+               WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')
+                 AND n.nspname NOT LIKE 'pg_toast%' AND n.nspname NOT LIKE 'pg_temp%'
+                 AND c.relkind IN ('r', 'p', 'v', 'm', 'f', 'S')) THEN
+        RAISE EXCEPTION 'Desarrollo no está vacío; no se reconstruye automáticamente';
+    END IF;
+END $$;
+'@
+$taskSql = $taskPreamble + "`n" +
+    (Get-Content -LiteralPath 'backend/Persistence/SQL/segunda-entrega-esquema.sql' -Raw) +
+    "`n" + (Get-Content -LiteralPath 'backend/Persistence/SQL/segunda-entrega-catalogos.sql' -Raw) +
+    "`nCOMMIT;"
+$taskOutput = $taskSql | docker exec -e PGOPTIONS= -i $taskContainer sh -c `
+    'exec psql -X -w -h /var/run/postgresql -p 5432 -U "$POSTGRES_USER" -d fluency_segunda_entrega_dev -v ON_ERROR_STOP=1'
+if ($LASTEXITCODE -ne 0) {
+    throw 'Preparación rechazada; revisar destino y restricciones sin borrar datos.'
+}
+'Esquema y catálogos preparados en desarrollo.'
+```
+
+No hay script de limpieza de desarrollo: después de confirmar la instalación se conservan sus datos. Una reinstalación o recuperación requiere una decisión explícita; revertir un commit no revierte la base.
+
+### Esquema comercial en tests
+
+`CommercialSchemaFixture` reutiliza la validación de conexión exclusiva de T03. Cada ejecución prepara un esquema GUID propio, el DDL, los catálogos y una tabla `probe` en una transacción. Las pruebas usan el SQL versionado copiado al output, sin generar otro esquema mediante EF. Los datos ficticios pertenecen a los tests y no a las semillas del producto.
+
+La limpieza compara identidad/propietario de la base y los OID/propietarios de los recursos creados. Elimina únicamente las tablas de su manifiesto en orden de dependencias y el esquema propio, todo en una transacción y con `RESTRICT`. Una tabla sustituida, una tabla adicional, una dependencia externa o un objeto residual del esquema impide confirmar la limpieza. Los índices/constraints y secuencias dependientes de las tablas propias se eliminan con ellas por las reglas de PostgreSQL; el manifiesto no es un inventario universal de objetos. No se recorren ni eliminan esquemas de otras ejecuciones; los restos de interrupciones se revisan manualmente.
+
+```powershell
+dotnet test backend/FluencyAPI.Tests/FluencyAPI.Tests.csproj --no-restore --filter 'FullyQualifiedName~SchemaTests'
+```
+
+Este incremento prepara persistencia, no habilita los recorridos comerciales del modelo nuevo. Los mapeos y permisos se adaptan en las tareas siguientes; roles/permisos iniciales corresponden a T05 y administrador inicial a T06. Fuentes de operación: [transacciones y errores de psql](https://www.postgresql.org/docs/17/app-psql.html), [dependencias y RESTRICT](https://www.postgresql.org/docs/17/ddl-depend.html).
