@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 11/10/2026. **Plan y especificación aprobados; planificación cerrada; T01–T02 ejecutadas, T03–T49 pendientes.** La línea de base tiene deuda registrada, no todos los controles verdes. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
+Plan del 08/10/2026, actualizado el 11/10/2026. **Plan y especificación aprobados; planificación cerrada; T01–T02 ejecutadas e integradas en `segunda-entrega`, T03–T49 pendientes.** El usuario confirmó el push. Siguiente paso: T03 y CP01, decidiendo juntos la base de pruebas y su limpieza antes de escrituras. La línea de base tiene deuda registrada, no todos los controles verdes. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -78,7 +78,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 
 **Verificación:** B + F + suite frontend completa + S + D. Medir duración; la medición inicial es un checkpoint y puede superar 90 s.
 
-**Evidencia (11/10/2026):** [comandos, resultados, duraciones, inventario y limitaciones](verificaciones/verificacion-t01.md). Builds correctos; lint normalizado con una advertencia previa; frontend 70/71 y reproducción aislada del fallo de carga diferida, ambos antes de editar. Auditorías completadas: npm raíz y .NET sin vulnerabilidades reportadas; frontend un alto preexistente en `source-map-js@1.2.1`. Gitleaks + revisión estática: credencial de configuración local ajena y fallback de DbContext, sin valores publicados ni secretos añadidos al cambio. Docker/API/Vite iniciados y tres GET locales correctos, sin mutaciones ni pruebas de persistencia. T01 completa la medición y los comandos, no corrige la deuda registrada B7/B8 ni las tareas T02+. Integración a `segunda-entrega` pendiente del OK del usuario; no se hizo merge ni publicación.
+**Evidencia (11/10/2026):** [comandos, resultados, duraciones, inventario y limitaciones](verificaciones/verificacion-t01.md). Builds correctos; lint normalizado con una advertencia previa; frontend 70/71 y reproducción aislada del fallo de carga diferida, ambos antes de editar. Auditorías completadas: npm raíz y .NET sin vulnerabilidades reportadas; frontend un alto preexistente en `source-map-js@1.2.1`. Gitleaks + revisión estática: credencial de configuración local ajena y fallback de DbContext, sin valores publicados ni secretos añadidos al cambio. Docker/API/Vite iniciados y tres GET locales correctos, sin mutaciones ni pruebas de persistencia. T01 completa la medición y los comandos, no corrige la deuda registrada B7/B8 ni las tareas T02+. Integración realizada posteriormente por el usuario; commit `9b60868` incluido en `segunda-entrega`. El push fue confirmado por el usuario.
 
 <a id="t02"></a>
 
@@ -95,7 +95,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] **T02.a — Configuración explícita:** habilitar User Secrets; quitar respaldo del DbContext; validar la nueva clave `ConnectionStrings:SegundaEntregaDB` y destino local en Development. Áreas: csproj, Program.cs y DbContext; build y diagnóstico sin configuración.
 - [x] **T02.b — Entorno local y evidencia:** identificar/crear la base vacía acordada `fluency_segunda_entrega_dev`, configurar el secreto fuera de Git, comprobar destino/ausencia de cambios de esquema y documentar operación en `docs/segunda-entrega/entorno-local.md` y `tasks/verificaciones/verificacion-t02.md`. Actualizar seguimiento solo con evidencia real.
 
-Decisiones del usuario: User Secrets de .NET y base nueva `fluency_segunda_entrega_dev` en el PostgreSQL local existente, usando sus credenciales. Conservar `appsettings.json` y la base anterior; no ejecutar esquema hasta T04. Base de pruebas y fixture corresponden a T03.
+Decisiones del usuario: User Secrets de .NET y base nueva `fluency_segunda_entrega_dev` en el PostgreSQL local existente, usando sus credenciales. Durante T02 se preservaron `appsettings.json` y la base anterior; posteriormente el usuario retiró la información sensible del archivo. No ejecutar esquema hasta T04. Base de pruebas y fixture corresponden a T03.
 
 **Aceptación:**
 
@@ -105,7 +105,7 @@ Decisiones del usuario: User Secrets de .NET y base nueva `fluency_segunda_entre
 
 **Verificación:** B + D; arranque local sin configuración falla de forma clara; revisión redactada del destino. Si falta información de acceso, pedir solo ese dato.
 
-**Evidencia (11/10/2026):** [comandos, resultados, duraciones y límites](verificaciones/verificacion-t02.md). Build sin errores/advertencias; siete rechazos de configuración comprobados antes de escuchar y sin revelar valores ficticios. API y proxy OpenAPI 200. Conexión TCP con User Secrets confirma `localhost:5433` y base acordada sin tablas; propietario verificado. Contraseña de respaldo eliminada; configuración local ajena preservada fuera del cambio. Revisión independiente sin bloqueantes y árbol escaneado sin secretos nuevos; queda la credencial local preexistente. T03 prepara el fixture y T04 el esquema. Integración pendiente del OK del usuario; no se hizo merge ni publicación.
+**Evidencia (11/10/2026):** [comandos, resultados, duraciones y límites](verificaciones/verificacion-t02.md). Build sin errores/advertencias; siete rechazos de configuración comprobados antes de escuchar y sin revelar valores ficticios. API y proxy OpenAPI 200. Conexión TCP con User Secrets confirma `localhost:5433` y base acordada sin tablas; propietario verificado. Contraseña de respaldo eliminada; configuración local ajena preservada fuera del cambio. Revisión independiente sin bloqueantes y árbol escaneado sin secretos nuevos al cerrar el agente. Después se diagnosticó la redirección del almacén de Codex a `LocalCache`; el usuario confirmó su importación al perfil normal de Windows y el retiro de información sensible de appsettings, sin repetir controles de conexión/auditoría tras esa intervención. Commit `a3fa0c4` integrado en `segunda-entrega`; merge y push confirmados por el usuario. T03 prepara el fixture y T04 el esquema; no se desplegó la aplicación.
 
 <a id="t03"></a>
 

@@ -7,7 +7,7 @@ Acuerdos con el usuario y ejecución inicial: 11/10/2026, T02. Evidencia en [ver
 | Uso | Destino/configuración |
 |---|---|
 | Desarrollo de segunda entrega | PostgreSQL local, `localhost:5433`, base `fluency_segunda_entrega_dev`; clave `ConnectionStrings:SegundaEntregaDB` en User Secrets. |
-| Primera entrega | Configuración local anterior `ConnectionStrings:FluencyLocalDB`, preservada en `appsettings.json`. La nueva API no consulta esa clave ni la usa como respaldo. |
+| Primera entrega | Base anterior conservada. La nueva API no consulta la clave antigua `ConnectionStrings:FluencyLocalDB` ni la usa como respaldo. El usuario informó que retiró la información sensible de `appsettings.json` después de T02. |
 | Pruebas automatizadas | Pendiente de T03: base y fixture separados. No reutilizar la base de desarrollo ni heredar su conexión. |
 | Producción | Configuración explícita `ConnectionStrings__SegundaEntregaDB` en el hosting, sin User Secrets. Azure y su publicación siguen pendientes; no se probaron. |
 
@@ -23,7 +23,7 @@ La base nueva se creó explícitamente después de comprobar que no existía. Pe
 
 Se eligió User Secrets de .NET. El `UserSecretsId` versionado en `FluencyAPI.csproj` es un identificador público del almacén, no una credencial. ASP.NET Core lo carga automáticamente en `Development`. Los valores se guardan fuera del repositorio, en el perfil del usuario, **sin cifrar**; no es un almacén para producción. Referencia: [Secret Manager de ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-10.0).
 
-La conexión de esta máquina ya fue guardada. Para configurar otra máquina, desde la raíz, después de identificar el PostgreSQL y crear expresamente una base nueva separada:
+La conexión fue guardada desde Codex y el usuario confirmó posteriormente su importación al almacén normal de Windows; ver la diferencia de rutas más abajo. Para configurar otra máquina, desde su terminal habitual y desde la raíz del repositorio, después de identificar el PostgreSQL y crear expresamente una base nueva separada:
 
 ```powershell
 $ErrorActionPreference = 'Stop'
@@ -45,9 +45,30 @@ try {
 }
 ```
 
-La contraseña se solicita sin eco y el JSON se transmite por stdin; no poner la cadena literal en comandos, documentación o argumentos de procesos. El dato existe en memoria y en el archivo local sin cifrar. No ejecutar `dotnet user-secrets list` ni imprimir el JSON en capturas/logs compartidos. No agregar archivos de secretos a Git. El `appsettings.json` modificado por el usuario se preservó y quedó fuera de los commits de T02.
+La contraseña se solicita sin eco y el JSON se transmite por stdin; no poner la cadena literal en comandos, documentación o argumentos de procesos. El dato existe en memoria y en el archivo local sin cifrar. `dotnet user-secrets list --project backend/FluencyAPI` permite inspeccionar los valores localmente, pero no compartir su salida ni el JSON en capturas/logs. No agregar archivos de secretos a Git. Durante T02 se preservó el cambio ajeno de `appsettings.json` fuera del commit del agente; después el usuario confirmó que retiró la información sensible.
 
 Variables de entorno tienen mayor precedencia que User Secrets. Una variable `ConnectionStrings__SegundaEntregaDB` antigua puede sobrescribir el secreto: comprobar su presencia sin imprimir el valor y quitarla del proceso si se desea usar User Secrets. La clave vieja `FluencyLocalDB` no sustituye a la nueva, aunque exista en archivos o variables.
+
+### Almacenes distintos en Codex y Windows Terminal
+
+El 11/10/2026, el listado desde Codex devolvía la clave mientras Windows Terminal informaba `No secrets configured for this application`, incluso con el mismo identificador. La identidad y las rutas nominales coincidían, pero consultar la ruta física del archivo abierto mediante `GetFinalPathNameByHandle` comprobó esta redirección:
+
+- Ruta nominal de Windows: `%APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json`.
+- Ruta física observada para los procesos de esta instalación de Codex: `%LOCALAPPDATA%\Packages\OpenAI.Codex_2p2nqsd0c76g0\LocalCache\Roaming\Microsoft\UserSecrets\<UserSecretsId>\secrets.json`.
+
+Es una observación de esta instalación, no una ruta universal ni un cambio en el código de .NET. Verificar solo la ruta nominal, el usuario o el resultado de un listado desde el agente no demuestra que la terminal externa vea el mismo almacén. Comprobar desde la terminal que realmente vaya a ejecutar la API o los tests.
+
+El usuario confirmó que resolvió el problema ejecutando la siguiente importación **desde Windows Terminal**, fuera de Codex. Se documenta para reproducir ese caso concreto si vuelve a ocurrir; no es necesario repetirla en cada arranque:
+
+```powershell
+$ErrorActionPreference = 'Stop'
+$taskId = '17a17c20-9f44-4609-9431-4d0c456082d0'
+$taskSource = "$env:LOCALAPPDATA\Packages\OpenAI.Codex_2p2nqsd0c76g0\LocalCache\Roaming\Microsoft\UserSecrets\$taskId\secrets.json"
+Get-Content -LiteralPath $taskSource -Raw | dotnet user-secrets set --id $taskId
+if ($LASTEXITCODE -ne 0) { throw 'No se pudo importar el almacén local.' }
+```
+
+El JSON pasa por stdin sin imprimirse; `set` incorpora las claves y reemplaza los valores de las claves coincidentes. No copiarlo al repositorio. La importación fue confirmada por el usuario; no se repitió una conexión TCP desde su terminal externa. El comando de listado muestra también la contraseña: limitarlo a inspección privada. La ausencia de estos comandos en el historial puede deberse al filtro de datos sensibles de PSReadLine, independientemente de la redirección del almacén.
 
 ## Inicio y diagnósticos
 
@@ -65,6 +86,8 @@ npm run dev -- --host 127.0.0.1 --strictPort
 ```
 
 API: `http://localhost:5169`. Frontend: `http://127.0.0.1:5173`. Vite conserva el proxy `/api` hacia la API local.
+
+Los perfiles `http` y `https` de `backend/FluencyAPI/Properties/launchSettings.json` definen `ASPNETCORE_ENVIRONMENT=Development`. `dotnet run --launch-profile http` aplica ese perfil; `launchSettings.json` es configuración de arranque local, no configuración de despliegue. Con `WebApplication.CreateBuilder`, `DOTNET_ENVIRONMENT` tiene prioridad si también está definido. Sin ninguna de esas variables ni otra selección explícita del entorno, el valor predeterminado es `Production`; Debug/Release no lo determina. El log de inicio permite corroborar `Hosting environment: Development`, que habilita la carga automática de User Secrets. Referencia: [entornos de ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/environments?view=aspnetcore-10.0).
 
 La API valida la configuración antes de registrar el DbContext y escuchar:
 

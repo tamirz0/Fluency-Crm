@@ -94,6 +94,12 @@ La tabla anterior conserva el relevamiento histórico, no los resultados actuale
 
 No hay excepciones nuevas aprobadas. La deuda se vuelve a evaluar al trabajar sobre el área afectada y antes de declarar completa la entrega final. Responsable de decidir su aceptación: usuario/equipo del trabajo práctico, sin asignar obligaciones a personas no consultadas.
 
+### 6.2. Actualización de configuración: T02, 11/10/2026
+
+T02 eliminó el fallback con contraseña de B4 del código actual y habilitó User Secrets para una base de desarrollo nueva y vacía; ver [evidencia](tasks/verificaciones/verificacion-t02.md). Esto no elimina la credencial del historial ni acredita una auditoría completa de ausencia de secretos: Gitleaks no detectaba ese fallback histórico, conocido por revisión estática. Los controles de T01 y §6.1 conservan su fecha y alcance; B7/B8 siguen pendientes.
+
+Después del commit de T02, el usuario confirmó que importó el secreto desde el almacén de Codex redirigido a `LocalCache` al almacén normal de Windows, retiró la información sensible de `appsettings.json` e integró/pusheó los cambios a `segunda-entrega`. No se repitieron conexiones ni auditorías después de su intervención. Los criterios y controles de este documento no se modifican; T03 debe verificar su propia configuración y aislamiento antes de escribir/limpiar datos.
+
 ## 7. Cierre y continuidad
 
 Por tarea informar archivos cambiados, controles ejecutados y resultados, fallos nuevos/previos y comprobaciones pendientes. Si el entorno impide un control, registrarlo como no verificado; no como aprobado. Los 90 segundos no habilitan a omitir evidencia fundamental.

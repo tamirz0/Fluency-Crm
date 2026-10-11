@@ -1,6 +1,6 @@
 # Mapa de capacidades: segunda entrega
 
-Estado: mapa, especificaciones técnicas y plan aprobados explícitamente por el usuario el 08/10/2026. Planificación cerrada; implementación aún no iniciada. El [plan aprobado](tasks/plan.md) y las [tareas verificables](tasks/todo.md) guían la siguiente etapa.
+Estado al 11/10/2026: mapa, especificaciones técnicas y plan aprobados explícitamente por el usuario el 08/10. Planificación cerrada; T01 y T02 completadas e integradas en `segunda-entrega`. Continúa T03; las funcionalidades de los módulos todavía están pendientes. El [plan aprobado](tasks/plan.md) y las [tareas verificables](tasks/todo.md) guían la ejecución.
 
 Fuentes: [diseño](docs/segunda-entrega/diseño-segunda-entrega.md), [decisiones confirmadas](docs/segunda-entrega/decisiones-confirmadas.md), [contexto](docs/segunda-entrega/contexto-segunda-entrega.md) y [constraints](CONSTRAINTS.md).
 
