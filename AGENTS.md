@@ -4,6 +4,18 @@
 
 Proyecto académico: CRM de una academia de inglés. Backend ASP.NET Core 10 / EF Core / PostgreSQL; frontend React 19 / TypeScript / Vite / MUI.
 
+## Simplicidad y esfuerzo proporcional
+
+Acuerdo explícito del 12/10/2026, aplicable al orquestador y a todos los subagentes. El objetivo es un trabajo práctico que funcione y cumpla la consigna. Este criterio concreta el enfoque de `ponytail` y prevalece sobre ceremonias genéricas de las skills; no reabre el alcance funcional aprobado.
+
+- Elegir la solución más simple que resuelva completamente la necesidad. Reutilizar lo existente; SQL o un procedimiento manual breve son opciones válidas para operaciones puntuales. No agregar flexibilidad, abstracciones, dependencias ni infraestructura para necesidades hipotéticas.
+- Verificar en proporción al comportamiento y al riesgo. Configuraciones y operaciones puntuales pueden acreditarse con una ejecución manual reproducible y revisión del resultado. Automatizar cuando proteja una regla relevante o una regresión probable; evitar variantes exhaustivas de configuración y casos marginales sin riesgo concreto.
+- Priorizar permisos, reglas comerciales, persistencia y recorridos fundamentales. Conservar el cuidado de datos, secretos y contraseñas, y la honestidad de la evidencia. No retirar las pruebas actuales por esta actualización; el bootstrap T06 se conserva porque funciona.
+- Usar los aproximadamente 90 segundos por tarea como señal para revisar el costo de verificación, sin cortar controles y declararlos aprobados. Antes de añadir mecanismos o pruebas costosas, evaluar una alternativa más directa. Reservar suites completas para cierres pertinentes y evitar repeticiones sin cambios ni dudas nuevas.
+- Si una necesidad simple empieza a requerir un mecanismo propio, muchos tests o mucha preparación, explicar la alternativa simple y su limitación y consultar antes de desarrollarla. Resolver decisiones rutinarias con autonomía. Delegar solo cuando aporte valor concreto; comunicar este enfoque en cada encargo.
+
+## Lectura previa
+
 Antes de cambiar código:
 
 1. Revisar `git status --short` y preservar cambios locales preexistentes.

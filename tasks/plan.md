@@ -120,6 +120,8 @@ No paralelizar escrituras que comparten DbContext, esquema, Program, cliente HTT
 
 ### 6.1. Metodología de agentes acordada
 
+Actualización metodológica acordada el 12/10/2026: aplicar a todos los agentes el enfoque de simplicidad y esfuerzo proporcional de `AGENTS.md` y `CONSTRAINTS.md`. Delegar cuando aporte valor concreto, aceptar evidencia manual reproducible para operaciones puntuales y consultar antes de convertir una necesidad simple en un mecanismo complejo. No reabre tareas, dependencias ni decisiones funcionales aprobadas; T06 se conserva.
+
 Orquestador estable, implementador por incremento acotado y revisor independiente para cierres importantes. El implementador conserva continuidad entre tareas relacionadas; los checkpoints son verificaciones, no una obligación de crear otro agente. El orquestador coordina contratos/archivos compartidos, contrasta hallazgos y evidencia y presenta el incremento para el OK de merge.
 
 | Responsabilidad | Modelo y razonamiento previstos |
