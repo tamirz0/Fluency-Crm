@@ -34,7 +34,7 @@ public sealed class BootstrapAdminTests
         await using var connection = await fixture.OpenAsync();
         await SeedRolesAsync(connection);
         var values = Credentials();
-        var first = await RunAsync(connection, values);
+        var first = await RunAsync(connection, values, production: true);
         Assert.Equal(0, first.Code);
         Assert.Contains("Administrador inicial creado", first.Output);
         Assert.DoesNotContain("Now listening", first.Output);
@@ -298,7 +298,7 @@ public sealed class BootstrapAdminTests
 
     private static async Task<(int Code, string Output)> RunAsync(NpgsqlConnection connection,
         Dictionary<string, string> values, string? argument = null, string? workingDirectory = null,
-        bool dotnetEnvironment = true, bool remoteHost = false)
+        bool dotnetEnvironment = true, bool remoteHost = false, bool production = false)
     {
         var start = new ProcessStartInfo("dotnet")
         {
@@ -314,8 +314,8 @@ public sealed class BootstrapAdminTests
         foreach (var key in start.Environment.Keys.Where(key => key.StartsWith("BootstrapAdmin", StringComparison.OrdinalIgnoreCase)).ToArray())
             start.Environment.Remove(key);
         start.Environment.Remove("DOTNET_ENVIRONMENT");
-        if (dotnetEnvironment) start.Environment["DOTNET_ENVIRONMENT"] = "Development";
-        start.Environment["ASPNETCORE_ENVIRONMENT"] = "Development";
+        if (dotnetEnvironment) start.Environment["DOTNET_ENVIRONMENT"] = production ? "Production" : "Development";
+        start.Environment["ASPNETCORE_ENVIRONMENT"] = production ? "Production" : "Development";
         // An opened NpgsqlConnection hides its password. Reload only the validated test secret
         // and preserve the exact namespace/options of this already-verified fixture.
         var target = new NpgsqlConnectionStringBuilder(TestDatabaseSettings.Load().ConnectionString);
@@ -323,7 +323,8 @@ public sealed class BootstrapAdminTests
         target.SearchPath = own.SearchPath;
         target.Options = own.Options;
         if (remoteHost) target.Host = "bootstrap.example.invalid";
-        start.Environment["ConnectionStrings__SegundaEntregaDB"] = target.ConnectionString;
+        start.Environment[production ? "ConnectionStrings__SegundaEntregaProductionDB" : "ConnectionStrings__SegundaEntregaDB"] = target.ConnectionString;
+        if (production) start.Environment["ConnectionStrings__SegundaEntregaDB"] = "Host=localhost";
         start.Environment["ASPNETCORE_URLS"] = "http://127.0.0.1:0";
         foreach (var (key, value) in values) start.Environment["BootstrapAdmin__" + key] = value;
         using var process = Process.Start(start)!;

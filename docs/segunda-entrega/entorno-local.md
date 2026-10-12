@@ -9,7 +9,7 @@ Acuerdos con el usuario y ejecución inicial: 11/10/2026, T02. Evidencia en [ver
 | Desarrollo de segunda entrega | PostgreSQL local, `localhost:5433`, base `fluency_segunda_entrega_dev`; clave `ConnectionStrings:SegundaEntregaDB` en User Secrets. |
 | Primera entrega | Base anterior conservada. La nueva API no consulta la clave antigua `ConnectionStrings:FluencyLocalDB` ni la usa como respaldo. El usuario informó que retiró la información sensible de `appsettings.json` después de T02. |
 | Pruebas automatizadas | PostgreSQL local, `localhost:5433`, base exclusiva `fluency_segunda_entrega_test`; clave `ConnectionStrings:SegundaEntregaTestDB` en el mismo almacén User Secrets de la API. No reutilizar desarrollo ni heredar su conexión. |
-| Producción | Configuración explícita `ConnectionStrings__SegundaEntregaDB` en el hosting, sin User Secrets. Azure y su publicación siguen pendientes; no se probaron. |
+| Producción / Supabase | Perfil local `Production`, clave separada `ConnectionStrings:SegundaEntregaProductionDB` en User Secrets. En hosting: `ConnectionStrings__SegundaEntregaProductionDB`. Azure y su publicación siguen pendientes; no se probaron. |
 
 Contenedor informado y comprobado: `968c3a20d1e55ae43fa73f0c27ff3fcc08f38c00a22ae27105c8b227cd14a964`. El 11/10/2026 estaba en ejecución y publicaba `127.0.0.1:5433` hacia `5432/tcp`; al iniciar T04 se volvió a comprobar y PostgreSQL informó versión 17.11. Comprobar nuevamente si cambia el entorno:
 
@@ -18,6 +18,31 @@ docker inspect --format '{{.State.Status}} {{json .NetworkSettings.Ports}}' 968c
 ```
 
 La base de desarrollo se creó explícitamente en T02 después de comprobar que no existía. Pertenece al usuario de conexión y tenía cero tablas al iniciar T04; T04 aplicó explícitamente las 20 tablas y catálogos, sin usuarios ni datos comerciales de demostración. En T03 el usuario eligió `fluency_segunda_entrega_test`, creada también tras comprobar su ausencia y propietario; se guardó su conexión bajo una clave exclusiva, conservando el secreto de desarrollo. Ambas usan las credenciales locales proporcionadas por el usuario; no se copian aquí. No se borró, migró ni alteró la base anterior. El esquema comercial se preparó explícitamente en T04: arrancar la API no crea tablas, datos ni usuarios.
+
+## Perfil Production para Supabase
+
+Acuerdo del 12/10/2026: el usuario destina el proyecto Supabase preparado durante CP02 a la base productiva del trabajo práctico. La conexión se guarda una vez, separada de desarrollo y tests. `Production` fija ambos selectores de entorno; `http`/`https` fijan Development. La aplicación y el bootstrap seleccionan `SegundaEntregaProductionDB` en Production, sin fallback a la conexión local. Las fuentes normales de configuración tienen prioridad; si la clave no existe, se consulta únicamente esa clave en User Secrets para la ejecución local. En hosting se proporciona la variable de entorno, sin depender del almacén local.
+
+Desde una terminal nueva de PowerShell 7, en la raíz, guardar una cadena Npgsql completa con los parámetros del Session pooler y `Search Path=fluency_crm`:
+
+```powershell
+$valor = Read-Host 'Conexión Npgsql de producción completa' -MaskInput
+@{'ConnectionStrings:SegundaEntregaProductionDB' = $valor} |
+    ConvertTo-Json -Compress | dotnet user-secrets set --project backend/FluencyAPI
+Remove-Variable valor
+```
+
+La entrada oculta evita escribir el secreto literal en el historial. Usar el almacén de Windows Terminal descrito abajo, sin compartir su contenido. Conservar `SegundaEntregaDB` y `SegundaEntregaTestDB`. Una variable `ConnectionStrings__SegundaEntregaProductionDB` del proceso prevalece sobre el valor guardado.
+
+Para producción se recomienda `SSL Mode=VerifyFull`. Si la CA no está reconocida por el sistema, descargar el certificado raíz del panel de Supabase y guardar `Root Certificate=<ruta absoluta al certificado>` en la misma cadena; es configuración única. `SSL Mode=Require` exige cifrado pero no verifica la identidad del servidor: fue presentado como alternativa para el ensayo con datos ficticios, no como una validación TLS equivalente ni como un resultado ya comprobado. Referencias: [Supabase y certificado raíz](https://supabase.com/docs/guides/database/psql), [TLS en Npgsql](https://www.npgsql.org/doc/security.html).
+
+```powershell
+dotnet run --project backend/FluencyAPI --launch-profile Production
+# Después de preparar los cinco campos BootstrapAdmin__... de T06:
+dotnet run --project backend/FluencyAPI --launch-profile Production -- --bootstrap-admin
+```
+
+El bootstrap conserva la entrada por variables de entorno únicamente; no persistir su contraseña en User Secrets. El arranque normal no crea cuentas ni tablas. La API local escucha en localhost y no habilita OpenAPI en Production; el perfil no publica la API ni acredita autenticación/recorridos pendientes. Los ensayos manuales sobre esta base conservan sus datos; las suites y su limpieza siguen siendo exclusivamente locales. Estado y controles en [CP02/Supabase](../../tasks/verificaciones/verificacion-cp02-supabase.md).
 
 ## Secretos de desarrollo
 

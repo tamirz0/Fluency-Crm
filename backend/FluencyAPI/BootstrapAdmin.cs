@@ -19,9 +19,13 @@ internal static class BootstrapAdmin
         {
             // Use the normal connection sources, but never command-line administrator credentials.
             var builder = WebApplication.CreateBuilder(Array.Empty<string>());
-            var configured = builder.Configuration.GetConnectionString("SegundaEntregaDB");
+            var connectionName = builder.Environment.IsProduction() ? "SegundaEntregaProductionDB" : "SegundaEntregaDB";
+            var configured = builder.Configuration.GetConnectionString(connectionName);
+            if (builder.Environment.IsProduction() && configured is null)
+                configured = new ConfigurationBuilder().AddUserSecrets<Program>(optional: true)
+                    .Build().GetConnectionString(connectionName);
             if (string.IsNullOrWhiteSpace(configured))
-                return Report(1, "Falta configurar ConnectionStrings:SegundaEntregaDB.");
+                return Report(1, $"Falta configurar ConnectionStrings:{connectionName}.");
 
             NpgsqlConnectionStringBuilder connection;
             try
@@ -30,11 +34,11 @@ internal static class BootstrapAdmin
             }
             catch (ArgumentException)
             {
-                return Report(1, "La configuración ConnectionStrings:SegundaEntregaDB no es válida.");
+                return Report(1, $"La configuración ConnectionStrings:{connectionName} no es válida.");
             }
             if (string.IsNullOrWhiteSpace(connection.Host) || string.IsNullOrWhiteSpace(connection.Database)
                 || (builder.Environment.IsDevelopment() && connection.Host is not ("localhost" or "127.0.0.1" or "::1")))
-                return Report(1, "Revisar Host y Database de ConnectionStrings:SegundaEntregaDB; Development exige un único host local.");
+                return Report(1, $"Revisar Host y Database de ConnectionStrings:{connectionName}; Development exige un único host local.");
 
             connection.IncludeErrorDetail = false;
             connection.LogParameters = false;
