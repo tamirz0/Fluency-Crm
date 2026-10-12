@@ -1,6 +1,6 @@
-# Contrato HTTP implementado: T07
+# Contrato HTTP implementado: T07–T08
 
-12/10/2026. Preparación del checkpoint CP03, todavía sin sesión ni recursos comerciales nuevos. No acredita acceso funcional; faltan T08–T09. Por indicación del usuario, no se agregó página informativa provisional.
+12/10/2026. Sesión HTTP implementada en T08; transporte frontend pendiente de T09 y acceso desde UI de T10. Los recursos comerciales nuevos siguen pendientes. Por indicación del usuario, no se agregó página informativa provisional.
 
 ## Convenciones comunes
 
@@ -11,7 +11,7 @@
 
 ## Corte de la primera entrega
 
-Los ocho controladores anteriores están excluidos del descubrimiento MVC mediante un feature provider explícito, sin flag de configuración para reabrirlos. Sus 23 acciones no se mapean y devuelven 404; tampoco aparecen en OpenAPI. Los servicios/DTO anteriores se conservan hasta sustituir cada módulo.
+T07 excluyó ocho controladores/23 acciones del descubrimiento MVC. T08 reescribió completamente LoginController: las dos rutas `/Login/*` se eliminaron, sin registro público. Los otros siete controladores/21 acciones siguen excluidos mediante un feature provider explícito, sin flag para reabrirlos. Ninguna ruta anterior aparece en OpenAPI; con la política por defecto un request anónimo recibe 401 antes de resolver la ruta, y uno autenticado recibe 404. Los servicios/DTO anteriores se conservan hasta sustituir cada módulo.
 
 | Controlador | Acciones anteriores excluidas (ruta relativa al prefijo del controlador) | Sustitución prevista |
 |---|---|---|
@@ -30,8 +30,20 @@ Superficie real al cerrar T07: cero acciones MVC de negocio; `paths` de OpenAPI 
 
 `frontend/src/App.tsx` no monta rutas mientras se completa acceso. No hay login anterior ni navegación comercial accesibles desde App; tampoco contenido informativo provisional. Se conserva el código de componentes y sus pruebas para adaptar los módulos en los incrementos previstos. El proveedor de sesión anterior aún existe; no acredita identidad de servidor ni monta una pantalla por sí mismo.
 
+## Sesión de T08
+
+Las únicas cuatro acciones de negocio publicadas son `GET /auth/csrf`, `POST /auth/login`, `GET /auth/me` y `POST /auth/logout`. CSRF/login permiten anónimo; me/logout requieren identidad. OpenAPI y Scalar siguen anónimos exclusivamente en Development. Todas las respuestas de sesión usan `Cache-Control: no-store`.
+
+Login recibe `{ username, password }` y devuelve `{ usuario, expiresAt }`; me devuelve la misma forma con roles/permisos actuales. Usuario contiene id, nombre, apellido, correo, username, activo, roles y permisos; nunca hash, huella ni contraseña. Credenciales incorrectas, desconocidas e inactivas reciben el mismo 401. Logout devuelve 204 y elimina la cookie.
+
+`Fluency.Session`: cookie protegida por Data Protection, HttpOnly, SameSite=Lax, Path=/, sin Domain ni persistencia, ocho horas absolutas sin renovación. Secure obligatorio fuera de Development; en Development depende del esquema del request. Cada request revalida usuario/roles y huella SHA-256 del hash BCrypt; baja, ausencia de roles o cambio de contraseña invalidan la sesión. `ActorActual` contiene exclusivamente la identidad validada del servidor. Las políticas de oportunidad/actividad se completarán con propiedad/transacción en sus módulos.
+
+Todas las mutaciones requieren antiforgery estándar, incluido login/logout: cookie `Fluency.Antiforgery`, token obtenido en csrf y header `X-CSRF-TOKEN`. Renovar el token tras cambiar identidad; el anterior falla con 400. El login limita diez requests por minuto por IP de conexión, incluso los rechazados por CSRF; luego devuelve 429/Retry-After. No se confía en X-Forwarded-For sin proxies explícitos.
+
+Desarrollo conserva `/api` mediante Vite hacia `http://localhost:5169`. Producción con frontend en otra URL necesita comprobar orígenes/sitios reales, CORS con origen explícito y credenciales; Lax no admite fetch entre sitios diferentes. Topología, HTTPS y persistencia de claves quedan para T49, sin afirmar que el hosting actual soporte ya las cookies.
+
 ## Evidencia y fuentes
 
-[Verificación T07](../../tasks/verificaciones/verificacion-t07.md). Las pruebas de binding/PATCH/paginación usan un controlador exclusivo del assembly de tests y mutaciones en memoria: verifican el contrato HTTP común, no recursos comerciales todavía inexistentes. Una fábrica separada inventaría la aplicación sin ese controlador.
+[Verificación T07](../../tasks/verificaciones/verificacion-t07.md) y [verificación T08](../../tasks/verificaciones/verificacion-t08.md). Las pruebas de binding/PATCH/paginación usan un controlador exclusivo del assembly de tests y mutaciones en memoria: verifican el contrato HTTP común, no recursos comerciales todavía inexistentes. Una fábrica separada inventaría la aplicación sin ese controlador. Los probes de permisos/actor de T08 también pertenecen exclusivamente al assembly de tests.
 
 Referencias de implementación: [ProblemDetails ASP.NET Core 10](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/error-handling-api?view=aspnetcore-10.0), [application feature providers](https://learn.microsoft.com/en-us/aspnet/core/mvc/advanced/app-parts?view=aspnetcore-10.0#feature-providers), [rechazo de propiedades JSON desconocidas](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/missing-members). Reglas funcionales: [especificación común §§3–4](especificacion-tecnica.md).

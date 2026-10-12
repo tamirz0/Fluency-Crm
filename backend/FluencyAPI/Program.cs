@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using FluencyAPI;
+using FluencyAPI.Authentication;
 using Npgsql;
 using Persistence.Models;
 using Scalar.AspNetCore;
@@ -52,6 +53,7 @@ if (builder.Environment.IsDevelopment()
 // Add services to the container.
 
 builder.Services.AddHttpContracts();
+builder.Services.AddSession(builder.Environment);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -75,18 +77,20 @@ app.UseStatusCodePages();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
     // Interactive Swagger-style docs at /scalar/v1, reading the OpenAPI document from MapOpenApi() above.
     // Swashbuckle is intentionally not used here: it has known compatibility issues with .NET 9+/10 OpenAPI
     // types (see .agents/skills/dotnet-webapi).
-    app.MapScalarApiReference();
+    app.MapScalarApiReference().AllowAnonymous();
 }
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
-
+app.UseRouting();
 app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapControllers();
 

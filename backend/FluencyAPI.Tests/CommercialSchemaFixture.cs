@@ -18,6 +18,7 @@ internal sealed class CommercialSchemaFixture : IAsyncDisposable
     private uint? schemaOid;
     private Dictionary<string, uint>? tableOids;
     internal string SchemaName => settings.SchemaName;
+    internal string ConnectionString => settings.ConnectionString;
 
     internal static string Script(string name) => File.ReadAllText(
         Path.Combine(AppContext.BaseDirectory, "SQL", $"segunda-entrega-{name}.sql"));
