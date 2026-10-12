@@ -1,6 +1,6 @@
 # CP02: conexión Supabase y perfil Production
 
-Fecha: 12/10/2026. Rama `segunda-entrega-t06-admin-inicial`. CP02 cerrado con el OK del usuario del 12/10/2026; integración a segunda-entrega autorizada, todavía no ejecutada. Sin push ni publicación.
+Fecha: 12/10/2026. Rama `segunda-entrega-t06-admin-inicial`. CP02 cerrado con el OK del usuario del 12/10/2026; integración local a `segunda-entrega` realizada mediante `c363670`, sin conflictos. Sin push ni publicación.
 
 ## Evidencia proporcionada por el usuario
 
