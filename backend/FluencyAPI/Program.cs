@@ -1,9 +1,16 @@
 using Microsoft.EntityFrameworkCore;
+using FluencyAPI;
 using Npgsql;
 using Persistence.Models;
 using Scalar.AspNetCore;
 using Services.Implementations;
 using Services.Interface;
+
+if (args.Contains("--bootstrap-admin", StringComparer.Ordinal))
+{
+    Environment.ExitCode = await BootstrapAdmin.RunAsync(args);
+    return;
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
