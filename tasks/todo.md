@@ -14,7 +14,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T04 — Escribir el esquema objetivo de segunda entrega](#t04)
 - [x] [T05 — Mapear la identidad y los tres roles fijos](#t05)
 - [x] [T06 — Crear el administrador mediante inicialización explícita](#t06)
-- [ ] [T07 — Preparar contrato HTTP y corte de rutas anteriores](#t07)
+- [x] [T07 — Preparar contrato HTTP y corte de rutas anteriores](#t07)
 - [ ] [T08 — Autenticar por cookie y validar el actor en servidor](#t08)
 - [ ] [T09 — Adaptar el transporte frontend a la sesión real](#t09)
 - [ ] [T10 — Restaurar y cerrar sesión desde la interfaz](#t10)
@@ -240,15 +240,21 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Archivos probables:** `backend/FluencyAPI/Program.cs`; `backend/FluencyAPI/ApiConventions.cs (nuevo)`; `backend/Services/DTO/HttpContracts.cs (nuevo)`; `backend/FluencyAPI.Tests/HttpContractTests.cs (nuevo)`; `frontend/src/App.tsx`.
 
+**Subpasos concretados (12/10/2026):**
+
+- [x] **T07.a — Contrato y corte HTTP:** Program, ApiConventions, HttpContracts y HttpContractTests (cuatro archivos). Pruebas de binding/errores y ausencia de rutas anteriores; sin persistencia ni cambios del bootstrap.
+- [x] **T07.b — Corte frontend:** App y su test (dos archivos). Conservar pruebas de componentes anteriores fuera de la navegación real. Por indicación del usuario, no agregar página informativa: el incremento es preparatorio hasta completar CP03.
+- [x] **T07.c — Inventario y cierre:** documentar superficie real y rutas pendientes, evidencia/seguimiento y revisión independiente. CP03 sigue pendiente de T08–T09; no presentar T07 como acceso funcional.
+
 **Aceptación:**
 
-- [ ] Errores ProblemDetails con code/traceId, códigos HTTP y binding explícito; PATCH omisión/null, rechazo de campos desconocidos y paginación 1/25/100 coherentes.
-- [ ] Inventariar rutas anteriores y mantener fuera del mapeo/navegación las incompatibles con el esquema nuevo; no dejar mutaciones alternativas ni respuestas ficticias.
-- [ ] Habilitar capacidades al completar su incremento; mantener contratos OpenAPI reales y documentar qué rutas quedan por sustituir.
+- [x] Errores ProblemDetails con code/traceId, códigos HTTP y binding explícito; PATCH omisión/null, rechazo de campos desconocidos y paginación 1/25/100 coherentes.
+- [x] Inventariar rutas anteriores y mantener fuera del mapeo/navegación las incompatibles con el esquema nuevo; no dejar mutaciones alternativas ni respuestas ficticias.
+- [x] Habilitar capacidades al completar su incremento; mantener contratos OpenAPI reales y documentar qué rutas quedan por sustituir.
 
 **Verificación:** B + F + API(HttpContractTests) + D; requests inválidos no escriben ni exponen excepciones; inventario de rutas de la aplicación realmente mapeadas.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia (12/10/2026):** [verificacion-t07.md](verificaciones/verificacion-t07.md). HttpContractTests 19/19; con regresión del host/aislamiento 24/24, cero omisiones; App 14/14; builds correctos, lint solo advertencia previa. Mutación representativa detectada/restaurada. Revisión independiente de código sin hallazgos requeridos; [inventario](../docs/segunda-entrega/contrato-http.md) de ocho controladores/23 acciones excluidas. Sin sesión real ni recursos comerciales nuevos. Usuario autorizó merge condicionado a tests/revisión y continuar T08; no habilitar rutas ni agregar pantalla provisional mientras CP03 está incompleto.
 
 <a id="t08"></a>
 

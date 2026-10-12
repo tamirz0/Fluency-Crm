@@ -51,7 +51,7 @@ if (builder.Environment.IsDevelopment()
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddHttpContracts();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -68,6 +68,9 @@ builder.Services.AddScoped<IOrigenComercialService, OrigenComercialService>();
 builder.Services.AddScoped<IEtapaComercialService, EtapaComercialService>();
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
