@@ -12,11 +12,11 @@ public sealed class IdentityTests
     [Fact]
     public void SellerDoesNotBecomeSuperiorWhenHigherPermissionsAreAttached()
     {
-        var seller = new Rol { Nombre = CodigosAcceso.Vendedor };
+        var seller = new Rol { Nombre = RolesYPermisos.Vendedor };
         seller.PermisoRoles = new[]
         {
-            CodigosAcceso.ConsultarComercial, CodigosAcceso.GestionarOportunidad,
-            CodigosAcceso.AdministrarUsuarios, CodigosAcceso.AdministrarConfiguracion, CodigosAcceso.ReabrirOportunidad
+            RolesYPermisos.ConsultarComercial, RolesYPermisos.GestionarOportunidad,
+            RolesYPermisos.AdministrarUsuarios, RolesYPermisos.AdministrarConfiguracion, RolesYPermisos.ReabrirOportunidad
         }.Select(code => new PermisoRol { IdPermisoNavigation = new Permiso { Codigo = code } }).ToList();
         var user = User("vendedor");
         user.UsuarioRoles = [new UsuarioRol { IdRolNavigation = seller }];
@@ -42,10 +42,10 @@ public sealed class IdentityTests
             .ThenInclude(join => join.IdPermisoNavigation).ToListAsync();
         foreach (var combination in new[]
         {
-            new[] { CodigosAcceso.Vendedor },
-            new[] { CodigosAcceso.Vendedor, CodigosAcceso.ResponsableComercial },
-            new[] { CodigosAcceso.Vendedor, CodigosAcceso.Administrador },
-            new[] { CodigosAcceso.Vendedor, CodigosAcceso.ResponsableComercial, CodigosAcceso.Administrador }
+            new[] { RolesYPermisos.Vendedor },
+            new[] { RolesYPermisos.Vendedor, RolesYPermisos.ResponsableComercial },
+            new[] { RolesYPermisos.Vendedor, RolesYPermisos.Administrador },
+            new[] { RolesYPermisos.Vendedor, RolesYPermisos.ResponsableComercial, RolesYPermisos.Administrador }
         })
         {
             var user = User("multirrol" + combination.Length + combination.Last());
@@ -63,9 +63,9 @@ public sealed class IdentityTests
             Assert.Equal(combination.Length > 1, capabilities.PuedeGestionarTodas);
             Assert.Equal(combination.Length > 1, capabilities.PuedeReabrir);
             Assert.Equal(combination.Length == 1, capabilities.FunnelSoloPropio);
-            Assert.Equal(combination.Contains(CodigosAcceso.Administrador), capabilities.PuedeAdministrarUsuarios);
-            Assert.Equal(combination.Contains(CodigosAcceso.Administrador), capabilities.PuedeAdministrarConfiguracion);
-            Assert.Equal(combination.Contains(CodigosAcceso.Administrador) ? 7 : combination.Length > 1 ? 5 : 4,
+            Assert.Equal(combination.Contains(RolesYPermisos.Administrador), capabilities.PuedeAdministrarUsuarios);
+            Assert.Equal(combination.Contains(RolesYPermisos.Administrador), capabilities.PuedeAdministrarConfiguracion);
+            Assert.Equal(combination.Contains(RolesYPermisos.Administrador) ? 7 : combination.Length > 1 ? 5 : 4,
                 capabilities.Permisos.Count);
         }
     }
@@ -73,8 +73,8 @@ public sealed class IdentityTests
     [Fact]
     public void InactiveUnknownOrUnassignedUsersHaveNoCapabilities()
     {
-        var permission = new Permiso { Codigo = CodigosAcceso.AdministrarUsuarios };
-        var knownRole = new Rol { Nombre = CodigosAcceso.Administrador,
+        var permission = new Permiso { Codigo = RolesYPermisos.AdministrarUsuarios };
+        var knownRole = new Rol { Nombre = RolesYPermisos.Administrador,
             PermisoRoles = [new PermisoRol { IdPermisoNavigation = permission }] };
         var unknownRole = new Rol { Nombre = "DESCONOCIDO",
             PermisoRoles = [new PermisoRol { IdPermisoNavigation = permission }] };

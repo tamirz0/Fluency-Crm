@@ -100,6 +100,17 @@ Reportes de esta ejecución: `node_modules/.tmp/t05-controls/` (ignorados por Gi
 
 ## Límites y continuidad
 
-Las pruebas automatizadas siguen exclusivamente en PostgreSQL local con la clave de tests y limpieza propia de T03/T04. El control completo superó el presupuesto aproximado de 90 s y se completó sin reducir casos/aislamiento ni alterar timeouts. No se repitió la suite después del resultado correcto porque solo cambió documentación y la aplicación explícita de semillas en la base de desarrollo separada.
+### Ajuste solicitado después del cierre inicial: separación de clases
+
+El usuario pidió sustituir el nombre genérico y separar las responsabilidades. Sobre `a5b827f`, con árbol limpio, se reemplazó `CodigosAcceso.cs` por `RolesYPermisos.cs` (constantes) y `CapacidadesUsuario.cs` (cálculo). IdentityTests solo cambia referencias al nombre nuevo; valores, lógica y asserts permanecen idénticos. Sin SQL, paquetes, cambios HTTP ni escrituras en desarrollo. La revisión independiente comprobó equivalencia textual normalizando saltos de línea y renombrando únicamente el identificador; sin hallazgos requeridos ni referencias antiguas en backend.
+
+Build después de separar: cero errores/advertencias, invocación 7,44 s. Suite backend completa repetida por pedido del usuario: 58/58 correctas, cero fallos y omisiones, invocación 134,98 s. TRX: `node_modules/.tmp/t05-controls/t05-refactor-backend.trx`. La comprobación posterior de solo lectura confirmó la base de tests y su propietario esperados, cero tablas de usuario y cero esquemas `t03_*`. Comandos:
+
+```powershell
+dotnet build backend/FluencyAPI.slnx --no-restore -m:1
+dotnet test backend/FluencyAPI.Tests/FluencyAPI.Tests.csproj --no-build --no-restore --logger 'trx;LogFileName=t05-refactor-backend.trx' --results-directory node_modules/.tmp/t05-controls
+```
+
+Las pruebas automatizadas siguen exclusivamente en PostgreSQL local con la clave de tests y limpieza propia de T03/T04. El control completo superó el presupuesto aproximado de 90 s y se completó sin reducir casos/aislamiento ni alterar timeouts. En el cierre inicial no se repitió la suite después del resultado correcto porque solo cambió documentación y la aplicación explícita de semillas en desarrollo; la repetición posterior responde al refactor pedido por el usuario.
 
 La revisión de la base de prueba Supabase se mantiene para el final de CP02/T06 cuando el usuario la haya creado; no se ha conectado ni redirigido ninguna clave a la nube. Azure y la primera entrega permanecen fuera de estas pruebas. B7/B8 conservan su estado previo; no se repiten frontend/auditorías npm por este cambio de persistencia. La API aún conserva deuda de acceso/contratos antiguos que se resolverá en T07–T12; T05 no acredita protección HTTP, administrador inicial ni mapeos comerciales nuevos. Sigue T06 después del OK de integración. Merge/push/publicación nuevos no se realizaron. Incremento completado, pendiente del OK de integración.
