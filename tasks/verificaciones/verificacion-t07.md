@@ -1,6 +1,6 @@
 # Verificación T07: contrato HTTP y corte de rutas anteriores
 
-Fecha: 12/10/2026. Rama `segunda-entrega-t07-contrato-http`, desde `segunda-entrega` / `c363670`. Usuario autorizó integrar T07 si tests/revisión aprobaban y continuar con T08. CP03 sigue pendiente de T08–T09; T07 es preparación y no se presenta como acceso funcional.
+Fecha: 12/10/2026. Rama `segunda-entrega-t07-contrato-http`, desde `segunda-entrega` / `c363670`. Usuario autorizó integrar T07 si tests/revisión aprobaban y continuar con T08. Integrado localmente: código `8d1601d`, merge `10d8a0a`, después de la aprobación independiente. CP03 sigue pendiente de T08–T09; T07 es preparación y no se presenta como acceso funcional.
 
 ## Resultado
 

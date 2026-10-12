@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using FluencyAPI.Controllers;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -20,21 +21,25 @@ namespace FluencyAPI.Tests;
 public sealed class HttpContractTests
 {
     [Fact]
-    public async Task ApplicationMapsNoLegacyActionsOrBusinessOpenApiPaths()
+    public async Task ApplicationMapsOnlyCompletedAuthActionsAndNoLegacyRoutes()
     {
         await using var factory = new ContractApiFactory(includeProbe: false);
         using var client = factory.CreateClient();
-        Assert.Empty(factory.Services.GetRequiredService<IActionDescriptorCollectionProvider>()
-            .ActionDescriptors.Items);
+        var actions = factory.Services.GetRequiredService<IActionDescriptorCollectionProvider>().ActionDescriptors.Items;
+        Assert.Equal(4, actions.Count);
+        Assert.All(actions, action => Assert.Equal(typeof(LoginController),
+            Assert.IsType<Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor>(action).ControllerTypeInfo.AsType()));
 
         using var response = await client.GetAsync("/openapi/v1.json");
         response.EnsureSuccessStatusCode();
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        Assert.Empty(document.RootElement.GetProperty("paths").EnumerateObject());
+        Assert.Equal(new[] { "/auth/csrf", "/auth/login", "/auth/logout", "/auth/me" },
+            document.RootElement.GetProperty("paths").EnumerateObject().Select(path => path.Name).Order().ToArray());
 
         // Enumerate source actions as well as the actual routing table: no alternate verb survives.
         var controllers = typeof(LoginController).Assembly.GetTypes()
-            .Where(type => type.Namespace == typeof(LoginController).Namespace && type.IsSubclassOf(typeof(ControllerBase)));
+            .Where(type => type.Namespace == typeof(LoginController).Namespace
+                && type.IsSubclassOf(typeof(ControllerBase)) && type != typeof(LoginController));
         foreach (var controller in controllers)
         {
             var prefix = controller.GetCustomAttribute<RouteAttribute>()!.Template
@@ -49,7 +54,7 @@ public sealed class HttpContractTests
                     Content = JsonBody("{}")
                 };
                 using var retired = await client.SendAsync(request);
-                Assert.Equal(HttpStatusCode.NotFound, retired.StatusCode);
+                Assert.Equal(HttpStatusCode.Unauthorized, retired.StatusCode);
             }
         }
     }
@@ -60,7 +65,7 @@ public sealed class HttpContractTests
         await using var factory = new ContractApiFactory();
         using var client = factory.CreateClient();
         using var response = await client.GetAsync("/no-existe");
-        await AssertProblem(response, HttpStatusCode.NotFound, "NOT_FOUND");
+        await AssertProblem(response, HttpStatusCode.Unauthorized, "UNAUTHENTICATED");
     }
 
     [Theory]
@@ -247,6 +252,8 @@ public sealed record ContractPatchRequest : PatchRequest
 
 // Test assembly only; never registered by the production application.
 [ApiController]
+[AllowAnonymous]
+[IgnoreAntiforgeryToken]
 [Route("contract-probe")]
 public sealed class ContractProbeController(ContractProbeState state) : ControllerBase
 {

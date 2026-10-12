@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 12/10/2026. **Plan y especificación aprobados; planificación cerrada; T01–T06, CP01 y CP02 integradas localmente en `segunda-entrega`, merge `c363670` autorizado por el usuario el 12/10/2026; controles locales y revisión funcional Supabase de CP02 completos, checkpoint cerrado con ese OK; T07–T49 pendientes.** Desarrollo tiene esquema/catálogos de T04 y roles/permisos de T05, sin usuarios ni datos comerciales; el bootstrap es explícito. Sigue T07. La línea de base conserva deuda identificada. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
+Plan del 08/10/2026, actualizado el 12/10/2026. **Plan y especificación aprobados; planificación cerrada; T01–T07, CP01 y CP02 integradas localmente en `segunda-entrega`, merge `c363670` autorizado por el usuario el 12/10/2026; controles locales y revisión funcional Supabase de CP02 completos, checkpoint cerrado con ese OK; T08 verificada; T09–T49 pendientes.** Desarrollo tiene esquema/catálogos de T04 y roles/permisos de T05, sin usuarios ni datos comerciales; el bootstrap es explícito. T07 integrada en `10d8a0a`; T08 verificada, con integración condicionada autorizada; sigue T09. La línea de base conserva deuda identificada. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -15,7 +15,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T05 — Mapear la identidad y los tres roles fijos](#t05)
 - [x] [T06 — Crear el administrador mediante inicialización explícita](#t06)
 - [x] [T07 — Preparar contrato HTTP y corte de rutas anteriores](#t07)
-- [ ] [T08 — Autenticar por cookie y validar el actor en servidor](#t08)
+- [x] [T08 — Autenticar por cookie y validar el actor en servidor](#t08)
 - [ ] [T09 — Adaptar el transporte frontend a la sesión real](#t09)
 - [ ] [T10 — Restaurar y cerrar sesión desde la interfaz](#t10)
 - [ ] [T11 — Administrar cuentas desde API](#t11)
@@ -266,15 +266,22 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Archivos probables:** `backend/FluencyAPI/Controllers/LoginController.cs`; `backend/FluencyAPI/Authentication/SessionValidation.cs (nuevo)`; `backend/Services/Implementations/LoginService.cs`; `backend/Services/DTO/LoginContracts.cs`; `backend/FluencyAPI.Tests/AuthTests.cs (nuevo)`.
 
+**Subpasos concretados (12/10/2026):**
+
+- [x] **T08.a — Identidad consultada en servidor:** LoginContracts, LoginService, ILoginService y tipos SesionUsuario/ActorActual (cinco archivos); retirar registro público y separar respuesta pública de huella interna.
+- [x] **T08.b — Sesión HTTP:** LoginController, SessionValidation, AuthenticationSetup, Program y ApiConventions (cinco archivos). Cookie/CSRF, políticas, validación por request y límite de login; sin configurar proxies desconocidos.
+- [x] **T08.c — Pruebas:** AuthTests/AuthApiFactory nuevos, adaptación del inventario HttpContractTests y exposición interna de la conexión del fixture comercial (cuatro archivos). PostgreSQL local con fixture comercial existente, reloj controlado y HTTP real.
+- [x] **T08.d — Cierre:** evidencia, contrato HTTP y continuidad. Revisión independiente y auditorías de dependencias/secretos. El usuario autorizó integrar T08 si tests y reviewer aprueban, y continuar T09; sin publicar ni cambiar hosting.
+
 **Aceptación:**
 
-- [ ] Implementar csrf/login/me/logout, autenticación por defecto y cookie de 8 h absolutas no persistente; antiforgery incluso login/logout y eliminación del registro público.
-- [ ] Validar usuario/roles actuales por request y huella del hash; 401 para sesión ausente/inactiva/expirada/manipulada, 403 para permiso insuficiente; no exponer secretos.
-- [ ] Rate limit de login 10/min con 429/Retry-After, errores genéricos y actor del contexto; solo confiar en proxies explícitos. Wiring de Program y DTO/servicio se integra en este incremento.
+- [x] Implementar csrf/login/me/logout, autenticación por defecto y cookie de 8 h absolutas no persistente; antiforgery incluso login/logout y eliminación del registro público.
+- [x] Validar usuario/roles actuales por request y huella del hash; 401 para sesión ausente/inactiva/expirada/manipulada, 403 para permiso insuficiente; no exponer secretos.
+- [x] Rate limit de login 10/min con 429/Retry-After, errores genéricos y actor del contexto; solo confiar en proxies explícitos. Wiring de Program y DTO/servicio se integra en este incremento.
 
 **Verificación:** B + API(AuthTests) + D + S por autenticación; probar HTTP real, CSRF inválido sin escritura y expiración con reloj controlado, sin esperar ocho horas.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia (12/10/2026):** [verificacion-t08.md](verificaciones/verificacion-t08.md). HTTP/identidad 44/44, cero omisiones; build sin errores/advertencias, mutación detectada/restaurada. Auditorías npm/.NET y Gitleaks completas, solo B8 previo. Revisión independiente sin hallazgos requeridos; merge condicionado autorizado por el usuario y continuidad T09. CP03 pendiente de transporte frontend, sin login UI todavía.
 
 <a id="t09"></a>
 

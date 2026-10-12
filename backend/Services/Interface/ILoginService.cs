@@ -1,10 +1,10 @@
+using Services.Acceso;
 using Services.DTO;
 
 namespace Services.Interface;
 
 public interface ILoginService
 {
-    Task<RegisterResult> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken);
-
-    Task<LoginResult> LoginAsync(LoginRequest request, CancellationToken cancellationToken);
+    Task<SesionUsuario?> LoginAsync(LoginRequest request, CancellationToken cancellationToken);
+    Task<SesionUsuario?> GetSessionAsync(int id, CancellationToken cancellationToken);
 }
