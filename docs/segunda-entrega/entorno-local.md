@@ -9,7 +9,7 @@ Acuerdos con el usuario y ejecución inicial: 11/10/2026, T02. Evidencia en [ver
 | Desarrollo de segunda entrega | PostgreSQL local, `localhost:5433`, base `fluency_segunda_entrega_dev`; clave `ConnectionStrings:SegundaEntregaDB` en User Secrets. |
 | Primera entrega | Base anterior conservada. La nueva API no consulta la clave antigua `ConnectionStrings:FluencyLocalDB` ni la usa como respaldo. El usuario informó que retiró la información sensible de `appsettings.json` después de T02. |
 | Pruebas automatizadas | PostgreSQL local, `localhost:5433`, base exclusiva `fluency_segunda_entrega_test`; clave `ConnectionStrings:SegundaEntregaTestDB` en el mismo almacén User Secrets de la API. No reutilizar desarrollo ni heredar su conexión. |
-| Producción | Configuración explícita `ConnectionStrings__SegundaEntregaDB` en el hosting, sin User Secrets. Azure y su publicación siguen pendientes; no se probaron. |
+| Producción / Supabase | Perfil local `Production`, clave separada `ConnectionStrings:SegundaEntregaProductionDB` en User Secrets. En hosting: `ConnectionStrings__SegundaEntregaProductionDB`. Azure y su publicación siguen pendientes; no se probaron. |
 
 Contenedor informado y comprobado: `968c3a20d1e55ae43fa73f0c27ff3fcc08f38c00a22ae27105c8b227cd14a964`. El 11/10/2026 estaba en ejecución y publicaba `127.0.0.1:5433` hacia `5432/tcp`; al iniciar T04 se volvió a comprobar y PostgreSQL informó versión 17.11. Comprobar nuevamente si cambia el entorno:
 
@@ -18,6 +18,31 @@ docker inspect --format '{{.State.Status}} {{json .NetworkSettings.Ports}}' 968c
 ```
 
 La base de desarrollo se creó explícitamente en T02 después de comprobar que no existía. Pertenece al usuario de conexión y tenía cero tablas al iniciar T04; T04 aplicó explícitamente las 20 tablas y catálogos, sin usuarios ni datos comerciales de demostración. En T03 el usuario eligió `fluency_segunda_entrega_test`, creada también tras comprobar su ausencia y propietario; se guardó su conexión bajo una clave exclusiva, conservando el secreto de desarrollo. Ambas usan las credenciales locales proporcionadas por el usuario; no se copian aquí. No se borró, migró ni alteró la base anterior. El esquema comercial se preparó explícitamente en T04: arrancar la API no crea tablas, datos ni usuarios.
+
+## Perfil Production para Supabase
+
+Acuerdo del 12/10/2026: el usuario destina el proyecto Supabase preparado durante CP02 a la base productiva del trabajo práctico. La conexión se guarda una vez, separada de desarrollo y tests. `Production` fija ambos selectores de entorno; `http`/`https` fijan Development. La aplicación y el bootstrap seleccionan `SegundaEntregaProductionDB` en Production, sin fallback a la conexión local. Las fuentes normales de configuración tienen prioridad; si la clave no existe, se consulta únicamente esa clave en User Secrets para la ejecución local. En hosting se proporciona la variable de entorno, sin depender del almacén local.
+
+Desde una terminal nueva de PowerShell 7, en la raíz, guardar una cadena Npgsql completa con los parámetros del Session pooler y `Search Path=fluency_crm`:
+
+```powershell
+$valor = Read-Host 'Conexión Npgsql de producción completa' -MaskInput
+@{'ConnectionStrings:SegundaEntregaProductionDB' = $valor} |
+    ConvertTo-Json -Compress | dotnet user-secrets set --project backend/FluencyAPI
+Remove-Variable valor
+```
+
+La entrada oculta evita escribir el secreto literal en el historial. Usar el almacén de Windows Terminal descrito abajo, sin compartir su contenido. Conservar `SegundaEntregaDB` y `SegundaEntregaTestDB`. Una variable `ConnectionStrings__SegundaEntregaProductionDB` del proceso prevalece sobre el valor guardado.
+
+Para producción se recomienda `SSL Mode=VerifyFull`. Si la CA no está reconocida por el sistema, descargar el certificado raíz del panel de Supabase y guardar `Root Certificate=<ruta absoluta al certificado>` en la misma cadena; es configuración única. `SSL Mode=Require` exige cifrado pero no verifica la identidad del servidor: fue presentado como alternativa para el ensayo con datos ficticios, no como una validación TLS equivalente ni como un resultado ya comprobado. Referencias: [Supabase y certificado raíz](https://supabase.com/docs/guides/database/psql), [TLS en Npgsql](https://www.npgsql.org/doc/security.html).
+
+```powershell
+dotnet run --project backend/FluencyAPI --launch-profile Production
+# Después de preparar los cinco campos BootstrapAdmin__... de T06:
+dotnet run --project backend/FluencyAPI --launch-profile Production -- --bootstrap-admin
+```
+
+El bootstrap conserva la entrada por variables de entorno únicamente; no persistir su contraseña en User Secrets. El arranque normal no crea cuentas ni tablas. La API local escucha en localhost y no habilita OpenAPI en Production; el perfil no publica la API ni acredita autenticación/recorridos pendientes. Los ensayos manuales sobre esta base conservan sus datos; las suites y su limpieza siguen siendo exclusivamente locales. Estado y controles en [CP02/Supabase](../../tasks/verificaciones/verificacion-cp02-supabase.md).
 
 ## Secretos de desarrollo
 
@@ -258,3 +283,51 @@ if ($LASTEXITCODE -ne 0) {
 ```
 
 Procedimiento ejecutado una vez al cerrar T05 (11/10/2026), después de revisión estática, suite backend 58/58 y build correcto, con SQL guardado en `5e38d60`. Consulta final: 20 tablas, tres roles/siete permisos/dieciséis asociaciones, cero usuarios/roles asignados y cero servicios/embudos/oportunidades. La base de tests quedó sin tablas ni esquemas propios. No volver a ejecutarlo sobre esta instalación; ver [evidencia](../../tasks/verificaciones/verificacion-t05.md). No se ejecuta al arrancar la API. El rollback del código no retira semillas ya confirmadas ni borra datos. La revisión Supabase permanece para el final de CP02; este bloque se limita al Docker local y no sirve como procedimiento remoto.
+
+## Administrador inicial explícito: T06
+
+Después de instalar esquema, catálogos y roles, el modo `--bootstrap-admin` crea una única cuenta activa con rol `ADMINISTRADOR` si no existe ningún usuario. No escucha HTTP ni crea/reconstruye tablas. El arranque normal no ejecuta este modo. Una instalación con administrador activo no cambia cuentas ni contraseñas al repetirlo; usuarios existentes sin administrador activo requieren recuperación operativa del dueño del entorno, sin elevación automática.
+
+La reejecución sobre una instalación con administrador activo no exige volver a proporcionar sus datos. Códigos de salida: `0` creado/ya inicializado; `1` argumentos, configuración o entrada inválidos; `2` recuperación operativa necesaria; `3` conflicto concurrente revertido; `4` conexión, esquema, roles u operación no disponibles. Los mensajes son diagnósticos sin valores sensibles.
+
+La conexión usa `ConnectionStrings:SegundaEntregaDB`, con las mismas comprobaciones de destino del arranque. Para este procedimiento local, verificar primero el contenedor, la base `fluency_segunda_entrega_dev` y su propietario como en T04/T05. `--launch-profile http` selecciona `Development` y carga User Secrets; la bandera de bootstrap termina el proceso antes de escuchar. Conservar la protección que rechaza hosts remotos en Development. La revisión Supabase tiene un paso posterior propio: no adaptar esta receta cambiando silenciosamente el secreto.
+
+Los cinco campos se leen exclusivamente de variables del proceso: `BootstrapAdmin__Nombre`, `BootstrapAdmin__Apellido`, `BootstrapAdmin__Correo`, `BootstrapAdmin__Username`, `BootstrapAdmin__Password`. No se aceptan credenciales por argumentos, JSON ni claves BootstrapAdmin de User Secrets. Nombre/apellido hasta 100 caracteres, correo hasta 150 y válido, username hasta 50; textos obligatorios sin blancos después de trim. La contraseña se conserva exactamente: mínimo ocho caracteres y máximo 72 bytes UTF-8; BCrypt con costo 12. No escribir valores ni hashes en archivos versionados o salidas.
+
+Desde una terminal local privada en la raíz, después del build y de verificar el destino:
+
+```powershell
+$ErrorActionPreference = 'Stop'
+$taskPreviousBootstrap = @{}
+$taskBootstrapPassword = $null
+try {
+    foreach ($taskField in @('Nombre', 'Apellido', 'Correo', 'Username', 'Password')) {
+        $taskKey = 'BootstrapAdmin__' + $taskField
+        $taskPreviousBootstrap[$taskKey] = [Environment]::GetEnvironmentVariable($taskKey, 'Process')
+        if ($taskField -eq 'Password') {
+            $taskBootstrapPassword = Read-Host 'Contraseña del administrador inicial' -AsSecureString
+            [Environment]::SetEnvironmentVariable($taskKey,
+                [System.Net.NetworkCredential]::new('', $taskBootstrapPassword).Password, 'Process')
+        } else {
+            [Environment]::SetEnvironmentVariable($taskKey, (Read-Host $taskField), 'Process')
+        }
+    }
+    dotnet run --no-build --no-restore --project backend/FluencyAPI --launch-profile http -- --bootstrap-admin
+    if ($LASTEXITCODE -ne 0) { throw 'Bootstrap rechazado; revisar el diagnóstico sin compartir secretos.' }
+} finally {
+    foreach ($taskKey in $taskPreviousBootstrap.Keys) {
+        if ($null -eq $taskPreviousBootstrap[$taskKey]) {
+            Remove-Item -LiteralPath ('Env:' + $taskKey) -ErrorAction SilentlyContinue
+        } else {
+            [Environment]::SetEnvironmentVariable($taskKey, $taskPreviousBootstrap[$taskKey], 'Process')
+        }
+    }
+    if ($null -ne $taskBootstrapPassword) { $taskBootstrapPassword.Dispose() }
+}
+```
+
+La contraseña está temporalmente en memoria y en el entorno del proceso hijo; no se almacena en el historial como literal. No compartir volcados de entorno. El bloque restaura variables preexistentes al terminar. Revertir Git no elimina la cuenta ya confirmada.
+
+La creación se confirma en una transacción Serializable. Ante conflicto concurrente se revierte completamente y se informa que hay que revisar/repetir explícitamente; no hay reintentos automáticos. Esto conserva el contrato aprobado y el tratamiento de [conflictos de PostgreSQL](https://www.postgresql.org/docs/17/transaction-iso.html). La preparación SQL sigue siendo explícita y separada.
+
+Verificaciones y estado de la ejecución de T06 en [verificacion-t06.md](../../tasks/verificaciones/verificacion-t06.md). La receta permite que el operador elija sus credenciales; los tests emplean cuentas ficticias exclusivamente en esquemas locales aislados y no crean la cuenta de desarrollo.

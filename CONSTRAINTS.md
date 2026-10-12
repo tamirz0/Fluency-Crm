@@ -6,6 +6,7 @@ Acuerdos de producto y permisos confirmados el 08/10/2026: [decisiones de la ent
 
 ## 1. Acuerdos
 
+- Actualización acordada el 12/10/2026: aplicar el enfoque proporcional de `AGENTS.md`. Para configuraciones y operaciones puntuales se acepta verificación manual reproducible con resultado registrado; no se exige automatizar cada variante. Concentrar tests en comportamiento fundamental y regresiones probables. Evaluar el costo antes de agregar controles lentos y consultar si una necesidad simple deriva en complejidad discutible. Se conservan los criterios de seguridad, integridad de datos, evidencia honesta y las pruebas existentes; el bootstrap T06 no se modifica.
 - Priorizar pruebas de reglas y recorridos fundamentales en backend y frontend, más seguridad de dependencias y secretos.
 - No exigir cobertura total ni un porcentaje mínimo de líneas, ramas o mutaciones. No se agregó un proveedor de cobertura.
 - Bloquear el cierre de una tarea por fallos nuevos de build, tipos, lint o pruebas, nuevos secretos y nuevos hallazgos de seguridad altos/críticos. Registrar problemas preexistentes por separado, sin permitir que empeoren.

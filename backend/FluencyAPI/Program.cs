@@ -1,17 +1,28 @@
 using Microsoft.EntityFrameworkCore;
+using FluencyAPI;
 using Npgsql;
 using Persistence.Models;
 using Scalar.AspNetCore;
 using Services.Implementations;
 using Services.Interface;
 
+if (args.Contains("--bootstrap-admin", StringComparer.Ordinal))
+{
+    Environment.ExitCode = await BootstrapAdmin.RunAsync(args);
+    return;
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("SegundaEntregaDB");
+var connectionName = builder.Environment.IsProduction() ? "SegundaEntregaProductionDB" : "SegundaEntregaDB";
+var connectionString = builder.Configuration.GetConnectionString(connectionName);
+if (builder.Environment.IsProduction() && connectionString is null)
+    connectionString = new ConfigurationBuilder().AddUserSecrets<Program>(optional: true)
+        .Build().GetConnectionString(connectionName);
 if (string.IsNullOrWhiteSpace(connectionString))
 {
     throw new InvalidOperationException(
-        "Falta configurar ConnectionStrings:SegundaEntregaDB mediante User Secrets o variables de entorno.");
+        $"Falta configurar ConnectionStrings:{connectionName} mediante User Secrets o variables de entorno.");
 }
 
 NpgsqlConnectionStringBuilder connectionSettings;
@@ -21,14 +32,14 @@ try
 }
 catch (ArgumentException)
 {
-    throw new InvalidOperationException("La configuración ConnectionStrings:SegundaEntregaDB no es válida.");
+    throw new InvalidOperationException($"La configuración ConnectionStrings:{connectionName} no es válida.");
 }
 
 if (string.IsNullOrWhiteSpace(connectionSettings.Host)
     || string.IsNullOrWhiteSpace(connectionSettings.Database))
 {
     throw new InvalidOperationException(
-        "La configuración ConnectionStrings:SegundaEntregaDB debe indicar Host y Database no vacíos.");
+        $"La configuración ConnectionStrings:{connectionName} debe indicar Host y Database no vacíos.");
 }
 
 if (builder.Environment.IsDevelopment()

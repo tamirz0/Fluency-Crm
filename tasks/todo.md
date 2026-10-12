@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 11/10/2026. **Plan y especificación aprobados; planificación cerrada; T01–T04 y CP01 integradas en `segunda-entrega` / `a639f76`, con merge/push confirmado por el usuario y comprobación local en Git. T05 completada en `segunda-entrega-t05-identidad-roles`, pendiente del OK de integración; T06–T49 pendientes.** Desarrollo tiene esquema/catálogos de T04 y roles/permisos de T05, sin usuarios ni datos comerciales. Sigue T06 tras integrar. La revisión Supabase sigue pendiente para el final de CP02. La línea de base conserva deuda identificada. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
+Plan del 08/10/2026, actualizado el 12/10/2026. **Plan y especificación aprobados; planificación cerrada; T01–T05 y CP01 integradas en `segunda-entrega` / `c69d887`, confirmado por el usuario y comprobado localmente. T06 completada en `segunda-entrega-t06-admin-inicial`, integración autorizada por el usuario el 12/10/2026; controles locales y revisión funcional Supabase de CP02 completos, checkpoint cerrado con ese OK; T07–T49 pendientes.** Desarrollo tiene esquema/catálogos de T04 y roles/permisos de T05, sin usuarios ni datos comerciales; el bootstrap es explícito. Sigue ejecutar la integración autorizada; después T07. La línea de base conserva deuda identificada. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -13,7 +13,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T03 — Preparar pruebas HTTP con PostgreSQL aislado](#t03)
 - [x] [T04 — Escribir el esquema objetivo de segunda entrega](#t04)
 - [x] [T05 — Mapear la identidad y los tres roles fijos](#t05)
-- [ ] [T06 — Crear el administrador mediante inicialización explícita](#t06)
+- [x] [T06 — Crear el administrador mediante inicialización explícita](#t06)
 - [ ] [T07 — Preparar contrato HTTP y corte de rutas anteriores](#t07)
 - [ ] [T08 — Autenticar por cookie y validar el actor en servidor](#t08)
 - [ ] [T09 — Adaptar el transporte frontend a la sesión real](#t09)
@@ -196,6 +196,8 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 <a id="t06"></a>
 
+**Integración posterior de T05 (12/10/2026):** el usuario confirmó merge; los cuatro commits, incluido el refactor `c69d887`, están en `segunda-entrega`, con referencia local `origin/segunda-entrega` coincidente. Árbol limpio al comenzar T06, sin nueva consulta remota. No se repiten controles de T05 por esta integración.
+
 ### T06 — Crear el administrador mediante inicialización explícita
 
 **Resultado:** Crear el administrador mediante inicialización explícita, conforme a la SPEC del módulo y al alcance descrito abajo.
@@ -204,21 +206,29 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Archivos probables:** `backend/FluencyAPI/BootstrapAdmin.cs (nuevo)`; `backend/FluencyAPI/Program.cs`; `backend/FluencyAPI.Tests/BootstrapAdminTests.cs (nuevo)`.
 
+**Ejecución seleccionada (12/10/2026):** T05 integrada por el usuario; comprobación local en `segunda-entrega` / `c69d887`, árbol limpio y referencia local `origin/segunda-entrega` coincidente, sin nueva consulta remota. Rama T06: `segunda-entrega-t06-admin-inicial`. Subdivisión rutinaria para conservar incrementos revisables, sin cambiar el plan aprobado:
+
+- [x] **T06.a — Comando y pruebas:** los tres archivos de código previstos, commit `4fdf3c1`; entrada explícita, validación y BCrypt, transacción, reejecución/concurrencia y 24 pruebas de proceso sobre fixture local aislado. Un solo implementador; sin escrituras en desarrollo ni conexión remota.
+- [x] **T06.b — Operación y evidencia:** guía local, esta lista y `tasks/verificaciones/verificacion-t06.md`; controles completos de persistencia inicial y revisión independiente. Backend 82/82, build correcto, mutación detectada/restaurada y limpieza verificada.
+- [x] **T06.c — Continuidad:** `AGENTS.md`, `CAPABILITIES.md` y contexto actualizados con estado comprobado, límites y siguiente tarea. Supabase queda para el paso posterior con el usuario; merge/publicación conservan su OK específico.
+
 **Aceptación:**
 
-- [ ] Implementar --bootstrap-admin con variables de entorno de la SPEC, BCrypt y validación; no iniciar HTTP ni crear/reconstruir esquema.
-- [ ] Base sin usuarios queda con un único administrador; segunda ejecución no crea otro ni cambia credenciales.
-- [ ] Dos ejecuciones concurrentes no duplican; usuarios existentes sin administrador requieren recuperación explícita, sin elevar a nadie automáticamente.
+- [x] Implementar --bootstrap-admin con variables de entorno de la SPEC, BCrypt y validación; no iniciar HTTP ni crear/reconstruir esquema.
+- [x] Base sin usuarios queda con un único administrador; segunda ejecución no crea otro ni cambia credenciales.
+- [x] Dos ejecuciones concurrentes no duplican; usuarios existentes sin administrador requieren recuperación explícita, sin elevar a nadie automáticamente.
 
 **Verificación:** B + API(BootstrapAdminTests) + D; ejecutar bootstrap dos veces sobre fixture aislado y comprobar cantidad/roles.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia T06 (12/10/2026):** [verificacion-t06.md](verificaciones/verificacion-t06.md), código `4fdf3c1`. BootstrapAdminTests 24/24; suite backend completa 82/82 (250,12 s), cero fallos/omisiones; build sin errores/advertencias y mutación representativa detectada con restauración exacta. Revisión independiente sin hallazgos pendientes; problema de carga de entorno y defecto del harness resueltos antes del verde. Auditoría .NET sin vulnerabilidades reportadas, código escaneado sin secretos detectados. Perfil local y guía verificados; desarrollo conserva cero usuarios y tests terminó sin tablas/esquemas/conexiones propios. No se repitió frontend/auditorías npm ni se habilitó sesión HTTP. El usuario indicó conservar el bootstrap si funciona: no se agregó otro mecanismo SQL. Pendiente del OK de integración; ensayo Supabase siguiente con el usuario, sin conectar durante T06.
 
 ### CP02 — Inicialización
 
-- [ ] Esquema/roles/bootstrap reproducibles y sin datos comerciales automáticos; controles completos de persistencia inicial.
-- [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
-- [ ] **Revisión solicitada por el usuario (11/10/2026), al terminar CP02/T04–T06:** evaluar y verificar la conexión de la API local a una base de prueba nueva en Supabase que creará el usuario. Confirmar destino/aislamiento, preparar explícitamente esquema/catálogos/roles/bootstrap y comprobar únicamente los recorridos ya habilitados en ese momento. Revisar connection string en almacenamiento seguro, endpoint directo o pooler, TLS, permisos/exposición del esquema y entorno de ejecución: actualmente `Development` rechaza hosts remotos en `Program.cs`, por lo que no basta sustituir el secreto. Conservar esa protección y definir una configuración explícita para el ensayo remoto. Las suites automatizadas y su limpieza siguen siendo exclusivamente locales; no redirigir `SegundaEntregaTestDB` a Supabase ni borrar/recrear bases remotas. No conectar ni escribir en la nube durante T04/T05/T06; ejecutar la revisión al final, cuando la base de prueba esté disponible, registrando evidencia y pendientes. Esta revisión no autoriza merges ni publicaciones.
+- [x] Esquema/roles/bootstrap reproducibles y sin datos comerciales automáticos; controles completos de persistencia inicial: backend 82/82, incluidos SchemaTests 20/20, IdentityTests 12/12 y BootstrapAdminTests 24/24. Ver evidencia T06.
+- [x] Resultados y límites registrados sin rebajar constraints; controles previos de backend siguen verdes. CP02 local cerrado; revisión remota siguiente sigue pendiente y no se acredita sesión/recorrido comercial HTTP.
+- [x] **Revisión Supabase solicitada por el usuario:** SQL T04/T05 preparados en fluency_crm; conexión, creación del administrador (1 usuario / 1 asociación / 1 administrador activo) y reejecución sin cambios confirmadas por el usuario. Eligió esa base como productiva y el perfil Production, con clave separada de desarrollo/tests. Modo TLS efectivo no verificado, registrado como límite para publicación; no se redirigieron suites ni se reconstruyó la base. CP02 cerrado e integración autorizada por el usuario el 12/10/2026. Ver [evidencia CP02](verificaciones/verificacion-cp02-supabase.md).
+
+**Actualización de esta revisión, 12/10/2026:** el usuario preparó Supabase y confirmó inventario previo 20/3/7/16/0 (tablas/roles/permisos/asociaciones/usuarios). El bootstrap falló en TLS; luego eligió esa base como productiva y pidió el perfil persistente `Production`. Perfil implementado, tres casos existentes 3/3 y build correcto; el usuario confirmó conexión funcional, capturas con 1 usuario / 1 asociación / 1 administrador activo y reejecución sin cambios. No aplicó configuración TLS adicional; el modo efectivo no se verificó. Comprobaciones funcionales completas; el usuario confirmó funcionamiento y autorizó el cierre de CP02 y la integración el 12/10/2026. Estado y comandos en [verificacion-cp02-supabase.md](verificaciones/verificacion-cp02-supabase.md); suites exclusivamente locales.
 
 <a id="t07"></a>
 
