@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 12/10/2026. **Plan y especificación aprobados; planificación cerrada; T01–T07, CP01 y CP02 integradas localmente en `segunda-entrega`, merge `c363670` autorizado por el usuario el 12/10/2026; controles locales y revisión funcional Supabase de CP02 completos, checkpoint cerrado con ese OK; T08 verificada; T09–T49 pendientes.** Desarrollo tiene esquema/catálogos de T04 y roles/permisos de T05, sin usuarios ni datos comerciales; el bootstrap es explícito. T07 integrada en `10d8a0a`; T08 verificada, con integración condicionada autorizada; sigue T09. La línea de base conserva deuda identificada. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
+Plan del 08/10/2026, actualizado el 12/10/2026. **Plan y especificación aprobados; planificación cerrada; T01–T08, CP01 y CP02 integradas localmente en `segunda-entrega`; CP02 en `c363670`, T07 en `10d8a0a` y T08 en `942e23d`, con autorización del usuario el 12/10/2026; controles locales y revisión funcional Supabase de CP02 completos, checkpoint cerrado con ese OK; T08 verificada; T09–T49 pendientes.** Desarrollo tiene esquema/catálogos de T04 y roles/permisos de T05, sin usuarios ni datos comerciales; el bootstrap es explícito. T07 integrada en `10d8a0a`; T08 integrada tras 44/44 y reviewer aprobado. T09 queda pendiente; ejecución detenida por indicación del usuario. La línea de base conserva deuda identificada. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -281,7 +281,7 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Verificación:** B + API(AuthTests) + D + S por autenticación; probar HTTP real, CSRF inválido sin escritura y expiración con reloj controlado, sin esperar ocho horas.
 
-**Evidencia (12/10/2026):** [verificacion-t08.md](verificaciones/verificacion-t08.md). HTTP/identidad 44/44, cero omisiones; build sin errores/advertencias, mutación detectada/restaurada. Auditorías npm/.NET y Gitleaks completas, solo B8 previo. Revisión independiente sin hallazgos requeridos; merge condicionado autorizado por el usuario y continuidad T09. CP03 pendiente de transporte frontend, sin login UI todavía.
+**Evidencia (12/10/2026):** [verificacion-t08.md](verificaciones/verificacion-t08.md). HTTP/identidad 44/44, cero omisiones; build sin errores/advertencias, mutación detectada/restaurada. Auditorías npm/.NET y Gitleaks completas, solo B8 previo. Revisión independiente sin hallazgos requeridos; integrada localmente en `942e23d` tras el OK condicionado del usuario. Por su última indicación, detenerse aquí; T09 pendiente. CP03 pendiente de transporte frontend, sin login UI todavía.
 
 <a id="t09"></a>
 
