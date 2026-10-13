@@ -1,25 +1,61 @@
 import createClient from 'openapi-fetch'
 import type { components, paths } from './schema'
+import type { components as LegacyComponents, paths as LegacyPaths } from './legacy-schema'
 
-export const api = createClient<paths>({ baseUrl: '/api', fetch: (...args) => globalThis.fetch(...args) })
+const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
+export const api = createClient<paths>({ baseUrl, credentials: 'include', fetch: (...args) => globalThis.fetch(...args) })
+// Contratos históricos de componentes fuera de App; retirar al sustituir cada módulo.
+const legacyApi = createClient<LegacyPaths>({ baseUrl, credentials: 'include', fetch: (...args) => globalThis.fetch(...args) })
 export type AuthUser = components['schemas']['UsuarioResponse']
 export type LoginCredentials = components['schemas']['LoginRequest']
-export type Empresa = components['schemas']['EmpresaResponse']
-export type Contacto = components['schemas']['ContactoResponse']
-export type OportunidadDetalle = components['schemas']['OportunidadResponse']
-export type EtapaConOportunidades = components['schemas']['EtapaConOportunidadesResponse']
-export type OportunidadResumenResponse = components['schemas']['OportunidadResumenResponse']
-export type EtapaComercial = components['schemas']['EtapaComercialResponse']
-export type UpdateEtapaOportunidadRequest = components['schemas']['UpdateEtapaOportunidadRequest']
-export type CreateEmpresaRequest = components['schemas']['CreateEmpresaRequest']
-export type PatchEmpresaRequest = components['schemas']['PatchEmpresaRequest']
-export type CreateContactoRequest = components['schemas']['CreateContactoRequest']
-export type PatchContactoRequest = components['schemas']['PatchContactoRequest']
-export type CreateOportunidadRequest = components['schemas']['CreateOportunidadRequest']
-export type PatchOportunidadRequest = components['schemas']['PatchOportunidadRequest']
-export type EstadoCliente = components['schemas']['EstadoClienteResponse']
-export type OrigenComercial = components['schemas']['OrigenComercialResponse']
-export type Servicio = components['schemas']['ServicioResponse']
+export type SessionResponse = components['schemas']['SesionResponse']
+export type Empresa = LegacyComponents['schemas']['EmpresaResponse']
+export type Contacto = LegacyComponents['schemas']['ContactoResponse']
+export type OportunidadDetalle = LegacyComponents['schemas']['OportunidadResponse']
+export type EtapaConOportunidades = LegacyComponents['schemas']['EtapaConOportunidadesResponse']
+export type OportunidadResumenResponse = LegacyComponents['schemas']['OportunidadResumenResponse']
+export type EtapaComercial = LegacyComponents['schemas']['EtapaComercialResponse']
+export type UpdateEtapaOportunidadRequest = LegacyComponents['schemas']['UpdateEtapaOportunidadRequest']
+export type CreateEmpresaRequest = LegacyComponents['schemas']['CreateEmpresaRequest']
+export type PatchEmpresaRequest = LegacyComponents['schemas']['PatchEmpresaRequest']
+export type CreateContactoRequest = LegacyComponents['schemas']['CreateContactoRequest']
+export type PatchContactoRequest = LegacyComponents['schemas']['PatchContactoRequest']
+export type CreateOportunidadRequest = LegacyComponents['schemas']['CreateOportunidadRequest']
+export type PatchOportunidadRequest = LegacyComponents['schemas']['PatchOportunidadRequest']
+export type EstadoCliente = LegacyComponents['schemas']['EstadoClienteResponse']
+export type OrigenComercial = LegacyComponents['schemas']['OrigenComercialResponse']
+export type Servicio = LegacyComponents['schemas']['ServicioResponse']
+
+let csrfToken: Promise<string> | undefined
+
+export function refreshCsrfToken(): Promise<string> {
+  const pending = getResponseData(() => api.GET('/auth/csrf')).then(data => {
+    if (!data.requestToken) throw new ApiRequestError('La API no devolvió el token CSRF.')
+    return data.requestToken
+  }).catch(error => {
+    if (csrfToken === pending) csrfToken = undefined
+    throw error
+  })
+  csrfToken = pending
+  return pending
+}
+
+api.use({
+  async onRequest({ request }) {
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method))
+      request.headers.set('X-CSRF-TOKEN', await (csrfToken ?? refreshCsrfToken()))
+  },
+  async onResponse({ response, schemaPath }) {
+    if (response.status === 401 || response.status === 400 ||
+        (response.ok && (schemaPath === '/auth/login' || schemaPath === '/auth/logout')))
+      csrfToken = undefined
+    if (!response.ok) {
+      const problem: unknown = await response.clone().json().catch(() => undefined)
+      throw new ApiRequestError(getApiErrorMessage(problem, response.status), response.status, problem)
+    }
+  },
+  onError() { return new ApiRequestError('No pudimos conectar con la API.') },
+})
 
 export type OportunidadResumen = OportunidadResumenResponse & {
   idEtapa: EtapaConOportunidades['idEtapa']
@@ -51,7 +87,22 @@ export const catalogQueryKeys = {
 
 export class ApiRequestError extends Error {
   readonly status?: number
-  constructor(message: string, status?: number) { super(message); this.name = 'ApiRequestError'; this.status = status }
+  readonly code?: string
+  readonly traceId?: string
+  readonly errors?: Record<string, string[]>
+  constructor(message: string, status?: number, problem?: unknown) {
+    super(message)
+    this.name = 'ApiRequestError'
+    this.status = status
+    if (problem && typeof problem === 'object') {
+      const data = problem as Record<string, unknown>
+      if (typeof data.code === 'string') this.code = data.code
+      if (typeof data.traceId === 'string') this.traceId = data.traceId
+      if (data.errors && typeof data.errors === 'object' && !Array.isArray(data.errors))
+        this.errors = Object.fromEntries(Object.entries(data.errors).filter((entry): entry is [string, string[]] =>
+          Array.isArray(entry[1]) && entry[1].every(message => typeof message === 'string')))
+    }
+  }
 }
 
 function messageFromPayload(payload: unknown): string | undefined {
@@ -76,19 +127,28 @@ export function getApiErrorMessage(payload: unknown, status?: number): string {
 }
 
 export async function loginRequest(credentials: LoginCredentials): Promise<AuthUser> {
-  try {
-    const { data, error, response } = await api.POST('/Login/Login', { body: credentials })
-    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
-    return data
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error
-    throw new ApiRequestError('No pudimos conectar con la API.')
-  }
+  return (await loginSession(credentials)).usuario
+}
+
+export async function loginSession(credentials: LoginCredentials): Promise<SessionResponse> {
+  await refreshCsrfToken()
+  const session = await getResponseData(() => api.POST('/auth/login', { body: credentials }))
+  await refreshCsrfToken()
+  return session
+}
+
+export function getSessionRequest(): Promise<SessionResponse> {
+  return getResponseData(() => api.GET('/auth/me'))
+}
+
+export async function logoutRequest(): Promise<void> {
+  await api.POST('/auth/logout')
+  await refreshCsrfToken()
 }
 
 export async function getCompanies(): Promise<Empresa[]> {
   try {
-    const { data, error, response } = await api.GET('/Empresa/ListadoEmpresas')
+    const { data, error, response } = await legacyApi.GET('/Empresa/ListadoEmpresas')
     if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
     return data
   } catch (error) {
@@ -99,7 +159,7 @@ export async function getCompanies(): Promise<Empresa[]> {
 
 export async function getCompany(idEmpresa: number): Promise<Empresa> {
   try {
-    const { data, error, response } = await api.GET('/Empresa/DatosEmpresa/{idEmpresa}', { params: { path: { idEmpresa } } })
+    const { data, error, response } = await legacyApi.GET('/Empresa/DatosEmpresa/{idEmpresa}', { params: { path: { idEmpresa } } })
     if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
     return data
   } catch (error) {
@@ -110,7 +170,7 @@ export async function getCompany(idEmpresa: number): Promise<Empresa> {
 
 export async function getContacts(): Promise<Contacto[]> {
   try {
-    const { data, error, response } = await api.GET('/Contacto/ListadoContactos')
+    const { data, error, response } = await legacyApi.GET('/Contacto/ListadoContactos')
     if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
     return data
   } catch (error) {
@@ -121,7 +181,7 @@ export async function getContacts(): Promise<Contacto[]> {
 
 export async function getContact(idContacto: number): Promise<Contacto> {
   try {
-    const { data, error, response } = await api.GET('/Contacto/DatosContacto/{idContacto}', { params: { path: { idContacto } } })
+    const { data, error, response } = await legacyApi.GET('/Contacto/DatosContacto/{idContacto}', { params: { path: { idContacto } } })
     if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
     return data
   } catch (error) {
@@ -132,7 +192,7 @@ export async function getContact(idContacto: number): Promise<Contacto> {
 
 export async function getOpportunitiesByStage(): Promise<EtapaConOportunidades[]> {
   try {
-    const { data, error, response } = await api.GET('/Oportunidades/OportunidadesPorEtapa')
+    const { data, error, response } = await legacyApi.GET('/Oportunidades/OportunidadesPorEtapa')
     if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
     return data
   } catch (error) {
@@ -143,7 +203,7 @@ export async function getOpportunitiesByStage(): Promise<EtapaConOportunidades[]
 
 export async function getOpportunity(idOportunidad: number): Promise<OportunidadDetalle> {
   try {
-    const { data, error, response } = await api.GET('/Oportunidades/DatosOportunidad/{idOportunidad}', { params: { path: { idOportunidad } } })
+    const { data, error, response } = await legacyApi.GET('/Oportunidades/DatosOportunidad/{idOportunidad}', { params: { path: { idOportunidad } } })
     if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
     return data
   } catch (error) {
@@ -154,7 +214,7 @@ export async function getOpportunity(idOportunidad: number): Promise<Oportunidad
 
 export async function getCommercialStages(): Promise<EtapaComercial[]> {
   try {
-    const { data, error, response } = await api.GET('/EtapasComerciales/ListadoEtapasComerciales')
+    const { data, error, response } = await legacyApi.GET('/EtapasComerciales/ListadoEtapasComerciales')
     if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
     return data
   } catch (error) {
@@ -163,7 +223,7 @@ export async function getCommercialStages(): Promise<EtapaComercial[]> {
   }
 }
 
-async function getCatalog<T>(request: () => Promise<{ data?: T; error?: unknown; response: Response }>): Promise<T> {
+async function getResponseData<T>(request: () => Promise<{ data?: T; error?: unknown; response: Response }>): Promise<T> {
   try {
     const { data, error, response } = await request()
     if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
@@ -175,20 +235,20 @@ async function getCatalog<T>(request: () => Promise<{ data?: T; error?: unknown;
 }
 
 export function getCustomerStates(): Promise<EstadoCliente[]> {
-  return getCatalog(() => api.GET('/EstadosCliente/ListadoEstadosCliente'))
+  return getResponseData(() => legacyApi.GET('/EstadosCliente/ListadoEstadosCliente'))
 }
 
 export function getCommercialOrigins(): Promise<OrigenComercial[]> {
-  return getCatalog(() => api.GET('/OrigenesComerciales/ListadoOrigenesComerciales'))
+  return getResponseData(() => legacyApi.GET('/OrigenesComerciales/ListadoOrigenesComerciales'))
 }
 
 export function getServices(): Promise<Servicio[]> {
-  return getCatalog(() => api.GET('/Servicios/ListadoServicios'))
+  return getResponseData(() => legacyApi.GET('/Servicios/ListadoServicios'))
 }
 
 export async function createCompany(body: CreateEmpresaRequest): Promise<Empresa> {
   try {
-    const { data, error, response } = await api.POST('/Empresa/AltaEmpresa', { body })
+    const { data, error, response } = await legacyApi.POST('/Empresa/AltaEmpresa', { body })
     if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
     return data
   } catch (error) {
@@ -199,7 +259,7 @@ export async function createCompany(body: CreateEmpresaRequest): Promise<Empresa
 
 export async function patchCompany(idEmpresa: number, body: PatchEmpresaRequest): Promise<Empresa> {
   try {
-    const { data, error, response } = await api.PATCH('/Empresa/ModificarEmpresa/{idEmpresa}', { params: { path: { idEmpresa } }, body })
+    const { data, error, response } = await legacyApi.PATCH('/Empresa/ModificarEmpresa/{idEmpresa}', { params: { path: { idEmpresa } }, body })
     if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
     return data
   } catch (error) {
@@ -210,7 +270,7 @@ export async function patchCompany(idEmpresa: number, body: PatchEmpresaRequest)
 
 export async function createContact(body: CreateContactoRequest): Promise<Contacto> {
   try {
-    const { data, error, response } = await api.POST('/Contacto/AltaContacto', { body })
+    const { data, error, response } = await legacyApi.POST('/Contacto/AltaContacto', { body })
     if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
     return data
   } catch (error) {
@@ -221,7 +281,7 @@ export async function createContact(body: CreateContactoRequest): Promise<Contac
 
 export async function patchContact(idContacto: number, body: PatchContactoRequest): Promise<Contacto> {
   try {
-    const { data, error, response } = await api.PATCH('/Contacto/ModificarContacto/{idContacto}', { params: { path: { idContacto } }, body })
+    const { data, error, response } = await legacyApi.PATCH('/Contacto/ModificarContacto/{idContacto}', { params: { path: { idContacto } }, body })
     if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
     return data
   } catch (error) {
@@ -232,7 +292,7 @@ export async function patchContact(idContacto: number, body: PatchContactoReques
 
 export async function createOpportunity(body: CreateOportunidadRequest): Promise<OportunidadDetalle> {
   try {
-    const { data, error, response } = await api.POST('/Oportunidades/AltaOportunidad', { body })
+    const { data, error, response } = await legacyApi.POST('/Oportunidades/AltaOportunidad', { body })
     if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
     return data
   } catch (error) {
@@ -243,7 +303,7 @@ export async function createOpportunity(body: CreateOportunidadRequest): Promise
 
 export async function patchOpportunity(idOportunidad: number, body: PatchOportunidadRequest): Promise<OportunidadDetalle> {
   try {
-    const { data, error, response } = await api.PATCH('/Oportunidades/ModificarOportunidad/{idOportunidad}', { params: { path: { idOportunidad } }, body })
+    const { data, error, response } = await legacyApi.PATCH('/Oportunidades/ModificarOportunidad/{idOportunidad}', { params: { path: { idOportunidad } }, body })
     if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
     return data
   } catch (error) {
@@ -257,7 +317,7 @@ export async function updateOpportunityStage(
   body: UpdateEtapaOportunidadRequest & { idUsuario: number | string },
 ): Promise<OportunidadDetalle> {
   try {
-    const { data, error, response } = await api.POST('/Oportunidades/UpdateEtapaOportunidad/{idOportunidad}', {
+    const { data, error, response } = await legacyApi.POST('/Oportunidades/UpdateEtapaOportunidad/{idOportunidad}', {
       params: { path: { idOportunidad } },
       body,
     })

@@ -1,13 +1,16 @@
 import { type ReactNode } from 'react'
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BrowserRouter } from 'react-router-dom'
 import { AppProviders } from '../app/providers'
 import { createQueryClient } from '../app/queryClient'
-import App from '../App'
+import App from '../test/LegacyApp'
 import { AuthProvider } from '../auth/AuthContext'
 import { SESSION_KEY } from '../auth/session'
+
+// Preparar el módulo antes de medir el formulario, sin depender del costo del import diferido.
+beforeAll(async () => { await import('./opportunities/OpportunityFormPage') })
 
 const user = { id: 7, nombre: 'María', apellido: 'Gómez', correo: 'maria@example.com', username: 'maria', activo: true }
 const company = { id: 4, razonSocial: 'Acme Idiomas', cuit: '30-123', industria: 'Educación', correo: 'acme@example.com', telefono: '1144', direccion: 'Calle 1', idEstado: 1, estadoDescripcion: 'Cliente', idOrigen: 2, origenDescripcion: 'Referido', observaciones: 'Nota' }
