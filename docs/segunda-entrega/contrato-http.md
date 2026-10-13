@@ -1,6 +1,6 @@
-# Contrato HTTP implementado: T07–T08
+# Contrato HTTP implementado: T07–T09
 
-12/10/2026. Sesión HTTP implementada en T08; transporte frontend pendiente de T09 y acceso desde UI de T10. Los recursos comerciales nuevos siguen pendientes. Por indicación del usuario, no se agregó página informativa provisional.
+12/10/2026. Sesión HTTP implementada en T08 y transporte frontend en T09; acceso desde UI pendiente de T10. T09/CP03 preparados en su rama, sin merge hasta validación del usuario. Los recursos comerciales nuevos siguen pendientes. Por indicación del usuario, no se agregó página informativa provisional.
 
 ## Convenciones comunes
 
@@ -43,6 +43,8 @@ Todas las mutaciones requieren antiforgery estándar, incluido login/logout: coo
 Desarrollo conserva `/api` mediante Vite hacia `http://localhost:5169`. Producción con frontend en otra URL necesita comprobar orígenes/sitios reales, CORS con origen explícito y credenciales; Lax no admite fetch entre sitios diferentes. Topología, HTTPS y persistencia de claves quedan para T49, sin afirmar que el hosting actual soporte ya las cookies.
 
 ## Evidencia y fuentes
+
+T09 expone el cliente actual `api`, `loginSession`, `loginRequest`, `getSessionRequest`, `logoutRequest` y `refreshCsrfToken`. Usa `/api` por defecto y `VITE_API_BASE_URL` opcional, cookies include y CSRF en memoria; renueva tras cambios de identidad, sin reenviar mutaciones rechazadas. ApiRequestError conserva status/code/traceId/errores de campos. La integración con el estado/navegación de UI corresponde a T10. `schema.d.ts` refleja solo la API vigente; `legacy-schema.d.ts` conserva la referencia generada anterior para componentes fuera de App, hasta su sustitución. Vite mantiene el proxy local existente. [Evidencia y límites T09/CP03](../../tasks/verificaciones/verificacion-t09.md).
 
 [Verificación T07](../../tasks/verificaciones/verificacion-t07.md) y [verificación T08](../../tasks/verificaciones/verificacion-t08.md). Las pruebas de binding/PATCH/paginación usan un controlador exclusivo del assembly de tests y mutaciones en memoria: verifican el contrato HTTP común, no recursos comerciales todavía inexistentes. Una fábrica separada inventaría la aplicación sin ese controlador. Los probes de permisos/actor de T08 también pertenecen exclusivamente al assembly de tests.
 

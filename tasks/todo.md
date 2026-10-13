@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 12/10/2026. **Plan y especificación aprobados; planificación cerrada; T01–T08, CP01 y CP02 integradas localmente en `segunda-entrega`; CP02 en `c363670`, T07 en `10d8a0a` y T08 en `942e23d`, con autorización del usuario el 12/10/2026; controles locales y revisión funcional Supabase de CP02 completos, checkpoint cerrado con ese OK; T08 verificada; T09–T49 pendientes.** Desarrollo tiene esquema/catálogos de T04 y roles/permisos de T05, sin usuarios ni datos comerciales; el bootstrap es explícito. T07 integrada en `10d8a0a`; T08 integrada tras 44/44 y reviewer aprobado. T09 queda pendiente; ejecución detenida por indicación del usuario. La línea de base conserva deuda identificada. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
+Plan del 08/10/2026, actualizado el 12/10/2026. **Plan y especificación aprobados; planificación cerrada; T01–T08, CP01 y CP02 integradas localmente en `segunda-entrega`; CP02 en `c363670`, T07 en `10d8a0a` y T08 en `942e23d`, con autorización del usuario el 12/10/2026; controles locales y revisión funcional Supabase de CP02 completos, checkpoint cerrado con ese OK; T09 implementada y verificada en su rama; T10–T49 pendientes.** Desarrollo tiene esquema/catálogos de T04 y roles/permisos de T05, sin usuarios ni datos comerciales; el bootstrap es explícito. T07 integrada en `10d8a0a`; T08 integrada tras 44/44 y reviewer aprobado. T09/CP03 preparados con aprobación final del reviewer y pendientes de validación del usuario, sin merge autorizado. T10 no iniciada. La línea de base conserva deuda identificada. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -16,7 +16,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T06 — Crear el administrador mediante inicialización explícita](#t06)
 - [x] [T07 — Preparar contrato HTTP y corte de rutas anteriores](#t07)
 - [x] [T08 — Autenticar por cookie y validar el actor en servidor](#t08)
-- [ ] [T09 — Adaptar el transporte frontend a la sesión real](#t09)
+- [x] [T09 — Adaptar el transporte frontend a la sesión real](#t09)
 - [ ] [T10 — Restaurar y cerrar sesión desde la interfaz](#t10)
 - [ ] [T11 — Administrar cuentas desde API](#t11)
 - [ ] [T12 — Gestionar usuarios desde la pantalla administrativa](#t12)
@@ -293,20 +293,29 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Archivos probables:** `frontend/src/api/client.ts`; `frontend/src/api/schema.d.ts (generado)`; `frontend/src/api/client.test.ts (nuevo)`; `frontend/vite.config.ts`.
 
+**Subpasos concretados (12/10/2026):**
+
+- [x] **T09.a — Transporte y tipos:** client, schema generado, copia histórica legacy-schema y client.test (cuatro archivos). Cookie/CSRF/errores, sin reabrir rutas ni cambiar hosting.
+- [x] **T09.b — Regresión de componentes:** arnés LegacyApp exclusivo de tests y cuatro imports comerciales (cinco archivos); conservar todos los asserts tras el corte T07. Preparar el import del formulario para corregir B7 sin ampliar timeouts.
+- [x] **T09.c — Integración de pruebas:** setup Request real y mocks de App.test (dos archivos). Regresión completa y ensayo local del cliente.
+- [x] **T09.d — Evidencia y cierre:** revisión independiente, documentación y validación técnica CP03. El usuario pide detenerse sin merge y validar el checkpoint antes del OK.
+
 **Aceptación:**
 
-- [ ] Usar la cookie en /api local y obtener/renovar X-CSRF-TOKEN tras cambios de identidad; tipos regenerados desde API local.
-- [ ] Distinguir 401 de 403, leer ProblemDetails y no reenviar automáticamente mutaciones fallidas por sesión o CSRF.
-- [ ] No almacenar credenciales/tokens de autenticación en sessionStorage ni cambiar aún el hosting de Azure.
+- [x] Usar la cookie en /api local y obtener/renovar X-CSRF-TOKEN tras cambios de identidad; tipos regenerados desde API local.
+- [x] Distinguir 401 de 403, leer ProblemDetails y no reenviar automáticamente mutaciones fallidas por sesión o CSRF.
+- [x] No almacenar credenciales/tokens de autenticación en sessionStorage ni cambiar aún el hosting de Azure.
 
 **Verificación:** F + UI(src/api/client.test.ts) + D; inspección local de cookie/header y respuesta de /auth/me.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia (12/10/2026):** [verificacion-t09.md](verificaciones/verificacion-t09.md). Backend 114/114 y frontend 86/86 completos, cero omisiones; builds correctos, solo warning previo de lint. Ensayo real de cliente/cookie antiforgery/header y me401 en navegador local. Corrección del arnés omitido en T07 y preparación del import de B7 sin retirar asserts ni ampliar timeouts. Código revisado sin hallazgos requeridos, aprobación final explícita de código/evidencia recibida. Sin merge: validación y OK del usuario pendientes; no iniciar T10.
 
 ### CP03 — Acceso HTTP
 
-- [ ] Cookie, CSRF y actor real comprobados por HTTP; rutas incompatibles no operativas. Este checkpoint todavía no acredita login desde UI.
-- [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+**Estado:** verificación técnica y reviewer aprobados; validación del usuario e integración pendientes. No hacer merge ni iniciar T10 sin nueva indicación.
+
+- [x] Cookie, CSRF y actor real comprobados por HTTP; rutas incompatibles no operativas. Este checkpoint todavía no acredita login desde UI.
+- [x] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
 
 <a id="t10"></a>
 
