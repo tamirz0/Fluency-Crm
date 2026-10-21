@@ -55,10 +55,12 @@ Se detectó una omisión propia de T07: cuatro suites comerciales aún importaba
 
 ## Validación del usuario y límites
 
-CP03 verifica acceso HTTP y transporte, todavía sin login desde UI (T10). Para revisar: ejecutar `npm run test:run -- src/api/client.test.ts` y consultar [contrato implementado](../../docs/segunda-entrega/contrato-http.md). Para un ensayo manual autenticado, usar una cuenta local creada explícitamente con el [bootstrap existente](../../docs/segunda-entrega/entorno-local.md), iniciar API con perfil http y Vite, obtener csrf, enviar login, renovar csrf, consultar me, hacer logout y comprobar me401. No usar Supabase para suites ni compartir credenciales/token.
+**Validación del usuario (21/10/2026):** recorrido local de login y sesión completado; `/auth/me` devolvió la identidad autenticada. El token CSRF anterior fue rechazado con 400; tras obtener uno nuevo, el logout se completó y `/auth/me` volvió a responder 401. El usuario ejecutó `npm run test:run -- src/api/client.test.ts --maxWorkers=1 --no-file-parallelism`: 9/9 tests aprobados, 22,08 s.
+
+CP03 verifica acceso HTTP y transporte, todavía sin login desde UI (T10). No usar Supabase para suites ni compartir credenciales/token.
 
 Sin cambios de dependencias/lockfiles: auditorías de T08 del mismo día siguen siendo aplicables (npm raíz/.NET sin hallazgos; B8 source-map-js alto previo). No se repiten consultas sin cambios. TLS productivo, claves Data Protection y topología de frontend/API quedan para T49. El arnés temporal de navegador se eliminó; pestaña, API y Vite iniciados para el ensayo se cerraron. No pertenece al producto ni a los commits. Se observaron warnings de Development por perfil HTTP sin puerto HTTPS y consulta de varias colecciones; no hubo error de requests y no se cambió configuración ni se acredita HTTPS productivo. No se implementa T10, no se hace merge/push ni se modifica main.
 
 ## Cierre
 
-Código/tests guardados en `ecb6976` (`feat:`); documentación en commit `docs:` separado. Gitleaks sobre índice de implementación: exit0, 88.940 bytes, sin hallazgos. Reviewer independiente aprobó explícitamente código y evidencia tras recibir los resultados completos; no quedan correcciones requeridas. T09 y verificación técnica CP03 completas en la rama; el cierre por el usuario y la integración siguen pendientes de su validación/OK. No continuar T10 ni integrar automáticamente.
+Código/tests guardados en `ecb6976` (`feat:`); documentación en commit `docs:` separado. Gitleaks sobre índice de implementación: exit0, 88.940 bytes, sin hallazgos. Reviewer independiente aprobó explícitamente código y evidencia tras recibir los resultados completos; no quedan correcciones requeridas. El usuario aprobó CP03 el 21/10/2026 tras la validación manual y el test frontend registrados arriba. La integración sigue pendiente de autorización; T10 no iniciada.

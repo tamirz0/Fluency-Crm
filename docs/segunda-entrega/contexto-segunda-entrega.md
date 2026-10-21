@@ -38,6 +38,8 @@ Los requisitos académicos y las simplificaciones del diseño se mantienen disti
 
 **T09 / CP03 (12/10/2026), sin integrar:** transporte cookie/CSRF y tipos actuales implementados en `segunda-entrega-t09-transporte-sesion`, desde `54ff182`. Backend completo114/114 y frontend86/86, builds correctos y solo warning previo de lint. Ensayo de cliente real en navegador local: me401 y login inválido con antiforgery válido, sin reintentos ni creación de datos. Se adaptó el arnés de tests comerciales omitido en T07 y se corrigió la preparación del import diferido B7 sin retirar asserts ni ampliar timeouts. Revisión final de código/evidencia aprobada sin hallazgos requeridos. El usuario pide validar CP03 antes de autorizar merge: detenerse aquí, T10 no iniciada. Implementación y documentación en commits separados por su preferencia expresa. [Evidencia y límites](../../tasks/verificaciones/verificacion-t09.md).
 
+**Actualización CP03 (21/10/2026):** el usuario completó el ciclo local de login, consulta de sesión y logout; verificó que el CSRF anterior da 400 y que `/auth/me` responde 401 tras cerrar sesión. El test `src/api/client.test.ts` pasó 9/9 en 22,08 s. CP03 aprobada por el usuario; integración pendiente de autorización. No se registran datos de la cuenta de prueba. Ver [evidencia T09/CP03](../../tasks/verificaciones/verificacion-t09.md).
+
 ## 2. Estado comprobado en el repositorio
 
 ### Stack y estructura

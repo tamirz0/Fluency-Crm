@@ -4,6 +4,8 @@ Estado al 12/10/2026: mapa, especificaciones técnicas y plan aprobados explíci
 
 Fuentes: [diseño](docs/segunda-entrega/diseño-segunda-entrega.md), [decisiones confirmadas](docs/segunda-entrega/decisiones-confirmadas.md), [contexto](docs/segunda-entrega/contexto-segunda-entrega.md) y [constraints](CONSTRAINTS.md).
 
+Actualización al 21/10/2026: el usuario aprobó CP03 después de validar localmente login, `/auth/me`, renovación CSRF, logout y el test frontend de transporte (9/9). T09 sigue sin integrar; T10 no iniciada.
+
 | ID estable | Responsabilidad | Depende de |
 |---|---|---|
 | `acceso` | Autenticación, administrador inicial, usuarios, roles y autorización por acción/propiedad. | — |
