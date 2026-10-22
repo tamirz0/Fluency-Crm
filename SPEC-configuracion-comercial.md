@@ -1,6 +1,6 @@
 # Especificación: configuración comercial
 
-ID: `configuracion-comercial`; depende de `acceso`. [Mapa](CAPABILITIES.md) y especificación aprobados por el usuario el 08/10/2026; no implementada. Incluye [convenciones comunes](docs/segunda-entrega/especificacion-tecnica.md). Fuente funcional: diseño §4–5 y §8.
+ID: `configuracion-comercial`; depende de `acceso`. [Mapa](CAPABILITIES.md) y especificación aprobados por el usuario el 08/10/2026; catálogos implementados/verificados en CP05, pendientes de validación del operador e integración; servicios, embudos y etapas aún pendientes. [Evidencia CP05](tasks/verificaciones/verificacion-cp05.md). Incluye [convenciones comunes](docs/segunda-entrega/especificacion-tecnica.md). Fuente funcional: diseño §4–5 y §8.
 
 ## Objetivo, estructura y límites
 

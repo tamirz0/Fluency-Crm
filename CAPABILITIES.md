@@ -1,10 +1,10 @@
 # Mapa de capacidades: segunda entrega
 
-Estado al 21/10/2026: mapa, especificaciones y plan aprobados; planificación cerrada. T01–T09/CP01–CP03 integradas en `segunda-entrega`; T09 en `3ac9310`, documentación reciente preservada hasta `2930e95`. T10–T12/CP04 completos/verificados en `segunda-entrega-CP04-acceso`: sesión UI y administración de cuentas API/UI, backend116/116 y frontend90/90, revisión independiente cerrada y demo del usuario sin fallos. [Evidencia CP04](tasks/verificaciones/verificacion-cp04.md). Sin integración ni push de CP04. T13 y capacidades comerciales siguientes no iniciadas. El [seguimiento](tasks/todo.md) es la fuente del estado verificable actual.
+Estado al 22/10/2026: planificación aprobada y cerrada. T01–T12/CP01–CP04 integradas localmente en `segunda-entrega` / `4a6d65a`, sin publicar. T13–T15/CP05 implementadas y verificadas en `segunda-entrega-cp05-catalogos`: seis catálogos configurables y estados fijos de oportunidad de solo lectura, con administración protegida y referencias inactivas conservadas. Backend119/119, frontend94/94, revisión independiente sin defectos requeridos. [Evidencia CP05](tasks/verificaciones/verificacion-cp05.md); validación del operador e integración pendientes. T16 y siguientes no iniciadas. El [seguimiento](tasks/todo.md) conserva el estado verificable.
 
 Fuentes: [diseño](docs/segunda-entrega/diseño-segunda-entrega.md), [decisiones confirmadas](docs/segunda-entrega/decisiones-confirmadas.md), [contexto](docs/segunda-entrega/contexto-segunda-entrega.md) y [constraints](CONSTRAINTS.md).
 
-La validación anterior de CP03 se conserva sin repetirla. CP04 reutiliza cookie/antiforgery/actor del servidor y añade sus consumidores de UI y cuentas; las pantallas comerciales retiradas siguen sin publicarse. La aprobación de implementación no autoriza integrar CP04.
+La validación anterior de CP03 se conserva sin repetirla. CP04 reutiliza cookie/antiforgery/actor del servidor y añade sus consumidores de UI y cuentas; las pantallas comerciales retiradas siguen sin publicarse. CP05 reutiliza esos controles para catálogos; su implementación no autoriza integrar la rama.
 
 | ID estable | Responsabilidad | Depende de |
 |---|---|---|

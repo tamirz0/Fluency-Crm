@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 21/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T49 pendientes.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
+Plan del 08/10/2026, actualizado el 21/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T15/CP05 implementadas y verificadas en `segunda-entrega-cp05-catalogos`, pendientes de validación del usuario e integración. T16–T49 pendientes.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -20,9 +20,9 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T10 — Restaurar y cerrar sesión desde la interfaz](#t10)
 - [x] [T11 — Administrar cuentas desde API](#t11)
 - [x] [T12 — Gestionar usuarios desde la pantalla administrativa](#t12)
-- [ ] [T13 — Alinear los catálogos con el modelo objetivo](#t13)
-- [ ] [T14 — Exponer administración y opciones de catálogos](#t14)
-- [ ] [T15 — Editar catálogos desde configuración](#t15)
+- [x] [T13 — Alinear los catálogos con el modelo objetivo](#t13)
+- [x] [T14 — Exponer administración y opciones de catálogos](#t14)
+- [x] [T15 — Editar catálogos desde configuración](#t15)
 - [ ] [T16 — Mapear servicios, embudos y etapas](#t16)
 - [ ] [T17 — Gestionar servicios mediante API](#t17)
 - [ ] [T18 — Gestionar servicios desde UI](#t18)
@@ -400,17 +400,19 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Dependencias:** T04, T12. **Tamaño previsto:** M; 5 ubicaciones principales previstas.
 
+**Subdivisión CP05 antes de implementar:** T13.a alinea activos y estados fijos; T13.b reemplaza la categoría antigua por TipoActividad, agrega MotivoPerdida y verifica semillas/referencia inactiva. Un único responsable; SQL instalado conservado. Riesgo CP05: autorización administrativa; revisión independiente agrupada obligatoria de cierre (GPT-6.1 Sol / High), más revisión propia por paso.
+
 **Archivos probables:** `backend/Persistence/Models/EstadoCliente.cs`; `backend/Persistence/Models/OrigenComercial.cs`; `backend/Persistence/Models/TipoActividad.cs (nuevo)`; `backend/Persistence/Models/MotivoPerdida.cs (nuevo)`; `backend/Persistence/Models/FluencyLocalDbContext.cs`.
 
 **Aceptación:**
 
-- [ ] Mapear activos de catálogos y reemplazar el concepto antiguo de Actividad-categoría por TipoActividad; mapear motivo de pérdida.
-- [ ] Niveles/modalidades y estados de oportunidad se ajustan al SQL objetivo; estados ABIERTA/GANADA/PERDIDA permanecen fijos.
-- [ ] Etiquetas de referencias inactivas siguen consultables; no aplicar filtros globales que oculten historia. Si ajustes de catálogos auxiliares exceden cinco archivos, separar T13.a/T13.b.
+- [x] Mapear activos de catálogos y reemplazar el concepto antiguo de Actividad-categoría por TipoActividad; mapear motivo de pérdida.
+- [x] Niveles/modalidades y estados de oportunidad se ajustan al SQL objetivo; estados ABIERTA/GANADA/PERDIDA permanecen fijos.
+- [x] Etiquetas de referencias inactivas siguen consultables; no aplicar filtros globales que oculten historia. Si ajustes de catálogos auxiliares exceden cinco archivos, separar T13.a/T13.b.
 
 **Verificación:** B + API(SchemaTests) + D; lectura EF de semillas y referencia inactiva con etiqueta.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia CP05 (22/10/2026):** [verificacion-cp05.md](verificaciones/verificacion-cp05.md). Semillas/mapeos EF y SchemaTests 21/21; referencia inactiva con etiqueta conservada.
 
 <a id="t14"></a>
 
@@ -420,17 +422,19 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Dependencias:** T07, T13. **Tamaño previsto:** M; 5 ubicaciones principales previstas.
 
+**Subdivisión CP05:** T14.a contratos/servicio/controlador y wiring; T14.b pruebas HTTP y ajuste del inventario cerrado de rutas. La lista administrativa es paginada según SPEC; opciones y estados fijos no requieren paginación.
+
 **Archivos probables:** `backend/FluencyAPI/Controllers/CatalogosController.cs (nuevo)`; `backend/Services/Implementations/CatalogoService.cs (nuevo)`; `backend/Services/DTO/CatalogoContracts.cs (nuevo)`; `backend/FluencyAPI.Tests/CatalogosTests.cs (nuevo)`; `backend/FluencyAPI/Program.cs`.
 
 **Aceptación:**
 
-- [ ] Lista cerrada de catálogos configurables con GET/POST/PATCH/desactivar/reactivar; no construir SQL con nombres arbitrarios de la ruta.
-- [ ] Solo administrador modifica; operadores leen opciones activas. Estados de oportunidad solo lectura, catálogo pequeño sin paginación artificial.
-- [ ] CRUD conserva referencias y distingue omisión/null/duplicados según SPEC; desactivar/reactivar no produce cascadas.
+- [x] Lista cerrada de catálogos configurables con GET/POST/PATCH/desactivar/reactivar; no construir SQL con nombres arbitrarios de la ruta.
+- [x] Solo administrador modifica; operadores leen opciones activas. Estados de oportunidad solo lectura, catálogo pequeño sin paginación artificial.
+- [x] CRUD conserva referencias y distingue omisión/null/duplicados según SPEC; desactivar/reactivar no produce cascadas.
 
 **Verificación:** B + API(CatalogosTests) + D; verificar matriz 401/403/permitido y rechazo de nombre de catálogo no permitido.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia CP05 (22/10/2026):** [verificacion-cp05.md](verificaciones/verificacion-cp05.md). API focalizada 2/2; backend completo 119/119, incluyendo vendedor y responsable comercial, estados fijos y lista cerrada.
 
 <a id="t15"></a>
 
@@ -440,22 +444,26 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Dependencias:** T14. **Tamaño previsto:** M; 5 ubicaciones principales previstas.
 
+**Subdivisión CP05:** T15.a tipos generados/cliente/navegación; T15.b listado/editor y pruebas de recorrido. Reutiliza estilo, sesión y transporte de CP04 sin rehacerlos.
+
 **Archivos probables:** `frontend/src/features/settings/CatalogsPage.tsx (nuevo)`; `frontend/src/features/settings/CatalogsPage.test.tsx (nuevo)`; `frontend/src/api/client.ts`; `frontend/src/App.tsx`; `frontend/src/app/AuthenticatedShell.tsx`.
 
 **Aceptación:**
 
-- [ ] Pantalla administrativa permite los cambios admitidos con estados activo/inactivo y búsqueda/paginación donde corresponde.
-- [ ] Opciones operativas excluyen inactivos y detalle conserva sus etiquetas; estados fijos no muestran acciones de escritura.
-- [ ] Errores/carga/vacío y acciones pendientes son visibles; conservar teclado, foco y diseño existente.
+- [x] Pantalla administrativa permite los cambios admitidos con estados activo/inactivo y búsqueda/paginación donde corresponde.
+- [x] Opciones operativas excluyen inactivos y detalle conserva sus etiquetas; estados fijos no muestran acciones de escritura.
+- [x] Errores/carga/vacío y acciones pendientes son visibles; conservar teclado, foco y diseño existente.
 
 **Verificación:** F + UI(src/features/settings/CatalogsPage.test.tsx) + D; crear/desactivar/reactivar un origen de prueba local.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia CP05 (22/10/2026):** [verificacion-cp05.md](verificaciones/verificacion-cp05.md). UI focalizada 4/4; frontend completo 94/94. Tipos/build/lint correctos, solo warning previo.
 
 ### CP05 — Catálogos
 
-- [ ] Administrador configura y otros roles solo consultan; etiquetas inactivas conservadas.
-- [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+- [x] Administrador configura y otros roles solo consultan; etiquetas inactivas conservadas.
+- [x] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+
+**Evidencia de cierre:** [verificacion-cp05.md](verificaciones/verificacion-cp05.md). Backend119/119 y frontend94/94, cero omisiones; builds correctos y revisión independiente sin defectos requeridos. Recorrido local preparado; queda la validación del operador y el OK específico de integración.
 
 <a id="t16"></a>
 
