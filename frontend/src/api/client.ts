@@ -356,3 +356,38 @@ export function setUserActive(id: AuthUser['id'], active: boolean) {
     ? getResponseData(() => api.POST('/usuarios/{id}/reactivar', { params: { path: { id: Number(id) } } }))
     : getResponseData(() => api.POST('/usuarios/{id}/desactivar', { params: { path: { id: Number(id) } } }))
 }
+
+export type CatalogOption = components['schemas']['CatalogoResponse']
+export type CatalogRequest = components['schemas']['CatalogoRequest']
+export type CatalogQuery = { q?: string; activo?: 'true' | 'false' | 'todos'; page?: number; pageSize?: number }
+export const configurableCatalogs = [
+  { id: 'estados-cliente', label: 'Estados de cliente' },
+  { id: 'origenes-comerciales', label: 'Orígenes comerciales' },
+  { id: 'niveles-ingles', label: 'Niveles de inglés' },
+  { id: 'modalidades', label: 'Modalidades' },
+  { id: 'motivos-perdida', label: 'Motivos de pérdida' },
+  { id: 'tipos-actividad', label: 'Tipos de actividad' },
+] as const
+export type ConfigurableCatalog = typeof configurableCatalogs[number]['id']
+export function getCatalog(catalogo: ConfigurableCatalog, query: CatalogQuery = {}) {
+  return getResponseData(() => api.GET('/catalogos/{catalogo}', { params: { path: { catalogo }, query } }))
+}
+export function getCatalogOptions(catalogo: ConfigurableCatalog, q?: string) {
+  return getResponseData(() => api.GET('/catalogos/{catalogo}/opciones', { params: { path: { catalogo }, query: { q } } }))
+}
+export function getCatalogOption(catalogo: ConfigurableCatalog, id: CatalogOption['id']) {
+  return getResponseData(() => api.GET('/catalogos/{catalogo}/{id}', { params: { path: { catalogo, id: Number(id) } } }))
+}
+export function createCatalogOption(catalogo: ConfigurableCatalog, body: CatalogRequest) {
+  return getResponseData(() => api.POST('/catalogos/{catalogo}', { params: { path: { catalogo } }, body }))
+}
+export function patchCatalogOption(catalogo: ConfigurableCatalog, id: CatalogOption['id'], body: CatalogRequest) {
+  return getResponseData(() => api.PATCH('/catalogos/{catalogo}/{id}', { params: { path: { catalogo, id: Number(id) } }, body }))
+}
+export function setCatalogOptionActive(catalogo: ConfigurableCatalog, id: CatalogOption['id'], active: boolean) {
+  const path = { catalogo, id: Number(id) }
+  return active
+    ? getResponseData(() => api.POST('/catalogos/{catalogo}/{id}/reactivar', { params: { path } }))
+    : getResponseData(() => api.POST('/catalogos/{catalogo}/{id}/desactivar', { params: { path } }))
+}
+export function getOpportunityStates() { return getResponseData(() => api.GET('/estados-oportunidad')) }

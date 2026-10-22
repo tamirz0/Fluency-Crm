@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Box, Button, Divider, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography } from '@mui/material'
-import { Business, Contacts, Dashboard, Logout, Menu, Timeline, ViewKanban, ManageAccounts } from '@mui/icons-material'
+import { Business, Contacts, Dashboard, Logout, Menu, Timeline, ViewKanban, ManageAccounts, Settings } from '@mui/icons-material'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 
@@ -39,6 +39,7 @@ function NavigationContent({ onNavigate, commercial }: { onNavigate?: () => void
       <ListItemButton component={NavLink} to="/embudo" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><ViewKanban fontSize="small" /></ListItemIcon><ListItemText primary="Embudo" /></ListItemButton>
     </>}
       {user?.permisos?.includes('AdministrarUsuarios') && <ListItemButton component={NavLink} to="/configuracion/usuarios" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><ManageAccounts fontSize="small" /></ListItemIcon><ListItemText primary="Usuarios" /></ListItemButton>}
+      {user?.roles.includes('ADMINISTRADOR') && user.permisos.includes('AdministrarConfiguracion') && <ListItemButton component={NavLink} to="/configuracion/catalogos" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Settings fontSize="small" /></ListItemIcon><ListItemText primary="Catálogos" /></ListItemButton>}
     </List>
     <Box sx={{ mt: 'auto', p: 2.25 }}><Divider sx={{ mb: 2 }} /><Typography sx={{ mb: 1.25, color: 'text.secondary', fontSize: '.95rem' }}>{fullName}</Typography><Button color="inherit" fullWidth startIcon={<Logout />} disabled={closing} onClick={async () => { if (closing) return; setClosing(true); try { await logout() } finally { setClosing(false) } }} sx={{ justifyContent: 'flex-start', color: 'text.primary' }}>Cerrar sesión</Button></Box>
   </Box>
