@@ -15,7 +15,9 @@ public partial class FluencyLocalDbContext : DbContext
     {
     }
 
-    public virtual DbSet<Actividad> Actividades { get; set; }
+    public virtual DbSet<TipoActividad> TiposActividad { get; set; }
+
+    public virtual DbSet<MotivoPerdida> MotivosPerdida { get; set; }
 
     public virtual DbSet<ActividadOportunidad> ActividadOportunidades { get; set; }
 
@@ -59,16 +61,26 @@ public partial class FluencyLocalDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Actividad>(entity =>
+        modelBuilder.Entity<TipoActividad>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("actividad_pkey");
+            entity.HasKey(e => e.Id).HasName("tipo_actividad_pkey");
 
-            entity.ToTable("actividad");
+            entity.ToTable("tipo_actividad");
 
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Descripcion)
+            entity.Property(e => e.Id).UseIdentityAlwaysColumn().HasColumnName("id");
+            entity.Property(e => e.Nombre)
                 .HasMaxLength(100)
-                .HasColumnName("descripcion");
+                .HasColumnName("nombre");
+            entity.Property(e => e.Activo).HasDefaultValue(true).HasSentinel(true).HasColumnName("activo");
+        });
+
+        modelBuilder.Entity<MotivoPerdida>(entity =>
+        {
+            entity.ToTable("motivo_perdida");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).UseIdentityAlwaysColumn().HasColumnName("id");
+            entity.Property(e => e.Descripcion).HasMaxLength(100).HasColumnName("descripcion");
+            entity.Property(e => e.Activo).HasDefaultValue(true).HasSentinel(true).HasColumnName("activo");
         });
 
         modelBuilder.Entity<ActividadOportunidad>(entity =>
@@ -199,10 +211,12 @@ public partial class FluencyLocalDbContext : DbContext
 
             entity.ToTable("estado_cliente");
 
-            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Id).UseIdentityAlwaysColumn().HasColumnName("id");
             entity.Property(e => e.Descripcion)
-                .HasMaxLength(50)
+                .HasMaxLength(100)
                 .HasColumnName("descripcion");
+            entity.Property(e => e.Activo).HasDefaultValue(true).HasSentinel(true).HasColumnName("activo");
+
         });
 
         modelBuilder.Entity<EstadoOportunidad>(entity =>
@@ -211,10 +225,12 @@ public partial class FluencyLocalDbContext : DbContext
 
             entity.ToTable("estado_oportunidad");
 
-            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Id).UseIdentityAlwaysColumn().HasColumnName("id");
             entity.Property(e => e.Descripcion)
-                .HasMaxLength(50)
+                .HasMaxLength(100)
                 .HasColumnName("descripcion");
+            entity.Property(e => e.Codigo).HasMaxLength(100).HasColumnName("codigo");
+
         });
 
         modelBuilder.Entity<EtapaComercial>(entity =>
@@ -299,10 +315,12 @@ public partial class FluencyLocalDbContext : DbContext
 
             entity.ToTable("modalidad");
 
-            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Id).UseIdentityAlwaysColumn().HasColumnName("id");
             entity.Property(e => e.Descripcion)
-                .HasMaxLength(50)
+                .HasMaxLength(100)
                 .HasColumnName("descripcion");
+            entity.Property(e => e.Activo).HasDefaultValue(true).HasSentinel(true).HasColumnName("activo");
+
         });
 
         modelBuilder.Entity<MotivoRechazo>(entity =>
@@ -323,10 +341,12 @@ public partial class FluencyLocalDbContext : DbContext
 
             entity.ToTable("nivel_ingles");
 
-            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Id).UseIdentityAlwaysColumn().HasColumnName("id");
             entity.Property(e => e.Descripcion)
-                .HasMaxLength(20)
+                .HasMaxLength(100)
                 .HasColumnName("descripcion");
+            entity.Property(e => e.Activo).HasDefaultValue(true).HasSentinel(true).HasColumnName("activo");
+
         });
 
         modelBuilder.Entity<Oportunidad>(entity =>
@@ -416,10 +436,12 @@ public partial class FluencyLocalDbContext : DbContext
 
             entity.ToTable("origen_comercial");
 
-            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Id).UseIdentityAlwaysColumn().HasColumnName("id");
             entity.Property(e => e.Descripcion)
                 .HasMaxLength(100)
                 .HasColumnName("descripcion");
+            entity.Property(e => e.Activo).HasDefaultValue(true).HasSentinel(true).HasColumnName("activo");
+
         });
 
         modelBuilder.Entity<Permiso>(entity =>

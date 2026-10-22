@@ -7,6 +7,8 @@ public partial class NivelIngles
 {
     public int Id { get; set; }
 
+    public bool Activo { get; set; } = true;
+
     public string Descripcion { get; set; } = null!;
 
     public virtual ICollection<Servicio> Servicios { get; set; } = new List<Servicio>();

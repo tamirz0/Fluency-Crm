@@ -23,7 +23,7 @@ public partial class ActividadOportunidad
 
     public string? Resultado { get; set; }
 
-    public virtual Actividad? IdTipoActividadNavigation { get; set; }
+    public virtual TipoActividad? IdTipoActividadNavigation { get; set; }
 
     public virtual Usuario? IdUsuarioNavigation { get; set; }
 
