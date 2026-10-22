@@ -6,7 +6,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { AppProviders } from '../app/providers'
 import { createQueryClient } from '../app/queryClient'
 import App from '../test/LegacyApp'
-import { AuthProvider } from '../auth/AuthContext'
+import { AuthProvider } from '../test/LegacyAuthProvider'
 import { SESSION_KEY } from '../auth/session'
 
 // Preparar el módulo antes de medir el formulario, sin depender del costo del import diferido.

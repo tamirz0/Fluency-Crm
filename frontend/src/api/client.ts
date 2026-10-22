@@ -51,6 +51,8 @@ api.use({
       csrfToken = undefined
     if (!response.ok) {
       const problem: unknown = await response.clone().json().catch(() => undefined)
+      if (response.status === 401 && schemaPath !== '/auth/login') window.dispatchEvent(new Event('fluency:unauthorized'))
+      if (response.status === 403) window.dispatchEvent(new CustomEvent('fluency:forbidden', { detail: getApiErrorMessage(problem, 403) }))
       throw new ApiRequestError(getApiErrorMessage(problem, response.status), response.status, problem)
     }
   },

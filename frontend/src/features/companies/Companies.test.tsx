@@ -6,7 +6,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { AppProviders } from '../../app/providers'
 import { createQueryClient } from '../../app/queryClient'
 import App from '../../test/LegacyApp'
-import { AuthProvider } from '../../auth/AuthContext'
+import { AuthProvider } from '../../test/LegacyAuthProvider'
 import { SESSION_KEY } from '../../auth/session'
 
 const savedUser = { id: 7, nombre: 'María', apellido: 'Gómez', correo: 'maria@example.com', username: 'maria', activo: true }
