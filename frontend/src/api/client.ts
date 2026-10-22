@@ -24,7 +24,8 @@ export type CreateOportunidadRequest = LegacyComponents['schemas']['CreateOportu
 export type PatchOportunidadRequest = LegacyComponents['schemas']['PatchOportunidadRequest']
 export type EstadoCliente = LegacyComponents['schemas']['EstadoClienteResponse']
 export type OrigenComercial = LegacyComponents['schemas']['OrigenComercialResponse']
-export type Servicio = LegacyComponents['schemas']['ServicioResponse']
+export type Servicio = components['schemas']['ServicioResponse']
+export type ServicioRequest = components['schemas']['ServicioRequest']
 
 let csrfToken: Promise<string> | undefined
 
@@ -245,8 +246,8 @@ export function getCommercialOrigins(): Promise<OrigenComercial[]> {
   return getResponseData(() => legacyApi.GET('/OrigenesComerciales/ListadoOrigenesComerciales'))
 }
 
-export function getServices(): Promise<Servicio[]> {
-  return getResponseData(() => legacyApi.GET('/Servicios/ListadoServicios'))
+export async function getServices(): Promise<Servicio[]> {
+  return (await listServices()).items
 }
 
 export async function createCompany(body: CreateEmpresaRequest): Promise<Empresa> {
@@ -391,3 +392,19 @@ export function setCatalogOptionActive(catalogo: ConfigurableCatalog, id: Catalo
     : getResponseData(() => api.POST('/catalogos/{catalogo}/{id}/desactivar', { params: { path } }))
 }
 export function getOpportunityStates() { return getResponseData(() => api.GET('/estados-oportunidad')) }
+
+export function listServices(query: CatalogQuery = {}) {
+  return getResponseData(() => api.GET('/servicios', { params: { query } }))
+}
+export function createService(body: ServicioRequest) {
+  return getResponseData(() => api.POST('/servicios', { body }))
+}
+export function patchService(id: Servicio['id'], body: ServicioRequest) {
+  return getResponseData(() => api.PATCH('/servicios/{id}', { params: { path: { id: Number(id) } }, body }))
+}
+export function setServiceActive(id: Servicio['id'], active: boolean) {
+  const path = { id: Number(id) }
+  return active
+    ? getResponseData(() => api.POST('/servicios/{id}/reactivar', { params: { path } }))
+    : getResponseData(() => api.POST('/servicios/{id}/desactivar', { params: { path } }))
+}

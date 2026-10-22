@@ -6,6 +6,7 @@ import { LoginPage } from './features/login/LoginPage'
 import { useAuth } from './auth/useAuth'
 import { UsersPage } from './features/settings/UsersPage'
 import { CatalogsPage } from './features/settings/CatalogsPage'
+import { ServicesPage } from './features/services/ServicesPage'
 function AccessHome() {
   const { user } = useAuth()
   return <Box sx={{ p: { xs: 3, md: 5 } }}><Typography variant="h4" component="h1">Hola, {user?.nombre}</Typography><Typography sx={{ mt: 2 }}>Bienvenido a Fluency CRM.</Typography></Box>
@@ -17,6 +18,7 @@ function App() {
       <Route path="/inicio" element={<AccessHome />} />
       <Route path="/configuracion/usuarios" element={<UsersPage />} />
       <Route path="/configuracion/catalogos" element={<CatalogsPage />} />
+      <Route path="/configuracion/servicios" element={<ServicesPage />} />
     </Route></Route>
     <Route path="*" element={<Navigate to="/inicio" replace />} />
   </Routes>
