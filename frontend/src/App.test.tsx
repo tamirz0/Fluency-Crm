@@ -96,3 +96,41 @@ it('credenciales inválidas conserva username y vacía password; red permite rei
   await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
   await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('No pudimos conectar'))
 })
+
+it('foco durante login no descarta la identidad que devuelve el servidor', async () => {
+  mount('/login')
+  await screen.findByRole('heading', { name: 'Ingresá a tu espacio comercial' })
+  await userEvent.type(screen.getByLabelText('Usuario'), 'maria')
+  await userEvent.type(screen.getByLabelText('Contraseña'), 'secreto')
+  const normal = vi.mocked(fetch).getMockImplementation()!
+  let finish: (response: Response) => void = () => {}
+  vi.mocked(fetch).mockImplementation(async (r, init) => (r as Request).url.endsWith('/login') ? new Promise<Response>(resolve => { finish = resolve }) : normal(r, init))
+  await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
+  await waitFor(() => expect(vi.mocked(fetch).mock.calls.some(([r]) => (r as Request).url.endsWith('/login'))).toBe(true))
+  fireEvent(window, new Event('focus'))
+  authenticated = true; finish(json(session))
+  expect(await screen.findByRole('heading', { name: 'Hola, María' })).toBeTruthy()
+})
+it('logout 204 limpia identidad y caché aunque falle renovar CSRF', async () => {
+  authenticated = true
+  const client = mount()
+  await screen.findByRole('heading', { name: 'Hola, María' })
+  client.setQueryData(['privado'], 'dato')
+  let signedOut = false
+  const normal = vi.mocked(fetch).getMockImplementation()!
+  vi.mocked(fetch).mockImplementation(async (r, init) => {
+    if ((r as Request).url.endsWith('/logout')) { signedOut = true; return new Response(null, { status: 204 }) }
+    if (signedOut && (r as Request).url.endsWith('/csrf')) throw new TypeError('network')
+    return normal(r, init)
+  })
+  await userEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+  await screen.findByRole('heading', { name: 'Ingresá a tu espacio comercial' })
+  expect(client.getQueryData(['privado'])).toBeUndefined()
+})
+
+it.each(['/empresas/nueva', '/contactos/1/editar', '/oportunidades/1', '/embudo'])('conserva retirado el módulo comercial %s', async path => {
+  authenticated = true
+  mount(path)
+  await screen.findByRole('heading', { name: 'Hola, María' })
+  expect(vi.mocked(fetch).mock.calls.every(([r]) => new URL((r as Request).url).pathname.startsWith('/api/auth/'))).toBe(true)
+})
