@@ -55,6 +55,8 @@ public partial class FluencyLocalDbContext : DbContext
 
     public virtual DbSet<Servicio> Servicios { get; set; }
 
+    public virtual DbSet<Embudo> Embudos { get; set; }
+
     public virtual DbSet<Usuario> Usuarios { get; set; }
 
     public virtual DbSet<UsuarioRol> UsuarioRoles { get; set; }
@@ -233,6 +235,19 @@ public partial class FluencyLocalDbContext : DbContext
 
         });
 
+        modelBuilder.Entity<Embudo>(entity =>
+        {
+            entity.ToTable("embudo");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Nombre).HasMaxLength(100).HasColumnName("nombre");
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion");
+            entity.Property(e => e.Activo).HasDefaultValue(true).HasColumnName("activo");
+            entity.Property(e => e.IdServicio).HasColumnName("id_servicio");
+            entity.HasOne(e => e.IdServicioNavigation).WithMany(e => e.Embudos)
+                .HasForeignKey(e => e.IdServicio).OnDelete(DeleteBehavior.Restrict);
+        });
+
         modelBuilder.Entity<EtapaComercial>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("etapa_comercial_pkey");
@@ -245,6 +260,16 @@ public partial class FluencyLocalDbContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("nombre");
             entity.Property(e => e.Orden).HasColumnName("orden");
+            entity.Property(e => e.Activo).HasDefaultValue(true).HasColumnName("activo");
+            entity.Property(e => e.IdEmbudo).HasColumnName("id_embudo");
+            entity.Property(e => e.IdEstado).HasColumnName("id_estado");
+            entity.HasOne(e => e.IdEmbudoNavigation).WithMany(e => e.Etapas)
+                .HasForeignKey(e => e.IdEmbudo).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.IdEstadoNavigation).WithMany(e => e.Etapas)
+                .HasForeignKey(e => e.IdEstado).OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(e => new { e.IdEmbudo, e.Orden }).IsUnique().HasFilter("activo")
+                .HasDatabaseName("ux_etapa_embudo_orden_activo");
+            // The final-state partial index is defined by semantic codes in the versioned SQL.
         });
 
         modelBuilder.Entity<HistorialEtapa>(entity =>
@@ -516,15 +541,17 @@ public partial class FluencyLocalDbContext : DbContext
                 .HasMaxLength(150)
                 .HasColumnName("nombre");
             entity.Property(e => e.PrecioReferencia)
-                .HasPrecision(10, 2)
+                .HasPrecision(12, 2)
                 .HasColumnName("precio_referencia");
 
             entity.HasOne(d => d.IdModalidadNavigation).WithMany(p => p.Servicios)
                 .HasForeignKey(d => d.IdModalidad)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("servicio_id_modalidad_fkey");
 
             entity.HasOne(d => d.IdNivelNavigation).WithMany(p => p.Servicios)
                 .HasForeignKey(d => d.IdNivel)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("servicio_id_nivel_fkey");
         });
 

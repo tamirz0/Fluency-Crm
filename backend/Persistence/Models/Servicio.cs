@@ -19,7 +19,9 @@ public partial class Servicio
 
     public int? IdModalidad { get; set; }
 
-    public bool? Activo { get; set; }
+    public bool Activo { get; set; } = true;
+
+    public virtual ICollection<Embudo> Embudos { get; set; } = new List<Embudo>();
 
     public virtual Modalidad? IdModalidadNavigation { get; set; }
 

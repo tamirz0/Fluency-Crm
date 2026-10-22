@@ -251,7 +251,7 @@ public sealed class SchemaTests
         await fixture.CleanupAsync();
     }
 
-    private static Task SeedContextAsync(NpgsqlConnection db) => ExecuteAsync(db, """
+    internal static Task SeedContextAsync(NpgsqlConnection db) => ExecuteAsync(db, """
         INSERT INTO usuario(nombre,apellido,correo,username,password_hash)
         VALUES ('Usuario','Ficticio','prueba@example.invalid','prueba','hash-ficticio');
         INSERT INTO empresa(razon_social,id_estado,id_responsable)
