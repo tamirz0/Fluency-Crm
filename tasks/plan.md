@@ -148,7 +148,7 @@ Los checkpoints verifican integración y reutilizan evidencia válida sin sustit
 
 | Riesgo / dato pendiente | Tratamiento y momento |
 |---|---|
-| Puerto, credenciales y bases del PostgreSQL dockerizado desconocidos | T02–T03 identifican destino local sin imprimir secretos; esta planificación no inspecciona ni arranca el contenedor. ID y autorización de uso futuro en AGENTS. |
+| Puerto, credenciales y bases del PostgreSQL dockerizado desconocidos | T02–T03 identifican destino local sin imprimir secretos; esta planificación no inspecciona ni arranca el contenedor. ID y diagnóstico en [entorno local](../docs/segunda-entrega/entorno-local.md); límites de uso en AGENTS. |
 | SQL nuevo ejecutado accidentalmente sobre la base anterior | T03–T04 exigen base de prueba/desarrollo nueva identificada. Verificar propiedad y host antes de limpiar fixtures. Base existente: solicitar autorización específica, nunca borrarla por inferencia. |
 | Modelo nuevo incompatible con rutas anteriores | Corte coordinado por incremento; T07 impide exposición de rutas pendientes y T46 demuestra retiro final. No mantener bypass ni pruebas que ignoren el problema. |
 | Cambios de roles/propiedad durante escritura | Actor actual, consultas transaccionales y carreras fundamentales desde T08/T11 y cada módulo. |
