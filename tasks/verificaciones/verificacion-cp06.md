@@ -64,4 +64,8 @@ Destino comprobado: `localhost:5433 / fluency_segunda_entrega_dev`, configuraci�
 6. Limpieza del dato de demostración: desactivar únicamente ese servicio y dejarlo inactivo; no hay DELETE ni barrido SQL. No crear embudos para la demo de CP06. La independencia de embudos se verificó en fixtures; su gestión corresponde a T19.
 7. Con vendedor/responsable ya existentes, si el operador dispone de esas cuentas: enlace administrativo oculto y URL directa denegada. No crear cuentas para esta prueba.
 
-Validación manual del usuario e integración pendientes; no autoriza merge ni publicación.
+### Validación del usuario y cierre (22/10/2026)
+
+El usuario confirmó «Funcionamiento esperado. Puede cerrarse la implementación de CP06». Se da por validado el funcionamiento presentado y se cierra la implementación de T16–T18/CP06 en `segunda-entrega-cp06-servicios`. No se atribuyen comprobaciones adicionales ni limpieza de datos a esa confirmación.
+
+Al retomar: Git limpio en `8a744bc`, misma rama y sin cambios de código. Este cierre solo actualiza documentación; se conserva la evidencia válida, sin repetir suites, arrancar servicios ni operar la base. La integración y publicación siguen pendientes de autorización específica; no se hace merge/push ni se inicia T19.
