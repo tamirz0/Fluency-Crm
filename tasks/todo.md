@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 21/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados en `segunda-entrega-CP04-acceso`, con demo del usuario sin fallos; sin autorización de integrar este bloque ni publicar. T13–T49 pendientes.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
+Plan del 08/10/2026, actualizado el 21/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T49 pendientes.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -337,7 +337,7 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Verificación:** F + UI(src/App.test.tsx) + D; recorrido manual local entrar, recargar, expirar y salir.
 
-**Evidencia (21/10/2026):** [CP04](verificaciones/verificacion-cp04.md). Backend completo 116/116 y frontend completo 90/90, cero omisiones; builds correctos y warning previo de lint. Revisión independiente sin bloqueantes pendientes; demo del usuario completa, sin fallos. Incremento sin integrar ni publicar.
+**Evidencia (21/10/2026):** [CP04](verificaciones/verificacion-cp04.md). Backend completo 116/116 y frontend completo 90/90, cero omisiones; builds correctos y warning previo de lint. Revisión independiente sin bloqueantes pendientes; demo del usuario completa, sin fallos. CP04 integrada localmente en `segunda-entrega` / `20c5383`; sin publicar.
 
 <a id="t11"></a>
 
@@ -359,7 +359,7 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Verificación:** B + API(UsuariosTests) + API(AuthTests) afectados + D; vendedor/responsable reciben 403 en administración, y opciones no filtran hashes ni datos innecesarios.
 
-**Evidencia (21/10/2026):** [CP04](verificaciones/verificacion-cp04.md). Backend completo 116/116 y frontend completo 90/90, cero omisiones; builds correctos y warning previo de lint. Revisión independiente sin bloqueantes pendientes; demo del usuario completa, sin fallos. Incremento sin integrar ni publicar.
+**Evidencia (21/10/2026):** [CP04](verificaciones/verificacion-cp04.md). Backend completo 116/116 y frontend completo 90/90, cero omisiones; builds correctos y warning previo de lint. Revisión independiente sin bloqueantes pendientes; demo del usuario completa, sin fallos. CP04 integrada localmente en `segunda-entrega` / `20c5383`; sin publicar.
 
 <a id="t12"></a>
 
@@ -381,11 +381,11 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Verificación:** F + UI(src/features/settings/UsersPage.test.tsx) + D; demo local administrador crea vendedor y responsable comercial. Checkpoint de acceso completo.
 
-**Evidencia (21/10/2026):** [CP04](verificaciones/verificacion-cp04.md). Backend completo 116/116 y frontend completo 90/90, cero omisiones; builds correctos y warning previo de lint. Revisión independiente sin bloqueantes pendientes; demo del usuario completa, sin fallos. Incremento sin integrar ni publicar.
+**Evidencia (21/10/2026):** [CP04](verificaciones/verificacion-cp04.md). Backend completo 116/116 y frontend completo 90/90, cero omisiones; builds correctos y warning previo de lint. Revisión independiente sin bloqueantes pendientes; demo del usuario completa, sin fallos. CP04 integrada localmente en `segunda-entrega` / `20c5383`; sin publicar.
 
 ### CP04 — Módulo acceso
 
-**Estado:** completo y verificado el 21/10/2026; demo confirmada por el usuario. Pendiente únicamente del OK de integración del incremento y de la deuda previa explicitada en [evidencia](verificaciones/verificacion-cp04.md). No hacer merge/push ni iniciar T13 sin indicación.
+**Estado:** completo, verificado e integrado localmente en `segunda-entrega` / `20c5383` el 21/10/2026; demo confirmada por el usuario. Sin publicar. Se conserva la deuda previa explicitada en [evidencia](verificaciones/verificacion-cp04.md); no iniciar T13 sin indicación.
 
 **Modalidad (21/10/2026):** cierre del primer bloque con el flujo de plan §6.1. Revisar independientemente T10/T11 si aún no se hizo, T12 y la integración entre piezas. Reutilizar revisiones válidas y revisar cambios posteriores y efectos relacionados, sin repetir toda la auditoría. Conservar los controles siguientes. Evaluar con el usuario consumo observado, retrabajo y utilidad de la revisión, sin infraestructura nueva ni porcentaje de ahorro exigido. Esta clasificación no autoriza iniciar T10 ni integrar CP03.
 
