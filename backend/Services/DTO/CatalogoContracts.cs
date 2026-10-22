@@ -5,10 +5,10 @@ namespace Services.DTO;
 /// <summary>Referencia consultable aun cuando está inactiva; tipo de actividad usa nombre.</summary>
 public sealed record CatalogoResponse
 {
-    public int Id { get; init; }
+    public required int Id { get; init; }
     public string? Descripcion { get; init; }
     public string? Nombre { get; init; }
-    public bool Activo { get; init; }
+    public required bool Activo { get; init; }
 }
 /// <summary>Estado fijo del circuito; no admite mutaciones.</summary>
 public sealed record EstadoOportunidadResponse(int Id, string Codigo, string Descripcion);

@@ -52,6 +52,12 @@ public sealed class CatalogosTests
             var edited = await admin.PatchAsJsonAsync($"{path}/{id}", catalog == "tipos-actividad" ? new { nombre = "Editado CP05" } as object : new { descripcion = "Editado CP05" });
             edited.EnsureSuccessStatusCode();
         }
+        await using (var db = await factory.OpenAsync())
+            await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE usuario_rol SET id_rol=(SELECT id FROM rol WHERE nombre='RESPONSABLE_COMERCIAL') WHERE id_usuario={factory.SellerId}");
+        Assert.Equal(HttpStatusCode.OK, (await seller.GetAsync("/catalogos/origenes-comerciales/opciones")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await seller.GetAsync("/catalogos/origenes-comerciales?activo=todos")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await seller.PostAsJsonAsync("/catalogos/origenes-comerciales", new { descripcion = "No permitido" })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await seller.GetAsync("/estados-oportunidad")).StatusCode);
     }
 
     [Fact]
