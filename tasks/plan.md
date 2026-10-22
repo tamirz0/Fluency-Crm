@@ -120,22 +120,29 @@ No paralelizar escrituras que comparten DbContext, esquema, Program, cliente HTT
 
 ### 6.1. Metodología de agentes acordada
 
-Actualización metodológica acordada el 12/10/2026: aplicar a todos los agentes el enfoque de simplicidad y esfuerzo proporcional de `AGENTS.md` y `CONSTRAINTS.md`. Delegar cuando aporte valor concreto, aceptar evidencia manual reproducible para operaciones puntuales y consultar antes de convertir una necesidad simple en un mecanismo complejo. No reabre tareas, dependencias ni decisiones funcionales aprobadas; T06 se conserva.
+Acuerdo del 21/10/2026: un responsable por bloque implementa, verifica y revisa su diff. Sustituye la separación fija de orquestador e implementador. Se conservan tareas, dependencias, aceptación, CONSTRAINTS y OK de merge/publicación. Reglas operativas y lectura selectiva en [AGENTS.md](../AGENTS.md).
 
-Orquestador estable, implementador por incremento acotado y revisor independiente para cierres importantes. El implementador conserva continuidad entre tareas relacionadas; los checkpoints son verificaciones, no una obligación de crear otro agente. El orquestador coordina contratos/archivos compartidos, contrasta hallazgos y evidencia y presenta el incremento para el OK de merge.
-
-| Responsabilidad | Modelo y razonamiento previstos |
+| Trabajo | Modelo y razonamiento propuestos |
 |---|---|
-| Orquestador | GPT-6.1 Sol, High |
-| Implementación habitual | GPT-6.1 Sol, Medium |
-| Autenticación, permisos, SQL y transacciones delicadas | GPT-6.1 Sol, High |
-| Revisión independiente | GPT-6.1 Sol, High |
-| Inventarios, exploraciones y cambios mecánicos acotados | GPT-6 Luna, Medium |
-| Problema especialmente difícil que justifique escalar | GPT-6 Astra, High, de forma puntual |
+| Implementación habitual y coordinación en el mismo agente | GPT-6.1 Sol, Medium |
+| Dificultad concreta en permisos, sesión, contraseñas o transacciones sensibles | GPT-6.1 Sol, High |
+| Cambio mecánico claro | GPT-6 Luna, esfuerzo según dificultad; no crear un agente para derivar un trabajo breve |
+| Revisión independiente | GPT-6.1 Sol, Medium; High para riesgos sensibles o dificultad concreta |
+| Problema excepcional que lo justifique | GPT-6 Astra, puntual, explicando el motivo |
 
-Se autoriza esta delegación para la futura implementación. Cada encargo identifica objetivo/tareas, fuentes pertinentes, archivos asignados, criterios de aceptación, comprobaciones y límites. Pasar contexto específico suficiente, sin copiar toda la conversación por defecto. Si un modelo no está disponible, informar y usar una alternativa adecuada disponible; no afirmar cambios de modelo que no se hayan realizado.
+La tabla es una política de selección, no prueba de configuración efectiva. Informar si el modelo/esfuerzo no está disponible o no puede cambiarse; nunca afirmar un cambio no realizado.
 
-Comenzar con un solo agente escribiendo código; paralelizar exploración/revisión cuando aporte valor. Dos implementadores simultáneos solo con contratos y archivos independientes. Coordinar también las escrituras y limpiezas de la base de tests. Ningún subagente se inicia durante este cierre documental.
+Determinar la revisión antes de implementar, según tasks/todo.md:
+
+- Independiente obligatoria antes de integrar autenticación, autorización, contraseñas, operaciones destructivas o transacciones sensibles.
+- Funcionalidad habitual: revisión agrupada en checkpoint. Documentación y cambios mecánicos de bajo riesgo: revisión propia.
+- Ante un riesgo nuevo, explicar y ajustar la revisión. Un checkpoint no obliga a crear otro agente ni repetir una revisión completa de código sin cambios.
+
+Se autoriza delegación excepcional con beneficio concreto, fuentes, archivos, aceptación y límites acotados. El revisor recibe diff, requisitos y evidencia pertinente, sin toda la conversación. Devuelve defectos e incertidumbres concretos en una ronda; rondas adicionales se limitan a correcciones importantes pendientes y efectos relacionados. Sugerencias opcionales no amplían alcance. No repetir suites salvo cambios relevantes o evidencia insuficiente.
+
+Mantener continuidad entre tareas relacionadas y traspaso breve al cambiar de bloque/chat. No paralelizar escrituras compartidas ni preparación/limpieza de la base. T10–T12 se ejecutan secuencialmente: concentrar revisión en CP04 si se integran juntas; si se integran separadas, revisar T10/T11 antes de cada merge. Clasificar los bloques futuros antes de implementarlos, sin reabrir requisitos.
+
+Los checkpoints verifican integración y reutilizan evidencia válida sin sustituir controles amplios previstos. Continuar un bloque y autorizar merge son decisiones separadas. Al pedir el OK, terminar el turno con commits y evidencia listos; retomar comprobando Git, sin repetir controles por la sola espera. Evaluar consumo observado, retrabajo y utilidad de la revisión al cerrar CP04, sin infraestructura nueva ni promesas de ahorro.
 
 ## 7. Riesgos y pendientes operativos
 

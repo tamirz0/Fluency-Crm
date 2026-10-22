@@ -321,6 +321,8 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 ### T10 — Restaurar y cerrar sesión desde la interfaz
 
+**Modalidad (21/10/2026):** responsable único; revisión independiente obligatoria de sesión antes de integrar. Puede agruparse en CP04 si T10–T12 se integran juntas.
+
 **Resultado:** Restaurar y cerrar sesión desde la interfaz, conforme a la SPEC del módulo y al alcance descrito abajo.
 
 **Dependencias:** T09. **Tamaño previsto:** M; 5 ubicaciones principales previstas.
@@ -340,6 +342,8 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 <a id="t11"></a>
 
 ### T11 — Administrar cuentas desde API
+
+**Modalidad (21/10/2026):** responsable único; revisión independiente obligatoria de permisos, contraseñas y desactivación antes de integrar. Puede agruparse en CP04 si T10–T12 se integran juntas.
 
 **Resultado:** Administrar cuentas desde API, conforme a la SPEC del módulo y al alcance descrito abajo.
 
@@ -361,6 +365,8 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 ### T12 — Gestionar usuarios desde la pantalla administrativa
 
+**Modalidad (21/10/2026):** responsable único; revisión agrupada en CP04. Si aparecen cambios sensibles adicionales, ajustar la revisión antes de integrarlos.
+
 **Resultado:** Gestionar usuarios desde la pantalla administrativa, conforme a la SPEC del módulo y al alcance descrito abajo.
 
 **Dependencias:** T10, T11. **Tamaño previsto:** M; 5 ubicaciones principales previstas.
@@ -378,6 +384,8 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 **Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
 
 ### CP04 — Módulo acceso
+
+**Modalidad (21/10/2026):** cierre del primer bloque con el flujo de plan §6.1. Revisar independientemente T10/T11 si aún no se hizo, T12 y la integración entre piezas. Reutilizar revisiones válidas y revisar cambios posteriores y efectos relacionados, sin repetir toda la auditoría. Conservar los controles siguientes. Evaluar con el usuario consumo observado, retrabajo y utilidad de la revisión, sin infraestructura nueva ni porcentaje de ahorro exigido. Esta clasificación no autoriza iniciar T10 ni integrar CP03.
 
 - [ ] B + F, suites pertinentes completas, S y recorrido local login→crear roles de usuario→cambiar rol/password→logout. Presentar incremento para revisión antes del merge.
 - [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
