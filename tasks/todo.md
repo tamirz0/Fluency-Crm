@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 22/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T15/CP05 completas, verificadas por pruebas y validadas manualmente por el usuario; integradas localmente en `segunda-entrega` mediante fast-forward a `809a23a`; sin publicar. T16–T49 pendientes.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
+Plan del 08/10/2026, actualizado el 22/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T15/CP05 completas, verificadas por pruebas y validadas manualmente por el usuario; integradas localmente en `segunda-entrega` mediante fast-forward a `809a23a`; sin publicar. T16–T18 implementadas/verificadas en `segunda-entrega-cp06-servicios`; CP06 preparada para validación del operador, sin integrar. T19–T49 pendientes.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -23,9 +23,9 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T13 — Alinear los catálogos con el modelo objetivo](#t13)
 - [x] [T14 — Exponer administración y opciones de catálogos](#t14)
 - [x] [T15 — Editar catálogos desde configuración](#t15)
-- [ ] [T16 — Mapear servicios, embudos y etapas](#t16)
-- [ ] [T17 — Gestionar servicios mediante API](#t17)
-- [ ] [T18 — Gestionar servicios desde UI](#t18)
+- [x] [T16 — Mapear servicios, embudos y etapas](#t16)
+- [x] [T17 — Gestionar servicios mediante API](#t17)
+- [x] [T18 — Gestionar servicios desde UI](#t18)
 - [ ] [T19 — Gestionar embudos y sus finales automáticas](#t19)
 - [ ] [T20 — Gestionar y reordenar etapas](#t20)
 - [ ] [T21 — Configurar embudos y etapas desde UI](#t21)
@@ -477,13 +477,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Etapa contiene id, id_embudo, id_estado, nombre, descripcion, orden y activo; embudo pertenece a un servicio y estado se deriva desde etapa.
-- [ ] Mapeo y restricciones coinciden con SQL: precio decimal, orden activo único por embudo y finales únicas.
-- [ ] Lecturas para bloqueos usan el esquema objetivo, incluyendo oportunidades/historial de fixtures; no requieren que la pantalla de oportunidades ya exista.
+- [x] Etapa contiene id, id_embudo, id_estado, nombre, descripcion, orden y activo; embudo pertenece a un servicio y estado se deriva desde etapa.
+- [x] Mapeo y restricciones coinciden con SQL: precio decimal, orden activo único por embudo y finales únicas.
+- [x] Lecturas para bloqueos usan el esquema objetivo, incluyendo oportunidades/historial de fixtures; no requieren que la pantalla de oportunidades ya exista.
 
 **Verificación:** B + API(SchemaTests) + D; materializar relaciones y demostrar duplicados activos rechazados e inactivos permitidos.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia (22/10/2026):** [CP06](verificaciones/verificacion-cp06.md). Implementación y controles técnicos completos; recorrido real autenticado del operador e integración pendientes.
 
 <a id="t17"></a>
 
@@ -497,13 +497,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Rutas REST de servicios con precio requerido no negativo, cero válido y nivel/modalidad/duración opcionales según SPEC.
-- [ ] Administrador crea/edita/desactiva/reactiva; opciones operativas solo activas y referencias históricas siguen legibles.
-- [ ] Desactivar servicio no modifica embudos y solo impide elegirlo para otros nuevos; consultas/paginación/error coherentes.
+- [x] Rutas REST de servicios con precio requerido no negativo, cero válido y nivel/modalidad/duración opcionales según SPEC.
+- [x] Administrador crea/edita/desactiva/reactiva; opciones operativas solo activas y referencias históricas siguen legibles.
+- [x] Desactivar servicio no modifica embudos y solo impide elegirlo para otros nuevos; consultas/paginación/error coherentes.
 
 **Verificación:** B + API(ServiciosTests) + D; probar servicio inactivo con embudo activo y persistencia de precio decimal.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia (22/10/2026):** [CP06](verificaciones/verificacion-cp06.md). Implementación y controles técnicos completos; recorrido real autenticado del operador e integración pendientes.
 
 <a id="t18"></a>
 
@@ -517,20 +517,22 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Listado/editor y acciones administrativas usan los contratos nuevos y permiten precio cero.
-- [ ] Filtros/paginación se resuelven en servidor; referencias inactivas existentes no se pierden al editar otro campo.
-- [ ] Retirar consumidores de rutas antiguas de servicios en el mismo incremento y mostrar errores reales sin éxito ficticio.
+- [x] Listado/editor y acciones administrativas usan los contratos nuevos y permiten precio cero.
+- [x] Filtros/paginación se resuelven en servidor; referencias inactivas existentes no se pierden al editar otro campo.
+- [x] Retirar consumidores de rutas antiguas de servicios en el mismo incremento y mostrar errores reales sin éxito ficticio.
 
 **Verificación:** F + UI(src/features/services/ServicesPage.test.tsx) + D; crear y editar servicio local sin multiplicaciones ni redondeos silenciosos.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia (22/10/2026):** [CP06](verificaciones/verificacion-cp06.md). Implementación y controles técnicos completos; recorrido real autenticado del operador e integración pendientes.
 
 ### CP06 — Servicios
+
+**Estado técnico (22/10/2026):** T16–T18 implementadas y verificadas en `segunda-entrega-cp06-servicios`. Backend 122/122 más comprobación focalizada posterior 1/1; frontend 99/99; builds/tipos/lint correctos, con warning previo. Revisión independiente GPT-6.1 Sol / Medium sin defectos requeridos. Recorrido real autenticado del operador e integración pendientes; [evidencia e instrucciones](verificaciones/verificacion-cp06.md).
 
 **Modalidad (22/10/2026):** un responsable ejecuta T16–T18 secuencialmente; revisión independiente agrupada en GPT-6.1 Sol / Medium antes de presentar el bloque. Revisar permisos, precio decimal/cero, mapeos/restricciones y conservación de referencias e independencia de embudos al desactivar servicios. High solo por dificultad concreta explicada según plan §6.1. T16 incluye mapeos de embudos/etapas; no anticipar la gestión de T19. Conservar aceptación y controles de cada tarea; esta clasificación no autoriza merge ni publicación.
 
 - [ ] Crear/editar/desactivar servicio desde UI y comprobar persistencia, precio cero y referencias.
-- [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+- [x] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
 
 <a id="t19"></a>
 

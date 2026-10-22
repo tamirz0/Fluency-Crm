@@ -1,6 +1,6 @@
 # Especificación: configuración comercial
 
-ID: `configuracion-comercial`; depende de `acceso`. [Mapa](CAPABILITIES.md) y especificación aprobados por el usuario el 08/10/2026; catálogos implementados/verificados en CP05, pendientes de validación del operador e integración; servicios, embudos y etapas aún pendientes. [Evidencia CP05](tasks/verificaciones/verificacion-cp05.md). Incluye [convenciones comunes](docs/segunda-entrega/especificacion-tecnica.md). Fuente funcional: diseño §4–5 y §8.
+ID: `configuracion-comercial`; depende de `acceso`. [Mapa](CAPABILITIES.md) y especificación aprobados por el usuario el 08/10/2026; catálogos CP05 validados por el usuario e integrados localmente. Servicios T16–T18 implementados/verificados en `segunda-entrega-cp06-servicios`, con mapeos de embudos/etapas; recorrido real del operador e integración pendientes. La gestión de embudos/etapas sigue pendiente de T19+. Evidencia [CP05](tasks/verificaciones/verificacion-cp05.md) y [CP06](tasks/verificaciones/verificacion-cp06.md). Incluye [convenciones comunes](docs/segunda-entrega/especificacion-tecnica.md). Fuente funcional: diseño §4–5 y §8.
 
 ## Objetivo, estructura y límites
 
