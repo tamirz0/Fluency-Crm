@@ -1,5 +1,7 @@
 # Contexto de trabajo de la segunda entrega
 
+Estado vigente al 21/10/2026: T01–T09/CP01–CP03 integradas en `segunda-entrega` (T09: `3ac9310`; documentación conservada hasta `2930e95`). T10–T12/CP04 completos/verificados en `segunda-entrega-CP04-acceso`: backend116/116, frontend90/90, revisión independiente sin bloqueantes y demo del usuario sin fallos. Sin integración/publicación autorizadas. Consultar [seguimiento](../../tasks/todo.md) y [evidencia CP04](../../tasks/verificaciones/verificacion-cp04.md); los apartados históricos siguientes no sustituyen ese estado ni la lectura selectiva de AGENTS.md. T13 no iniciada.
+
 Relevamiento: 07/10/2026. Base inspeccionada: rama `segunda-entrega`, commit `f9fde15`, más los cambios locales existentes. Este documento describe el punto de partida y las decisiones pendientes; no es un plan de implementación ni acredita funcionamiento integral en ejecución.
 
 > **Actualización del 08/10/2026:** entrevista, especificación técnica y [plan](../../tasks/plan.md) aprobados. El usuario pidió cerrar la planificación; implementación aún no iniciada. Acuerdos en [decisiones-confirmadas.md](decisiones-confirmadas.md), SPEC en [CAPABILITIES.md](../../CAPABILITIES.md) y ejecución pendiente en [tasks/todo.md](../../tasks/todo.md). Los resultados de pruebas de este contexto son históricos; no se repitieron. Al planificar se comprobó por lectura que el cliente usa nuevamente `/api`; los tres fallos anteriores por URL no deben asumirse actuales sin medirlos.

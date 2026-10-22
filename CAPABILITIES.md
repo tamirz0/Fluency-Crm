@@ -1,10 +1,10 @@
 # Mapa de capacidades: segunda entrega
 
-Estado al 12/10/2026: mapa, especificaciones técnicas y plan aprobados explícitamente por el usuario el 08/10. Planificación cerrada; T01–T08, CP01 y CP02 integradas localmente en `segunda-entrega`; CP02 en `c363670`, T07 en `10d8a0a` y T08 en `942e23d`, con autorización del usuario el 12/10/2026: administrador por comando explícito, sin HTTP/DDL, backend 82/82 y controles locales de CP02 completos. El usuario confirmó conexión Supabase, creación del administrador y reejecución sin cambios; CP02 cerrado. TLS efectivo no verificado. T07 integrada en `10d8a0a`; T08 integrada tras 44/44 y reviewer aprobado. T09 implementada/verificada en su rama (backend114/114, frontend86/86); CP03 con verificación técnica/reviewer completos y pendiente de validación del usuario, sin merge autorizado. T10 no iniciada. La cuenta de desarrollo aún no se creó y la sesión HTTP está implementada y verificada en T08; transporte implementado en T09 y login UI pendiente de T10. El [plan aprobado](tasks/plan.md) y las [tareas verificables](tasks/todo.md), con la evidencia funcional Supabase registrada, guían la ejecución.
+Estado al 21/10/2026: mapa, especificaciones y plan aprobados; planificación cerrada. T01–T09/CP01–CP03 integradas en `segunda-entrega`; T09 en `3ac9310`, documentación reciente preservada hasta `2930e95`. T10–T12/CP04 completos/verificados en `segunda-entrega-CP04-acceso`: sesión UI y administración de cuentas API/UI, backend116/116 y frontend90/90, revisión independiente cerrada y demo del usuario sin fallos. [Evidencia CP04](tasks/verificaciones/verificacion-cp04.md). Sin integración ni push de CP04. T13 y capacidades comerciales siguientes no iniciadas. El [seguimiento](tasks/todo.md) es la fuente del estado verificable actual.
 
 Fuentes: [diseño](docs/segunda-entrega/diseño-segunda-entrega.md), [decisiones confirmadas](docs/segunda-entrega/decisiones-confirmadas.md), [contexto](docs/segunda-entrega/contexto-segunda-entrega.md) y [constraints](CONSTRAINTS.md).
 
-Actualización al 21/10/2026: el usuario aprobó CP03 después de validar localmente login, `/auth/me`, renovación CSRF, logout y el test frontend de transporte (9/9). T09 sigue sin integrar; T10 no iniciada.
+La validación anterior de CP03 se conserva sin repetirla. CP04 reutiliza cookie/antiforgery/actor del servidor y añade sus consumidores de UI y cuentas; las pantallas comerciales retiradas siguen sin publicarse. La aprobación de implementación no autoriza integrar CP04.
 
 | ID estable | Responsabilidad | Depende de |
 |---|---|---|

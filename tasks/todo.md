@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 21/10/2026. **Plan y especificación aprobados; planificación cerrada; T01–T08, CP01 y CP02 integradas localmente en `segunda-entrega`; CP02 en `c363670`, T07 en `10d8a0a` y T08 en `942e23d`, con autorización del usuario el 12/10/2026; controles locales y revisión funcional Supabase de CP02 completos, checkpoint cerrado con ese OK; T09 implementada y verificada en su rama; CP03 aprobada por el usuario el 21/10/2026, pendiente de integración; T10–T49 pendientes.** Desarrollo tiene esquema/catálogos de T04 y roles/permisos de T05; el bootstrap es explícito. T07 integrada en `10d8a0a`; T08 integrada tras 44/44 y reviewer aprobado. T09/CP03 cuentan con revisión final del reviewer y validación funcional del usuario; no hay autorización de merge. T10 no iniciada. La línea de base conserva deuda identificada. No pedir de nuevo aprobación del mismo plan. Leer [plan.md](plan.md) y [CONSTRAINTS.md](../CONSTRAINTS.md).
+Plan del 08/10/2026, actualizado el 21/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados en `segunda-entrega-CP04-acceso`, con demo del usuario sin fallos; sin autorización de integrar este bloque ni publicar. T13–T49 pendientes.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -17,9 +17,9 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T07 — Preparar contrato HTTP y corte de rutas anteriores](#t07)
 - [x] [T08 — Autenticar por cookie y validar el actor en servidor](#t08)
 - [x] [T09 — Adaptar el transporte frontend a la sesión real](#t09)
-- [ ] [T10 — Restaurar y cerrar sesión desde la interfaz](#t10)
-- [ ] [T11 — Administrar cuentas desde API](#t11)
-- [ ] [T12 — Gestionar usuarios desde la pantalla administrativa](#t12)
+- [x] [T10 — Restaurar y cerrar sesión desde la interfaz](#t10)
+- [x] [T11 — Administrar cuentas desde API](#t11)
+- [x] [T12 — Gestionar usuarios desde la pantalla administrativa](#t12)
 - [ ] [T13 — Alinear los catálogos con el modelo objetivo](#t13)
 - [ ] [T14 — Exponer administración y opciones de catálogos](#t14)
 - [ ] [T15 — Editar catálogos desde configuración](#t15)
@@ -308,11 +308,11 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Verificación:** F + UI(src/api/client.test.ts) + D; inspección local de cookie/header y respuesta de /auth/me.
 
-**Evidencia (12/10/2026; validación de usuario 21/10/2026):** [verificacion-t09.md](verificaciones/verificacion-t09.md). Backend 114/114 y frontend 86/86 completos, cero omisiones; builds correctos, solo warning previo de lint. Ensayo real de cliente/cookie antiforgery/header en navegador local. El usuario completó login/sesión/logout y el test del cliente frontend 9/9; CSRF vencido rechazado y token renovado aceptado. Revisión final aprobada. CP03 aprobada por el usuario; integración pendiente de autorización. No iniciar T10.
+**Evidencia (12/10/2026; validación de usuario 21/10/2026):** [verificacion-t09.md](verificaciones/verificacion-t09.md). Backend 114/114 y frontend 86/86 completos, cero omisiones; builds correctos, solo warning previo de lint. Ensayo real de cliente/cookie antiforgery/header en navegador local. El usuario completó login/sesión/logout y el test del cliente frontend 9/9; CSRF vencido rechazado y token renovado aceptado. Revisión final aprobada. CP03 aprobada por el usuario y T09 integrada en `3ac9310`; comprobado al retomar el 21/10/2026, con autorización de continuidad a T10–T12. Se conserva esta evidencia sin repetir controles por cambios documentales.
 
 ### CP03 — Acceso HTTP
 
-**Estado:** verificación técnica, reviewer y validación del usuario aprobados al 21/10/2026; integración pendiente de autorización. No hacer merge ni iniciar T10 sin nueva indicación.
+**Estado:** verificación técnica, reviewer y validación del usuario aprobados; integrada en `segunda-entrega` / `3ac9310`. Git limpio en `2930e95` al retomar, con documentación reciente preservada. El usuario autorizó continuar T10–T12 en rama derivada, sin integrar CP04.
 
 - [x] Cookie, CSRF y actor real comprobados por HTTP; rutas incompatibles no operativas. Este checkpoint todavía no acredita login desde UI.
 - [x] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
@@ -331,13 +331,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Login y recarga consultan identidad del servidor; 401 limpia caché/usuario y vuelve a login; 403 conserva sesión y explica el rechazo.
-- [ ] Logout limpia la cookie mediante API y el estado visible; al recuperar foco se actualizan identidad/capacidades.
-- [ ] La navegación no confía en un usuario guardado localmente; probar roles con perfiles separados, dado que la cookie es compartida entre pestañas.
+- [x] Login y recarga consultan identidad del servidor; 401 limpia caché/usuario y vuelve a login; 403 conserva sesión y explica el rechazo.
+- [x] Logout limpia la cookie mediante API y el estado visible; al recuperar foco se actualizan identidad/capacidades.
+- [x] La navegación no confía en un usuario guardado localmente; probar roles con perfiles separados, dado que la cookie es compartida entre pestañas.
 
 **Verificación:** F + UI(src/App.test.tsx) + D; recorrido manual local entrar, recargar, expirar y salir.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia (21/10/2026):** [CP04](verificaciones/verificacion-cp04.md). Backend completo 116/116 y frontend completo 90/90, cero omisiones; builds correctos y warning previo de lint. Revisión independiente sin bloqueantes pendientes; demo del usuario completa, sin fallos. Incremento sin integrar ni publicar.
 
 <a id="t11"></a>
 
@@ -353,13 +353,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Administrador consulta roles/cuentas, crea/edita perfil y roles, reemplaza contraseña y desactiva/reactiva; no hay borrado físico ni registro público.
-- [ ] Username/correo únicos normalizados, contraseña 8 caracteres–72 bytes, al menos un rol; listados paginados y opciones mínimas activas accesibles a todos.
-- [ ] Cambios de rol/password/activo se reflejan al siguiente request sin renovar expiración; desactivar no exige reasignar ni altera relaciones.
+- [x] Administrador consulta roles/cuentas, crea/edita perfil y roles, reemplaza contraseña y desactiva/reactiva; no hay borrado físico ni registro público.
+- [x] Username/correo únicos normalizados, contraseña 8 caracteres–72 bytes, al menos un rol; listados paginados y opciones mínimas activas accesibles a todos.
+- [x] Cambios de rol/password/activo se reflejan al siguiente request sin renovar expiración; desactivar no exige reasignar ni altera relaciones.
 
 **Verificación:** B + API(UsuariosTests) + API(AuthTests) afectados + D; vendedor/responsable reciben 403 en administración, y opciones no filtran hashes ni datos innecesarios.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia (21/10/2026):** [CP04](verificaciones/verificacion-cp04.md). Backend completo 116/116 y frontend completo 90/90, cero omisiones; builds correctos y warning previo de lint. Revisión independiente sin bloqueantes pendientes; demo del usuario completa, sin fallos. Incremento sin integrar ni publicar.
 
 <a id="t12"></a>
 
@@ -375,20 +375,22 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Administrador puede listar, crear y editar usuarios/roles, cambiar contraseña y desactivar/reactivar; no aparece editor de permisos ni registro público.
-- [ ] Roles insuficientes no ofrecen administración; errores de duplicado/validación y expiración se muestran sin doble envío.
-- [ ] Se regeneran contratos; selector de responsables consume opciones activas y conserva etiquetas de referencias anteriores cuando corresponda.
+- [x] Administrador puede listar, crear y editar usuarios/roles, cambiar contraseña y desactivar/reactivar; no aparece editor de permisos ni registro público.
+- [x] Roles insuficientes no ofrecen administración; errores de duplicado/validación y expiración se muestran sin doble envío.
+- [x] Se regeneran contratos; selector de responsables consume opciones activas y conserva etiquetas de referencias anteriores cuando corresponda.
 
 **Verificación:** F + UI(src/features/settings/UsersPage.test.tsx) + D; demo local administrador crea vendedor y responsable comercial. Checkpoint de acceso completo.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia (21/10/2026):** [CP04](verificaciones/verificacion-cp04.md). Backend completo 116/116 y frontend completo 90/90, cero omisiones; builds correctos y warning previo de lint. Revisión independiente sin bloqueantes pendientes; demo del usuario completa, sin fallos. Incremento sin integrar ni publicar.
 
 ### CP04 — Módulo acceso
 
+**Estado:** completo y verificado el 21/10/2026; demo confirmada por el usuario. Pendiente únicamente del OK de integración del incremento y de la deuda previa explicitada en [evidencia](verificaciones/verificacion-cp04.md). No hacer merge/push ni iniciar T13 sin indicación.
+
 **Modalidad (21/10/2026):** cierre del primer bloque con el flujo de plan §6.1. Revisar independientemente T10/T11 si aún no se hizo, T12 y la integración entre piezas. Reutilizar revisiones válidas y revisar cambios posteriores y efectos relacionados, sin repetir toda la auditoría. Conservar los controles siguientes. Evaluar con el usuario consumo observado, retrabajo y utilidad de la revisión, sin infraestructura nueva ni porcentaje de ahorro exigido. Esta clasificación no autoriza iniciar T10 ni integrar CP03.
 
-- [ ] B + F, suites pertinentes completas, S y recorrido local login→crear roles de usuario→cambiar rol/password→logout. Presentar incremento para revisión antes del merge.
-- [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+- [x] B + F, suites pertinentes completas, S y recorrido local login→crear roles de usuario→cambiar rol/password→logout. Presentar incremento para revisión antes del merge.
+- [x] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
 
 <a id="t13"></a>
 
