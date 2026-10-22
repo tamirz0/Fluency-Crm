@@ -97,6 +97,8 @@ El JSON pasa por stdin sin imprimirse; `set` incorpora las claves y reemplaza lo
 
 ## Inicio y diagnósticos
 
+**PowerShell / conexiones:** para analizar una cadena ya cargada en memoria, usar `$taskBuilder = [System.Data.Common.DbConnectionStringBuilder]::new()` y `$taskBuilder.set_ConnectionString($taskValue)`; leer campos con `$taskBuilder.get_Item('Host')`. Evitar `$taskBuilder.ConnectionString = $taskValue`: el adaptador de diccionario puede tratar `ConnectionString` como una clave en lugar de invocar el setter. Este error se repitió en CP04/CP06. No imprimir la cadena ni el builder; comprobar el destino con valores redactados. El parseo no abre una conexión ni acredita disponibilidad o identidad de la base.
+
 Desde raíz:
 
 ```powershell
