@@ -4,6 +4,7 @@ import { AuthenticatedShell } from './app/AuthenticatedShell'
 import { ProtectedRoute } from './app/ProtectedRoute'
 import { LoginPage } from './features/login/LoginPage'
 import { useAuth } from './auth/useAuth'
+import { UsersPage } from './features/settings/UsersPage'
 function AccessHome() {
   const { user } = useAuth()
   return <Box sx={{ p: { xs: 3, md: 5 } }}><Typography variant="h4" component="h1">Hola, {user?.nombre}</Typography><Typography sx={{ mt: 2 }}>Bienvenido a Fluency CRM.</Typography></Box>
@@ -13,6 +14,7 @@ function App() {
     <Route path="/login" element={<LoginPage />} />
     <Route element={<ProtectedRoute />}><Route element={<AuthenticatedShell />}>
       <Route path="/inicio" element={<AccessHome />} />
+      <Route path="/configuracion/usuarios" element={<UsersPage />} />
     </Route></Route>
     <Route path="*" element={<Navigate to="/inicio" replace />} />
   </Routes>

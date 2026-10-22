@@ -33,7 +33,7 @@ function LegacyApp() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route element={<ProtectedRoute />}>
-        <Route element={<AuthenticatedShell />}>
+        <Route element={<AuthenticatedShell commercial />}>
           <Route path="/inicio" element={<HomePage />} />
           <Route path="/empresas" element={<CompaniesPage />} />
           <Route path="/empresas/nueva" element={<NewCompanyPage />} />

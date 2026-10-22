@@ -331,3 +331,28 @@ export async function updateOpportunityStage(
     throw new ApiRequestError('No pudimos conectar con la API.')
   }
 }
+
+export type CreateUsuarioRequest = components['schemas']['CreateUsuarioRequest']
+export type PatchUsuarioRequest = components['schemas']['PatchUsuarioRequest']
+export type UsuarioQuery = { q?: string; activo?: boolean; rol?: string; page?: number; pageSize?: number }
+export type UsuarioOpcion = components['schemas']['UsuarioOpcionResponse']
+export const usuarioQueryKeys = { all: ['usuarios'] as const, options: ['usuarios-opciones'] as const }
+export function getUsers(query: UsuarioQuery = {}) {
+  return getResponseData(() => api.GET('/usuarios', { params: { query } }))
+}
+export function getUserOptions(query: Omit<UsuarioQuery, 'activo'> = {}) {
+  return getResponseData(() => api.GET('/usuarios/opciones', { params: { query } }))
+}
+export function getRoles() { return getResponseData(() => api.GET('/roles')) }
+export function createUser(body: CreateUsuarioRequest) { return getResponseData(() => api.POST('/usuarios', { body })) }
+export function patchUser(id: AuthUser['id'], body: PatchUsuarioRequest) {
+  return getResponseData(() => api.PATCH('/usuarios/{id}', { params: { path: { id: Number(id) } }, body }))
+}
+export async function changeUserPassword(id: AuthUser['id'], password: string) {
+  await api.PUT('/usuarios/{id}/password', { params: { path: { id: Number(id) } }, body: { password } })
+}
+export function setUserActive(id: AuthUser['id'], active: boolean) {
+  return active
+    ? getResponseData(() => api.POST('/usuarios/{id}/reactivar', { params: { path: { id: Number(id) } } }))
+    : getResponseData(() => api.POST('/usuarios/{id}/desactivar', { params: { path: { id: Number(id) } } }))
+}
