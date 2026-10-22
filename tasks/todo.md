@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 21/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T15/CP05 implementadas y verificadas en `segunda-entrega-cp05-catalogos`, pendientes de validación del usuario e integración. T16–T49 pendientes.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
+Plan del 08/10/2026, actualizado el 22/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T15/CP05 completas, verificadas por pruebas y validadas manualmente por el usuario; integradas localmente en `segunda-entrega` mediante fast-forward a `809a23a`; sin publicar. T16–T49 pendientes.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -463,7 +463,7 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 - [x] Administrador configura y otros roles solo consultan; etiquetas inactivas conservadas.
 - [x] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
 
-**Evidencia de cierre:** [verificacion-cp05.md](verificaciones/verificacion-cp05.md). Backend119/119 y frontend94/94, cero omisiones; builds correctos y revisión independiente sin defectos requeridos. Recorrido local preparado; queda la validación del operador y el OK específico de integración.
+**Evidencia de cierre:** [verificacion-cp05.md](verificaciones/verificacion-cp05.md). Backend 119/119 y frontend 94/94, cero omisiones; builds correctos y revisión independiente sin defectos requeridos. Recorrido local validado por el usuario; integrada localmente en `segunda-entrega` mediante fast-forward a `809a23a`, sin publicar.
 
 <a id="t16"></a>
 

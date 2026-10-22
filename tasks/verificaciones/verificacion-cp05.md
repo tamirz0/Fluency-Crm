@@ -69,4 +69,6 @@ Destino: `localhost:5433 / fluency_segunda_entrega_dev`, validado sin imprimir l
 4. Elegir **Tipos de actividad** y comprobar el campo Nombre. Elegir **Estados de oportunidad**: ABIERTA/GANADA/PERDIDA, sin alta, edición ni desactivación.
 5. Con vendedor/responsable existentes, si el operador dispone de esas cuentas: sin enlace administrativo; URL directa denegada. La API y su matriz de roles están verificadas en fixtures. No crear cuentas para completar esta comprobación.
 
-La validación manual autenticada del operador y el OK de integración quedan pendientes por diseño. No se hace merge, push ni se inicia T16.
+### Validación del usuario e integración (22/10/2026)
+
+El usuario confirmó que completó y validó el recorrido manual; indicó que funciona y autorizó integrar la rama. CP05 se integró localmente en `segunda-entrega` mediante fast-forward de `4a6d65a` a `809a23a`. No se hizo push ni se inició T16.
