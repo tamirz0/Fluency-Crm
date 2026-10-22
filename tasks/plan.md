@@ -127,10 +127,19 @@ Acuerdo del 21/10/2026: un responsable por bloque implementa, verifica y revisa 
 | Implementación habitual y coordinación en el mismo agente | GPT-6.1 Sol, Medium |
 | Dificultad concreta en permisos, sesión, contraseñas o transacciones sensibles | GPT-6.1 Sol, High |
 | Cambio mecánico claro | GPT-6 Luna, esfuerzo según dificultad; no crear un agente para derivar un trabajo breve |
-| Revisión independiente | GPT-6.1 Sol, Medium; High para riesgos sensibles o dificultad concreta |
+| Revisión independiente | GPT-6.1 Sol, Medium por defecto; High solo con dificultad concreta justificada según el criterio siguiente |
 | Problema excepcional que lo justifique | GPT-6 Astra, puntual, explicando el motivo |
 
 La tabla es una política de selección, no prueba de configuración efectiva. Informar si el modelo/esfuerzo no está disponible o no puede cambiarse; nunca afirmar un cambio no realizado.
+
+**Ajuste tras CP05 (22/10/2026):** separar necesidad de revisión y esfuerzo del modelo. Aplicar permisos o transacciones mediante patrones existentes no exige High automáticamente. Reservarlo para mecanismos nuevos de seguridad, concurrencia compleja, invariantes difíciles o incertidumbres concretas no resueltas con Medium; explicar el motivo antes de escalar. Una revisión sin hallazgos no demuestra que era innecesaria.
+
+Lecciones operativas CP04–CP05:
+
+- Secuenciar build, tests y API cuando comparten binarios. Sin salida del runner, comprobar proceso y duración esperable antes de interrumpir; no fijar timeouts diagnósticos menores que ejecuciones conocidas.
+- Reutilizar comandos de entorno ya documentados. Antes de repetir un control, identificar qué cambió o qué incertidumbre resolverá; no repetir suites por errores de edición sin cambios de producto.
+- Preferir parches acotados en documentación; comprobar el diff para detectar recortes o reemplazos afectados por CRLF antes del commit.
+- Evaluar consumo observado, contexto, duración, retrabajo y hallazgos por bloque; comparar alcances distintos con cautela. No añadir infraestructura de medición ni atribuir ahorros causales sin evidencia comparable.
 
 Determinar la revisión antes de implementar, según tasks/todo.md:
 

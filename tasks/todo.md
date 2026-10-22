@@ -527,6 +527,8 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 ### CP06 — Servicios
 
+**Modalidad (22/10/2026):** un responsable ejecuta T16–T18 secuencialmente; revisión independiente agrupada en GPT-6.1 Sol / Medium antes de presentar el bloque. Revisar permisos, precio decimal/cero, mapeos/restricciones y conservación de referencias e independencia de embudos al desactivar servicios. High solo por dificultad concreta explicada según plan §6.1. T16 incluye mapeos de embudos/etapas; no anticipar la gestión de T19. Conservar aceptación y controles de cada tarea; esta clasificación no autoriza merge ni publicación.
+
 - [ ] Crear/editar/desactivar servicio desde UI y comprobar persistencia, precio cero y referencias.
 - [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
 
