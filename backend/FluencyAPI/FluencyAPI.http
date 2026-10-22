@@ -108,9 +108,39 @@ Accept: application/json
 
 ###
 
-### Servicios activos para seleccionar en una oportunidad (200; [] si no hay activos)
-GET {{FluencyAPI_HostAddress}}/Servicios/ListadoServicios
+### Servicios activos paginados (sesión requerida)
+GET {{FluencyAPI_HostAddress}}/servicios?page=1&pageSize=25
 Accept: application/json
+
+# Recorrido CP06: usar sesión administrativa y token CSRF de /auth/csrf.
+# Completar solo con ID propio y token de la sesión; no versionar credenciales.
+@servicioId = 0
+@csrfServicios =
+
+### Detalle, incluidas referencias inactivas
+GET {{FluencyAPI_HostAddress}}/servicios/{{servicioId}}
+
+### Alta con precio cero
+POST {{FluencyAPI_HostAddress}}/servicios
+Content-Type: application/json
+X-CSRF-TOKEN: {{csrfServicios}}
+
+{ "nombre": "Validación CP06", "precioReferencia": 0 }
+
+### Edición decimal sin redondeo
+PATCH {{FluencyAPI_HostAddress}}/servicios/{{servicioId}}
+Content-Type: application/json
+X-CSRF-TOKEN: {{csrfServicios}}
+
+{ "precioReferencia": 123.45, "descripcion": null }
+
+### Baja reversible; conserva embudos
+POST {{FluencyAPI_HostAddress}}/servicios/{{servicioId}}/desactivar
+X-CSRF-TOKEN: {{csrfServicios}}
+
+### Reactivación
+POST {{FluencyAPI_HostAddress}}/servicios/{{servicioId}}/reactivar
+X-CSRF-TOKEN: {{csrfServicios}}
 
 ###
 

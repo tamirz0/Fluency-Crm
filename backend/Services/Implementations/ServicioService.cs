@@ -59,7 +59,7 @@ public sealed class ServicioService(FluencyLocalDbContext db, ActorActual actor)
                 && !await db.Modalidades.AnyAsync(x => x.Id == request.IdModalidad && x.Activo, ct))
                 throw new ServicioOperationException(400, "REFERENCE_UNAVAILABLE", "La modalidad no está disponible.");
             if (request.HasField(nameof(request.Nombre))) service.Nombre = request.Nombre!.Trim();
-            if (request.HasField(nameof(request.Descripcion))) service.Descripcion = request.Descripcion?.Trim();
+            if (request.HasField(nameof(request.Descripcion))) service.Descripcion = string.IsNullOrWhiteSpace(request.Descripcion) ? null : request.Descripcion.Trim();
             if (request.HasField(nameof(request.PrecioReferencia))) service.PrecioReferencia = request.PrecioReferencia!.Value;
             if (request.HasField(nameof(request.DuracionHoras))) service.DuracionHoras = request.DuracionHoras;
             if (request.HasField(nameof(request.IdNivel))) service.IdNivel = request.IdNivel;

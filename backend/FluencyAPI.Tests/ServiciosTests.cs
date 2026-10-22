@@ -58,11 +58,12 @@ public sealed class ServiciosTests
         Assert.Equal(1, page.GetProperty("totalCount").GetInt32());
         Assert.Empty((await admin.GetFromJsonAsync<JsonElement>("/servicios?activo=todos&page=999")).GetProperty("items").EnumerateArray());
         (await admin.PostAsync($"/servicios/{id}/reactivar", null)).EnsureSuccessStatusCode();
-        (await admin.PatchAsJsonAsync($"/servicios/{id}", new { descripcion = (string?)null, duracionHoras = (int?)null, idNivel = (int?)null, idModalidad = (int?)null })).EnsureSuccessStatusCode();
+        (await admin.PatchAsJsonAsync($"/servicios/{id}", new { descripcion = "   ", duracionHoras = (int?)null, idNivel = (int?)null, idModalidad = (int?)null })).EnsureSuccessStatusCode();
         item = await admin.GetFromJsonAsync<JsonElement>($"/servicios/{id}");
         Assert.Equal(JsonValueKind.Null, item.GetProperty("nivel").ValueKind);
         Assert.Equal(JsonValueKind.Null, item.GetProperty("modalidad").ValueKind);
         Assert.Equal(JsonValueKind.Null, item.GetProperty("duracionHoras").ValueKind);
+        Assert.Equal(JsonValueKind.Null, item.GetProperty("descripcion").ValueKind);
     }
 
     [Fact]
