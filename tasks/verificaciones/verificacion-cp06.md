@@ -69,3 +69,7 @@ Destino comprobado: `localhost:5433 / fluency_segunda_entrega_dev`, configuraci�
 El usuario confirmó «Funcionamiento esperado. Puede cerrarse la implementación de CP06». Se da por validado el funcionamiento presentado y se cierra la implementación de T16–T18/CP06 en `segunda-entrega-cp06-servicios`. No se atribuyen comprobaciones adicionales ni limpieza de datos a esa confirmación.
 
 Al retomar: Git limpio en `8a744bc`, misma rama y sin cambios de código. Este cierre solo actualiza documentación; se conserva la evidencia válida, sin repetir suites, arrancar servicios ni operar la base. La integración y publicación siguen pendientes de autorización específica; no se hace merge/push ni se inicia T19.
+
+### Integración local autorizada (22/10/2026)
+
+Después de informar que la integración requería su OK específico, el usuario respondió «OK». Se comprobó Git limpio en `c0c6a26`, base `segunda-entrega` en `4d0c966` y divergencia 0/6. CP06 se integró localmente mediante fast-forward de `4d0c966` a `c0c6a26`, conservando los cambios documentales recientes. Sin cambios de código ni evidencia invalidada, no se repitieron controles. No se hizo push ni se inició T19; publicación pendiente de autorización específica.
