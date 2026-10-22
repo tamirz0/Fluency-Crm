@@ -26,20 +26,21 @@ public sealed class HttpContractTests
         await using var factory = new ContractApiFactory(includeProbe: false);
         using var client = factory.CreateClient();
         var actions = factory.Services.GetRequiredService<IActionDescriptorCollectionProvider>().ActionDescriptors.Items;
-        Assert.Equal(4, actions.Count);
-        Assert.All(actions, action => Assert.Equal(typeof(LoginController),
-            Assert.IsType<Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor>(action).ControllerTypeInfo.AsType()));
+        Assert.Equal(13, actions.Count);
+        Assert.All(actions, action => Assert.Contains(
+            Assert.IsType<Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor>(action).ControllerTypeInfo.AsType(),
+            new[] { typeof(LoginController), typeof(UsuariosController) }));
 
         using var response = await client.GetAsync("/openapi/v1.json");
         response.EnsureSuccessStatusCode();
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        Assert.Equal(new[] { "/auth/csrf", "/auth/login", "/auth/logout", "/auth/me" },
-            document.RootElement.GetProperty("paths").EnumerateObject().Select(path => path.Name).Order().ToArray());
+        Assert.Equal(new[] { "/auth/csrf", "/auth/login", "/auth/logout", "/auth/me", "/roles", "/usuarios", "/usuarios/opciones", "/usuarios/{id}", "/usuarios/{id}/desactivar", "/usuarios/{id}/password", "/usuarios/{id}/reactivar" },
+            document.RootElement.GetProperty("paths").EnumerateObject().Select(path => path.Name).Order(StringComparer.Ordinal).ToArray());
 
         // Enumerate source actions as well as the actual routing table: no alternate verb survives.
         var controllers = typeof(LoginController).Assembly.GetTypes()
             .Where(type => type.Namespace == typeof(LoginController).Namespace
-                && type.IsSubclassOf(typeof(ControllerBase)) && type != typeof(LoginController));
+                && type.IsSubclassOf(typeof(ControllerBase)) && type != typeof(LoginController) && type != typeof(UsuariosController));
         foreach (var controller in controllers)
         {
             var prefix = controller.GetCustomAttribute<RouteAttribute>()!.Template
