@@ -23,7 +23,7 @@ export function StageEditor({ funnel, item, active = false, nextOrder, onClose }
     if (pending.current || isLoading) return
     pending.current = true; setError('')
     try {
-      const body: EtapaRequest = v ? { nombre: v.nombre.trim(), descripcion: v.descripcion.trim() || null, orden: Number(v.orden), ...(item && !isFinal ? { idEmbudo: Number(v.idEmbudo) } : {}) } : {}
+      const body: EtapaRequest = v ? { nombre: v.nombre.trim(), descripcion: v.descripcion.trim() || null, ...(!isFinal ? { orden: item ? Number(v.orden) : nextOrder } : {}), ...(item && !isFinal ? { idEmbudo: Number(v.idEmbudo) } : {}) } : {}
       const baseline: EtapaRequest = { nombre: defaults.nombre, descripcion: defaults.descripcion.trim() || null, orden: Number(defaults.orden), idEmbudo: Number(defaults.idEmbudo) }
       const patch: EtapaRequest = Object.fromEntries(Object.entries(body).filter(([key, value]) => value !== baseline[key as keyof EtapaRequest]))
       if (item && !active && !Object.keys(patch).length) { setError('No hay cambios para guardar.'); return }
@@ -44,7 +44,8 @@ export function StageEditor({ funnel, item, active = false, nextOrder, onClose }
         {active ? <Typography>¿Confirmás {item?.activo ? 'desactivar' : 'reactivar'} «{item?.nombre}»? Las oportunidades abiertas y activas en ella impiden la baja. Reactivar la coloca al final del orden activo y conserva las oportunidades dadas de baja.</Typography> : <>
           <TextField {...register('nombre')} label="Nombre" autoFocus required disabled={isSubmitting || isLoading} error={!!errors.nombre} helperText={errors.nombre?.message} />
           <TextField {...register('descripcion')} label="Descripción" multiline minRows={2} disabled={isSubmitting || isLoading} />
-          <TextField {...register('orden')} label="Orden" required disabled={isSubmitting || isLoading} error={!!errors.orden} helperText={errors.orden?.message ?? 'Único entre activas. Para intercambiar posiciones, usá Guardar orden en la lista.'} />
+          {item && !isFinal && <TextField {...register('orden')} label="Orden" required disabled={isSubmitting || isLoading} error={!!errors.orden} helperText={errors.orden?.message ?? 'Único entre activas. Para intercambiar posiciones, arrastrá las etapas en la lista y usá Guardar orden.'} />}
+          {!item && errors.orden && <Alert severity="error">No hay un orden válido disponible al final del embudo.</Alert>}
           {item && !isFinal && <>
             <TextField label="Buscar embudos" value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} disabled={isSubmitting} />
             {funnels.error && <Alert severity="error" action={<Button onClick={() => void funnels.refetch()}>Reintentar embudos</Button>}>{funnels.error.message}</Alert>}
@@ -54,7 +55,7 @@ export function StageEditor({ funnel, item, active = false, nextOrder, onClose }
             </TextField>} />
             <Box><Button disabled={page === 1 || isSubmitting} onClick={() => setPage(p => p - 1)}>Embudos anteriores</Button><Button disabled={!funnels.data || page * 25 >= Number(funnels.data.totalCount) || isSubmitting} onClick={() => setPage(p => p + 1)}>Más embudos</Button></Box>
           </>}
-          {isFinal && <Alert severity="info">Esta etapa final conserva su estado y embudo; permanece activa.</Alert>}
+          {isFinal && <Alert severity="info">Esta etapa del sistema conserva su estado, embudo y orden; permanece activa. Podés editar su nombre y descripción.</Alert>}
         </>}
       </DialogContent>
       <DialogActions><Button disabled={isSubmitting} onClick={onClose}>Cancelar</Button><Button type="submit" variant="contained" disabled={isSubmitting || isLoading || !active && !!item && !isDirty}>{isSubmitting ? 'Guardando…' : active ? 'Confirmar' : 'Guardar'}</Button></DialogActions>

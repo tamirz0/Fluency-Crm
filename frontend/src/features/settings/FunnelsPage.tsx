@@ -1,13 +1,11 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { Alert, Box, Button, Chip, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography, MenuItem } from '@mui/material'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { listFunnels, listStages, reorderStages, type Embudo, type EtapaConfiguracion } from '../../api/client'
+import { useQuery } from '@tanstack/react-query'
+import { listFunnels, listStages, type Embudo, type EtapaConfiguracion } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { FunnelDialog } from './FunnelDialog'
 import { StageEditor } from './StageEditor'
+import { StageOrderEditor } from './StageOrderEditor'
 
 export function FunnelsPage() {
   const { user } = useAuth()
@@ -45,45 +43,19 @@ function FunnelList() {
 function Stages({ funnel }: { funnel: Embudo }) {
   const [action, setAction] = useState<{ item?: EtapaConfiguracion; active?: boolean } | null>(null)
   const [orderError, setOrderError] = useState('')
+  const [orderSuccess, setOrderSuccess] = useState(false)
   const stages = useQuery({ queryKey: ['etapas', funnel.id], queryFn: () => listStages(Number(funnel.id), 'todos') })
   const active = stages.data?.filter(s => s.activo) ?? []
   const nextOrder = active.length ? Math.max(...active.map(s => Number(s.orden))) + 1 : 1
   return <Box component="section" aria-label={`Etapas de ${funnel.nombre}`} sx={{ mt: 4, borderTop: '1px solid', borderColor: 'divider', pt: 3 }}>
     <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 2, mb: 2 }}><Typography component="h2" variant="h5">Etapas de {funnel.nombre}</Typography><Button variant="outlined" onClick={() => setAction({})}>Nueva etapa abierta</Button></Stack>
+    <Typography color="text.secondary" sx={{ mb: 3 }}>Organizá el flujo comercial. Arrastrá las etapas abiertas activas para cambiar su secuencia y guardá el orden.</Typography>
     {!funnel.activo && <Alert severity="info" sx={{ mb: 2 }}>Embudo inactivo: conserva sus etapas y no recibe nuevas oportunidades ni reaperturas.</Alert>}
     {stages.isPending ? <Box role="status">Cargando etapas…</Box> : stages.error ? <Alert severity="error" action={<Button onClick={() => void stages.refetch()}>Reintentar etapas</Button>}>{stages.error.message}</Alert> : <>
       {!active.some(s => s.estado === 'ABIERTA') && <Alert severity="info" sx={{ mb: 2 }}>Este embudo no permite altas de oportunidades hasta que tenga una etapa abierta activa.</Alert>}
-      <OrderEditor key={JSON.stringify(stages.data)} funnel={funnel} stages={stages.data} error={orderError} onError={setOrderError} onEdit={item => setAction({ item })} onActive={item => setAction({ item, active: true })} />
+      {orderSuccess && <Alert severity="success" sx={{ mb: 2 }}>Orden guardado.</Alert>}
+      <StageOrderEditor key={JSON.stringify(stages.data)} funnel={funnel} stages={stages.data} error={orderError} onError={message => { setOrderError(message); setOrderSuccess(false) }} onSaved={() => setOrderSuccess(true)} onEdit={item => setAction({ item })} onActive={item => setAction({ item, active: true })} />
     </>}
     {action && <StageEditor {...action} funnel={funnel} nextOrder={nextOrder} onClose={() => setAction(null)} />}
-  </Box>
-}
-const orderSchema = z.object({ posiciones: z.record(z.string(), z.string().trim().refine(v => /^-?\d+$/.test(v) && Number(v) >= -2147483648 && Number(v) <= 2147483647, 'Ingresá un orden entero válido.')) })
-function OrderEditor({ funnel, stages, error, onError, onEdit, onActive }: { funnel: Embudo; stages: EtapaConfiguracion[]; error: string; onError: (message: string) => void; onEdit: (s: EtapaConfiguracion) => void; onActive: (s: EtapaConfiguracion) => void }) {
-  const client = useQueryClient(), pending = useRef(false)
-  const { isLoading } = useAuth()
-  const [success, setSuccess] = useState(false)
-  const defaults = { posiciones: Object.fromEntries(stages.filter(s => s.activo).map(s => [String(s.id), String(s.orden)])) }
-  const { register, reset, handleSubmit, formState: { errors, isSubmitting, isDirty } } = useForm({ resolver: zodResolver(orderSchema), defaultValues: defaults })
-  const save = async (v: z.infer<typeof orderSchema>) => {
-    if (pending.current || isLoading || !isDirty) return
-    pending.current = true; onError(''); setSuccess(false)
-    try {
-      const data = await reorderStages(Number(funnel.id), { etapas: Object.entries(v.posiciones).map(([id, orden]) => ({ id: Number(id), orden: Number(orden) })) })
-      client.setQueryData(['etapas', funnel.id], stages.map(s => data.find(updated => updated.id === s.id) ?? s)); reset(v); setSuccess(true)
-    } catch (cause) {
-      onError(cause instanceof Error ? cause.message : 'No pudimos guardar el orden.')
-      await client.invalidateQueries({ queryKey: ['etapas', funnel.id] }); reset(defaults)
-    } finally { pending.current = false }
-  }
-  return <Box component="form" noValidate onSubmit={e => { void handleSubmit(save)(e) }}>
-    {error && <Alert severity="error">{error}</Alert>}{success && <Alert severity="success">Orden guardado.</Alert>}
-    <TableContainer><Table aria-label="Etapas" size="small"><TableHead><TableRow><TableCell>Etapa</TableCell><TableCell>Estado</TableCell><TableCell>Orden</TableCell><TableCell>Disponibilidad</TableCell><TableCell>Acciones</TableCell></TableRow></TableHead>
-      <TableBody>{stages.map(s => <TableRow key={s.id}><TableCell>{s.nombre}</TableCell><TableCell>{s.estado === 'ABIERTA' ? 'Abierta' : s.estado === 'GANADA' ? 'Ganada' : 'Perdida'}</TableCell>
-        <TableCell>{s.activo ? <TextField {...register(`posiciones.${s.id}`)} size="small" label={`Orden de ${s.nombre}`} disabled={isSubmitting || isLoading} error={!!errors.posiciones?.[String(s.id)]} helperText={errors.posiciones?.[String(s.id)]?.message} sx={{ width: 160 }} /> : s.orden}</TableCell>
-        <TableCell>{s.activo ? 'Activa' : 'Inactiva'}</TableCell><TableCell><Button disabled={isSubmitting} aria-label={`Editar ${s.nombre}`} onClick={() => onEdit(s)}>Editar</Button>{s.estado === 'ABIERTA' && <Button disabled={isSubmitting} aria-label={`${s.activo ? 'Desactivar' : 'Reactivar'} ${s.nombre}`} onClick={() => onActive(s)}>{s.activo ? 'Desactivar' : 'Reactivar'}</Button>}</TableCell>
-      </TableRow>)}</TableBody>
-    </Table></TableContainer>
-    <Button type="submit" variant="contained" disabled={isSubmitting || isLoading || !isDirty} sx={{ mt: 2 }}>{isSubmitting ? 'Guardando…' : 'Guardar orden'}</Button>
   </Box>
 }
