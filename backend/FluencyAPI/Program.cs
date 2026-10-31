@@ -67,6 +67,7 @@ builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<CatalogoService>();
 builder.Services.AddScoped<IServicioService, ServicioService>();
+builder.Services.AddScoped<EmbudoService>();
 builder.Services.AddScoped<IEstadoClienteService, EstadoClienteService>();
 builder.Services.AddScoped<IOrigenComercialService, OrigenComercialService>();
 builder.Services.AddScoped<IEtapaComercialService, EtapaComercialService>();

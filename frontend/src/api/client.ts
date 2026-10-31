@@ -408,3 +408,23 @@ export function setServiceActive(id: Servicio['id'], active: boolean) {
     ? getResponseData(() => api.POST('/servicios/{id}/reactivar', { params: { path } }))
     : getResponseData(() => api.POST('/servicios/{id}/desactivar', { params: { path } }))
 }
+
+export type Embudo = components['schemas']['EmbudoResponse']
+export type EmbudoRequest = components['schemas']['EmbudoRequest']
+export type EtapaConfiguracion = components['schemas']['EtapaComercialResponse']
+export type EtapaRequest = components['schemas']['EtapaComercialRequest']
+export function listFunnels(query: CatalogQuery = {}) { return getResponseData(() => api.GET('/embudos', { params: { query } })) }
+export function createFunnel(body: EmbudoRequest) { return getResponseData(() => api.POST('/embudos', { body })) }
+export function patchFunnel(id: number, body: EmbudoRequest) { return getResponseData(() => api.PATCH('/embudos/{id}', { params: { path: { id } }, body })) }
+export function setFunnelActive(id: number, active: boolean) {
+  return active ? getResponseData(() => api.POST('/embudos/{id}/reactivar', { params: { path: { id } } }))
+    : getResponseData(() => api.POST('/embudos/{id}/desactivar', { params: { path: { id } } }))
+}
+export function listStages(id: number, activo: 'true' | 'false' | 'todos' = 'true') { return getResponseData(() => api.GET('/embudos/{id}/etapas', { params: { path: { id }, query: { activo } } })) }
+export function createStage(id: number, body: EtapaRequest) { return getResponseData(() => api.POST('/embudos/{id}/etapas', { params: { path: { id } }, body })) }
+export function patchStage(id: number, body: EtapaRequest) { return getResponseData(() => api.PATCH('/etapas/{id}', { params: { path: { id } }, body })) }
+export function setStageActive(id: number, active: boolean) {
+  return active ? getResponseData(() => api.POST('/etapas/{id}/reactivar', { params: { path: { id } } }))
+    : getResponseData(() => api.POST('/etapas/{id}/desactivar', { params: { path: { id } } }))
+}
+export function reorderStages(id: number, body: components['schemas']['OrdenEtapasRequest']) { return getResponseData(() => api.PUT('/embudos/{id}/orden-etapas', { params: { path: { id } }, body })) }
