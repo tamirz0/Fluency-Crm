@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 22/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T15/CP05 completas, verificadas por pruebas y validadas manualmente por el usuario; integradas localmente en `segunda-entrega` mediante fast-forward a `809a23a`; sin publicar. T16–T18 implementadas/verificadas en `segunda-entrega-cp06-servicios`; CP06 cerrada con validación del usuario e integrada localmente en `segunda-entrega` / `c0c6a26` el 22/10/2026, sin publicar. T19–T49 pendientes.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
+Plan del 08/10/2026, actualizado el 31/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T15/CP05 completas, verificadas por pruebas y validadas manualmente por el usuario; integradas localmente en `segunda-entrega` mediante fast-forward a `809a23a`; sin publicar. T16–T18 implementadas/verificadas en `segunda-entrega-cp06-servicios`; CP06 cerrada con validación del usuario e integrada localmente en `segunda-entrega` / `c0c6a26` el 22/10/2026, sin publicar. T19–T21 implementadas y verificadas técnicamente en `segunda-entrega-cp07-configuracion` / `6b6cca3`; CP07 lista para validación del usuario, sin integrar ni publicar. T22–T49 pendientes.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -26,9 +26,9 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T16 — Mapear servicios, embudos y etapas](#t16)
 - [x] [T17 — Gestionar servicios mediante API](#t17)
 - [x] [T18 — Gestionar servicios desde UI](#t18)
-- [ ] [T19 — Gestionar embudos y sus finales automáticas](#t19)
-- [ ] [T20 — Gestionar y reordenar etapas](#t20)
-- [ ] [T21 — Configurar embudos y etapas desde UI](#t21)
+- [x] [T19 — Gestionar embudos y sus finales automáticas](#t19)
+- [x] [T20 — Gestionar y reordenar etapas](#t20)
+- [x] [T21 — Configurar embudos y etapas desde UI](#t21)
 - [ ] [T22 — Alinear persistencia de empresas y contactos](#t22)
 - [ ] [T23 — Adaptar empresas a los contratos y reglas nuevos](#t23)
 - [ ] [T24 — Actualizar pantallas de empresas](#t24)
@@ -546,13 +546,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Crear embudo produce exactamente Ganada/Perdida en la misma transacción, órdenes iniciales 1/2 y ninguna abierta; una falla revierte todo.
-- [ ] Un embudo utilizado conserva servicio; desactivar bloquea solo por oportunidades abiertas y activas, sin cascadas.
-- [ ] Reactivar/configurar no restaura datos comerciales; permisos de configuración solo administrador y consultas de bloqueo coordinadas con escrituras.
+- [x] Crear embudo produce exactamente Ganada/Perdida en la misma transacción, órdenes iniciales 1/2 y ninguna abierta; una falla revierte todo.
+- [x] Un embudo utilizado conserva servicio; desactivar bloquea solo por oportunidades abiertas y activas, sin cascadas.
+- [x] Reactivar/configurar no restaura datos comerciales; permisos de configuración solo administrador y consultas de bloqueo coordinadas con escrituras.
 
 **Verificación:** B + API(EmbudosTests) + D; fixtures de abiertas, cerradas y dadas de baja, y restricción de finales únicas en PostgreSQL.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica:** [verificacion-cp07.md](verificaciones/verificacion-cp07.md). Backend 128/128 más comprobación focalizada posterior 1/1; frontend 105/105; revisión independiente con un hallazgo corregido. Validación del operador e integración pendientes.
 
 <a id="t20"></a>
 
@@ -566,13 +566,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Alta manual solo ABIERTA; finales editan textos/orden pero nunca embudo/estado/activo; una abierta usada no cambia de embudo.
-- [ ] Orden entre activas único, admite huecos; PUT reordena todas las activas atómicamente; reactivación al máximo activo + 1.
-- [ ] Baja abierta bloquea por oportunidades abiertas/activas, considera historia para inmutabilidad y devuelve 409 sin escritura parcial ante colisión/carrera.
+- [x] Alta manual solo ABIERTA; finales editan textos/orden pero nunca embudo/estado/activo; una abierta usada no cambia de embudo.
+- [x] Orden entre activas único, admite huecos; PUT reordena todas las activas atómicamente; reactivación al máximo activo + 1.
+- [x] Baja abierta bloquea por oportunidades abiertas/activas, considera historia para inmutabilidad y devuelve 409 sin escritura parcial ante colisión/carrera.
 
 **Verificación:** B + API(EtapasTests) + D; probar intercambio de posiciones, duplicación concurrente, reactivación y prohibiciones de finales.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica:** [verificacion-cp07.md](verificaciones/verificacion-cp07.md). Backend 128/128 más comprobación focalizada posterior 1/1; frontend 105/105; revisión independiente con un hallazgo corregido. Validación del operador e integración pendientes.
 
 <a id="t21"></a>
 
@@ -586,18 +586,19 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Administrador crea embudo y edita/ordena etapas según permisos; no ofrece baja de finales ni selección de su estado.
-- [ ] Embudo sin abiertas puede guardarse; explica por qué no permite altas de oportunidad, sin inventar etapas ni asistente obligatorio.
-- [ ] Los conflictos de orden/baja se muestran y se recargan datos sin reintentar mutaciones automáticamente; retirar API antigua de etapas del recorrido.
+- [x] Administrador crea embudo y edita/ordena etapas según permisos; no ofrece baja de finales ni selección de su estado.
+- [x] Embudo sin abiertas puede guardarse; explica por qué no permite altas de oportunidad, sin inventar etapas ni asistente obligatorio.
+- [x] Los conflictos de orden/baja se muestran y se recargan datos sin reintentar mutaciones automáticamente; retirar API antigua de etapas del recorrido.
 
 **Verificación:** F + UI(src/features/settings/FunnelsPage.test.tsx) + D; recorrido local servicio → embudo → etapa abierta. Checkpoint de configuración completo.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica:** [verificacion-cp07.md](verificaciones/verificacion-cp07.md). Backend 128/128 más comprobación focalizada posterior 1/1; frontend 105/105; revisión independiente con un hallazgo corregido. Validación del operador e integración pendientes.
 
 ### CP07 — Módulo configuración
 
-- [ ] B + F, suites completas pertinentes, seguridad según cambios y recorrido servicio→embudo→etapas→orden→bajas. Finales y bloqueos probados en PostgreSQL. Revisar incremento antes del merge.
-- [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+- [x] B + F, suites completas pertinentes, seguridad según cambios y recorrido automatizado UI/API. Finales, bloqueos y carreras representativas probados en PostgreSQL; revisión independiente completada con hallazgo corregido.
+- [ ] Validación autenticada del usuario: servicio→embudo→etapas→orden→bajas, según [recorrido y limpieza](verificaciones/verificacion-cp07.md#recorrido-local-del-operador). Integración/publicación requieren OK específico.
+- [x] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
 
 <a id="t22"></a>
 
