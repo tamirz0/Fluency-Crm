@@ -1296,6 +1296,325 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/empresas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista empresas compartidas, con filtros previos al conteo y orden razón social/ID. */
+        get: {
+            parameters: {
+                query?: {
+                    q?: string;
+                    idEstado?: number | string;
+                    idOrigen?: number | string;
+                    idResponsable?: number | string;
+                    page?: number | string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PageResponseOfEmpresaResponse"];
+                        "application/json": components["schemas"]["PageResponseOfEmpresaResponse"];
+                        "text/json": components["schemas"]["PageResponseOfEmpresaResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Crea una empresa compartida; defaults de responsable y estado desde el servidor. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["EmpresaRequest"];
+                    "text/json": components["schemas"]["EmpresaRequest"];
+                    "application/*+json": components["schemas"]["EmpresaRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EmpresaResponse"];
+                        "application/json": components["schemas"]["EmpresaResponse"];
+                        "text/json": components["schemas"]["EmpresaResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/empresas/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Consulta una empresa vigente, con referencias históricas legibles. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EmpresaResponse"];
+                        "application/json": components["schemas"]["EmpresaResponse"];
+                        "text/json": components["schemas"]["EmpresaResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edita atómicamente campos enviados; omisión conserva y null limpia opcionales. */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["EmpresaRequest"];
+                    "text/json": components["schemas"]["EmpresaRequest"];
+                    "application/*+json": components["schemas"]["EmpresaRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EmpresaResponse"];
+                        "application/json": components["schemas"]["EmpresaResponse"];
+                        "text/json": components["schemas"]["EmpresaResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/embudos/{id}/etapas": {
         parameters: {
             query?: never;
@@ -3597,6 +3916,49 @@ export interface components {
             servicio: components["schemas"]["CatalogoResponse"];
             activo: boolean;
         };
+        /** @description Alta requiere razón social; los defaults se aplican solo a campos omitidos. */
+        EmpresaRequest: {
+            razonSocial?: null | string;
+            cuit?: null | string;
+            industria?: null | string;
+            correo?: null | string;
+            telefono?: null | string;
+            direccion?: null | string;
+            observaciones?: null | string;
+            /** Format: int32 */
+            idEstado?: null | number | string;
+            /** Format: int32 */
+            idOrigen?: null | number | string;
+            /** Format: int32 */
+            idResponsable?: null | number | string;
+        };
+        /** @description Empresa compartida y disponibilidad de sus referencias actuales. */
+        EmpresaResponse: {
+            /** Format: int32 */
+            id: number | string;
+            razonSocial: string;
+            cuit?: null | string;
+            industria?: null | string;
+            correo?: null | string;
+            telefono?: null | string;
+            direccion?: null | string;
+            observaciones?: null | string;
+            /** Format: int32 */
+            idEstado: number | string;
+            estadoDescripcion: string;
+            estadoActivo: boolean;
+            /** Format: int32 */
+            idOrigen?: null | number | string;
+            origenDescripcion?: null | string;
+            origenActivo?: null | boolean;
+            /** Format: int32 */
+            idResponsable: number | string;
+            responsableNombre: string;
+            responsableActivo: boolean;
+            /** Format: date-time */
+            fechaCreacion: string;
+            activo: boolean;
+        };
         /** @description Estado fijo del circuito; no admite mutaciones. */
         EstadoOportunidadResponse: {
             /** Format: int32 */
@@ -3648,6 +4010,16 @@ export interface components {
         /** @description Página de resultados, contados después de aplicar los filtros. */
         PageResponseOfEmbudoResponse: {
             items: components["schemas"]["EmbudoResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+        };
+        /** @description Página de resultados, contados después de aplicar los filtros. */
+        PageResponseOfEmpresaResponse: {
+            items: components["schemas"]["EmpresaResponse"][];
             /** Format: int32 */
             page: number | string;
             /** Format: int32 */

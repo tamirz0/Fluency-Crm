@@ -9,15 +9,15 @@ const legacyApi = createClient<LegacyPaths>({ baseUrl, credentials: 'include', f
 export type AuthUser = components['schemas']['UsuarioResponse']
 export type LoginCredentials = components['schemas']['LoginRequest']
 export type SessionResponse = components['schemas']['SesionResponse']
-export type Empresa = LegacyComponents['schemas']['EmpresaResponse']
+export type Empresa = components['schemas']['EmpresaResponse']
 export type Contacto = LegacyComponents['schemas']['ContactoResponse']
 export type OportunidadDetalle = LegacyComponents['schemas']['OportunidadResponse']
 export type EtapaConOportunidades = LegacyComponents['schemas']['EtapaConOportunidadesResponse']
 export type OportunidadResumenResponse = LegacyComponents['schemas']['OportunidadResumenResponse']
 export type EtapaComercial = LegacyComponents['schemas']['EtapaComercialResponse']
 export type UpdateEtapaOportunidadRequest = LegacyComponents['schemas']['UpdateEtapaOportunidadRequest']
-export type CreateEmpresaRequest = LegacyComponents['schemas']['CreateEmpresaRequest']
-export type PatchEmpresaRequest = LegacyComponents['schemas']['PatchEmpresaRequest']
+export type CreateEmpresaRequest = components['schemas']['EmpresaRequest']
+export type PatchEmpresaRequest = components['schemas']['EmpresaRequest']
 export type CreateContactoRequest = LegacyComponents['schemas']['CreateContactoRequest']
 export type PatchContactoRequest = LegacyComponents['schemas']['PatchContactoRequest']
 export type CreateOportunidadRequest = LegacyComponents['schemas']['CreateOportunidadRequest']
@@ -150,26 +150,14 @@ export async function logoutRequest(): Promise<void> {
   await refreshCsrfToken()
 }
 
-export async function getCompanies(): Promise<Empresa[]> {
-  try {
-    const { data, error, response } = await legacyApi.GET('/Empresa/ListadoEmpresas')
-    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
-    return data
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error
-    throw new ApiRequestError('No pudimos conectar con la API.')
-  }
+export type EmpresaQuery = { q?: string; idEstado?: number; idOrigen?: number; idResponsable?: number; page?: number; pageSize?: number }
+export function listCompanies(query: EmpresaQuery = {}) {
+  return getResponseData(() => api.GET('/empresas', { params: { query } }))
 }
-
-export async function getCompany(idEmpresa: number): Promise<Empresa> {
-  try {
-    const { data, error, response } = await legacyApi.GET('/Empresa/DatosEmpresa/{idEmpresa}', { params: { path: { idEmpresa } } })
-    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
-    return data
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error
-    throw new ApiRequestError('No pudimos conectar con la API.')
-  }
+// Consumidores retirados de App conservan su adaptación hasta su propio incremento.
+export async function getCompanies(): Promise<Empresa[]> { return (await listCompanies()).items }
+export function getCompany(id: number): Promise<Empresa> {
+  return getResponseData(() => api.GET('/empresas/{id}', { params: { path: { id } } }))
 }
 
 export async function getContacts(): Promise<Contacto[]> {
@@ -250,26 +238,11 @@ export async function getServices(): Promise<Servicio[]> {
   return (await listServices()).items
 }
 
-export async function createCompany(body: CreateEmpresaRequest): Promise<Empresa> {
-  try {
-    const { data, error, response } = await legacyApi.POST('/Empresa/AltaEmpresa', { body })
-    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
-    return data
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error
-    throw new ApiRequestError('No pudimos conectar con la API.')
-  }
+export function createCompany(body: CreateEmpresaRequest): Promise<Empresa> {
+  return getResponseData(() => api.POST('/empresas', { body }))
 }
-
-export async function patchCompany(idEmpresa: number, body: PatchEmpresaRequest): Promise<Empresa> {
-  try {
-    const { data, error, response } = await legacyApi.PATCH('/Empresa/ModificarEmpresa/{idEmpresa}', { params: { path: { idEmpresa } }, body })
-    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
-    return data
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error
-    throw new ApiRequestError('No pudimos conectar con la API.')
-  }
+export function patchCompany(id: number, body: PatchEmpresaRequest): Promise<Empresa> {
+  return getResponseData(() => api.PATCH('/empresas/{id}', { params: { path: { id } }, body }))
 }
 
 export async function createContact(body: CreateContactoRequest): Promise<Contacto> {
