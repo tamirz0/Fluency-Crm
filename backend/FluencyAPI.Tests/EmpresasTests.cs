@@ -77,4 +77,19 @@ public sealed class EmpresasTests
         foreach (var query in new[] { "page=0", "pageSize=101", "idEstado=0", "idOrigen=-1", "idResponsable=no" })
             Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/empresas?" + query)).StatusCode);
     }
+
+    [Fact]
+    public async Task SearchNormalizesLatinDiacriticsOnBothSides()
+    {
+        await using var factory = new AuthApiFactory(); await factory.InitializeAsync();
+        using var client = factory.Client(); await UsuariosTests.SignIn(client, factory, "seller");
+        foreach (var name in new[] { "São Paulo", "Citroën" })
+            (await client.PostAsJsonAsync("/empresas", new { razonSocial = name })).EnsureSuccessStatusCode();
+        foreach (var text in new[] { "sao", "SÃO", "citroen", "CITROËN" })
+        {
+            var result = await client.GetFromJsonAsync<JsonElement>("/empresas?q=" + Uri.EscapeDataString(text));
+            Assert.Equal(1, result.GetProperty("totalCount").GetInt32());
+            Assert.Single(result.GetProperty("items").EnumerateArray());
+        }
+    }
 }

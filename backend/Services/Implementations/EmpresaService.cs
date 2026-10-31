@@ -10,7 +10,7 @@ namespace Services.Implementations;
 public sealed class EmpresaService(FluencyLocalDbContext db, ActorActual actor) : IEmpresaService
 {
     private static EmpresaOperationException Missing() => new(404, "NOT_FOUND", "No existe la empresa.");
-    private IQueryable<EmpresaResponse> Query() => db.Empresas.AsNoTracking().Where(e => e.Activo).Select(e => new EmpresaResponse
+    private IQueryable<EmpresaResponse> Query(IQueryable<Empresa>? source = null) => (source ?? db.Empresas).AsNoTracking().Where(e => e.Activo).Select(e => new EmpresaResponse
     {
         Id = e.Id, RazonSocial = e.RazonSocial, Cuit = e.Cuit, Industria = e.Industria, Correo = e.Correo,
         Telefono = e.Telefono, Direccion = e.Direccion, Observaciones = e.Observaciones,
@@ -23,17 +23,25 @@ public sealed class EmpresaService(FluencyLocalDbContext db, ActorActual actor) 
 
     public async Task<PageResponse<EmpresaResponse>> ListAsync(string? q, int? idEstado, int? idOrigen, int? idResponsable, int page, int pageSize, CancellationToken ct)
     {
-        var query = Query();
+        var source = db.Empresas.AsNoTracking();
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            const string accents = "áàäâãåéèëêíìïîóòöôõúùüûñç";
+            const string plain =   "aaaaaaeeeeiiiiooooouuuunc";
+            var search = q.Trim().ToLowerInvariant();
+            for (var i = 0; i < accents.Length; i++) search = search.Replace(accents[i], plain[i]);
+            source = db.Empresas.FromSqlInterpolated($"""
+                SELECT * FROM empresa
+                WHERE strpos(translate(lower(razon_social), {accents}, {plain}), {search}) > 0
+                   OR strpos(translate(lower(cuit), {accents}, {plain}), {search}) > 0
+                   OR strpos(translate(lower(correo), {accents}, {plain}), {search}) > 0
+                   OR strpos(translate(lower(telefono), {accents}, {plain}), {search}) > 0
+                """).AsNoTracking();
+        }
+        var query = Query(source);
         if (idEstado is not null) query = query.Where(e => e.IdEstado == idEstado);
         if (idOrigen is not null) query = query.Where(e => e.IdOrigen == idOrigen);
         if (idResponsable is not null) query = query.Where(e => e.IdResponsable == idResponsable);
-        if (!string.IsNullOrWhiteSpace(q))
-        {
-            var search = q.Trim().ToLowerInvariant().Replace("á", "a").Replace("é", "e").Replace("í", "i").Replace("ó", "o").Replace("ú", "u").Replace("ü", "u").Replace("ñ", "n");
-            query = query.Where(e => e.RazonSocial.ToLower().Replace("á", "a").Replace("é", "e").Replace("í", "i").Replace("ó", "o").Replace("ú", "u").Replace("ü", "u").Replace("ñ", "n").Contains(search)
-                || (e.Cuit != null && e.Cuit.ToLower().Contains(search)) || (e.Correo != null && e.Correo.ToLower().Contains(search))
-                || (e.Telefono != null && e.Telefono.ToLower().Contains(search)));
-        }
         var total = await query.CountAsync(ct);
         var items = await query.OrderBy(e => e.RazonSocial).ThenBy(e => e.Id)
             .Skip((int)Math.Min((long)(page - 1) * pageSize, int.MaxValue)).Take(pageSize).ToListAsync(ct);
