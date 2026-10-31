@@ -69,4 +69,6 @@ Instancias separadas preparadas: **UI [127.0.0.1:5174](http://127.0.0.1:5174/emp
 4. Entrar con **Responsable comercial** y comprobar lectura y edición de esa misma empresa. Guardar sin cambios debe permanecer deshabilitado. Los tres roles pueden gestionarla; responsable no implica exclusividad.
 5. En listado elegir 10 por página. Si existen más de 10 coincidencias, recorrer páginas y contrastar conteo/filtros; si no, comprobar controles deshabilitados. Las dos páginas filtradas con desempate por ID están demostradas por fixtures, sin sembrar empresas de demo para forzarlas.
 
-Pendientes: validación autenticada del usuario y OK específico posterior de integración. Sin merge, push, T25, T27 ni publicación.
+## Cierre
+
+El 31/10/2026 el usuario confirmó que probó el recorrido autenticado descrito arriba y que funcionó, y autorizó específicamente la integración local en `segunda-entrega`. Integración fast-forward registrada al cerrar CP08. Sin push, T25, T27 ni publicación.

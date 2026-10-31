@@ -664,8 +664,8 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 ### CP08 — Empresas
 
 - [x] Verificación automatizada: cualquier rol crea/edita empresa con responsable diferente; lista/ficha/paginación consistentes.
-- [ ] Validación autenticada del usuario con las cuentas existentes, según el recorrido de la evidencia.
-- [ ] Integración en `segunda-entrega` con OK específico; sin publicación.
+- [x] Validación autenticada del usuario: el 31/10/2026 confirmó que probó el recorrido y funcionó.
+- [x] Integración local fast-forward en `segunda-entrega` autorizada por el usuario el 31/10/2026; sin publicación.
 - [x] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
 
 <a id="t25"></a>
