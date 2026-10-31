@@ -129,6 +129,11 @@ public partial class FluencyLocalDbContext : DbContext
 
         modelBuilder.Entity<Contacto>(entity =>
         {
+            entity.Property(e => e.IdEstado).IsRequired();
+            entity.Property(e => e.IdResponsable).HasColumnName("id_responsable");
+            entity.Property(e => e.FechaCreacion).HasColumnName("fecha_creacion").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.Activo).HasColumnName("activo").HasDefaultValue(true).HasSentinel(true);
+            entity.HasOne(e => e.IdResponsableNavigation).WithMany().HasForeignKey(e => e.IdResponsable).OnDelete(DeleteBehavior.Restrict);
             entity.HasKey(e => e.Id).HasName("contacto_pkey");
 
             entity.ToTable("contacto");
@@ -159,20 +164,27 @@ public partial class FluencyLocalDbContext : DbContext
 
             entity.HasOne(d => d.IdEmpresaNavigation).WithMany(p => p.Contactos)
                 .HasForeignKey(d => d.IdEmpresa)
-                .OnDelete(DeleteBehavior.SetNull)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("contacto_id_empresa_fkey");
 
             entity.HasOne(d => d.IdEstadoNavigation).WithMany(p => p.Contactos)
                 .HasForeignKey(d => d.IdEstado)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("contacto_id_estado_fkey");
 
             entity.HasOne(d => d.IdOrigenNavigation).WithMany(p => p.Contactos)
                 .HasForeignKey(d => d.IdOrigen)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("contacto_id_origen_fkey");
         });
 
         modelBuilder.Entity<Empresa>(entity =>
         {
+            entity.Property(e => e.IdEstado).IsRequired();
+            entity.Property(e => e.IdResponsable).HasColumnName("id_responsable");
+            entity.Property(e => e.FechaCreacion).HasColumnName("fecha_creacion").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.Activo).HasColumnName("activo").HasDefaultValue(true).HasSentinel(true);
+            entity.HasOne(e => e.IdResponsableNavigation).WithMany().HasForeignKey(e => e.IdResponsable).OnDelete(DeleteBehavior.Restrict);
             entity.HasKey(e => e.Id).HasName("empresa_pkey");
 
             entity.ToTable("empresa");
@@ -200,10 +212,12 @@ public partial class FluencyLocalDbContext : DbContext
 
             entity.HasOne(d => d.IdEstadoNavigation).WithMany(p => p.Empresas)
                 .HasForeignKey(d => d.IdEstado)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("empresa_id_estado_fkey");
 
             entity.HasOne(d => d.IdOrigenNavigation).WithMany(p => p.Empresas)
                 .HasForeignKey(d => d.IdOrigen)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("empresa_id_origen_fkey");
         });
 

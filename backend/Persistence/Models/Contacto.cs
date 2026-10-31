@@ -23,6 +23,11 @@ public partial class Contacto
 
     public int? IdOrigen { get; set; }
 
+    public int IdResponsable { get; set; }
+    public DateTime FechaCreacion { get; set; }
+    public bool Activo { get; set; } = true;
+    public virtual Usuario IdResponsableNavigation { get; set; } = null!;
+
     public int? IdEmpresa { get; set; }
 
     public string? Observaciones { get; set; }

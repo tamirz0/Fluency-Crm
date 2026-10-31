@@ -23,6 +23,11 @@ public partial class Empresa
 
     public int? IdOrigen { get; set; }
 
+    public int IdResponsable { get; set; }
+    public DateTime FechaCreacion { get; set; }
+    public bool Activo { get; set; } = true;
+    public virtual Usuario IdResponsableNavigation { get; set; } = null!;
+
     public string? Observaciones { get; set; }
 
     public virtual ICollection<ActividadOportunidad> ActividadOportunidades { get; set; } = new List<ActividadOportunidad>();
