@@ -4,15 +4,7 @@ namespace Services.Interface;
 
 public interface IEmpresaService
 {
-    Task<CreateEmpresaResult> CreateAsync(CreateEmpresaRequest request, CancellationToken cancellationToken);
-
-    Task<EmpresaResponse?> GetByIdAsync(int idEmpresa, CancellationToken cancellationToken);
-
-    Task<IReadOnlyList<EmpresaResponse>> GetAllAsync(CancellationToken cancellationToken);
-
-    Task<UpdateEmpresaResult> UpdateAsync(
-        int idEmpresa, UpdateEmpresaRequest request, CancellationToken cancellationToken);
-
-    Task<UpdateEmpresaResult> PatchAsync(
-        int idEmpresa, PatchEmpresaRequest request, CancellationToken cancellationToken);
+    Task<PageResponse<EmpresaResponse>> ListAsync(string? q, int? idEstado, int? idOrigen, int? idResponsable, int page, int pageSize, CancellationToken ct);
+    Task<EmpresaResponse> GetAsync(int id, CancellationToken ct);
+    Task<EmpresaResponse> WriteAsync(int? id, EmpresaRequest request, CancellationToken ct);
 }
