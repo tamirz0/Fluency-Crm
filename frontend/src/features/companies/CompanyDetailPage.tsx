@@ -70,10 +70,13 @@ export function CompanyDetailPage() {
       <section className="company-detail-section" aria-labelledby="company-commercial-heading">
         <Typography component="h2" id="company-commercial-heading" className="company-section-heading">Información comercial</Typography>
         <dl className="company-detail-fields">
+          <CompanyField label="Responsable">{company.responsableNombre ? company.responsableNombre + (company.responsableActivo === false ? ' (inactivo)' : '') : '-'}</CompanyField>
+          <CompanyField label="Fecha de creación">{company.fechaCreacion ? new Date(company.fechaCreacion).toLocaleString('es-AR') : '-'}</CompanyField>
+          {company.estadoActivo === false && <CompanyField label="Disponibilidad del estado">Estado inactivo para nuevas asignaciones</CompanyField>}
           <CompanyField label="CUIT">{company.cuit?.trim()}</CompanyField>
           <CompanyField label="Industria">{company.industria?.trim()}</CompanyField>
           <CompanyField label="Estado" className="company-detail-commercial-field"><CompanyStatus value={status} /></CompanyField>
-          <CompanyField label="Origen">{company.origenDescripcion?.trim()}</CompanyField>
+          <CompanyField label="Origen">{company.origenDescripcion ? `${company.origenDescripcion}${company.origenActivo === false ? " (inactivo)" : ""}` : undefined}</CompanyField>
         </dl>
       </section>
       <section className="company-detail-section" aria-labelledby="company-contact-heading">
