@@ -64,12 +64,44 @@ Limpieza final después de todas las pruebas: **0 esquemas t03_* / 0 tablas de u
 Destino: desarrollo local identificado arriba; usar el administrador existente elegido por el operador. No elegir credenciales ni crear cuentas. Datos de demostración: prefijo `Validación CP07 31-10`; al terminar, desactivar solo esos registros. No hay borrado físico ni barridos SQL.
 
 1. Abrir `http://127.0.0.1:5173/configuracion/servicios`, iniciar sesión y crear `Validación CP07 31-10 Servicio` con precio 0.
-2. Ir a **Embudos y etapas**, crear `Validación CP07 31-10 Embudo` eligiendo ese servicio. Abrir **Etapas**: únicamente Ganada y Perdida, órdenes 1 y 2; mensaje de que aún no permite altas de oportunidades.
-3. Crear abierta `Validación CP07 31-10 Consulta` con orden 5. Recargar y comprobar persistencia. Las finales permiten corregir textos/orden y no ofrecen desactivar ni cambiar estado/embudo.
-4. En la lista intercambiar órdenes Ganada=2 y Perdida=1 y pulsar **Guardar orden**. Luego repetir un orden activo: debe mostrar conflicto y recargar, sin repetir la mutación. Corregir y guardar manualmente.
-5. Desactivar Consulta; crear otra abierta con el orden 5; reactivar Consulta y comprobar orden 6. Desactivar el servicio y comprobar que el embudo y sus etapas siguen activos.
+2. Ir a **Embudos y etapas**, crear `Validación CP07 31-10 Embudo` eligiendo ese servicio. Abrir **Etapas**: bloque de abiertas vacío y mensaje de que aún no permite altas de oportunidades; Ganada y Perdida en el bloque fijo del sistema, sin números ni controles de arrastre.
+3. Crear abiertas `Validación CP07 31-10 Consulta` y `Validación CP07 31-10 Propuesta`. El alta asigna automáticamente el siguiente orden activo disponible; la lista muestra posiciones visuales 1 y 2. Recargar y comprobar persistencia. Las finales ofrecen edición de nombre/descripción, sin orden, estado ni embudo.
+4. Arrastrar Propuesta antes de Consulta desde el asa y pulsar **Guardar orden**. Recargar: debe conservar la secuencia. Usar ↑/↓ sobre el asa para devolverlas al orden anterior, comprobar anuncio/foco y guardar. Para probar una colisión en un embudo recién creado, editar el Orden de una abierta a 1: debe mostrar conflicto y conservar el editor; cancelar. Los valores internos de las finales siguen siendo 1/2, aunque no se muestren ni puedan editarse en esta UI. La presentación de respuestas 409 del guardado visual también está cubierta en Vitest.
+5. Desactivar Consulta: debe aparecer después de las activas, numerada y con asa deshabilitada. Crear otra abierta y reactivar Consulta: debe incorporarse al final de las activas. La persistencia conserva max(orden activo)+1, independientemente de la numeración visual. Desactivar el servicio y comprobar que el embudo y sus etapas siguen activos.
 6. Desactivar/reactivar el embudo: etapas conservan estado; no restaura oportunidades. Los bloqueos por oportunidades e historia se prueban con fixtures, sin adelantar T22 ni crear negocios de demo.
 7. Limpieza: desactivar solo las abiertas creadas para esta demo, después el embudo y el servicio. Las dos finales quedan activas dentro del embudo inactivo; es el comportamiento previsto.
 8. Si el operador dispone de cuentas vendedor/responsable ya existentes, verificar enlace oculto y URL directa denegada. No crear cuentas para este control.
 
-Pendiente validación real autenticada por el operador; tests UI y API separados no equivalen a ese recorrido de navegador. Integración/publicación requieren OK específico posterior.
+Al cierre inicial quedó pendiente la validación real autenticada del operador; tests UI y API separados no equivalen a ese recorrido de navegador. La validación autenticada del ajuste visual posterior se registra abajo. Integración/publicación requieren OK específico posterior.
+
+## Ajuste visual de etapas — 31/10/2026
+
+Plan visual aprobado y ejecutado sobre `aa6bb7d`, árbol limpio en la misma rama. Implementación: `a25ac23`. Responsable único; cuatro archivos frontend (pantalla, editor, componente de orden y pruebas), más esta evidencia. Se conserva la historia anterior; solo se actualizó el recorrido vigente para reflejar la interfaz nueva.
+
+Abiertas activas reordenables arriba; inactivas al final con asa deshabilitada y numeración visual continua desde 1. Finales ordenadas por código GANADA/PERDIDA, aunque cambien sus nombres u órdenes internos; sin números, arrastre, baja ni edición de orden. El editor conserva nombre/descripción. Alta abierta automática al máximo activo + 1. Tema oscuro, componentes y estilos existentes, sin dependencias nuevas.
+
+El arrastre usa eventos de puntero desde el asa y captura sobre el cuerpo estable de la tabla; teclado ↑/↓, anuncio y conservación de foco. Solo modifica un borrador hasta Guardar orden. Se permutan las posiciones persistidas de las abiertas activas (incluidos huecos); el PUT existente sigue incluyendo todas las activas, con finales intactas e inactivas excluidas. Guardas de doble envío/movimiento pendiente, actualización de caché y conflicto visible con recarga, sin retry automático. Backend, esquema, contratos, cliente API y tipos generados sin cambios.
+
+**Controles:**
+
+- RED: **6 fallos / 3 correctas**, **34,60 s**, por pantalla anterior sin separación/asas y órdenes aún editables en alta/finales. GREEN focal **9/9**, **33,90 s**. Dos casos adicionales se incorporaron al cierre completo.
+- Suite frontend completa: **110/110**, trece archivos, cero omisiones, **320,54 s**; incluye **11/11** del módulo. TEMP/TMP locales, un worker y aislamiento conservados. Verifica payload exacto con huecos y finales renombradas/órdenes distintos, arrastre sin escritura, teclado/anuncio/foco, cancelación, doble envío, bloqueo pendiente, conflictos/recarga, alta al máximo activo y acciones existentes.
+- `npm run build`: tipos/build correctos (**4,84 s** Vite). `npm run lint`: cero errores, solo warning previo de `providers.tsx:9`. `git diff --check` y Gitleaks staged sin hallazgos. Revisión propia del diff completo/nuevo componente y del mapeo de posiciones; no se ampliaron reglas ni se debilitaron pruebas. La evidencia backend anterior conserva su alcance; no se ejecutó nuevamente una suite backend para este cambio de interfaz.
+
+Comandos npm desde `frontend`, con `$env:TEMP` y `$env:TMP` apuntando a `frontend/node_modules/.tmp/cp07-visual-vitest`:
+
+```powershell
+npm run test:run -- src/features/settings/FunnelsPage.test.tsx --maxWorkers=1 --no-file-parallelism
+npm run build
+npm run lint
+npm run test:run -- --maxWorkers=1 --no-file-parallelism
+```
+
+**Validación autenticada real y limpieza:** el usuario proporcionó sesión y autorizó guardar en su embudo de prueba. Se confirmó el mismo proceso API Development (PID 13944) cuyo destino `localhost:5433 / fluency_segunda_entrega_dev` ya estaba identificado, y contenedor running en `127.0.0.1:5433`. Antes de mutar se definió crear solo `Validación CP07 arrastre temporal 31-10`, restaurar el orden de Prueba y desactivar la temporal al terminar. Sin cuentas/credenciales nuevas ni uso de Supabase.
+
+- Alta temporal sin campo Orden: persistió **4**, con máximo activo previo **3**; la abierta inactiva de orden 6 no intervino. Arrastre real mediante asa cambió la posición visual; una consulta antes de Guardar confirmó que los valores persistidos seguían intactos.
+- Guardar y recargar conservó la secuencia nueva. ↑ sobre el asa de Prueba mantuvo foco, anunció su posición y permitió guardar la restauración. La final GANADA se mostró primero aun teniendo orden interno 2 y PERDIDA orden 1.
+- Colisión real del editor temporal con orden 2 mostró «El orden o la etapa final ya existe. Recargue los datos.» y mantuvo el formulario. Se canceló; no hubo escritura parcial. Editor de Ganada comprobado con solo nombre/descripción; sin guardar cambios sobre finales. Baja/reactivación de la temporal comprobadas, seguida de su baja final. Consola del navegador: cero errores/advertencias.
+- Consulta final: originales conservados exactamente: **Ganada 2 activa; Perdida 1 activa; Consulta 6 inactiva; Prueba 3 activa**. Solo se añadió la etapa temporal, **4 inactiva**, como limpieza lógica acordada; sin DELETE ni barridos. Captura final en `node_modules/.tmp/cp07-visual-validacion.jpg` (ignorada por Git).
+
+Incidentes: la pestaña de navegador anterior había desaparecido; una pestaña nueva llegó al login y luego se usó la sesión facilitada por el usuario. Sin fallos nuevos de producto ni retrabajo posterior a los controles verdes. Ajuste listo para revisión, sin merge, push ni T22. La aprobación de integración sigue pendiente del usuario.
