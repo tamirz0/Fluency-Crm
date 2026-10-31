@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 31/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T15/CP05 completas, verificadas por pruebas y validadas manualmente por el usuario; integradas localmente en `segunda-entrega` mediante fast-forward a `809a23a`; sin publicar. T16–T18 implementadas/verificadas en `segunda-entrega-cp06-servicios`; CP06 cerrada con validación del usuario e integrada localmente en `segunda-entrega` / `c0c6a26` el 22/10/2026, sin publicar. T19–T21/CP07 implementadas, verificadas y validadas por el usuario; integradas localmente en `segunda-entrega` el 31/10/2026, sin publicar. T22–T49 pendientes.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
+Plan del 08/10/2026, actualizado el 31/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T15/CP05 completas, verificadas por pruebas y validadas manualmente por el usuario; integradas localmente en `segunda-entrega` mediante fast-forward a `809a23a`; sin publicar. T16–T18 implementadas/verificadas en `segunda-entrega-cp06-servicios`; CP06 cerrada con validación del usuario e integrada localmente en `segunda-entrega` / `c0c6a26` el 22/10/2026, sin publicar. T19–T21/CP07 implementadas, verificadas y validadas por el usuario; integradas localmente en `segunda-entrega` el 31/10/2026, sin publicar. T22–T24 implementadas y verificadas técnicamente en `segunda-entrega-cp08-empresas`, con revisión independiente; CP08 pendiente de validación autenticada del usuario e integración. T25–T49 pendientes.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -29,9 +29,9 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T19 — Gestionar embudos y sus finales automáticas](#t19)
 - [x] [T20 — Gestionar y reordenar etapas](#t20)
 - [x] [T21 — Configurar embudos y etapas desde UI](#t21)
-- [ ] [T22 — Alinear persistencia de empresas y contactos](#t22)
-- [ ] [T23 — Adaptar empresas a los contratos y reglas nuevos](#t23)
-- [ ] [T24 — Actualizar pantallas de empresas](#t24)
+- [x] [T22 — Alinear persistencia de empresas y contactos](#t22)
+- [x] [T23 — Adaptar empresas a los contratos y reglas nuevos](#t23)
+- [x] [T24 — Actualizar pantallas de empresas](#t24)
 - [ ] [T25 — Adaptar contactos conservando relaciones históricas](#t25)
 - [ ] [T26 — Actualizar pantallas de contactos](#t26)
 - [ ] [T27 — Completar bajas definitivas de clientes](#t27)
@@ -613,13 +613,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Persistir responsable, estado, fecha de creación y activo con relaciones del E-R; no hacer privado un cliente por responsable.
-- [ ] Conservar FKs históricas y evitar bajas en cascada; estado comercial Inactivo no es activo=false.
-- [ ] Preparar consulta de bloqueos sobre esquema objetivo con parámetros y fixtures de oportunidades, aun antes de su UI; no crear dependencia circular entre servicios.
+- [x] Persistir responsable, estado, fecha de creación y activo con relaciones del E-R; no hacer privado un cliente por responsable.
+- [x] Conservar FKs históricas y evitar bajas en cascada; estado comercial Inactivo no es activo=false.
+- [x] Preparar consulta de bloqueos sobre esquema objetivo con parámetros y fixtures de oportunidades, aun antes de su UI; no crear dependencia circular entre servicios.
 
 **Verificación:** B + API(ClientesModelTests) + D; asociaciones históricas y restricciones reales de PostgreSQL.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica:** [verificacion-cp08.md](verificaciones/verificacion-cp08.md). ClientesModelTests 1/1 y suite backend 132/132; FKs restrictivas y asociaciones históricas comprobadas en PostgreSQL real. Bloqueos representados con fixtures, sin habilitar bajas ni gestión de contactos.
 
 <a id="t23"></a>
 
@@ -633,13 +633,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Todos los usuarios activos crean/editan/leen empresas ajenas; defaults responsable=actor y estado=Potencial activo, con selección explícita si falta ese default.
-- [ ] GET paginado aplica q/estado/origen/responsable antes de contar; orden estable por razón social/ID y búsqueda normalizada.
-- [ ] POST/PATCH no admiten autor/activo ocultos ni campos inválidos; omisión conserva, null limpia opcional, referencias inactivas previas no bloquean edición ordinaria.
+- [x] Todos los usuarios activos crean/editan/leen empresas ajenas; defaults responsable=actor y estado=Potencial activo, con selección explícita si falta ese default.
+- [x] GET paginado aplica q/estado/origen/responsable antes de contar; orden estable por razón social/ID y búsqueda normalizada.
+- [x] POST/PATCH no admiten autor/activo ocultos ni campos inválidos; omisión conserva, null limpia opcional, referencias inactivas previas no bloquean edición ordinaria.
 
 **Verificación:** B + API(EmpresasTests) + D; caso vendedor edita cliente ajeno, PATCH atómico y dos páginas con filtros.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica:** [verificacion-cp08.md](verificaciones/verificacion-cp08.md). Suite backend 132/132 y focal posterior de búsqueda/paginación 2/2. Revisión independiente Sol/Medium con P2 de normalización corregido; sin secretos nuevos. No se inició T25/T27.
 
 <a id="t24"></a>
 
@@ -653,18 +653,20 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Listado usa paginación/filtros de servidor y formulario respeta defaults, responsable compartido y PATCH diferencial.
-- [ ] Ficha muestra fechas y etiquetas históricas; carga/error/vacío y conflictos visibles; accesibilidad existente conservada.
-- [ ] Actualizar consumidores y tipos; retirar endpoints antiguos de empresas sustituidos en este incremento, sin modificar tests solo para esconder fallos.
+- [x] Listado usa paginación/filtros de servidor y formulario respeta defaults, responsable compartido y PATCH diferencial.
+- [x] Ficha muestra fechas y etiquetas históricas; carga/error/vacío y conflictos visibles; accesibilidad existente conservada.
+- [x] Actualizar consumidores y tipos; retirar endpoints antiguos de empresas sustituidos en este incremento, sin modificar tests solo para esconder fallos.
 
 **Verificación:** F + UI(src/features/companies/Companies.test.tsx) + D; alta/edición/listado local con dos usuarios.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica:** [verificacion-cp08.md](verificaciones/verificacion-cp08.md). Frontend comprobado mediante suite amplia más focal App 13/13 (107 casos vigentes), builds correctos y solo warning previo de lint. Revisión independiente completada; recorrido autenticado del operador e integración pendientes.
 
 ### CP08 — Empresas
 
-- [ ] Usuario de cualquier rol crea/edita empresa con responsable diferente; lista/ficha/paginación consistentes.
-- [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+- [x] Verificación automatizada: cualquier rol crea/edita empresa con responsable diferente; lista/ficha/paginación consistentes.
+- [ ] Validación autenticada del usuario con las cuentas existentes, según el recorrido de la evidencia.
+- [ ] Integración en `segunda-entrega` con OK específico; sin publicación.
+- [x] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
 
 <a id="t25"></a>
 
