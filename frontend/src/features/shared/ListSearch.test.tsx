@@ -29,23 +29,23 @@ beforeEach(() => {
 })
 
 describe('búsqueda de listados', () => {
-  it('filtra empresas por industria ignorando acentos, cuenta resultados y permite limpiar', async () => {
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([
-      { id: 1, razonSocial: 'Acme Idiomas', cuit: null, industria: 'Educación', correo: 'hola@acme.com', telefono: null, direccion: null, idEstado: 1, estadoDescripcion: 'Potencial', idOrigen: 1, origenDescripcion: 'Referido', observaciones: null },
-      { id: 2, razonSocial: 'Beta Cursos', cuit: null, industria: 'Tecnología', correo: 'beta@cursos.com', telefono: null, direccion: null, idEstado: 1, estadoDescripcion: 'Activa', idOrigen: 2, origenDescripcion: 'Web', observaciones: null },
-    ]))
-    renderAuthenticated('/empresas')
-
-    const search = await screen.findByRole('searchbox', { name: 'Buscar en empresas' })
-    await userEvent.setup().type(search, 'educacion')
-    const table = within(await screen.findByRole('table', { name: 'Empresas' }))
-    expect(table.getByText('Acme Idiomas')).toBeTruthy()
-    expect(table.queryByText('Beta Cursos')).toBeNull()
-    expect(screen.getByText('1 de 2 resultados')).toBeTruthy()
-
-    await userEvent.setup().clear(search)
-    expect(await table.findByText('Beta Cursos')).toBeTruthy()
-    expect(screen.getByText('2 de 2 resultados')).toBeTruthy()
+  it('busca empresas en servidor y permite limpiar los filtros', async () => {
+    const companies = [{ id: 1, razonSocial: 'Acme Idiomas', industria: 'Educación', idEstado: 1, estadoDescripcion: 'Potencial' }, { id: 2, razonSocial: 'Beta Cursos', industria: 'Tecnología', idEstado: 1, estadoDescripcion: 'Cliente' }]
+    vi.mocked(fetch).mockImplementation(async input => {
+      const request = input as Request; const url = new URL(request.url)
+      if (url.pathname.endsWith('/usuarios/opciones')) return jsonResponse({ items: [], page: 1, pageSize: 25, totalCount: 0 })
+      if (url.pathname.includes('/catalogos/')) return jsonResponse([])
+      const items = url.searchParams.get('q') ? [companies[0]] : companies
+      return jsonResponse({ items, page: 1, pageSize: 25, totalCount: items.length })
+    })
+    renderAuthenticated('/empresas'); const actor = userEvent.setup()
+    const search = await screen.findByRole('searchbox', { name: 'Buscar empresas' })
+    await actor.type(search, 'acme'); await actor.click(screen.getByRole('button', { name: 'Buscar' }))
+    await waitFor(() => expect(within(screen.getByRole('table', { name: 'Empresas' })).queryByText('Beta Cursos')).toBeNull())
+    expect(screen.getByText('1 empresa')).toBeTruthy()
+    await actor.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
+    expect(await within(await screen.findByRole('table', { name: 'Empresas' })).findByText('Beta Cursos')).toBeTruthy()
+    expect(screen.getByText('2 empresas')).toBeTruthy()
   })
 
   it('filtra contactos por campos visibles y ofrece limpiar cuando no hay coincidencias', async () => {

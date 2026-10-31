@@ -28,23 +28,25 @@ beforeEach(() => {
 
 describe('desglose del pulso comercial', () => {
   it('integra cada total con su desglose e incluye etapas y estados nulos como guion', async () => {
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(jsonResponse([
+    vi.mocked(fetch).mockImplementation(async input => {
+      const url = (input as Request).url
+      if (url.includes('/empresas')) return jsonResponse({ items: [
         { id: 1, razonSocial: 'A', estadoDescripcion: 'Potencial' },
         { id: 2, razonSocial: 'B', estadoDescripcion: 'Cliente' },
         { id: 3, razonSocial: 'C', estadoDescripcion: 'Inactivo' },
         { id: 4, razonSocial: 'D', estadoDescripcion: null },
-      ]))
-      .mockResolvedValueOnce(jsonResponse([
+      ], page: 1, pageSize: 25, totalCount: 4 })
+      if (url.includes('ListadoContactos')) return jsonResponse([
         { id: 1, nombre: 'Ana', apellido: 'Paz', estadoDescripcion: 'Potencial' },
         { id: 2, nombre: 'Luis', apellido: 'Sol', estadoDescripcion: 'Inactivo' },
         { id: 3, nombre: 'Eva', apellido: 'Mar', estadoDescripcion: null },
-      ]))
-      .mockResolvedValueOnce(jsonResponse([
+      ])
+      return jsonResponse([
         { idEtapa: 1, nombre: 'Consulta recibida', orden: 1, oportunidades: [{ id: 11 }, { id: 12 }] },
         { idEtapa: 2, nombre: 'Propuesta', orden: 2, oportunidades: [{ id: 13 }] },
         { idEtapa: 3, nombre: '  ', orden: 3, oportunidades: [{ id: 14 }] },
-      ]))
+      ])
+    })
 
     renderHome()
 

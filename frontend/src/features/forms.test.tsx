@@ -13,7 +13,7 @@ import { SESSION_KEY } from '../auth/session'
 beforeAll(async () => { await import('./opportunities/OpportunityFormPage') })
 
 const user = { id: 7, nombre: 'María', apellido: 'Gómez', correo: 'maria@example.com', username: 'maria', activo: true }
-const company = { id: 4, razonSocial: 'Acme Idiomas', cuit: '30-123', industria: 'Educación', correo: 'acme@example.com', telefono: '1144', direccion: 'Calle 1', idEstado: 1, estadoDescripcion: 'Cliente', idOrigen: 2, origenDescripcion: 'Referido', observaciones: 'Nota' }
+const company = { id: 4, razonSocial: 'Acme Idiomas', cuit: '30-123', industria: 'Educación', correo: 'acme@example.com', telefono: '1144', direccion: 'Calle 1', idEstado: 1, estadoDescripcion: 'Cliente', estadoActivo: true, idOrigen: 2, origenDescripcion: 'Referido', origenActivo: true, idResponsable: 7, responsableNombre: 'María Gómez', responsableActivo: true, fechaCreacion: '2026-10-31T12:00:00Z', activo: true, observaciones: 'Nota' }
 const contact = { id: 14, nombre: 'Lucía', apellido: 'Pérez', documento: '30123456', cargo: 'Directora', correo: 'lucia@example.com', telefono: '1144', idEstado: 1, estadoDescripcion: 'Cliente', idOrigen: 2, origenDescripcion: 'Referido', idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas', observaciones: null }
 const secondContact = { ...contact, id: 15, nombre: 'Ana', apellido: 'López', idEmpresa: 8, empresaRazonSocial: 'Otra empresa' }
 const opportunity = { id: 91, titulo: 'Renovación anual', idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas', idContacto: 14, contactoNombre: 'Lucía', contactoApellido: 'Pérez', idUsuario: 7, usuarioNombre: 'María', usuarioApellido: 'Gómez', idServicio: 2, servicioNombre: 'Capacitación', idEtapa: 3, etapaNombre: 'Propuesta', fechaEstimadaCierre: '2026-12-31', fechaCierre: null, idOrigen: 2, origenDescripcion: 'Referido', idEstado: 1, estadoDescripcion: 'Activa', observaciones: 'Nota' }
@@ -22,6 +22,10 @@ const stages = [{ id: 3, nombre: 'Propuesta', descripcion: null, orden: 3 }]
 function jsonResponse(body: unknown, status = 200) { return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }) }
 function renderAuthenticated(path: string) { sessionStorage.setItem(SESSION_KEY, JSON.stringify(user)); window.history.pushState({}, '', path); const queryClient = createQueryClient(); const Wrapper = ({ children }: { children: ReactNode }) => <AppProviders queryClient={queryClient}><BrowserRouter><AuthProvider>{children}</AuthProvider></BrowserRouter></AppProviders>; return render(<App />, { wrapper: Wrapper }) }
 function catalogResponse(url: string, services = [{ id: 2, nombre: 'Capacitación', descripcion: null, precioReferencia: 10 }]): Response | undefined {
+  if (url.includes('/auth/csrf')) return jsonResponse({ requestToken: 'fixture-csrf' })
+  if (url.includes('/usuarios/opciones')) return jsonResponse({ items: [], page: 1, pageSize: 25, totalCount: 0 })
+  if (url.includes('/catalogos/estados-cliente/opciones')) return jsonResponse([{ id: 1, descripcion: 'Potencial', activo: true }])
+  if (url.includes('/catalogos/origenes-comerciales/opciones')) return jsonResponse([{ id: 2, descripcion: 'Referido', activo: true }])
   if (url.includes('ListadoEstadosCliente')) return jsonResponse([{ id: 1, descripcion: 'Cliente' }])
   if (url.includes('ListadoOrigenesComerciales')) return jsonResponse([{ id: 2, descripcion: 'Referido' }])
   if (url.includes('ListadoEtapasComerciales')) return jsonResponse(stages)
@@ -34,16 +38,16 @@ function installCatalogApi(options: { services?: { id: number; nombre: string; d
     const url = requestUrl(input)
     const catalog = catalogResponse(url, options.services)
     if (catalog) return catalog
-    if (url.includes('ListadoEmpresas')) return jsonResponse([company, { ...company, id: 8, razonSocial: 'Otra empresa' }])
+    if (new URL(url, 'http://localhost').pathname === '/api/empresas' && (input as Request).method === 'GET') return jsonResponse({ items: [company, { ...company, id: 8, razonSocial: 'Otra empresa' }], page: 1, pageSize: 25, totalCount: 2 })
     if (url.includes('ListadoContactos')) return jsonResponse([contact, secondContact])
     if (url.includes('OportunidadesPorEtapa')) return jsonResponse([{ idEtapa: 3, nombre: 'Propuesta', orden: 3, oportunidades: [] }])
-    if (url.includes('DatosEmpresa')) return jsonResponse(company)
+    if (url.endsWith('/empresas/4') && (input as Request).method === 'GET') return jsonResponse(company)
     if (url.includes('DatosContacto')) return jsonResponse(contact)
     if (url.includes('DatosOportunidad')) return jsonResponse(opportunity)
-    if (url.includes('AltaEmpresa')) return jsonResponse({ ...company, id: 22, razonSocial: 'Nueva empresa' }, 201)
+    if (url.endsWith('/empresas') && (input as Request).method === 'POST') return jsonResponse({ ...company, id: 22, razonSocial: 'Nueva empresa' }, 201)
     if (url.includes('AltaContacto')) return jsonResponse({ ...contact, id: 22, nombre: 'Nuevo' }, 201)
     if (url.includes('AltaOportunidad')) return jsonResponse({ ...opportunity, id: 22, titulo: 'Nueva oportunidad' }, 201)
-    if (url.includes('ModificarEmpresa')) return jsonResponse(company)
+    if (url.endsWith('/empresas/4') && (input as Request).method === 'PATCH') return jsonResponse(company)
     if (url.includes('ModificarContacto')) return jsonResponse(contact)
     if (url.includes('ModificarOportunidad')) return jsonResponse(opportunity)
     return jsonResponse([])
@@ -60,7 +64,7 @@ describe('altas y ediciones', () => {
     await actor.type(screen.getByRole('textbox', { name: 'Razón social' }), '  Nueva empresa  ')
     await actor.click(screen.getByRole('button', { name: 'Crear empresa' }))
     await screen.findByText('Empresa creada')
-    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('AltaEmpresa'))
+    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).endsWith('/empresas') && (input as Request).method === 'POST')
     expect(call).toBeTruthy(); expect(await requestBody(call!)).toEqual({ razonSocial: 'Nueva empresa' })
   })
 
@@ -70,7 +74,7 @@ describe('altas y ediciones', () => {
     await actor.clear(screen.getByRole('textbox', { name: 'Industria' })); await actor.type(screen.getByRole('textbox', { name: 'Industria' }), 'Servicios')
     await actor.click(screen.getByRole('button', { name: 'Guardar cambios' }))
     await screen.findByText('Empresa actualizada')
-    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('ModificarEmpresa'))
+    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).endsWith('/empresas/4') && (input as Request).method === 'PATCH')
     expect(call).toBeTruthy(); expect(await requestBody(call!)).toEqual({ industria: 'Servicios' })
   })
 
@@ -84,7 +88,7 @@ describe('altas y ediciones', () => {
     expect((save as HTMLButtonElement).disabled).toBe(false)
     await actor.clear(industry); await actor.type(industry, 'Educación')
     expect((save as HTMLButtonElement).disabled).toBe(true)
-    expect(vi.mocked(fetch).mock.calls.some(([input]) => requestUrl(input).includes('ModificarEmpresa'))).toBe(false)
+    expect(vi.mocked(fetch).mock.calls.some(([input]) => requestUrl(input).endsWith('/empresas/4') && (input as Request).method === 'PATCH')).toBe(false)
   })
 
   it('envía null al limpiar un opcional de empresa', async () => {
@@ -92,12 +96,12 @@ describe('altas y ediciones', () => {
     await screen.findByRole('heading', { name: 'Editar empresa' })
     await actor.clear(screen.getByRole('textbox', { name: 'CUIT' })); await actor.click(screen.getByRole('button', { name: 'Guardar cambios' }))
     await screen.findByText('Empresa actualizada')
-    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('ModificarEmpresa'))
+    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).endsWith('/empresas/4') && (input as Request).method === 'PATCH')
     expect(await requestBody(call!)).toEqual({ cuit: null })
   })
 
   it('conserva los valores al recibir un error de API', async () => {
-    installCatalogApi(); vi.mocked(fetch).mockImplementation(async (input) => requestUrl(input).includes('AltaEmpresa') ? jsonResponse({ detail: 'La empresa ya existe.' }, 400) : catalogResponse(requestUrl(input)) ?? jsonResponse([]))
+    installCatalogApi(); vi.mocked(fetch).mockImplementation(async (input) => requestUrl(input).endsWith('/empresas') && (input as Request).method === 'POST' ? jsonResponse({ detail: 'La empresa ya existe.' }, 400) : catalogResponse(requestUrl(input)) ?? jsonResponse([]))
     const actor = userEvent.setup(); renderAuthenticated('/empresas/nueva'); await screen.findByRole('heading', { name: 'Nueva empresa' })
     const field = screen.getByRole('textbox', { name: 'Razón social' }); await actor.type(field, 'Empresa repetida'); await actor.click(screen.getByRole('button', { name: 'Crear empresa' }))
     expect(await screen.findByText('La empresa ya existe.')).toBeTruthy(); expect((field as HTMLInputElement).value).toBe('Empresa repetida')
