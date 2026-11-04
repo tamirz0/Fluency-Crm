@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BrowserRouter } from 'react-router-dom'
@@ -14,7 +14,7 @@ beforeAll(async () => { await import('./opportunities/OpportunityFormPage') })
 
 const user = { id: 7, nombre: 'María', apellido: 'Gómez', correo: 'maria@example.com', username: 'maria', activo: true }
 const company = { id: 4, razonSocial: 'Acme Idiomas', cuit: '30-123', industria: 'Educación', correo: 'acme@example.com', telefono: '1144', direccion: 'Calle 1', idEstado: 1, estadoDescripcion: 'Cliente', estadoActivo: true, idOrigen: 2, origenDescripcion: 'Referido', origenActivo: true, idResponsable: 7, responsableNombre: 'María Gómez', responsableActivo: true, fechaCreacion: '2026-10-31T12:00:00Z', activo: true, observaciones: 'Nota' }
-const contact = { id: 14, nombre: 'Lucía', apellido: 'Pérez', documento: '30123456', cargo: 'Directora', correo: 'lucia@example.com', telefono: '1144', idEstado: 1, estadoDescripcion: 'Cliente', idOrigen: 2, origenDescripcion: 'Referido', idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas', observaciones: null }
+const contact = { id: 14, nombre: 'Lucía', apellido: 'Pérez', documento: '30123456', cargo: 'Directora', correo: 'lucia@example.com', telefono: '1144', idEstado: 1, estadoDescripcion: 'Cliente', estadoActivo: true, idOrigen: 2, origenDescripcion: 'Referido', origenActivo: true, idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas', idResponsable: 7, responsableNombre: 'María Gómez', responsableActivo: true, fechaCreacion: '2026-10-31T12:00:00Z', activo: true, observaciones: null }
 const secondContact = { ...contact, id: 15, nombre: 'Ana', apellido: 'López', idEmpresa: 8, empresaRazonSocial: 'Otra empresa' }
 const opportunity = { id: 91, titulo: 'Renovación anual', idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas', idContacto: 14, contactoNombre: 'Lucía', contactoApellido: 'Pérez', idUsuario: 7, usuarioNombre: 'María', usuarioApellido: 'Gómez', idServicio: 2, servicioNombre: 'Capacitación', idEtapa: 3, etapaNombre: 'Propuesta', fechaEstimadaCierre: '2026-12-31', fechaCierre: null, idOrigen: 2, origenDescripcion: 'Referido', idEstado: 1, estadoDescripcion: 'Activa', observaciones: 'Nota' }
 const stages = [{ id: 3, nombre: 'Propuesta', descripcion: null, orden: 3 }]
@@ -38,17 +38,18 @@ function installCatalogApi(options: { services?: { id: number; nombre: string; d
     const url = requestUrl(input)
     const catalog = catalogResponse(url, options.services)
     if (catalog) return catalog
-    if (new URL(url, 'http://localhost').pathname === '/api/empresas' && (input as Request).method === 'GET') return jsonResponse({ items: [company, { ...company, id: 8, razonSocial: 'Otra empresa' }], page: 1, pageSize: 25, totalCount: 2 })
-    if (url.includes('ListadoContactos')) return jsonResponse([contact, secondContact])
+    const { pathname } = new URL(url, 'http://localhost'); const method = (input as Request).method
+    if (pathname === '/api/contactos' && method === 'GET') return jsonResponse({ items: [contact, secondContact], page: 1, pageSize: 100, totalCount: 2 })
+    if (pathname === '/api/contactos' && method === 'POST') return jsonResponse({ ...contact, id: 22, nombre: 'Nuevo' }, 201)
+    if (pathname === '/api/contactos/14' && method === 'GET') return jsonResponse(contact)
+    if (pathname === '/api/contactos/14' && method === 'PATCH') return jsonResponse(contact)
+    if (pathname === '/api/empresas' && method === 'GET') return jsonResponse({ items: [company, { ...company, id: 8, razonSocial: 'Otra empresa' }], page: 1, pageSize: 25, totalCount: 2 })
     if (url.includes('OportunidadesPorEtapa')) return jsonResponse([{ idEtapa: 3, nombre: 'Propuesta', orden: 3, oportunidades: [] }])
     if (url.endsWith('/empresas/4') && (input as Request).method === 'GET') return jsonResponse(company)
-    if (url.includes('DatosContacto')) return jsonResponse(contact)
     if (url.includes('DatosOportunidad')) return jsonResponse(opportunity)
     if (url.endsWith('/empresas') && (input as Request).method === 'POST') return jsonResponse({ ...company, id: 22, razonSocial: 'Nueva empresa' }, 201)
-    if (url.includes('AltaContacto')) return jsonResponse({ ...contact, id: 22, nombre: 'Nuevo' }, 201)
     if (url.includes('AltaOportunidad')) return jsonResponse({ ...opportunity, id: 22, titulo: 'Nueva oportunidad' }, 201)
     if (url.endsWith('/empresas/4') && (input as Request).method === 'PATCH') return jsonResponse(company)
-    if (url.includes('ModificarContacto')) return jsonResponse(contact)
     if (url.includes('ModificarOportunidad')) return jsonResponse(opportunity)
     return jsonResponse([])
   })
@@ -110,7 +111,7 @@ describe('altas y ediciones', () => {
   it('crea un contacto sin empresa y omite la asociación', async () => {
     installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/contactos/nuevo'); await screen.findByRole('heading', { name: 'Nuevo contacto' })
     await actor.type(screen.getByRole('textbox', { name: 'Nombre' }), 'Ana'); await actor.type(screen.getByRole('textbox', { name: 'Apellido' }), 'García'); await actor.type(screen.getByRole('textbox', { name: 'Correo' }), 'ana@example.com'); await actor.click(screen.getByRole('button', { name: 'Crear contacto' }))
-    await screen.findByText('Contacto creado'); const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('AltaContacto'))
+    await screen.findByText('Contacto creado'); const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).endsWith('/contactos') && (input as Request).method === 'POST')
     expect(call).toBeTruthy(); expect(await requestBody(call!)).toEqual({ nombre: 'Ana', apellido: 'García', correo: 'ana@example.com' })
   })
 
@@ -121,14 +122,28 @@ describe('altas y ediciones', () => {
     expect((save as HTMLButtonElement).disabled).toBe(true)
     await actor.clear(screen.getByRole('textbox', { name: 'Documento' })); expect((save as HTMLButtonElement).disabled).toBe(false)
     await actor.click(save); await screen.findByText('Contacto actualizado')
-    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).includes('ModificarContacto'))
+    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).endsWith('/contactos/14') && (input as Request).method === 'PATCH')
     expect(await requestBody(call!)).toEqual({ documento: null })
   })
 
-  it('bloquea el selector de empresa del contacto cuando tiene oportunidades', async () => {
-    installCatalogApi(); vi.mocked(fetch).mockImplementation(async (input) => requestUrl(input).includes('OportunidadesPorEtapa') ? jsonResponse([{ idEtapa: 3, nombre: 'Propuesta', orden: 3, oportunidades: [{ id: 91, titulo: 'Oportunidad', idEmpresa: 4, empresaRazonSocial: 'Acme', idContacto: 14, contactoNombre: 'Lucía', contactoApellido: 'Pérez', idUsuario: 7, usuarioNombre: 'María', usuarioApellido: 'Gómez', fechaEstimadaCierre: null }] }]) : catalogResponse(requestUrl(input)) ?? jsonResponse(requestUrl(input).includes('DatosContacto') ? contact : []))
-    renderAuthenticated('/contactos/14/editar'); await screen.findByRole('heading', { name: 'Editar contacto' }); const select = await screen.findByRole('combobox', { name: 'Empresa' })
-    await waitFor(() => expect(select.getAttribute('aria-disabled')).toBe('true')); expect(screen.getByText('La empresa no puede cambiarse porque el contacto tiene oportunidades asociadas.')).toBeTruthy()
+  it('cambia la empresa del contacto sin consultar oportunidades, informa que las relaciones se conservan y envía solo la empresa', async () => {
+    installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/contactos/14/editar'); await screen.findByRole('heading', { name: 'Editar contacto' })
+    expect(screen.getByRole('note').textContent).toContain('Las oportunidades y actividades anteriores conservan sus relaciones.')
+    const select = screen.getByRole('combobox', { name: 'Empresa' }); expect((select as HTMLInputElement).value).toBe('Acme Idiomas'); expect(select.hasAttribute('disabled')).toBe(false)
+    await actor.click(select); await actor.click(await screen.findByRole('option', { name: 'Otra empresa' }))
+    await actor.click(screen.getByRole('button', { name: 'Guardar cambios' })); await screen.findByText('Contacto actualizado')
+    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).endsWith('/contactos/14') && (input as Request).method === 'PATCH')
+    expect(await requestBody(call!)).toEqual({ idEmpresa: 8 })
+    expect(vi.mocked(fetch).mock.calls.some(([input]) => requestUrl(input).includes('Oportunidades'))).toBe(false)
+  })
+
+  it('quita la empresa del contacto enviando null y muestra la empresa vigente antes de editar', async () => {
+    installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/contactos/14/editar'); await screen.findByRole('heading', { name: 'Editar contacto' })
+    expect((screen.getByRole('combobox', { name: 'Empresa' }) as HTMLInputElement).value).toBe('Acme Idiomas')
+    await actor.click(screen.getByRole('combobox', { name: 'Empresa' })); await actor.click(screen.getByRole('button', { name: 'Quitar empresa', hidden: true }))
+    await actor.click(screen.getByRole('button', { name: 'Guardar cambios' })); await screen.findByText('Contacto actualizado')
+    const call = vi.mocked(fetch).mock.calls.find(([input]) => requestUrl(input).endsWith('/contactos/14') && (input as Request).method === 'PATCH')
+    expect(await requestBody(call!)).toEqual({ idEmpresa: null })
   })
 
   it('filtra contactos por empresa y crea una oportunidad con responsable y etapa', async () => {

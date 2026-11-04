@@ -14,9 +14,10 @@ import { formatCommercialDate } from '../shared/display'
 const user = { id: 7, nombre: 'María', apellido: 'Gómez', correo: 'maria@example.com', username: 'maria', activo: true }
 const contact = {
   id: 14, nombre: 'Lucía', apellido: 'Pérez', documento: '30123456', cargo: 'Directora', correo: 'lucia@example.com', telefono: '1144556677',
-  idEstado: 1, estadoDescripcion: 'Cliente', idOrigen: 2, origenDescripcion: 'Referido', idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas', observaciones: 'Primera línea\nSegunda línea',
+  idEstado: 1, estadoDescripcion: 'Cliente', estadoActivo: true, idOrigen: 2, origenDescripcion: 'Referido', origenActivo: true, idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas', observaciones: 'Primera línea\nSegunda línea',
+  idResponsable: 7, responsableNombre: 'María Gómez', responsableActivo: false, fechaCreacion: '2026-10-31T12:00:00Z', activo: true,
 }
-const blankContact = { ...contact, id: 15, nombre: 'Ana', apellido: 'Álvarez', documento: null, cargo: null, correo: '', telefono: null, idEstado: null, estadoDescripcion: null, idOrigen: null, origenDescripcion: null, idEmpresa: null, empresaRazonSocial: null, observaciones: null }
+const blankContact = { ...contact, id: 15, nombre: 'Ana', apellido: 'Álvarez', documento: null, cargo: null, correo: 'ana@example.com', telefono: null, estadoDescripcion: 'Inactivo', idOrigen: null, origenDescripcion: null, origenActivo: null, idEmpresa: null, empresaRazonSocial: null, observaciones: null }
 const opportunity = {
   id: 91, titulo: 'Renovación anual', idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas', idContacto: 14, contactoNombre: 'Lucía', contactoApellido: 'Pérez',
   idUsuario: 7, usuarioNombre: 'María', usuarioApellido: 'Gómez', idServicio: 2, servicioNombre: 'Capacitación', idEtapa: 3, etapaNombre: 'Propuesta',
@@ -48,6 +49,16 @@ function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 }
 
+// El listado de contactos también consulta catálogos, empresas y responsables para sus filtros.
+function mockContactsApi(list: () => Response) {
+  vi.mocked(fetch).mockImplementation(async input => {
+    const { pathname } = new URL((input as Request).url)
+    if (pathname.endsWith('/contactos')) return list()
+    if (pathname.endsWith('/empresas') || pathname.endsWith('/usuarios/opciones')) return jsonResponse({ items: [], page: 1, pageSize: 25, totalCount: 0 })
+    return jsonResponse([])
+  })
+}
+
 beforeEach(() => {
   sessionStorage.clear()
   vi.stubGlobal('fetch', vi.fn())
@@ -55,7 +66,7 @@ beforeEach(() => {
 
 describe('consultas comerciales', () => {
   it('lista contactos en el orden recibido, con valores opcionales y navegación activa', async () => {
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([contact, blankContact]))
+    mockContactsApi(() => jsonResponse({ items: [contact, blankContact], page: 1, pageSize: 25, totalCount: 2 }))
     renderAuthenticated()
     const table = within(await screen.findByRole('table', { name: 'Contactos' }))
     const first = await table.findByText('Pérez, Lucía')
@@ -72,12 +83,13 @@ describe('consultas comerciales', () => {
   })
 
   it('muestra vacío y permite reintentar un listado de contactos', async () => {
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ title: 'Error' }, 503)).mockResolvedValueOnce(jsonResponse([]))
+    let attempts = 0
+    mockContactsApi(() => ++attempts === 1 ? jsonResponse({ title: 'Error' }, 503) : jsonResponse({ items: [], page: 1, pageSize: 25, totalCount: 0 }))
     renderAuthenticated()
     expect(await screen.findByRole('heading', { name: 'No pudimos cargar los contactos' })).toBeTruthy()
     await userEvent.setup().click(screen.getByRole('button', { name: 'Reintentar' }))
     expect(await screen.findByRole('heading', { name: 'Todavía no hay contactos' })).toBeTruthy()
-    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(attempts).toBe(2)
   })
 
   it('muestra el detalle del contacto, sus observaciones y el enlace correcto a empresa', async () => {
@@ -87,6 +99,8 @@ describe('consultas comerciales', () => {
     expect(screen.getByText('30123456')).toBeTruthy()
     expect(screen.getByText('Directora')).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Acme Idiomas' }).getAttribute('href')).toBe('/empresas/4')
+    expect(screen.getByText('María Gómez (inactivo)')).toBeTruthy()
+    expect(screen.getByText('Fecha de creación', { selector: 'dt' })).toBeTruthy()
     expect(screen.getByText(/Primera línea\s+Segunda línea/)).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Volver a contactos' })).toBeTruthy()
     expect(fetch).toHaveBeenCalledTimes(1)

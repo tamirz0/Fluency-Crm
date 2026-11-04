@@ -36,11 +36,11 @@ describe('desglose del pulso comercial', () => {
         { id: 3, razonSocial: 'C', estadoDescripcion: 'Inactivo' },
         { id: 4, razonSocial: 'D', estadoDescripcion: null },
       ], page: 1, pageSize: 25, totalCount: 4 })
-      if (url.includes('ListadoContactos')) return jsonResponse([
+      if (url.includes('/contactos')) return jsonResponse({ items: [
         { id: 1, nombre: 'Ana', apellido: 'Paz', estadoDescripcion: 'Potencial' },
         { id: 2, nombre: 'Luis', apellido: 'Sol', estadoDescripcion: 'Inactivo' },
         { id: 3, nombre: 'Eva', apellido: 'Mar', estadoDescripcion: null },
-      ])
+      ], page: 1, pageSize: 100, totalCount: 3 })
       return jsonResponse([
         { idEtapa: 1, nombre: 'Consulta recibida', orden: 1, oportunidades: [{ id: 11 }, { id: 12 }] },
         { idEtapa: 2, nombre: 'Propuesta', orden: 2, oportunidades: [{ id: 13 }] },

@@ -144,7 +144,23 @@ it.each(['/empresas', '/empresas/nueva'])('habilita empresas compartidas desde %
   expect(vi.mocked(fetch).mock.calls.some(([r]) => new URL((r as Request).url).pathname.startsWith('/api/catalogos/'))).toBe(true)
 })
 
-it.each(['/contactos/1/editar', '/oportunidades/1', '/embudo'])('conserva retirado el módulo comercial %s', async path => {
+it.each(['/contactos', '/contactos/nuevo'])('habilita contactos compartidos desde %s', async path => {
+  authenticated = true
+  const normal = vi.mocked(fetch).getMockImplementation()!
+  vi.mocked(fetch).mockImplementation(async (r, init) => {
+    const url = new URL((r as Request).url)
+    if (['/api/contactos', '/api/empresas', '/api/usuarios/opciones'].includes(url.pathname))
+      return json({ items: [], page: 1, pageSize: 25, totalCount: 0 })
+    if (url.pathname.includes('/api/catalogos/')) return json([])
+    return normal(r, init)
+  })
+  mount(path)
+  await screen.findByRole('heading', { name: path.endsWith('/nuevo') ? 'Nuevo contacto' : 'Contactos' })
+  expect(screen.getByRole('link', { name: 'Contactos' }).getAttribute('aria-current')).toBe('page')
+  expect(vi.mocked(fetch).mock.calls.some(([r]) => new URL((r as Request).url).pathname.startsWith('/api/catalogos/'))).toBe(true)
+})
+
+it.each(['/oportunidades/1', '/embudo'])('conserva retirado el módulo comercial %s', async path => {
   authenticated = true
   mount(path)
   await screen.findByRole('heading', { name: 'Hola, María' })

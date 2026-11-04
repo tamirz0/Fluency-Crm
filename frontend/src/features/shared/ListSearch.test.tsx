@@ -48,38 +48,55 @@ describe('búsqueda de listados', () => {
     expect(screen.getByText('2 empresas')).toBeTruthy()
   })
 
-  it('filtra contactos por campos visibles y ofrece limpiar cuando no hay coincidencias', async () => {
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([
-      { id: 1, nombre: 'Lucía', apellido: 'Pérez', documento: null, cargo: 'Directora', correo: 'lucia@example.com', telefono: null, idEstado: 1, estadoDescripcion: 'Inactivo', idOrigen: 1, origenDescripcion: 'Referido', idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas', observaciones: null },
-      { id: 2, nombre: 'Tomás', apellido: 'López', documento: null, cargo: 'Analista', correo: 'tomas@example.com', telefono: '1122334455', idEstado: 1, estadoDescripcion: 'Activo', idOrigen: 2, origenDescripcion: 'Web', idEmpresa: null, empresaRazonSocial: null, observaciones: null },
-    ]))
-    renderAuthenticated('/contactos')
-
-    const search = await screen.findByRole('searchbox', { name: 'Buscar en contactos' })
+  it('busca y filtra contactos en servidor, y permite limpiar los filtros', async () => {
+    const base = { documento: null, cargo: 'Analista', idEstado: 1, estadoDescripcion: 'Potencial', estadoActivo: true, origenActivo: true, idResponsable: 7, responsableNombre: 'María Gómez', responsableActivo: true, fechaCreacion: '2026-10-31T12:00:00Z', activo: true, observaciones: null }
+    const contacts = [
+      { ...base, id: 1, nombre: 'Lucía', apellido: 'Pérez', correo: 'lucia@example.com', telefono: null, idOrigen: 1, origenDescripcion: 'Referido', idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas' },
+      { ...base, id: 2, nombre: 'Tomás', apellido: 'López', correo: 'tomas@example.com', telefono: '1122334455', idOrigen: 2, origenDescripcion: 'Web', idEmpresa: null, empresaRazonSocial: null },
+    ]
+    const requests: URL[] = []
+    vi.mocked(fetch).mockImplementation(async input => {
+      const url = new URL((input as Request).url)
+      if (url.pathname.endsWith('/usuarios/opciones') || url.pathname.endsWith('/empresas')) return jsonResponse({ items: [], page: 1, pageSize: 25, totalCount: 0 })
+      if (url.pathname.includes('/catalogos/')) return jsonResponse([{ id: 1, descripcion: 'Potencial', activo: true }])
+      requests.push(url)
+      const items = url.searchParams.get('q') ? [contacts[0]] : contacts
+      return jsonResponse({ items, page: 1, pageSize: 25, totalCount: items.length })
+    })
+    renderAuthenticated('/contactos'); const actor = userEvent.setup()
     const table = within(await screen.findByRole('table', { name: 'Contactos' }))
-    expect(table.getByRole('columnheader', { name: 'Correo' })).toBeTruthy()
-    expect(table.getByRole('columnheader', { name: 'Teléfono' })).toBeTruthy()
-    expect(table.getAllByRole('columnheader')[1]?.textContent).toBe('Estado')
-    expect(Array.from(table.getAllByRole('row')).slice(1).map((row) => row.textContent?.includes('Tomás'))).toEqual([true, false])
-    const contactRow = table.getByRole('row', { name: /Pérez, Lucía/ })
-    const contactCells = Array.from(contactRow.querySelectorAll('td'))
-    expect(contactCells[4]?.textContent).toBe('lucia@example.com')
-    expect(contactCells[5]?.textContent).toBe('-')
-    const actor = userEvent.setup()
-    await actor.type(search, 'perez')
-    expect(await screen.findByText('Pérez, Lucía')).toBeTruthy()
-    expect(screen.queryByText('López, Tomás')).toBeNull()
-    expect(screen.getByText('1 de 2 resultados')).toBeTruthy()
+    expect(table.getAllByRole('columnheader').map((header) => header.textContent)).toEqual(['Nombre completo', 'Estado', 'Empresa', 'Cargo', 'Correo', 'Teléfono', 'Origen', 'Responsable'])
+    const cells = Array.from(table.getByRole('row', { name: /Pérez, Lucía/ }).querySelectorAll('td'))
+    expect(cells[4]?.textContent).toBe('lucia@example.com'); expect(cells[5]?.textContent).toBe('-'); expect(cells[7]?.textContent).toBe('María Gómez')
+    expect(screen.getByText('2 contactos')).toBeTruthy()
 
-    await actor.clear(search)
-    await actor.type(search, 'no-existe')
-    expect((await screen.findByRole('status')).textContent).toContain('No hay resultados para “no-existe”.')
-    await actor.click(screen.getByRole('button', { name: 'Limpiar búsqueda' }))
-    expect(await screen.findByText('López, Tomás')).toBeTruthy()
-    await actor.clear(search)
-    await actor.type(search, '1122334455')
-    expect(await screen.findByText('López, Tomás')).toBeTruthy()
-    expect(screen.queryByText('Pérez, Lucía')).toBeNull()
+    await actor.type(screen.getByRole('searchbox', { name: 'Buscar contactos' }), 'acme'); await actor.click(screen.getByRole('button', { name: 'Buscar' }))
+    await waitFor(() => expect(within(screen.getByRole('table', { name: 'Contactos' })).queryByText('López, Tomás')).toBeNull())
+    expect(requests.at(-1)?.searchParams.get('q')).toBe('acme'); expect(requests.at(-1)?.searchParams.get('page')).toBe('1')
+    expect(screen.getByText('1 contacto')).toBeTruthy()
+
+    await actor.click(screen.getByRole('combobox', { name: 'Estado' })); await actor.click(await screen.findByRole('option', { name: 'Potencial' }))
+    await waitFor(() => expect(requests.at(-1)?.searchParams.get('idEstado')).toBe('1'))
+    await actor.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
+    expect(await within(await screen.findByRole('table', { name: 'Contactos' })).findByText('López, Tomás')).toBeTruthy()
+    expect(requests.at(-1)?.searchParams.get('q')).toBe(''); expect(requests.at(-1)?.searchParams.has('idEstado')).toBe(false)
+    expect(screen.getByText('2 contactos')).toBeTruthy()
+  })
+
+  it('pide la página siguiente de contactos al servidor', async () => {
+    const requests: URL[] = []
+    vi.mocked(fetch).mockImplementation(async input => {
+      const url = new URL((input as Request).url)
+      if (url.pathname.endsWith('/usuarios/opciones') || url.pathname.endsWith('/empresas')) return jsonResponse({ items: [], page: 1, pageSize: 25, totalCount: 0 })
+      if (url.pathname.includes('/catalogos/')) return jsonResponse([])
+      requests.push(url)
+      return jsonResponse({ items: [{ id: 1, nombre: 'Lucía', apellido: 'Pérez', correo: 'lucia@example.com', idEstado: 1, estadoDescripcion: 'Potencial', estadoActivo: true, idResponsable: 7, responsableNombre: 'María Gómez', responsableActivo: true, fechaCreacion: '2026-10-31T12:00:00Z', activo: true }], page: Number(url.searchParams.get('page')), pageSize: 25, totalCount: 40 })
+    })
+    renderAuthenticated('/contactos'); const actor = userEvent.setup()
+    await screen.findByRole('table', { name: 'Contactos' })
+    await actor.click(screen.getByRole('button', { name: 'Página siguiente' }))
+    await waitFor(() => expect(requests.at(-1)?.searchParams.get('page')).toBe('2'))
+    expect(requests.at(-1)?.searchParams.get('pageSize')).toBe('25')
   })
 
   it('busca oportunidades por título, empresa y contacto sin consultar de nuevo la API', async () => {
