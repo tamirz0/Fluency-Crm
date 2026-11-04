@@ -34,8 +34,8 @@ function NavigationContent({ onNavigate, commercial }: { onNavigate?: () => void
     <List sx={{ px: 1.5, py: 2 }} aria-label="Navegación principal">
       <ListItemButton component={NavLink} to="/inicio" end onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Dashboard fontSize="small" /></ListItemIcon><ListItemText primary="Inicio" /></ListItemButton>
       <ListItemButton component={NavLink} to="/empresas" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Business fontSize="small" /></ListItemIcon><ListItemText primary="Empresas" /></ListItemButton>
-      {commercial && <>
       <ListItemButton component={NavLink} to="/contactos" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Contacts fontSize="small" /></ListItemIcon><ListItemText primary="Contactos" /></ListItemButton>
+      {commercial && <>
       <ListItemButton component={NavLink} to="/oportunidades" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Timeline fontSize="small" /></ListItemIcon><ListItemText primary="Oportunidades" /></ListItemButton>
       <ListItemButton component={NavLink} to="/embudo" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><ViewKanban fontSize="small" /></ListItemIcon><ListItemText primary="Embudo" /></ListItemButton>
     </>}

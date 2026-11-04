@@ -11,6 +11,9 @@ import { FunnelsPage } from './features/settings/FunnelsPage'
 import { CompaniesPage } from './features/companies/CompaniesPage'
 import { CompanyDetailPage } from './features/companies/CompanyDetailPage'
 import { NewCompanyPage, EditCompanyPage } from './features/companies/CompanyFormPage'
+import { ContactsPage } from './features/contacts/ContactsPage'
+import { ContactDetailPage } from './features/contacts/ContactDetailPage'
+import { NewContactPage, EditContactPage } from './features/contacts/ContactFormPage'
 function AccessHome() {
   const { user } = useAuth()
   return <Box sx={{ p: { xs: 3, md: 5 } }}><Typography variant="h4" component="h1">Hola, {user?.nombre}</Typography><Typography sx={{ mt: 2 }}>Bienvenido a Fluency CRM.</Typography></Box>
@@ -24,6 +27,10 @@ function App() {
       <Route path="/empresas/nueva" element={<NewCompanyPage />} />
       <Route path="/empresas/:idEmpresa" element={<CompanyDetailPage />} />
       <Route path="/empresas/:idEmpresa/editar" element={<EditCompanyPage />} />
+      <Route path="/contactos" element={<ContactsPage />} />
+      <Route path="/contactos/nuevo" element={<NewContactPage />} />
+      <Route path="/contactos/:idContacto" element={<ContactDetailPage />} />
+      <Route path="/contactos/:idContacto/editar" element={<EditContactPage />} />
       <Route path="/configuracion/usuarios" element={<UsersPage />} />
       <Route path="/configuracion/catalogos" element={<CatalogsPage />} />
       <Route path="/configuracion/servicios" element={<ServicesPage />} />

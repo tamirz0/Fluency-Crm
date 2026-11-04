@@ -10,7 +10,7 @@ export type AuthUser = components['schemas']['UsuarioResponse']
 export type LoginCredentials = components['schemas']['LoginRequest']
 export type SessionResponse = components['schemas']['SesionResponse']
 export type Empresa = components['schemas']['EmpresaResponse']
-export type Contacto = LegacyComponents['schemas']['ContactoResponse']
+export type Contacto = components['schemas']['ContactoResponse']
 export type OportunidadDetalle = LegacyComponents['schemas']['OportunidadResponse']
 export type EtapaConOportunidades = LegacyComponents['schemas']['EtapaConOportunidadesResponse']
 export type OportunidadResumenResponse = LegacyComponents['schemas']['OportunidadResumenResponse']
@@ -18,8 +18,7 @@ export type EtapaComercial = LegacyComponents['schemas']['EtapaComercialResponse
 export type UpdateEtapaOportunidadRequest = LegacyComponents['schemas']['UpdateEtapaOportunidadRequest']
 export type CreateEmpresaRequest = components['schemas']['EmpresaRequest']
 export type PatchEmpresaRequest = components['schemas']['EmpresaRequest']
-export type CreateContactoRequest = LegacyComponents['schemas']['CreateContactoRequest']
-export type PatchContactoRequest = LegacyComponents['schemas']['PatchContactoRequest']
+export type ContactoRequest = components['schemas']['ContactoRequest']
 export type CreateOportunidadRequest = LegacyComponents['schemas']['CreateOportunidadRequest']
 export type PatchOportunidadRequest = LegacyComponents['schemas']['PatchOportunidadRequest']
 export type EstadoCliente = LegacyComponents['schemas']['EstadoClienteResponse']
@@ -160,26 +159,14 @@ export function getCompany(id: number): Promise<Empresa> {
   return getResponseData(() => api.GET('/empresas/{id}', { params: { path: { id } } }))
 }
 
-export async function getContacts(): Promise<Contacto[]> {
-  try {
-    const { data, error, response } = await legacyApi.GET('/Contacto/ListadoContactos')
-    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
-    return data
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error
-    throw new ApiRequestError('No pudimos conectar con la API.')
-  }
+export type ContactoQuery = { q?: string; idEstado?: number; idOrigen?: number; idResponsable?: number; idEmpresa?: number; page?: number; pageSize?: number }
+export function listContacts(query: ContactoQuery = {}) {
+  return getResponseData(() => api.GET('/contactos', { params: { query } }))
 }
-
-export async function getContact(idContacto: number): Promise<Contacto> {
-  try {
-    const { data, error, response } = await legacyApi.GET('/Contacto/DatosContacto/{idContacto}', { params: { path: { idContacto } } })
-    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
-    return data
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error
-    throw new ApiRequestError('No pudimos conectar con la API.')
-  }
+// Consumidores de oportunidades e inicio conservan esta adaptación hasta su propio incremento.
+export async function getContacts(): Promise<Contacto[]> { return (await listContacts({ pageSize: 100 })).items }
+export function getContact(id: number): Promise<Contacto> {
+  return getResponseData(() => api.GET('/contactos/{id}', { params: { path: { id } } }))
 }
 
 export async function getOpportunitiesByStage(): Promise<EtapaConOportunidades[]> {
@@ -245,26 +232,11 @@ export function patchCompany(id: number, body: PatchEmpresaRequest): Promise<Emp
   return getResponseData(() => api.PATCH('/empresas/{id}', { params: { path: { id } }, body }))
 }
 
-export async function createContact(body: CreateContactoRequest): Promise<Contacto> {
-  try {
-    const { data, error, response } = await legacyApi.POST('/Contacto/AltaContacto', { body })
-    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
-    return data
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error
-    throw new ApiRequestError('No pudimos conectar con la API.')
-  }
+export function createContact(body: ContactoRequest): Promise<Contacto> {
+  return getResponseData(() => api.POST('/contactos', { body }))
 }
-
-export async function patchContact(idContacto: number, body: PatchContactoRequest): Promise<Contacto> {
-  try {
-    const { data, error, response } = await legacyApi.PATCH('/Contacto/ModificarContacto/{idContacto}', { params: { path: { idContacto } }, body })
-    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
-    return data
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error
-    throw new ApiRequestError('No pudimos conectar con la API.')
-  }
+export function patchContact(id: number, body: ContactoRequest): Promise<Contacto> {
+  return getResponseData(() => api.PATCH('/contactos/{id}', { params: { path: { id } }, body }))
 }
 
 export async function createOpportunity(body: CreateOportunidadRequest): Promise<OportunidadDetalle> {

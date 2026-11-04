@@ -1,6 +1,6 @@
 import { ArrowBack, Refresh } from '@mui/icons-material'
 import { Alert, Box, Button, Link, Skeleton, Typography } from '@mui/material'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { Link as RouterLink, useLocation, useParams } from 'react-router-dom'
 import { Edit } from '@mui/icons-material'
@@ -32,7 +32,13 @@ function ContactDetails({ contact }: { contact: Contacto }) {
     </section>
     <section className="company-detail-section" aria-labelledby="contact-commercial-heading">
       <Typography component="h2" id="contact-commercial-heading" className="company-section-heading">Datos comerciales</Typography>
-      <dl className="company-detail-fields"><ContactField label="Estado" className="company-detail-commercial-field"><CompanyStatus value={contact.estadoDescripcion} /></ContactField><ContactField label="Origen">{contact.origenDescripcion?.trim()}</ContactField></dl>
+      <dl className="company-detail-fields">
+        <ContactField label="Responsable">{contact.responsableNombre + (contact.responsableActivo ? '' : ' (inactivo)')}</ContactField>
+        <ContactField label="Fecha de creación">{new Date(contact.fechaCreacion).toLocaleString('es-AR')}</ContactField>
+        <ContactField label="Estado" className="company-detail-commercial-field"><CompanyStatus value={contact.estadoDescripcion} /></ContactField>
+        {contact.estadoActivo === false && <ContactField label="Disponibilidad del estado">Estado inactivo para nuevas asignaciones</ContactField>}
+        <ContactField label="Origen">{contact.origenDescripcion ? contact.origenDescripcion + (contact.origenActivo === false ? ' (inactivo)' : '') : undefined}</ContactField>
+      </dl>
     </section>
     <section className="company-detail-section" aria-labelledby="contact-method-heading">
       <Typography component="h2" id="contact-method-heading" className="company-section-heading">Contacto</Typography>
@@ -53,9 +59,7 @@ export function ContactDetailPage() {
   const { idContacto: routeId } = useParams()
   const location = useLocation()
   const idContacto = parsePositiveId(routeId)
-  const queryClient = useQueryClient()
-  const cachedContact = idContacto === undefined ? undefined : queryClient.getQueryData<Contacto[]>(contactoQueryKeys.all)?.find((contact) => String(contact.id) === String(idContacto))
-  const query = useQuery({ queryKey: contactoQueryKeys.detail(idContacto ?? 0), queryFn: () => getContact(idContacto as number), enabled: idContacto !== undefined, placeholderData: cachedContact })
+  const query = useQuery({ queryKey: contactoQueryKeys.detail(idContacto ?? 0), queryFn: () => getContact(idContacto as number), enabled: idContacto !== undefined })
 
   if (idContacto === undefined || (query.isError && query.error instanceof ApiRequestError && query.error.status === 404)) return <Box className="companies-page company-result-page records-page"><Link component={RouterLink} to="/contactos" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a contactos</Link><section className="company-feedback"><Typography component="h1" className="company-feedback-title">No encontramos ese contacto</Typography><Typography color="text.secondary">El enlace puede estar vencido o el contacto ya no está disponible.</Typography></section></Box>
   if (query.isPending) return <Box className="companies-page company-result-page records-page"><ContactSkeleton /></Box>
@@ -66,7 +70,6 @@ export function ContactDetailPage() {
     <Link component={RouterLink} to="/contactos" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a contactos</Link>
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
     <header className="company-detail-header"><div><Typography component="h1" className="companies-page-title">{contactFullName(contact)}</Typography></div><div className="company-detail-header-actions"><CompanyStatus value={contact.estadoDescripcion} /><Button component={RouterLink} to={`/contactos/${contact.id}/editar`} variant="contained" startIcon={<Edit />}>Editar contacto</Button></div></header>
-    {query.isFetching && query.isPlaceholderData && <Typography className="company-detail-loading" role="status">Actualizando ficha…</Typography>}
     <ContactDetails contact={contact} />
   </Box>
 }
