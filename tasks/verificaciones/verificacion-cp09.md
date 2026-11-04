@@ -111,8 +111,6 @@ Rama `segunda-entrega-bajas-clientes`, desde `segunda-entrega` / `0725237` (T26 
 
 ### No ejecutado (no aprobado)
 
-- Análisis de secretos con Gitleaks: no ejecutado; CP09 no agrega secretos ni dependencias.
-- Limpieza comprobada de esquemas `t03_*` en la base de tests: no verificada (sin `psql` en el shell del agente).
 
 ### Comandos reproducibles
 
@@ -146,4 +144,12 @@ Recorrido de bloqueo y de baja válida aprobado por el usuario el 03/11/2026 en 
 - Caché tras la baja: al volver atrás la ficha refresca y muestra «No encontramos…», que es el comportamiento esperado.
 - `page` muy grande: devuelve vacío; mismo comportamiento que empresas.
 
-**Mejora opcional, no aplicada:** debounce en el buscador de `ContactCompanySelect` (una petición por tecla; igual que `CompanyResponsibleSelect`).
+**Mejora acordada para una próxima tarea (el usuario la quiere incorporar):** debounce en el buscador de `ContactCompanySelect` y en `CompanyResponsibleSelect` (hoy una petición por tecla).
+
+## Seguridad y limpieza del entorno de tests
+
+- Gitleaks 8.30.1 (release oficial; ZIP Windows x64 verificado contra el SHA-256 de la evidencia de T01), ejecutado desde una carpeta temporal propia, sin instalación global, con `--redact=100`:
+  - Historial completo (`git … --log-opts='--all --no-textconv --no-ext-diff'`): 117 commits, ~7,2 MB, **sin hallazgos** (exit 0, 1,6 s).
+  - Foto del árbol actual (versionados + nuevos no ignorados, incluidos `crear-admin.ps1`, `levantar-*.ps1`, `CLAUDE.md` y `Properties/launchSettings.json` sin seguimiento): 247 de 247 archivos, ~1,7 MB escaneados, **sin hallazgos** (exit 0). El primer intento omitió una ruta con «ñ» por el entrecomillado de git; se repitió con `core.quotepath=false` y 0 omitidos.
+- Esquemas `t03_*` residuales en la base de tests: **ninguno**, revisado manualmente por el usuario el 03/11/2026 tras el cierre de T27.
+- Sin dependencias nuevas ni cambios de manifiestos o lockfiles en CP09 (solo `npm ci` desde el lockfile existente): no se repitieron auditorías de paquetes; la deuda anterior sigue en T47.
