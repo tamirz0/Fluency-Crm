@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Services.DTO;
 using Services.Interface;
@@ -45,6 +44,15 @@ public sealed class ContactoController(IContactoService contactos) : ControllerB
     [ProducesResponseType<ContactoResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult<ContactoResponse>> Patch(int id, [FromBody] ContactoRequest request, CancellationToken ct)
         => Ok(await contactos.WriteAsync(id, request, ct));
+
+    /// <summary>Baja definitiva (sin borrado físico ni restauración); bloqueada por oportunidades activas, con la causa en el 409.</summary>
+    [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Delete(int id, CancellationToken ct)
+    {
+        await contactos.DeleteAsync(id, ct);
+        return NoContent();
+    }
 }
 
 public sealed class ContactoErrors : IExceptionFilter
@@ -52,7 +60,8 @@ public sealed class ContactoErrors : IExceptionFilter
     public void OnException(ExceptionContext context)
     {
         var operation = context.Exception as ContactoOperationException;
-        var postgres = (context.Exception is DbUpdateException ? context.Exception.InnerException : context.Exception) as PostgresException;
+        // Con transacciones de usuario EF envuelve el error de PostgreSQL (p. ej. 40001) en varios niveles: se toma el original.
+        var postgres = context.Exception.GetBaseException() as PostgresException;
         if (postgres?.SqlState == PostgresErrorCodes.ForeignKeyViolation)
             operation = new(400, "REFERENCE_UNAVAILABLE", "La referencia no está disponible.");
         if (postgres?.SqlState is PostgresErrorCodes.SerializationFailure or PostgresErrorCodes.DeadlockDetected)

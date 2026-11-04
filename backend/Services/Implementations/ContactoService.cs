@@ -99,5 +99,20 @@ public sealed class ContactoService(FluencyLocalDbContext db, ActorActual actor)
         return result;
     }
 
+    public async Task DeleteAsync(int id, CancellationToken ct)
+    {
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        if (!await db.Usuarios.AnyAsync(u => u.Id == actor.Id && u.Activo, ct))
+            throw new ContactoOperationException(401, "UNAUTHENTICATED", "La sesión ya no está disponible.");
+        var contact = await db.Contactos.SingleOrDefaultAsync(c => c.Id == id && c.Activo, ct) ?? throw Missing();
+        // Cualquier oportunidad activa bloquea, incluso ganada o perdida; las actividades no. Ver nota de EmpresaService sobre el SQL.
+        var opportunities = await db.Database.SqlQuery<int>($"SELECT count(*)::int AS \"Value\" FROM oportunidad WHERE id_contacto = {id} AND activo").SingleAsync(ct);
+        if (opportunities > 0)
+            throw new ContactoOperationException(409, "BUSINESS_CONFLICT", $"No se puede dar de baja el contacto porque tiene {(opportunities == 1 ? "1 oportunidad activa" : $"{opportunities} oportunidades activas")}.");
+        contact.Activo = false;
+        await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
+    }
+
     private static string? Text(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
