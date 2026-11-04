@@ -33,7 +33,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T23 — Adaptar empresas a los contratos y reglas nuevos](#t23)
 - [x] [T24 — Actualizar pantallas de empresas](#t24)
 - [x] [T25 — Adaptar contactos conservando relaciones históricas](#t25)
-- [ ] [T26 — Actualizar pantallas de contactos](#t26)
+- [x] [T26 — Actualizar pantallas de contactos](#t26)
 - [ ] [T27 — Completar bajas definitivas de clientes](#t27)
 - [ ] [T28 — Adaptar el modelo e historial de oportunidades](#t28)
 - [ ] [T29 — Crear oportunidades con defaults e historial atómico](#t29)
@@ -700,13 +700,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Lista filtra/pagina en servidor; formulario permite cambiar empresa sin bloquear por negociaciones existentes.
-- [ ] Aviso informa que las relaciones previas se conservan, sin preguntar si se propagan ni actualizar registros relacionados.
-- [ ] Detalle muestra responsable/fechas y referencias vigentes o históricas; retirar los consumidores antiguos y regenerar tipos.
+- [x] Lista filtra/pagina en servidor; formulario permite cambiar empresa sin bloquear por negociaciones existentes.
+- [x] Aviso informa que las relaciones previas se conservan, sin preguntar si se propagan ni actualizar registros relacionados.
+- [x] Detalle muestra responsable/fechas y referencias vigentes o históricas; retirar los consumidores antiguos y regenerar tipos.
 
 **Verificación:** F + UI(src/features/forms.test.tsx) + D; cambio A→B local y lectura del registro relacionado intacto.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (03/11/2026):** [verificacion-cp09.md](verificaciones/verificacion-cp09.md#t26--pantallas-de-contactos). Frontend completo 110/110, build correcto y lint solo con el warning previo de `providers.tsx`; tipos regenerados desde la API local. Recorrido autenticado del operador, revisión independiente y suite backend completa quedan para el cierre de CP09. Sin merge ni push.
 
 <a id="t27"></a>
 
