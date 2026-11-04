@@ -58,6 +58,10 @@ Rama `segunda-entrega-contactos-ui`, desde `segunda-entrega` / `0d137b8` (T25 in
 - `git diff --check` sin hallazgos.
 - La integración A→B contra PostgreSQL real ya está probada por `ContactosTests` (T25); T26 prueba el contrato que envía la UI.
 
+### Recorrido del operador
+
+Aprobado por el usuario el 03/11/2026 en el entorno local (API en 5169, Vite, base de desarrollo con administrador inicial propio): alta de contactos, cambio de empresa A→B con aviso de relaciones conservadas y quitar empresa. La oportunidad asociada no es visible en el navegador hasta T28; esa conservación queda acreditada por `ContactosTests` (T25) contra PostgreSQL real.
+
 ### Entorno e incidentes
 
 - Faltaba `frontend/node_modules`: se instaló con `npm ci --no-audit --no-fund` desde el lockfile (218 paquetes, 43 s); sin cambios en manifiestos.
@@ -66,7 +70,6 @@ Rama `segunda-entrega-contactos-ui`, desde `segunda-entrega` / `0d137b8` (T25 in
 
 ### No ejecutado (no aprobado)
 
-- Recorrido manual autenticado del operador en navegador (cambio A→B y lectura de la oportunidad): pendiente de su validación.
 - Suite backend completa, revisión independiente y análisis de secretos (Gitleaks): se reservan para el cierre de CP09; T26 no agrega secretos ni dependencias.
 - Inicio muestra el total de contactos sobre los primeros 100 (y empresas sobre 25, como en T24); su exactitud queda para la tarea que migre esa pantalla.
 

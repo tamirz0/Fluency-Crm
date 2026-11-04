@@ -706,7 +706,7 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Verificación:** F + UI(src/features/forms.test.tsx) + D; cambio A→B local y lectura del registro relacionado intacto.
 
-**Evidencia técnica (03/11/2026):** [verificacion-cp09.md](verificaciones/verificacion-cp09.md#t26--pantallas-de-contactos). Frontend completo 110/110, build correcto y lint solo con el warning previo de `providers.tsx`; tipos regenerados desde la API local. Recorrido autenticado del operador, revisión independiente y suite backend completa quedan para el cierre de CP09. Sin merge ni push.
+**Evidencia técnica (03/11/2026):** [verificacion-cp09.md](verificaciones/verificacion-cp09.md#t26--pantallas-de-contactos). Frontend completo 110/110, build correcto y lint solo con el warning previo de `providers.tsx`; tipos regenerados desde la API local. Recorrido autenticado local del operador aprobado el 03/11/2026 (alta, cambio de empresa A→B y quitar empresa). Revisión independiente y suite backend completa quedan para el cierre de CP09. Integrada localmente en `segunda-entrega`; sin publicar.
 
 <a id="t27"></a>
 
