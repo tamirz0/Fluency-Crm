@@ -32,7 +32,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T22 — Alinear persistencia de empresas y contactos](#t22)
 - [x] [T23 — Adaptar empresas a los contratos y reglas nuevos](#t23)
 - [x] [T24 — Actualizar pantallas de empresas](#t24)
-- [ ] [T25 — Adaptar contactos conservando relaciones históricas](#t25)
+- [x] [T25 — Adaptar contactos conservando relaciones históricas](#t25)
 - [ ] [T26 — Actualizar pantallas de contactos](#t26)
 - [ ] [T27 — Completar bajas definitivas de clientes](#t27)
 - [ ] [T28 — Adaptar el modelo e historial de oportunidades](#t28)
@@ -680,13 +680,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Todos gestionan contactos; defaults/validación y filtros incluyen empresa; búsqueda también por razón social y orden apellido/nombre/ID.
-- [ ] Cambiar/quitar empresa modifica solo el contacto, aun si tiene oportunidades; no propaga a oportunidades/actividades previas.
-- [ ] Nuevas referencias deben estar disponibles; editar otro campo conserva las antiguas; nulos/omitidos y conflictos no producen guardados parciales.
+- [x] Todos gestionan contactos; defaults/validación y filtros incluyen empresa; búsqueda también por razón social y orden apellido/nombre/ID.
+- [x] Cambiar/quitar empresa modifica solo el contacto, aun si tiene oportunidades; no propaga a oportunidades/actividades previas.
+- [x] Nuevas referencias deben estar disponibles; editar otro campo conserva las antiguas; nulos/omitidos y conflictos no producen guardados parciales.
 
 **Verificación:** B + API(ContactosTests) + D; fixture A→B y desvinculación conserva asociaciones previas.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (03/11/2026):** [verificacion-cp09.md](verificaciones/verificacion-cp09.md). ContactosTests 3/3 y regresión HttpContract/ClientesModel/Empresas 23/23; build sin advertencias y `git diff --check` limpio. Suite completa, frontend y revisión independiente quedan para T26/CP09. Sin merge ni push.
 
 <a id="t26"></a>
 
