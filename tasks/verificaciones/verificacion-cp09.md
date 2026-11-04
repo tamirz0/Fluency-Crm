@@ -1,6 +1,6 @@
 # CP09 — Contactos (en curso)
 
-Inicio: 03/11/2026. Base `segunda-entrega` / `648853e` (CP08 integrada localmente). Rama `segunda-entrega-clientes`. Sin merge ni push autorizados. Este archivo cubre **T25** y **T26**; T27 y el cierre de CP09 siguen pendientes.
+Inicio: 03/11/2026. Base `segunda-entrega` / `648853e` (CP08 integrada localmente). Rama `segunda-entrega-clientes`. Sin merge ni push autorizados. Este archivo cubre **T25**, **T26** y **T27**; el cierre de CP09 (recorrido de bajas, revisión independiente e integración) sigue pendiente.
 
 ## T25 — Alcance
 
@@ -83,4 +83,44 @@ npm run api:types
 npx vitest run
 npm run build
 npm run lint
+```
+
+## T27 — Bajas definitivas de clientes
+
+Rama `segunda-entrega-bajas-clientes`, desde `segunda-entrega` / `0725237` (T26 integrada localmente con OK del usuario; sin publicar). Responsable único, backend y frontend.
+
+### Alcance
+
+- `DELETE /empresas/{id}` y `DELETE /contactos/{id}`: baja lógica (`activo = false`) en transacción Serializable, sin borrado físico, cascadas ni restauración; 204 si procede, 404 si no existe o ya fue dada de baja, 401 sin sesión, 409 `BUSINESS_CONFLICT` si está bloqueada.
+- Bloqueos: empresa por contactos activos u oportunidades activas asociadas directamente; contacto por cualquier oportunidad activa (también ganada o perdida). Las actividades no bloquean. El 409 informa causas y cantidades («…porque tiene 3 contactos activos y 2 oportunidades activas.»).
+- Las oportunidades se cuentan con SQL parametrizado vía `DbContext`, en la misma transacción: el modelo EF de oportunidades es el heredado y no tiene `activo` hasta T28. Sin llamar al servicio de oportunidades.
+- Defecto de producto corregido: los filtros de errores de empresas y contactos solo desenvolvían un nivel de excepción, así que un `40001` (conflicto de serialización) llegaba como `InvalidOperationException` → `DbUpdateException` → `PostgresException` y respondía 500 en lugar de 409 `CONCURRENT_CHANGE`. Ahora toman `GetBaseException()`. Afectaba también a altas/ediciones concurrentes de T23/T25. Servicios, usuarios, embudos y catálogos conservan el patrón anterior (fuera de alcance).
+- UI: botón «Dar de baja» en las fichas, con diálogo de confirmación (baja definitiva, sin restauración), mensaje del 409 dentro del diálogo y aviso «Empresa dada de baja» / «Contacto dado de baja» en el listado. `schema.d.ts` regenerado desde la API local (5169), sin edición manual; la API se detuvo al terminar.
+
+### Resultados
+
+- `BajasClientesTests` **2/2**: bloqueos por contacto y oportunidad, también ganada y perdida; actividad sin bloqueo; 204 y 404 posteriores (GET, DELETE, PATCH, listado); referencias y etiquetas conservadas (oportunidad, actividad y contacto siguen apuntando a la empresa dada de baja); empresa dada de baja no seleccionable; conteo plural; anónimo 401. Y seis rondas de baja contra alta concurrente de un contacto: nunca queda una empresa inactiva con contactos activos ni se aceptan ambas operaciones.
+- Backend completo **138/138**, cero omitidas, 6 min 38 s.
+- Frontend completo **114/114**, 14 archivos, 33,7 s (4 casos nuevos en `bajas.test.tsx`: baja correcta y bloqueo 409 para empresa y contacto). `npm run build` correcto; lint solo con la advertencia previa de `providers.tsx:9`.
+- `git diff --check` sin hallazgos.
+
+### Entorno e incidentes
+
+- Primer intento de `BajasClientesTests` 0/2. (1) Los conteos «3 contactos y 27 oportunidades» eran **del fixture**: `SchemaTests.SeedContextAsync` hace `CROSS JOIN usuario` y, con los usuarios de `AuthApiFactory`, multiplica filas (81 oportunidades). Se reemplazó por un fixture mínimo propio. (2) La carrera devolvía 500: defecto de producto descrito arriba, evidenciado con el log del servidor (`40001` envuelto). No se debilitó ninguna aserción.
+- Hallazgo de T25 sin corregir: `ContactosTests.ChangingOrRemovingTheCompany…` usa ese mismo seed multiplicado y comprueba la oportunidad con `SELECT … FROM oportunidad` sin filtro (primera fila). Pasa y el producto no toca oportunidades, pero la aserción es más débil de lo que parece; queda propuesto endurecerlo con un fixture propio.
+
+### No ejecutado (no aprobado)
+
+- Recorrido manual de bloqueo y de baja válida en el navegador: pendiente del operador.
+- Revisión independiente de CP09 (plan §6.1) y análisis de secretos con Gitleaks: pendientes; T27 no agrega secretos ni dependencias.
+- Limpieza comprobada de esquemas `t03_*` en la base de tests: no verificada (sin `psql` en el shell del agente).
+
+### Comandos reproducibles
+
+```powershell
+dotnet build backend/FluencyAPI.slnx --no-restore -m:1
+dotnet test backend/FluencyAPI.Tests/FluencyAPI.Tests.csproj --no-restore --filter "FullyQualifiedName~BajasClientesTests"
+dotnet test backend/FluencyAPI.Tests/FluencyAPI.Tests.csproj --no-restore
+cd frontend; npm run api:types   # con la API local en 5169
+npx vitest run; npm run build; npm run lint
 ```

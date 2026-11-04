@@ -34,7 +34,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T24 — Actualizar pantallas de empresas](#t24)
 - [x] [T25 — Adaptar contactos conservando relaciones históricas](#t25)
 - [x] [T26 — Actualizar pantallas de contactos](#t26)
-- [ ] [T27 — Completar bajas definitivas de clientes](#t27)
+- [x] [T27 — Completar bajas definitivas de clientes](#t27)
 - [ ] [T28 — Adaptar el modelo e historial de oportunidades](#t28)
 - [ ] [T29 — Crear oportunidades con defaults e historial atómico](#t29)
 - [ ] [T30 — Simplificar el alta de oportunidad en UI](#t30)
@@ -720,13 +720,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Empresa bloqueada por contactos activos o cualquier oportunidad activa; contacto por cualquier oportunidad activa, incluso ganada/perdida. Actividades no bloquean.
-- [ ] DELETE hace baja lógica definitiva, no hay restauración/cascadas; GET principal devuelve 404 y referencias en otros registros conservan etiquetas.
-- [ ] Acciones UI muestran causas/cantidades de 409; validar y escribir coordinadamente con asociaciones concurrentes. Completar bindings/tipos del DELETE junto con su consumidor.
+- [x] Empresa bloqueada por contactos activos o cualquier oportunidad activa; contacto por cualquier oportunidad activa, incluso ganada/perdida. Actividades no bloquean.
+- [x] DELETE hace baja lógica definitiva, no hay restauración/cascadas; GET principal devuelve 404 y referencias en otros registros conservan etiquetas.
+- [x] Acciones UI muestran causas/cantidades de 409; validar y escribir coordinadamente con asociaciones concurrentes. Completar bindings/tipos del DELETE junto con su consumidor.
 
 **Verificación:** B + F + API(BajasClientesTests) + D; baja frente a asociación concurrente con fixture PostgreSQL. Recorrido manual de bloqueo y baja válida. Checkpoint de clientes completo.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (03/11/2026):** [verificacion-cp09.md](verificaciones/verificacion-cp09.md#t27--bajas-definitivas-de-clientes). BajasClientesTests 2/2, backend completo 138/138 y frontend completo 114/114; build correcto y lint solo con el warning previo. Recorrido manual de bloqueo y baja válida, revisión independiente y cierre de CP09 pendientes. Sin merge ni push.
 
 ### CP09 — Módulo clientes
 
