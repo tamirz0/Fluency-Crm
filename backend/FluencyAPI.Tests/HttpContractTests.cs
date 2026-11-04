@@ -26,21 +26,21 @@ public sealed class HttpContractTests
         await using var factory = new ContractApiFactory(includeProbe: false);
         using var client = factory.CreateClient();
         var actions = factory.Services.GetRequiredService<IActionDescriptorCollectionProvider>().ActionDescriptors.Items;
-        Assert.Equal(44, actions.Count);
+        Assert.Equal(48, actions.Count);
         Assert.All(actions, action => Assert.Contains(
             Assert.IsType<Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor>(action).ControllerTypeInfo.AsType(),
-            new[] { typeof(LoginController), typeof(EmpresaController), typeof(UsuariosController), typeof(CatalogosController), typeof(ServiciosController), typeof(EmbudosController), typeof(EtapasComercialesController) }));
+            new[] { typeof(LoginController), typeof(EmpresaController), typeof(ContactoController), typeof(UsuariosController), typeof(CatalogosController), typeof(ServiciosController), typeof(EmbudosController), typeof(EtapasComercialesController) }));
 
         using var response = await client.GetAsync("/openapi/v1.json");
         response.EnsureSuccessStatusCode();
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        Assert.Equal(new[] { "/auth/csrf", "/auth/login", "/auth/logout", "/auth/me", "/catalogos/{catalogo}", "/catalogos/{catalogo}/opciones", "/catalogos/{catalogo}/{id}", "/catalogos/{catalogo}/{id}/desactivar", "/catalogos/{catalogo}/{id}/reactivar", "/embudos", "/embudos/{id}", "/embudos/{id}/desactivar", "/embudos/{id}/etapas", "/embudos/{id}/orden-etapas", "/embudos/{id}/reactivar", "/empresas", "/empresas/{id}", "/estados-oportunidad", "/etapas/{id}", "/etapas/{id}/desactivar", "/etapas/{id}/reactivar", "/roles", "/servicios", "/servicios/{id}", "/servicios/{id}/desactivar", "/servicios/{id}/reactivar", "/usuarios", "/usuarios/opciones", "/usuarios/{id}", "/usuarios/{id}/desactivar", "/usuarios/{id}/password", "/usuarios/{id}/reactivar" },
+        Assert.Equal(new[] { "/auth/csrf", "/auth/login", "/auth/logout", "/auth/me", "/catalogos/{catalogo}", "/catalogos/{catalogo}/opciones", "/catalogos/{catalogo}/{id}", "/catalogos/{catalogo}/{id}/desactivar", "/catalogos/{catalogo}/{id}/reactivar", "/contactos", "/contactos/{id}", "/embudos", "/embudos/{id}", "/embudos/{id}/desactivar", "/embudos/{id}/etapas", "/embudos/{id}/orden-etapas", "/embudos/{id}/reactivar", "/empresas", "/empresas/{id}", "/estados-oportunidad", "/etapas/{id}", "/etapas/{id}/desactivar", "/etapas/{id}/reactivar", "/roles", "/servicios", "/servicios/{id}", "/servicios/{id}/desactivar", "/servicios/{id}/reactivar", "/usuarios", "/usuarios/opciones", "/usuarios/{id}", "/usuarios/{id}/desactivar", "/usuarios/{id}/password", "/usuarios/{id}/reactivar" },
             document.RootElement.GetProperty("paths").EnumerateObject().Select(path => path.Name).Order(StringComparer.Ordinal).ToArray());
 
         // Enumerate source actions as well as the actual routing table: no alternate verb survives.
         var controllers = typeof(LoginController).Assembly.GetTypes()
             .Where(type => type.Namespace == typeof(LoginController).Namespace
-                && type.IsSubclassOf(typeof(ControllerBase)) && type != typeof(LoginController) && type != typeof(EmpresaController) && type != typeof(UsuariosController) && type != typeof(CatalogosController) && type != typeof(ServiciosController) && type != typeof(EmbudosController) && type != typeof(EtapasComercialesController));
+                && type.IsSubclassOf(typeof(ControllerBase)) && type != typeof(LoginController) && type != typeof(EmpresaController) && type != typeof(ContactoController) && type != typeof(UsuariosController) && type != typeof(CatalogosController) && type != typeof(ServiciosController) && type != typeof(EmbudosController) && type != typeof(EtapasComercialesController));
         foreach (var controller in controllers)
         {
             var prefix = controller.GetCustomAttribute<RouteAttribute>()!.Template
