@@ -1,11 +1,13 @@
 import { ArrowBack, Refresh } from '@mui/icons-material'
 import { Alert, Box, Button, Link, Skeleton, Typography } from '@mui/material'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { Link as RouterLink, useLocation, useParams } from 'react-router-dom'
-import { ApiRequestError, empresaQueryKeys, getCompany, type Empresa } from '../../api/client'
+import { Link as RouterLink, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { ApiRequestError, deleteCompany, empresaQueryKeys, getCompany, type Empresa } from '../../api/client'
 import { CompanyStatus } from './CompanyStatus'
 import { displayValue } from '../shared/display'
+import { confirmationFor } from '../shared/formUtils'
+import { RemoveRecordButton } from '../shared/RemoveRecordButton'
 import './companies.css'
 
 function parseCompanyId(value: string | undefined): number | undefined {
@@ -38,6 +40,8 @@ function DetailSkeleton() {
 export function CompanyDetailPage() {
   const { idEmpresa: routeId } = useParams()
   const location = useLocation()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const idEmpresa = parseCompanyId(routeId)
   const query = useQuery({
     queryKey: empresaQueryKeys.detail(idEmpresa ?? 0),
@@ -63,7 +67,11 @@ export function CompanyDetailPage() {
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
     <header className="company-detail-header">
       <div><Typography component="h1" className="companies-page-title">{company.razonSocial}</Typography></div>
-      <div className="company-detail-header-actions"><CompanyStatus value={status} /><Button component={RouterLink} to={`/empresas/${company.id}/editar`} variant="contained">Editar empresa</Button></div>
+      <div className="company-detail-header-actions"><CompanyStatus value={status} /><Button component={RouterLink} to={`/empresas/${company.id}/editar`} variant="contained">Editar empresa</Button>
+        <RemoveRecordButton noun="empresa" name={company.razonSocial} remove={() => deleteCompany(Number(company.id))} onRemoved={() => {
+          navigate('/empresas', { state: { confirmation: confirmationFor('Empresa', 'dada de baja') } })
+          void queryClient.invalidateQueries({ queryKey: empresaQueryKeys.all, refetchType: 'inactive' })
+        }} /></div>
     </header>
     {query.isFetching && query.isPlaceholderData && <Typography className="company-detail-loading" role="status">Actualizando ficha…</Typography>}
     <article className="company-sheet" aria-label={`Ficha de ${company.razonSocial}`}>

@@ -231,12 +231,18 @@ export function createCompany(body: CreateEmpresaRequest): Promise<Empresa> {
 export function patchCompany(id: number, body: PatchEmpresaRequest): Promise<Empresa> {
   return getResponseData(() => api.PATCH('/empresas/{id}', { params: { path: { id } }, body }))
 }
+export async function deleteCompany(id: number): Promise<void> {
+  await api.DELETE('/empresas/{id}', { params: { path: { id } } })
+}
 
 export function createContact(body: ContactoRequest): Promise<Contacto> {
   return getResponseData(() => api.POST('/contactos', { body }))
 }
 export function patchContact(id: number, body: ContactoRequest): Promise<Contacto> {
   return getResponseData(() => api.PATCH('/contactos/{id}', { params: { path: { id } }, body }))
+}
+export async function deleteContact(id: number): Promise<void> {
+  await api.DELETE('/contactos/{id}', { params: { path: { id } } })
 }
 
 export async function createOpportunity(body: CreateOportunidadRequest): Promise<OportunidadDetalle> {

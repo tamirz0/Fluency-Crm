@@ -2,7 +2,7 @@ import { Refresh } from '@mui/icons-material'
 import { Alert, Box, Button, Link, MenuItem, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 import { contactoQueryKeys, getCatalogOptions, listContacts, type Contacto } from '../../api/client'
 import { CompanyResponsibleSelect } from '../companies/CompanyResponsibleSelect'
 import { CompanyStatus } from '../companies/CompanyStatus'
@@ -53,6 +53,7 @@ function ContactListSkeleton() {
 
 export function ContactsPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [search, setSearch] = useState('')
   const [q, setQ] = useState('')
   const [state, setState] = useState('')
@@ -69,6 +70,7 @@ export function ContactsPage() {
   const filtered = Boolean(q || state || origin || responsible || company)
   return <Box className="companies-page records-page">
     <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Contactos</Typography><Typography className="companies-page-description">Personas compartidas por todo el equipo comercial.</Typography></div><Button component={RouterLink} to="/contactos/nuevo" variant="contained">Nuevo contacto</Button></header>
+    {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
     <Box component="form" onSubmit={e => { e.preventDefault(); setQ(search.trim()); setPage(0) }} sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3, alignItems: 'start' }}>
       <TextField label="Buscar contactos" type="search" value={search} onChange={e => setSearch(e.target.value)} helperText="Nombre, documento, correo, teléfono o empresa" />
       <TextField select label="Estado" value={state} onChange={e => { setState(e.target.value); setPage(0) }} sx={{ minWidth: 160 }}><MenuItem value="">Todos</MenuItem>{states.data?.map(s => <MenuItem key={s.id} value={String(s.id)}>{s.descripcion}</MenuItem>)}</TextField>

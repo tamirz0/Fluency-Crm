@@ -2,7 +2,7 @@ import { Business, Refresh } from '@mui/icons-material'
 import { Alert, Box, Button, Link, MenuItem, Skeleton, TablePagination, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 import { empresaQueryKeys, listCompanies, getCatalogOptions, type Empresa } from '../../api/client'
 import { displayValue } from '../shared/display'
 import { CompanyStatus } from './CompanyStatus'
@@ -76,6 +76,7 @@ function CompanyListSkeleton() {
 
 export function CompaniesPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [search, setSearch] = useState('')
   const [q, setQ] = useState('')
   const [state, setState] = useState('')
@@ -91,6 +92,7 @@ export function CompaniesPage() {
   const clear = () => { setSearch(''); setQ(''); setState(''); setOrigin(''); setResponsible(''); setPage(0) }
   return <Box className="companies-page">
     <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Empresas</Typography><Typography className="companies-page-description">Organizaciones compartidas por todo el equipo comercial.</Typography></div><Button component={RouterLink} to="/empresas/nueva" variant="contained">Nueva empresa</Button></header>
+    {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
     <Box component="form" onSubmit={e => { e.preventDefault(); setQ(search.trim()); setPage(0) }} sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3, alignItems: 'start' }}>
       <TextField label="Buscar empresas" type="search" value={search} onChange={e => setSearch(e.target.value)} helperText="Razón social, CUIT, correo o teléfono" />
       <TextField select label="Estado" value={state} onChange={e => { setState(e.target.value); setPage(0) }} sx={{ minWidth: 160 }}><MenuItem value="">Todos</MenuItem>{states.data?.map(s => <MenuItem key={s.id} value={String(s.id)}>{s.descripcion}</MenuItem>)}</TextField>
