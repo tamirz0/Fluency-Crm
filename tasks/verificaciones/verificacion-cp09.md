@@ -1,6 +1,6 @@
 # CP09 — Contactos (en curso)
 
-Inicio: 03/11/2026. Base `segunda-entrega` / `648853e` (CP08 integrada localmente). Rama `segunda-entrega-clientes`. Sin merge ni push autorizados. Este archivo cubre **T25**, **T26** y **T27**; el cierre de CP09 (recorrido de bajas, revisión independiente e integración) sigue pendiente.
+Inicio: 03/11/2026. Base `segunda-entrega` / `648853e` (CP08 integrada localmente). Rama `segunda-entrega-clientes`. Sin merge ni push autorizados. Este archivo cubre **T25**, **T26** y **T27**; la integración de T27 y del cierre de CP09 espera el OK del usuario.
 
 ## T25 — Alcance
 
@@ -111,8 +111,7 @@ Rama `segunda-entrega-bajas-clientes`, desde `segunda-entrega` / `0725237` (T26 
 
 ### No ejecutado (no aprobado)
 
-- Recorrido manual de bloqueo y de baja válida en el navegador: pendiente del operador.
-- Revisión independiente de CP09 (plan §6.1) y análisis de secretos con Gitleaks: pendientes; T27 no agrega secretos ni dependencias.
+- Análisis de secretos con Gitleaks: no ejecutado; CP09 no agrega secretos ni dependencias.
 - Limpieza comprobada de esquemas `t03_*` en la base de tests: no verificada (sin `psql` en el shell del agente).
 
 ### Comandos reproducibles
@@ -124,3 +123,27 @@ dotnet test backend/FluencyAPI.Tests/FluencyAPI.Tests.csproj --no-restore
 cd frontend; npm run api:types   # con la API local en 5169
 npx vitest run; npm run build; npm run lint
 ```
+
+## Recorrido manual de T27
+
+Recorrido de bloqueo y de baja válida aprobado por el usuario el 03/11/2026 en el entorno local.
+
+## Revisión independiente de CP09
+
+`/code-review` nivel medium sobre `648853e..HEAD` (T25, T26, T27), 03/11/2026. Es la revisión de la herramienta, no el modelo GPT-6.1 Sol/Medium del plan §6.1. Diez hallazgos, contrastados uno por uno con el código:
+
+**Obligaciones para T28 (válidas, sin consumidor hoy: `OportunidadesController` sigue retirado):**
+- `OportunidadService` valida contacto y empresa solo por existencia (`AnyAsync(c => c.Id == …)`), sin `Activo`. Al reactivar oportunidades debe exigir empresa y contacto activos y escribir en transacción Serializable, para que `DeleteAsync` de clientes cierre la carrera también con altas de oportunidades.
+- `OportunidadService.ContactoPerteneceAEmpresaAsync` rechaza oportunidades cuyo contacto ya no pertenece a la empresa. Contradice la regla de T25 (cambiar o quitar la empresa del contacto no toca oportunidades); debe retirarse en el corte de oportunidades.
+
+**Limitación conocida (ya documentada):** `getContacts()` trae los primeros 100 contactos para Inicio y el formulario de oportunidades, ambos hoy sin ruta. Se resuelve cuando se migren.
+
+**Descartados:**
+- `IdEstado!.Value` con valores nulos: `contacto.id_estado` es `NOT NULL` en el esquema.
+- Falta de reintento o `RollbackAsync` en Serializable: el 409 `CONCURRENT_CHANGE` sin reintentos automáticos es el contrato acordado, y `DisposeAsync` revierte la transacción.
+- `SingleOrDefaultAsync` con dos estados «Potencial»: `CatalogoService` rechaza etiquetas duplicadas (409 `DUPLICATE_VALUE`, sin distinguir mayúsculas).
+- Búsqueda con `translate`/`lower` y escaneo: mismo patrón ya revisado en empresas (T23), con volúmenes del proyecto.
+- Caché tras la baja: al volver atrás la ficha refresca y muestra «No encontramos…», que es el comportamiento esperado.
+- `page` muy grande: devuelve vacío; mismo comportamiento que empresas.
+
+**Mejora opcional, no aplicada:** debounce en el buscador de `ContactCompanySelect` (una petición por tecla; igual que `CompanyResponsibleSelect`).

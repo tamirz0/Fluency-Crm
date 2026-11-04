@@ -730,8 +730,8 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 ### CP09 — Módulo clientes
 
-- [ ] B + F, suites pertinentes completas y recorrido empresa/contacto/cambio de asociación/baja. Fixtures prueban bloqueos aunque la UI de oportunidades aún no esté terminada. Revisar antes del merge.
-- [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+- [x] B + F, suites pertinentes completas y recorrido empresa/contacto/cambio de asociación/baja. Fixtures prueban bloqueos aunque la UI de oportunidades aún no esté terminada. Revisar antes del merge. Backend 138/138 y frontend 114/114; recorridos manuales aprobados por el usuario (T26 y T27); revisión independiente realizada sin defectos que corregir.
+- [x] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando. Ver [verificacion-cp09.md](verificaciones/verificacion-cp09.md); quedan como no ejecutados Gitleaks y el conteo de esquemas `t03_*` residuales, y como entradas para T28 las dos obligaciones de la revisión.
 
 <a id="t28"></a>
 
