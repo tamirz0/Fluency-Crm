@@ -38,6 +38,8 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T28 — Adaptar el modelo e historial de oportunidades](#t28)
 - [x] [T29 — Crear oportunidades con defaults e historial atómico](#t29)
 - [ ] [T30 — Simplificar el alta de oportunidad en UI](#t30)
+- [x] [T30a — Hacer opcional el título de la oportunidad](#t30a)
+- [ ] [T30b — Renovar la apariencia de la interfaz](#t30b)
 - [ ] [T31 — Consultar oportunidades e historial de etapas](#t31)
 - [ ] [T32 — Mostrar tabla y ficha de oportunidades compartidas](#t32)
 - [ ] [T33 — Mostrar funnel según el rol](#t33)
@@ -797,6 +799,42 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 - [ ] Crear oportunidad desde cliente con defaults y comprobar historial inicial; no basta el formulario con mocks.
 - [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+
+<a id="t30a"></a>
+
+### T30a — Hacer opcional el título de la oportunidad
+
+**Resultado:** Cambio acordado el 05/11/2026 (CRM de referencia del docente): sin título, la oportunidad se muestra con el nombre de la empresa, del contacto o de ambos.
+
+**Dependencias:** T29, T30. **Tamaño:** S–M.
+
+**Aceptación:**
+
+- [x] `oportunidad.titulo` nulable (con CHECK si existe); alta sin título válida; vacío o en blanco se guarda como null; máximo 100.
+- [x] Respuesta con `titulo` y `tituloVisible` calculado al leer (título propio, empresa, contacto o `Empresa – Contacto`).
+- [x] Formulario sin título obligatorio, embudo preseleccionado si es el único; la ficha muestra `tituloVisible`.
+
+**Verificación:** B + API(`AltaOportunidadTests`) + F + D.
+
+**Evidencia técnica (05/11/2026):** [verificacion-t30a.md](verificaciones/verificacion-t30a.md). Backend 147/147 y frontend 116/116. **Operación manual pendiente en bases ya creadas:** `ALTER TABLE oportunidad ALTER COLUMN titulo DROP NOT NULL;` (solo está en el SQL versionado; no se ejecutó en ninguna base existente).
+
+<a id="t30b"></a>
+
+### T30b — Renovar la apariencia de la interfaz
+
+**Resultado:** Lavado de cara acordado el 05/11/2026: aspecto más moderno conservando MUI, tema oscuro, accesibilidad y el comportamiento actual.
+
+**Dependencias:** T30a. **Tamaño previsto:** M; tema, estilos compartidos, menú lateral y pantallas existentes.
+
+**Aceptación:**
+
+- [x] Tema de MUI renovado (paleta, tipografía, radios, sombras, botones, campos, tablas, chips y diálogos) definido en un solo lugar.
+- [x] Menú lateral, cabeceras, fichas, listados y formularios existentes usan el estilo nuevo sin cambiar rutas, textos accesibles ni flujos.
+- [x] Sin librerías nuevas; contraste, foco y teclado se conservan.
+
+**Verificación:** F + UI(suite completa) + D; revisión visual del usuario en el navegador.
+
+**Evidencia técnica (05/11/2026):** [verificacion-t30b.md](verificaciones/verificacion-t30b.md). Frontend 116/116, build correcto. **Pendiente:** revisión visual del usuario en el navegador (sin herramienta de navegador en la sesión); la tarea no se marca terminada hasta entonces.
 
 <a id="t31"></a>
 

@@ -427,12 +427,12 @@ Validar preventivamente recorridos, ofrecer asistentes de configuración o mostr
 2. La interfaz aprovecha ese contexto para completar cliente y/o embudo, sin exigir que se vuelvan a seleccionar.
 3. Al seleccionar el embudo se asigna su primera etapa **abierta y activa**, según `orden`. No se toma simplemente la primera etapa si esta fuera ganada o perdida.
 4. El responsable inicial es el usuario que crea la oportunidad.
-5. Se completa un título y se confirma el alta. Los datos complementarios pueden editarse luego.
+5. Se confirma el alta; el título es opcional. Los datos complementarios pueden editarse luego.
 6. Se genera la fecha de creación y una entrada inicial en el historial.
 
 | Información | Regla en el alta |
 |---|---|
-| Título | Necesario para identificar la negociación. Se puede sugerir desde el contexto; no obliga a un formato especial. |
+| Título | Opcional (acordado el 05/11/2026, siguiendo el CRM de referencia del docente). Sin título se muestra el nombre de la empresa y/o el contacto, calculado al leer. |
 | Empresa y contacto | Al menos uno. Pueden existir ambos. No exigir una empresa a un cliente individual. |
 | Responsable | Obligatorio, preseleccionado con el creador. |
 | Embudo | Selección de contexto que determina las etapas disponibles; no se duplica como FK en oportunidad. |

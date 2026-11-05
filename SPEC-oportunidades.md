@@ -10,8 +10,9 @@ Persistir únicamente relaciones y campos del E-R objetivo: responsable, empresa
 
 ## Entradas y respuestas
 
-Alta `CreateOportunidadRequest`: `titulo`, `idEmbudo`, al menos `idEmpresa` o `idContacto`; opcionales `idEtapa`, `idResponsable`, `idOrigen`, `valor`, `fechaEstimadaCierre`, `objetivoAprendizaje`, `cantidadParticipantes`, `disponibilidadHoraria`, `observaciones`.
+Alta `CreateOportunidadRequest`: `idEmbudo`, al menos `idEmpresa` o `idContacto`; opcionales `titulo` (cambio acordado el 05/11/2026), `idEtapa`, `idResponsable`, `idOrigen`, `valor`, `fechaEstimadaCierre`, `objetivoAprendizaje`, `cantidadParticipantes`, `disponibilidadHoraria`, `observaciones`.
 
+- Título opcional (máx. 100; vacío o en blanco se guarda como null). Response: `titulo` (propio, puede ser null) y `tituloVisible`, que el servidor calcula: el título propio o, si falta, la razón social, el nombre y apellido del contacto, o `Empresa – Nombre Apellido` cuando hay ambos. Tarjetas, tabla y ficha muestran `tituloVisible`; el nombre es el actual del cliente, no una copia.
 - `idEmbudo` solo expresa contexto de la operación y nunca se persiste como FK de oportunidad. Si hay etapa explícita, debe ser abierta/activa y pertenecer al embudo activo; si se omite, tomar primera abierta activa por orden.
 - Responsable omitido: actor autenticado. Un vendedor crea a su nombre; puede reasignar después. Administrador/responsable comercial pueden seleccionar otro usuario activo. Conservar el caso por defecto de un superior que crea una oportunidad propia.
 - Valor omitido: copiar precio del servicio. Null explícito no significa cero; importe numérico informado, incluido cero, prevalece. Origen y campos de academia opcionales no bloquean alta.
