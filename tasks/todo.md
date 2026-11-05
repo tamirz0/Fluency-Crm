@@ -908,13 +908,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Selector de embudo separa procesos; vendedor solo ve propias y no puede sustituir su responsable; superiores ven todas con filtro opcional.
-- [ ] Mantener columnas vacías, finales y cerradas vigentes; embudo inactivo explica su situación.
+- [x] Selector de embudo separa procesos; vendedor solo ve propias y no puede sustituir su responsable; superiores ven todas con filtro opcional.
+- [x] Mantener columnas vacías, finales y cerradas vigentes; embudo inactivo explica su situación.
 - [ ] Conservar tarjetas resumidas/expansión y selector de transición; no agregar drag-and-drop ni paginación por columna obligatorios.
 
 **Verificación:** F + UI(src/features/funnel/FunnelPage.test.tsx) + D; dos vendedores, mismo embudo, tabla global y funnels distintos.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t33.md](verificaciones/verificacion-t33.md). `FunnelPage.test.tsx` 3/3; frontend 113/113, build correcto, lint solo con la advertencia previa. **Pendiente:** el selector de transición espera a `/mover` (T36); por eso T33 no se marca terminada. Sin merge ni push.
 
 ### CP11 — Visibilidad comercial
 
