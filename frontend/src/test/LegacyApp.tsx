@@ -16,7 +16,6 @@ const EditContactPage = lazy(() => import('../features/contacts/ContactFormPage'
 const NewContactPage = lazy(() => import('../features/contacts/ContactFormPage').then(({ NewContactPage }) => ({ default: NewContactPage })))
 const OpportunitiesPage = lazy(() => import('../features/opportunities/OpportunitiesPage').then(({ OpportunitiesPage }) => ({ default: OpportunitiesPage })))
 const OpportunityDetailPage = lazy(() => import('../features/opportunities/OpportunityDetailPage').then(({ OpportunityDetailPage }) => ({ default: OpportunityDetailPage })))
-const EditOpportunityPage = lazy(() => import('../features/opportunities/OpportunityFormPage').then(({ EditOpportunityPage }) => ({ default: EditOpportunityPage })))
 const NewOpportunityPage = lazy(() => import('../features/opportunities/OpportunityFormPage').then(({ NewOpportunityPage }) => ({ default: NewOpportunityPage })))
 const FunnelPage = lazy(() => import('../features/funnel/FunnelPage').then(({ FunnelPage }) => ({ default: FunnelPage })))
 
@@ -45,7 +44,6 @@ function LegacyApp() {
           <Route path="/contactos/:idContacto" element={<ContactDetailPage />} />
           <Route path="/oportunidades" element={<OpportunitiesPage />} />
           <Route path="/oportunidades/nueva" element={<NewOpportunityPage />} />
-          <Route path="/oportunidades/:idOportunidad/editar" element={<EditOpportunityPage />} />
           <Route path="/oportunidades/:idOportunidad" element={<OpportunityDetailPage />} />
           <Route path="/embudo" element={<FunnelPage />} />
         </Route>

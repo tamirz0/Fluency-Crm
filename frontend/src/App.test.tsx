@@ -160,7 +160,8 @@ it.each(['/contactos', '/contactos/nuevo'])('habilita contactos compartidos desd
   expect(vi.mocked(fetch).mock.calls.some(([r]) => new URL((r as Request).url).pathname.startsWith('/api/catalogos/'))).toBe(true)
 })
 
-it.each(['/oportunidades/1', '/embudo'])('conserva retirado el módulo comercial %s', async path => {
+// La ficha /oportunidades/:id la publica T30; el listado y el funnel siguen retirados hasta T32/T33.
+it.each(['/oportunidades', '/embudo'])('conserva retirado el módulo comercial %s', async path => {
   authenticated = true
   mount(path)
   await screen.findByRole('heading', { name: 'Hola, María' })

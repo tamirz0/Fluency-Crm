@@ -2936,6 +2936,203 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/oportunidades/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Consulta una oportunidad vigente, también ajena (lectura compartida). */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OportunidadResponse"];
+                        "application/json": components["schemas"]["OportunidadResponse"];
+                        "text/json": components["schemas"]["OportunidadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oportunidades": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Crea una oportunidad con su historial inicial en una sola transacción. Sin etapa usa la primera abierta activa del embudo;
+         *     sin valor copia el precio del servicio; sin responsable usa al actor. El vendedor solo crea a su nombre.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateOportunidadRequest"];
+                    "text/json": components["schemas"]["CreateOportunidadRequest"];
+                    "application/*+json": components["schemas"]["CreateOportunidadRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OportunidadResponse"];
+                        "application/json": components["schemas"]["OportunidadResponse"];
+                        "text/json": components["schemas"]["OportunidadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/servicios": {
         parameters: {
             query?: never;
@@ -4322,6 +4519,16 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description Operaciones que el actor puede intentar; la API vuelve a comprobarlas al ejecutar. */
+        AccionesOportunidad: {
+            editar: boolean;
+            reasignar: boolean;
+            mover: boolean;
+            cerrar: boolean;
+            reabrir: boolean;
+            darDeBaja: boolean;
+            gestionarActividades: boolean;
+        };
         /** @description Alta o edición de la etiqueta obligatoria según el catálogo; omisión y null no la borran. */
         CatalogoRequest: {
             descripcion?: null | string;
@@ -4382,6 +4589,37 @@ export interface components {
             /** Format: date-time */
             fechaCreacion: string;
             activo: boolean;
+        };
+        /**
+         * @description Alta de oportunidad. Requiere título, embudo (solo contexto, no se persiste) y empresa o contacto.
+         *     Autor, estado y fechas los fija el servidor; propiedades desconocidas se rechazan.
+         */
+        CreateOportunidadRequest: {
+            titulo?: null | string;
+            /** Format: int32 */
+            idEmbudo?: number | string;
+            /** Format: int32 */
+            idEmpresa?: null | number | string;
+            /** Format: int32 */
+            idContacto?: null | number | string;
+            /** Format: int32 */
+            idEtapa?: null | number | string;
+            /** Format: int32 */
+            idResponsable?: null | number | string;
+            /** Format: int32 */
+            idOrigen?: null | number | string;
+            /**
+             * Format: double
+             * @description Omitido o null: copia el precio del servicio. Un importe informado, incluido cero, prevalece.
+             */
+            valor?: null | number | string;
+            /** Format: date */
+            fechaEstimadaCierre?: null | string;
+            objetivoAprendizaje?: null | string;
+            /** Format: int32 */
+            cantidadParticipantes?: null | number | string;
+            disponibilidadHoraria?: null | string;
+            observaciones?: null | string;
         };
         /** @description Alta administrativa; siempre inicia activa. */
         CreateUsuarioRequest: {
@@ -4488,6 +4726,57 @@ export interface components {
         LoginRequest: {
             username: string;
             password: string;
+        };
+        /** @description Oportunidad con referencias etiquetadas; embudo, servicio y estado se derivan de la etapa. */
+        OportunidadResponse: {
+            /** Format: int32 */
+            id: number | string;
+            titulo: string;
+            /** Format: int32 */
+            idResponsable: number | string;
+            responsableNombre: string;
+            responsableActivo: boolean;
+            /** Format: int32 */
+            idEmpresa?: null | number | string;
+            empresaRazonSocial?: null | string;
+            /** Format: int32 */
+            idContacto?: null | number | string;
+            contactoNombre?: null | string;
+            /** Format: int32 */
+            idEtapa: number | string;
+            etapaNombre: string;
+            etapaActiva: boolean;
+            estado: string;
+            /** Format: int32 */
+            idEmbudo: number | string;
+            embudoNombre: string;
+            embudoActivo: boolean;
+            /** Format: int32 */
+            idServicio: number | string;
+            servicioNombre: string;
+            servicioActivo: boolean;
+            /** Format: int32 */
+            idOrigen?: null | number | string;
+            origenDescripcion?: null | string;
+            origenActivo?: null | boolean;
+            /** Format: double */
+            valor: number | string;
+            /** Format: date-time */
+            fechaCreacion: string;
+            /** Format: date */
+            fechaEstimadaCierre?: null | string;
+            /** Format: date-time */
+            fechaCierre?: null | string;
+            /** Format: int32 */
+            idMotivoPerdida?: null | number | string;
+            motivoPerdidaDescripcion?: null | string;
+            objetivoAprendizaje?: null | string;
+            /** Format: int32 */
+            cantidadParticipantes?: null | number | string;
+            disponibilidadHoraria?: null | string;
+            observaciones?: null | string;
+            activo: boolean;
+            accionesPermitidas?: components["schemas"]["AccionesOportunidad"];
         };
         /** @description Incluye todas las etapas activas una vez; admite huecos. */
         OrdenEtapasRequest: {

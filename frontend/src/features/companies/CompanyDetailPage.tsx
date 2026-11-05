@@ -6,6 +6,7 @@ import { Link as RouterLink, useLocation, useNavigate, useParams } from 'react-r
 import { ApiRequestError, deleteCompany, empresaQueryKeys, getCompany, type Empresa } from '../../api/client'
 import { CompanyStatus } from './CompanyStatus'
 import { displayValue } from '../shared/display'
+import { useAuth } from '../../auth/useAuth'
 import { confirmationFor } from '../shared/formUtils'
 import { RemoveRecordButton } from '../shared/RemoveRecordButton'
 import './companies.css'
@@ -39,6 +40,7 @@ function DetailSkeleton() {
 
 export function CompanyDetailPage() {
   const { idEmpresa: routeId } = useParams()
+  const canCreateOpportunity = Boolean(useAuth().user?.permisos?.includes('GestionarOportunidad'))
   const location = useLocation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -67,7 +69,7 @@ export function CompanyDetailPage() {
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
     <header className="company-detail-header">
       <div><Typography component="h1" className="companies-page-title">{company.razonSocial}</Typography></div>
-      <div className="company-detail-header-actions"><CompanyStatus value={status} /><Button component={RouterLink} to={`/empresas/${company.id}/editar`} variant="contained">Editar empresa</Button>
+      <div className="company-detail-header-actions"><CompanyStatus value={status} />{canCreateOpportunity && <Button component={RouterLink} to={`/oportunidades/nueva?idEmpresa=${company.id}`} variant="outlined">Nueva oportunidad</Button>}<Button component={RouterLink} to={`/empresas/${company.id}/editar`} variant="contained">Editar empresa</Button>
         <RemoveRecordButton noun="empresa" name={company.razonSocial} remove={() => deleteCompany(Number(company.id))} onRemoved={() => {
           navigate('/empresas', { state: { confirmation: confirmationFor('Empresa', 'dada de baja') } })
           void queryClient.invalidateQueries({ queryKey: empresaQueryKeys.all, refetchType: 'inactive' })

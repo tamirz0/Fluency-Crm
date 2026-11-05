@@ -7,6 +7,7 @@ import { Edit } from '@mui/icons-material'
 import { ApiRequestError, contactoQueryKeys, deleteContact, getContact, type Contacto } from '../../api/client'
 import { CompanyStatus } from '../companies/CompanyStatus'
 import { contactFullName, displayValue, parsePositiveId } from '../shared/display'
+import { useAuth } from '../../auth/useAuth'
 import { confirmationFor } from '../shared/formUtils'
 import { RemoveRecordButton } from '../shared/RemoveRecordButton'
 import '../companies/companies.css'
@@ -59,6 +60,7 @@ function ContactDetails({ contact }: { contact: Contacto }) {
 
 export function ContactDetailPage() {
   const { idContacto: routeId } = useParams()
+  const canCreateOpportunity = Boolean(useAuth().user?.permisos?.includes('GestionarOportunidad'))
   const location = useLocation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -73,7 +75,7 @@ export function ContactDetailPage() {
   return <Box className="companies-page company-result-page records-page">
     <Link component={RouterLink} to="/contactos" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a contactos</Link>
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
-    <header className="company-detail-header"><div><Typography component="h1" className="companies-page-title">{contactFullName(contact)}</Typography></div><div className="company-detail-header-actions"><CompanyStatus value={contact.estadoDescripcion} /><Button component={RouterLink} to={`/contactos/${contact.id}/editar`} variant="contained" startIcon={<Edit />}>Editar contacto</Button>
+    <header className="company-detail-header"><div><Typography component="h1" className="companies-page-title">{contactFullName(contact)}</Typography></div><div className="company-detail-header-actions"><CompanyStatus value={contact.estadoDescripcion} />{canCreateOpportunity && <Button component={RouterLink} to={`/oportunidades/nueva?idContacto=${contact.id}`} variant="outlined">Nueva oportunidad</Button>}<Button component={RouterLink} to={`/contactos/${contact.id}/editar`} variant="contained" startIcon={<Edit />}>Editar contacto</Button>
       <RemoveRecordButton noun="contacto" name={contactFullName(contact)} remove={() => deleteContact(Number(contact.id))} onRemoved={() => {
         navigate('/contactos', { state: { confirmation: confirmationFor('Contacto', 'dado de baja') } })
         void queryClient.invalidateQueries({ queryKey: contactoQueryKeys.all, refetchType: 'inactive' })
