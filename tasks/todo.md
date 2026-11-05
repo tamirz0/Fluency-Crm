@@ -42,8 +42,8 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] ~~[T30b — Renovar la apariencia de la interfaz](#t30b)~~ (revertida a pedido del usuario)
 - [x] ~~[T30c — Landing pública con acceso al login](#t30c)~~ (revertida a pedido del usuario)
 - [x] [T31 — Consultar oportunidades e historial de etapas](#t31)
-- [ ] [T32 — Mostrar tabla y ficha de oportunidades compartidas](#t32)
-- [ ] [T33 — Mostrar funnel según el rol](#t33)
+- [x] [T32 — Mostrar tabla y ficha de oportunidades compartidas](#t32)
+- [x] [T33 — Mostrar funnel según el rol](#t33)
 - [x] [T34 — Editar datos de una oportunidad abierta](#t34)
 - [x] [T35 — Reasignar una oportunidad y retirar permiso anterior](#t35)
 - [x] [T36 — Mover entre etapas abiertas con historial](#t36)
@@ -889,12 +889,14 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 **Aceptación:**
 
 - [x] Tabla lista todas las vigentes con filtros/paginación; ficha ajena se puede leer completa e incluye historial de etapas.
-- [ ] Acciones se muestran según permisos del servidor; no se confunde ocultar botones con autorización.
+- [x] Acciones se muestran según permisos del servidor; no se confunde ocultar botones con autorización.
 - [x] Referencias inactivas siguen legibles; búsqueda y caché incluyen filtros/página y no mezclan resultados.
 
 **Verificación:** F + UI(src/features/consultations/Consultations.test.tsx) + D; vendedor consulta detalle ajeno sin editar.
 
 **Evidencia técnica (05/11/2026):** [verificacion-t32.md](verificaciones/verificacion-t32.md). Frontend 113/113, build correcto, lint solo con la advertencia previa. **Pendiente:** la segunda aceptación (acciones según permisos) espera a los comandos de T34–T39; por eso T32 no se marca terminada. Sin merge ni push.
+
+**Actualización (05/11/2026):** la aceptación pendiente quedó cubierta por T34–T39: las acciones de la ficha (editar, reasignar, cambiar etapa, cerrar, reabrir, dar de baja) se muestran según `accionesPermitidas` del servidor y el selector de transición del funnel existe. Ver [verificación T36](verificaciones/verificacion-t36.md) y [CP13](verificaciones/verificacion-cp13.md).
 
 <a id="t33"></a>
 
@@ -910,11 +912,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 - [x] Selector de embudo separa procesos; vendedor solo ve propias y no puede sustituir su responsable; superiores ven todas con filtro opcional.
 - [x] Mantener columnas vacías, finales y cerradas vigentes; embudo inactivo explica su situación.
-- [ ] Conservar tarjetas resumidas/expansión y selector de transición; no agregar drag-and-drop ni paginación por columna obligatorios.
+- [x] Conservar tarjetas resumidas/expansión y selector de transición; no agregar drag-and-drop ni paginación por columna obligatorios.
 
 **Verificación:** F + UI(src/features/funnel/FunnelPage.test.tsx) + D; dos vendedores, mismo embudo, tabla global y funnels distintos.
 
 **Evidencia técnica (05/11/2026):** [verificacion-t33.md](verificaciones/verificacion-t33.md). `FunnelPage.test.tsx` 3/3; frontend 113/113, build correcto, lint solo con la advertencia previa. **Pendiente:** el selector de transición espera a `/mover` (T36); por eso T33 no se marca terminada. Sin merge ni push.
+
+**Actualización (05/11/2026):** la aceptación pendiente quedó cubierta por T34–T39: las acciones de la ficha (editar, reasignar, cambiar etapa, cerrar, reabrir, dar de baja) se muestran según `accionesPermitidas` del servidor y el selector de transición del funnel existe. Ver [verificación T36](verificaciones/verificacion-t36.md) y [CP13](verificaciones/verificacion-cp13.md).
 
 ### CP11 — Visibilidad comercial
 
@@ -1048,8 +1052,10 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 ### CP13 — Módulo oportunidades
 
-- [ ] B + F, suites completas pertinentes y circuito alta→reasignación→movimiento→cierre→reapertura→baja. Repetir bloqueos de clientes/configuración usando operaciones reales. Revisar antes del merge.
+- [x] B + F, suites completas pertinentes y circuito alta→reasignación→movimiento→cierre→reapertura→baja. Repetir bloqueos de clientes/configuración usando operaciones reales. Revisar antes del merge (**revisión independiente pendiente**).
 - [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+
+**Evidencia técnica (05/11/2026):** [verificacion-cp13.md](verificaciones/verificacion-cp13.md). Backend completo 163/163, frontend 132/132, build correcto y lint solo con la advertencia previa. Pendientes: revisión independiente, validación autenticada del usuario y OK de integración. Sin merge ni push.
 
 <a id="t40"></a>
 
