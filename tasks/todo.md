@@ -53,7 +53,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T40 — Mapear actividades realizadas](#t40)
 - [x] [T41 — Registrar y consultar actividades por API](#t41)
 - [ ] [T42 — Registrar actividades desde fichas](#t42)
-- [ ] [T43 — Editar y dar de baja actividades con permisos de origen y destino](#t43)
+- [x] [T43 — Editar y dar de baja actividades con permisos de origen y destino](#t43)
 - [ ] [T44 — Proyectar el historial comercial combinado](#t44)
 - [ ] [T45 — Mostrar historial comercial en las tres fichas](#t45)
 - [ ] [T46 — Comprobar retiro del legado y coherencia de contratos](#t46)
@@ -1134,13 +1134,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] PATCH/DELETE verifican dueño actual de oportunidad o superiores; relink/desvinculación valida tanto origen como destino, sin eludir permiso.
-- [ ] Editar texto/resultado/fecha no revalida empresa actual del contacto contra historia ni altera autor/fechaRegistro.
-- [ ] Baja lógica sin restauración ni marcador; una relación comercial dada de baja no causa cascada y solo desaparece la actividad al darla de baja a ella.
+- [x] PATCH/DELETE verifican dueño actual de oportunidad o superiores; relink/desvinculación valida tanto origen como destino, sin eludir permiso.
+- [x] Editar texto/resultado/fecha no revalida empresa actual del contacto contra historia ni altera autor/fechaRegistro.
+- [x] Baja lógica sin restauración ni marcador; una relación comercial dada de baja no causa cascada y solo desaparece la actividad al darla de baja a ella.
 
 **Verificación:** B + F + API(EdicionActividadTests) + UI(src/features/activities/ActivityForm.test.tsx) + D; cambio de dueño, quitar oportunidad ajena y texto histórico.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t43.md](verificaciones/verificacion-t43.md). `EdicionActividadTests` 2/2 más `ActividadesTests` y `HttpContractTests` (24/24); frontend 138/138 (`ActivityForm.test.tsx` 6/6), build correcto, lint solo con la advertencia previa. Sin merge ni push.
 
 <a id="t44"></a>
 
