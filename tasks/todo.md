@@ -41,7 +41,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T30a — Hacer opcional el título de la oportunidad](#t30a)
 - [x] ~~[T30b — Renovar la apariencia de la interfaz](#t30b)~~ (revertida a pedido del usuario)
 - [x] ~~[T30c — Landing pública con acceso al login](#t30c)~~ (revertida a pedido del usuario)
-- [ ] [T31 — Consultar oportunidades e historial de etapas](#t31)
+- [x] [T31 — Consultar oportunidades e historial de etapas](#t31)
 - [ ] [T32 — Mostrar tabla y ficha de oportunidades compartidas](#t32)
 - [ ] [T33 — Mostrar funnel según el rol](#t33)
 - [ ] [T34 — Editar datos de una oportunidad abierta](#t34)
@@ -868,13 +868,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Tabla/detalle permiten lectura de todas las oportunidades vigentes; filtros por cliente/responsable/embudo/etapa/estado/origen y búsqueda antes de paginar.
-- [ ] DTO deriva relaciones y accionesPermitidas; historial paginado fecha/ID ascendentes, sin endpoints de edición.
-- [ ] Query de funnel por embudo devuelve columnas activas vacías/finales; fuerza dueño autenticado para vendedor y admite filtro de responsable para superiores, sin filtrar la tabla global.
+- [x] Tabla/detalle permiten lectura de todas las oportunidades vigentes; filtros por cliente/responsable/embudo/etapa/estado/origen y búsqueda antes de paginar.
+- [x] DTO deriva relaciones y accionesPermitidas; historial paginado fecha/ID ascendentes, sin endpoints de edición.
+- [x] Query de funnel por embudo devuelve columnas activas vacías/finales; fuerza dueño autenticado para vendedor y admite filtro de responsable para superiores, sin filtrar la tabla global.
 
 **Verificación:** B + API(ConsultaOportunidadesTests) + D; vendedor fuerza ID de otro en funnel y no amplía su cartera, pero sí consulta su detalle en tabla.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t31.md](verificaciones/verificacion-t31.md). `ConsultaOportunidadesTests` 3/3; `HttpContractTests` + `AltaOportunidadTests` 26/26; build sin errores ni advertencias. Sin merge ni push.
 
 <a id="t32"></a>
 
