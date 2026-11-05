@@ -94,6 +94,15 @@ public sealed class OportunidadesController(IOportunidadService oportunidades) :
         => Ok(await oportunidades.PerderAsync(id, request, ct));
 
     /// <summary>
+    /// Reabre una cerrada en una etapa abierta activa de su embudo (solo administrador y responsable comercial). Conserva en el
+    /// historial, como texto, el cierre anterior y la justificación; limpia fecha y motivo de cierre y mantiene el valor.
+    /// </summary>
+    [HttpPost("{id:int}/reabrir"), Authorize(Policy = RolesYPermisos.ReabrirOportunidad)]
+    [ProducesResponseType<OportunidadResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<OportunidadResponse>> Reabrir(int id, [FromBody] ReabrirOportunidadRequest request, CancellationToken ct)
+        => Ok(await oportunidades.ReabrirAsync(id, request, ct));
+
+    /// <summary>
     /// Crea una oportunidad con su historial inicial en una sola transacción. Sin etapa usa la primera abierta activa del embudo;
     /// sin valor copia el precio del servicio; sin responsable usa al actor. El vendedor solo crea a su nombre.
     /// </summary>

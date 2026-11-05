@@ -9,6 +9,7 @@ import { clientLabel, money, stateLabels } from './opportunityData'
 import { CloseOpportunityDialog, type CloseResult } from './CloseOpportunityDialog'
 import { MoveStageDialog } from './MoveStageDialog'
 import { ReassignDialog } from './ReassignDialog'
+import { ReopenOpportunityDialog } from './ReopenOpportunityDialog'
 import '../contacts/records.css'
 import '../companies/companies.css'
 
@@ -86,6 +87,7 @@ export function OpportunityDetailPage() {
   const opportunity = query.data
   const [reassigning, setReassigning] = useState(false)
   const [moving, setMoving] = useState(false)
+  const [reopening, setReopening] = useState(false)
   const [closing, setClosing] = useState<CloseResult | '' | null>(null)
   const [reassigned, setReassigned] = useState(false)
   const back = opportunity?.idEmpresa ? { to: `/empresas/${opportunity.idEmpresa}`, label: 'Volver a la empresa' } : opportunity?.idContacto ? { to: `/contactos/${opportunity.idContacto}`, label: 'Volver al contacto' } : { to: '/inicio', label: 'Volver al inicio' }
@@ -100,11 +102,12 @@ export function OpportunityDetailPage() {
   return <Box className="companies-page company-result-page records-page">
     {backLink}
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
-    <header className="company-detail-header"><div><Typography component="h1" className="companies-page-title">{opportunity.tituloVisible}</Typography>{opportunity.titulo && <Typography className="companies-page-description opportunity-subtitle">{clientLabel(opportunity)}</Typography>}</div><div className="company-detail-header-actions">{opportunity.accionesPermitidas.editar && <Button component={RouterLink} to={`/oportunidades/${opportunity.id}/editar`} variant="outlined">Editar</Button>}{opportunity.accionesPermitidas.mover && <Button variant="outlined" onClick={() => setMoving(true)}>Cambiar etapa</Button>}{opportunity.accionesPermitidas.cerrar && <Button variant="outlined" onClick={() => setClosing('')}>Cerrar</Button>}{opportunity.accionesPermitidas.reasignar && <Button variant="outlined" onClick={() => setReassigning(true)}>Reasignar</Button>}<Chip className="company-status company-status--prospect" label={stateLabels[opportunity.estado] ?? opportunity.estado} size="small" /></div></header>
+    <header className="company-detail-header"><div><Typography component="h1" className="companies-page-title">{opportunity.tituloVisible}</Typography>{opportunity.titulo && <Typography className="companies-page-description opportunity-subtitle">{clientLabel(opportunity)}</Typography>}</div><div className="company-detail-header-actions">{opportunity.accionesPermitidas.editar && <Button component={RouterLink} to={`/oportunidades/${opportunity.id}/editar`} variant="outlined">Editar</Button>}{opportunity.accionesPermitidas.mover && <Button variant="outlined" onClick={() => setMoving(true)}>Cambiar etapa</Button>}{opportunity.accionesPermitidas.cerrar && <Button variant="outlined" onClick={() => setClosing('')}>Cerrar</Button>}{opportunity.accionesPermitidas.reabrir && <Button variant="outlined" onClick={() => setReopening(true)}>Reabrir</Button>}{opportunity.accionesPermitidas.reasignar && <Button variant="outlined" onClick={() => setReassigning(true)}>Reasignar</Button>}<Chip className="company-status company-status--prospect" label={stateLabels[opportunity.estado] ?? opportunity.estado} size="small" /></div></header>
     {reassigned && <Alert severity="success" className="record-form-confirmation">Oportunidad reasignada. Podés consultarla, pero ya no editarla.</Alert>}
     <OpportunityDetails opportunity={opportunity} />
     <MoveStageDialog item={opportunity} open={moving} onClose={() => setMoving(false)} onDone={() => setMoving(false)} onCloseRequest={result => { setMoving(false); setClosing(result) }} />
     {closing !== null && <CloseOpportunityDialog item={opportunity} initialResult={closing || undefined} open onClose={() => setClosing(null)} onDone={() => setClosing(null)} />}
+    <ReopenOpportunityDialog item={opportunity} open={reopening} onClose={() => setReopening(false)} onDone={() => setReopening(false)} />
     <ReassignDialog item={opportunity} open={reassigning} onClose={() => setReassigning(false)} onDone={() => { setReassigning(false); setReassigned(true) }} />
     <StageHistory idOportunidad={opportunity.id as number} />
   </Box>

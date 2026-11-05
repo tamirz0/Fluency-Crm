@@ -239,6 +239,10 @@ export function winOpportunity(id: number, body: GanarOportunidadRequest): Promi
 export function loseOpportunity(id: number, body: PerderOportunidadRequest): Promise<Oportunidad> {
   return getResponseData(() => api.POST('/oportunidades/{id}/perder', { params: { path: { id } }, body }))
 }
+export type ReabrirOportunidadRequest = components['schemas']['ReabrirOportunidadRequest']
+export function reopenOpportunity(id: number, body: ReabrirOportunidadRequest): Promise<Oportunidad> {
+  return getResponseData(() => api.POST('/oportunidades/{id}/reabrir', { params: { path: { id } }, body }))
+}
 export type OportunidadQuery = {
   q?: string; idResponsable?: number; idEmpresa?: number; idContacto?: number; idEmbudo?: number; idEtapa?: number
   estado?: 'ABIERTA' | 'GANADA' | 'PERDIDA'; idOrigen?: number; page?: number; pageSize?: number

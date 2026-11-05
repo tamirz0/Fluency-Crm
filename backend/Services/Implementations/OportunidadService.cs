@@ -1,4 +1,5 @@
 using System.Data;
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Models;
 using Services.Acceso;
@@ -321,6 +322,46 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
         if (finalValue is { } value) item.Valor = value;
         if (reason is { } lostBecause) item.IdMotivoPerdida = lostBecause;
         db.HistorialEtapas.Add(new HistorialEtapa { IdOportunidad = id, IdEtapaAnterior = previous, IdNuevaEtapa = finalStage, IdUsuario = actor.Id, Observacion = Text(note) });
+        await db.SaveChangesAsync(ct);
+        var response = await GetAsync(id, ct);
+        await transaction.CommitAsync(ct);
+        return response;
+    }
+
+    /// <summary>
+    /// Reabre una cerrada (solo superiores) en una etapa abierta activa de su embudo, que debe estar activo. El cierre anterior
+    /// (resultado, fecha, valor y motivo) queda como texto legible junto con la justificación en la entrada de historial; se limpian
+    /// fecha y motivo de cierre actuales y el valor se mantiene. Un responsable o servicio inactivo no impide reabrir.
+    /// </summary>
+    public async Task<OportunidadResponse> ReabrirAsync(int id, ReabrirOportunidadRequest request, CancellationToken ct)
+    {
+        if (!actor.Usuario.Permisos.Contains(RolesYPermisos.ReabrirOportunidad) || !EsSuperior)
+            throw new OportunidadOperationException(403, "FORBIDDEN", "Solo un administrador o responsable comercial puede reabrir oportunidades.");
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        if (!await db.Usuarios.AnyAsync(u => u.Id == actor.Id && u.Activo, ct))
+            throw new OportunidadOperationException(401, "UNAUTHENTICATED", "La sesión ya no está disponible.");
+        var item = await db.Oportunidades.SingleOrDefaultAsync(o => o.Id == id && o.Activo, ct) ?? throw NotFound();
+        var current = await db.EtapaComerciales.Where(e => e.Id == item.IdEtapa)
+            .Select(e => new { e.IdEmbudo, EmbudoActivo = e.IdEmbudoNavigation.Activo, Estado = e.IdEstadoNavigation.Codigo }).SingleAsync(ct);
+        if (current.Estado == "ABIERTA")
+            throw new OportunidadOperationException(409, "BUSINESS_CONFLICT", "La oportunidad ya está abierta.");
+        if (!current.EmbudoActivo)
+            throw new OportunidadOperationException(409, "BUSINESS_CONFLICT", "El embudo está inactivo: reactívelo antes de reabrir la oportunidad.");
+        var target = await db.EtapaComerciales.AsNoTracking().Where(e => e.Id == request.IdEtapa)
+            .Select(e => new { e.IdEmbudo, e.Activo, Estado = e.IdEstadoNavigation.Codigo }).SingleOrDefaultAsync(ct);
+        if (target is null || target.IdEmbudo != current.IdEmbudo || !target.Activo || target.Estado != "ABIERTA")
+            throw Invalid("El destino debe ser una etapa abierta y activa del mismo embudo.");
+
+        var reason = item.IdMotivoPerdida is { } motive ? await db.MotivosPerdida.Where(m => m.Id == motive).Select(m => m.Descripcion).SingleOrDefaultAsync(ct) : null;
+        var closeDate = item.FechaCierre is { } closed ? closed.ToUniversalTime().ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) : "sin fecha";
+        var summary = $"Reapertura. Cierre anterior: {(current.Estado == "GANADA" ? "ganada" : "perdida")} el {closeDate}, valor {item.Valor.ToString("0.00", CultureInfo.InvariantCulture).Replace('.', ',')}"
+            + (reason is null ? "" : $", motivo: {reason}") + $". Justificación: {request.Justificacion!.Trim()}";
+
+        var previous = item.IdEtapa;
+        item.IdEtapa = request.IdEtapa;
+        item.FechaCierre = null;
+        item.IdMotivoPerdida = null;
+        db.HistorialEtapas.Add(new HistorialEtapa { IdOportunidad = id, IdEtapaAnterior = previous, IdNuevaEtapa = request.IdEtapa, IdUsuario = actor.Id, Observacion = summary });
         await db.SaveChangesAsync(ct);
         var response = await GetAsync(id, ct);
         await transaction.CommitAsync(ct);

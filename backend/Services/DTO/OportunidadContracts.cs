@@ -162,6 +162,18 @@ public sealed record PerderOportunidadRequest : IValidatableObject
     }
 }
 
+/// <summary>Reapertura: etapa abierta de destino y justificación obligatoria; autor y cierre anterior los fija el servidor.</summary>
+public sealed record ReabrirOportunidadRequest : IValidatableObject
+{
+    [Range(1, int.MaxValue)] public int IdEtapa { get; init; }
+    public string? Justificacion { get; init; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext context)
+    {
+        if (string.IsNullOrWhiteSpace(Justificacion)) yield return new("La justificación es obligatoria.", [nameof(Justificacion)]);
+    }
+}
+
 /// <summary>Error público sin detalles de persistencia.</summary>
 public sealed class OportunidadOperationException(int status, string code, string message) : Exception(message)
 {
