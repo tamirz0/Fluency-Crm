@@ -44,7 +44,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T31 — Consultar oportunidades e historial de etapas](#t31)
 - [ ] [T32 — Mostrar tabla y ficha de oportunidades compartidas](#t32)
 - [ ] [T33 — Mostrar funnel según el rol](#t33)
-- [ ] [T34 — Editar datos de una oportunidad abierta](#t34)
+- [x] [T34 — Editar datos de una oportunidad abierta](#t34)
 - [ ] [T35 — Reasignar una oportunidad y retirar permiso anterior](#t35)
 - [ ] [T36 — Mover entre etapas abiertas con historial](#t36)
 - [ ] [T37 — Cerrar oportunidades como ganadas o perdidas](#t37)
@@ -933,13 +933,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] PATCH admite solo los campos acordados de abierta activa y valida dueño/superior; no cambia responsable, etapa, cierre, activo ni derivados.
-- [ ] Editar título/valor conserva asociaciones históricas tras cambio de empresa del contacto; validar compatibilidad solo al cambiar asociaciones.
-- [ ] Valor no acepta null, participantes positivos si presentes y fechas correctas; rechazo de cerrada/ajena atómico y visible en UI.
+- [x] PATCH admite solo los campos acordados de abierta activa y valida dueño/superior; no cambia responsable, etapa, cierre, activo ni derivados.
+- [x] Editar título/valor conserva asociaciones históricas tras cambio de empresa del contacto; validar compatibilidad solo al cambiar asociaciones.
+- [x] Valor no acepta null, participantes positivos si presentes y fechas correctas; rechazo de cerrada/ajena atómico y visible en UI.
 
 **Verificación:** B + F + API(EdicionOportunidadTests) + UI(src/features/forms.test.tsx) + D; editar propia versus ajena y cambio histórico A→B.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t34.md](verificaciones/verificacion-t34.md). `EdicionOportunidadTests` 2/2 y `HttpContractTests` 19/19 (21/21); frontend 117/117, build correcto, lint solo con la advertencia previa. Sin merge ni push.
 
 <a id="t35"></a>
 
