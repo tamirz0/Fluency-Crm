@@ -888,13 +888,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Tabla lista todas las vigentes con filtros/paginación; ficha ajena se puede leer completa e incluye historial de etapas.
+- [x] Tabla lista todas las vigentes con filtros/paginación; ficha ajena se puede leer completa e incluye historial de etapas.
 - [ ] Acciones se muestran según permisos del servidor; no se confunde ocultar botones con autorización.
-- [ ] Referencias inactivas siguen legibles; búsqueda y caché incluyen filtros/página y no mezclan resultados.
+- [x] Referencias inactivas siguen legibles; búsqueda y caché incluyen filtros/página y no mezclan resultados.
 
 **Verificación:** F + UI(src/features/consultations/Consultations.test.tsx) + D; vendedor consulta detalle ajeno sin editar.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t32.md](verificaciones/verificacion-t32.md). Frontend 113/113, build correcto, lint solo con la advertencia previa. **Pendiente:** la segunda aceptación (acciones según permisos) espera a los comandos de T34–T39; por eso T32 no se marca terminada. Sin merge ni push.
 
 <a id="t33"></a>
 
