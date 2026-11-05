@@ -50,7 +50,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T37 — Cerrar oportunidades como ganadas o perdidas](#t37)
 - [x] [T38 — Reabrir una oportunidad conservando su cierre](#t38)
 - [x] [T39 — Dar de baja oportunidades sin cascadas](#t39)
-- [ ] [T40 — Mapear actividades realizadas](#t40)
+- [x] [T40 — Mapear actividades realizadas](#t40)
 - [ ] [T41 — Registrar y consultar actividades por API](#t41)
 - [ ] [T42 — Registrar actividades desde fichas](#t42)
 - [ ] [T43 — Editar y dar de baja actividades con permisos de origen y destino](#t43)
@@ -1069,13 +1069,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Actividad es un hecho, TipoActividad su catálogo; relaciones directas opcionales a empresa/contacto/oportunidad y al menos empresa o contacto.
-- [ ] Instante del hecho y de registro separados; creador real e inmutable, descripción obligatoria y resultado opcional.
-- [ ] Mapeo sin agenda, auditoría adicional ni cascadas; retirar relación antigua ActividadOportunidad al adaptar sus navegaciones en pasos pequeños.
+- [x] Actividad es un hecho, TipoActividad su catálogo; relaciones directas opcionales a empresa/contacto/oportunidad y al menos empresa o contacto.
+- [x] Instante del hecho y de registro separados; creador real e inmutable, descripción obligatoria y resultado opcional.
+- [x] Mapeo sin agenda, auditoría adicional ni cascadas; retirar relación antigua ActividadOportunidad al adaptar sus navegaciones en pasos pequeños.
 
 **Verificación:** B + API(ActividadesModelTests) + D; lectura/escritura UTC y conservación de las dos fechas.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t40.md](verificaciones/verificacion-t40.md). `ActividadesModelTests` 2/2 y, con `OportunidadesModelTests`, `ClientesModelTests` y `SchemaTests`, 25/25; build sin errores ni advertencias. Sin merge ni push.
 
 <a id="t41"></a>
 
