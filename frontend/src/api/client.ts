@@ -17,6 +17,7 @@ export type PatchEmpresaRequest = components['schemas']['EmpresaRequest']
 export type ContactoRequest = components['schemas']['ContactoRequest']
 export type Oportunidad = components['schemas']['OportunidadResponse']
 export type CreateOportunidadRequest = components['schemas']['CreateOportunidadRequest']
+export type PatchOportunidadRequest = components['schemas']['PatchOportunidadRequest']
 export type EstadoCliente = LegacyComponents['schemas']['EstadoClienteResponse']
 export type OrigenComercial = LegacyComponents['schemas']['OrigenComercialResponse']
 export type Servicio = components['schemas']['ServicioResponse']
@@ -220,6 +221,9 @@ export function createOpportunity(body: CreateOportunidadRequest): Promise<Oport
 }
 export function getOpportunity(id: number): Promise<Oportunidad> {
   return getResponseData(() => api.GET('/oportunidades/{id}', { params: { path: { id } } }))
+}
+export function patchOpportunity(id: number, body: PatchOportunidadRequest): Promise<Oportunidad> {
+  return getResponseData(() => api.PATCH('/oportunidades/{id}', { params: { path: { id } }, body }))
 }
 export type OportunidadQuery = {
   q?: string; idResponsable?: number; idEmpresa?: number; idContacto?: number; idEmbudo?: number; idEtapa?: number

@@ -35,7 +35,7 @@ function catalogResponse(url: string, services = [{ id: 2, nombre: 'Capacitació
 }
 function requestUrl(input: RequestInfo | URL) { if (typeof input === 'object' && input !== null && 'input' in input) return String(input.input); if (typeof input === 'object' && input !== null && 'url' in input) return String(input.url); return String(input) }
 let created: { titulo: string | null; tituloVisible: string } = opportunity
-function installCatalogApi(options: { services?: { id: number; nombre: string; descripcion: string | null; precioReferencia: number }[]; stages?: typeof funnelStages; create?: () => Response | Promise<Response>; funnels?: (typeof funnel)[] } = {}) {
+function installCatalogApi(options: { services?: { id: number; nombre: string; descripcion: string | null; precioReferencia: number }[]; stages?: typeof funnelStages; create?: () => Response | Promise<Response>; funnels?: (typeof funnel)[]; detail?: object; patch?: () => Response | Promise<Response> } = {}) {
   created = opportunity
   vi.mocked(fetch).mockImplementation(async (input) => {
     const url = requestUrl(input)
@@ -52,7 +52,13 @@ function installCatalogApi(options: { services?: { id: number; nombre: string; d
     if (pathname === '/api/servicios/2' && method === 'GET') return jsonResponse({ id: 2, nombre: 'Capacitación', descripcion: null, precioReferencia: 150, activo: true })
     if (pathname === '/api/oportunidades' && method === 'POST') { if (options.create) return options.create(); const title = ((await (input as Request).clone().json()).titulo as string | undefined) ?? null; created = { titulo: title, tituloVisible: title ?? 'Acme Idiomas' }; return jsonResponse({ ...opportunity, ...created }, 201) }
     if (/^\/api\/oportunidades\/\d+\/historial-etapas$/.test(pathname) && method === 'GET') return jsonResponse({ items: [], page: 1, pageSize: 10, totalCount: 0 })
-    if (/^\/api\/oportunidades\/\d+$/.test(pathname) && method === 'GET') return jsonResponse({ ...opportunity, ...created })
+    if (/^\/api\/oportunidades\/\d+$/.test(pathname) && method === 'PATCH') {
+      if (options.patch) return options.patch()
+      const body = await (input as Request).clone().json() as { titulo?: string | null }
+      if (body.titulo !== undefined) created = { titulo: body.titulo, tituloVisible: body.titulo ?? opportunity.tituloVisible }
+      return jsonResponse({ ...opportunity, ...body, ...created })
+    }
+    if (/^\/api\/oportunidades\/\d+$/.test(pathname) && method === 'GET') return jsonResponse({ ...opportunity, ...created, ...options.detail })
     if (url.endsWith('/empresas/4') && (input as Request).method === 'GET') return jsonResponse(company)
     if (url.endsWith('/empresas') && (input as Request).method === 'POST') return jsonResponse({ ...company, id: 22, razonSocial: 'Nueva empresa' }, 201)
     if (url.endsWith('/empresas/4') && (input as Request).method === 'PATCH') return jsonResponse(company)
@@ -302,6 +308,59 @@ describe('altas y ediciones', () => {
     expect((await screen.findAllByText(/catálogo necesario para crear este registro/i)).length).toBeGreaterThan(0)
     expect((screen.getByRole('button', { name: 'Crear oportunidad' }) as HTMLButtonElement).disabled).toBe(true)
     expect(opportunityPosts()).toHaveLength(0)
+  })
+
+  const opportunityPatches = () => vi.mocked(fetch).mock.calls.filter(([input]) => /\/oportunidades\/\d+$/.test(requestUrl(input)) && (input as Request).method === 'PATCH')
+  const startEdit = async (options: Parameters<typeof installCatalogApi>[0] = {}) => {
+    installCatalogApi(options); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/22/editar'); await screen.findByRole('heading', { name: 'Editar oportunidad' }); return actor
+  }
+
+  it('edita una oportunidad con PATCH diferencial, sin responsable ni etapa, y abre la ficha', async () => {
+    const actor = await startEdit()
+    expect((screen.getByRole('textbox', { name: 'Título' }) as HTMLInputElement).value).toBe('Renovación anual')
+    expect(screen.getByText('Se cambia con la acción de reasignar.')).toBeTruthy()
+    expect(screen.queryByRole('combobox', { name: /^(Embudo|Etapa|Responsable)/ })).toBeNull()
+    await actor.clear(screen.getByRole('textbox', { name: 'Título' })); await actor.type(screen.getByRole('textbox', { name: 'Título' }), '  Renovación 2027  ')
+    await actor.clear(screen.getByRole('textbox', { name: /^Valor/ })); await actor.type(screen.getByRole('textbox', { name: /^Valor/ }), '0')
+    await actor.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(await screen.findByRole('heading', { name: 'Renovación 2027' })).toBeTruthy()
+    expect(screen.getByText('Oportunidad actualizada')).toBeTruthy()
+    expect(opportunityPatches()).toHaveLength(1)
+    expect(await requestBody(opportunityPatches()[0])).toEqual({ titulo: 'Renovación 2027', valor: 0 })
+  })
+
+  it('no envía nada si no hay cambios y exige un valor', async () => {
+    const actor = await startEdit()
+    await actor.clear(screen.getByRole('textbox', { name: /^Valor/ }))
+    await actor.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(await screen.findByText('Ingresá el valor (podés ingresar 0).')).toBeTruthy()
+    await actor.type(screen.getByRole('textbox', { name: /^Valor/ }), '150')
+    await actor.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(await screen.findByText('Oportunidad actualizada')).toBeTruthy()
+    expect(opportunityPatches()).toHaveLength(0)
+  })
+
+  it('conserva lo escrito y muestra el rechazo del servidor sin duplicar el envío', async () => {
+    const actor = await startEdit({ patch: () => jsonResponse({ title: 'Una oportunidad cerrada no se edita directamente: reábrala primero.', code: 'BUSINESS_CONFLICT' }, 409) })
+    await actor.type(screen.getByRole('textbox', { name: 'Observaciones' }), 'Nuevo seguimiento')
+    await actor.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect((await screen.findByText(/reábrala primero/)).textContent).toContain('Una oportunidad cerrada')
+    expect((screen.getByRole('textbox', { name: 'Observaciones' }) as HTMLTextAreaElement).value).toBe('Nuevo seguimiento')
+    expect(opportunityPatches()).toHaveLength(1)
+    expect(screen.getByRole('heading', { name: 'Editar oportunidad' })).toBeTruthy()
+  })
+
+  it('ofrece editar solo si el servidor lo permite y explica cuando la edición no corresponde', async () => {
+    const readOnly = { accionesPermitidas: { editar: false, reasignar: false, mover: false, cerrar: false, reabrir: false, darDeBaja: false, gestionarActividades: false } }
+    installCatalogApi(); renderAuthenticated('/oportunidades/22')
+    expect(await screen.findByRole('link', { name: 'Editar' })).toBeTruthy()
+    expect((screen.getByRole('link', { name: 'Editar' }) as HTMLAnchorElement).getAttribute('href')).toBe('/oportunidades/22/editar')
+    cleanup(); installCatalogApi({ detail: readOnly }); renderAuthenticated('/oportunidades/22')
+    await screen.findByRole('heading', { name: 'Renovación anual' })
+    expect(screen.queryByRole('link', { name: 'Editar' })).toBeNull()
+    cleanup(); installCatalogApi({ detail: readOnly }); renderAuthenticated('/oportunidades/22/editar')
+    expect(await screen.findByRole('heading', { name: 'No podés editar esta oportunidad' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Guardar cambios' })).toBeNull()
   })
 
   it.each([

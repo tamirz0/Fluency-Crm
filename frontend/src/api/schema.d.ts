@@ -3416,7 +3416,95 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Edita atómicamente los campos enviados de una oportunidad abierta. Solo el responsable vendedor o un superior; una cerrada
+         *     exige reapertura. Responsable, etapa, cierre y baja usan comandos específicos.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PatchOportunidadRequest"];
+                    "text/json": components["schemas"]["PatchOportunidadRequest"];
+                    "application/*+json": components["schemas"]["PatchOportunidadRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OportunidadResponse"];
+                        "application/json": components["schemas"]["OportunidadResponse"];
+                        "text/json": components["schemas"]["OportunidadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
         trace?: never;
     };
     "/servicios": {
@@ -5199,6 +5287,28 @@ export interface components {
             pageSize: number | string;
             /** Format: int32 */
             totalCount: number | string;
+        };
+        /**
+         * @description Edición de datos de una oportunidad abierta. Omitir un campo lo conserva; null solo limpia los opcionales.
+         *     Responsable, etapa, cierre, baja y derivados no se editan por aquí (propiedades desconocidas: 400).
+         */
+        PatchOportunidadRequest: {
+            titulo?: null | string;
+            /** Format: int32 */
+            idEmpresa?: null | number | string;
+            /** Format: int32 */
+            idContacto?: null | number | string;
+            /** Format: int32 */
+            idOrigen?: null | number | string;
+            /** Format: double */
+            valor?: null | number | string;
+            /** Format: date */
+            fechaEstimadaCierre?: null | string;
+            objetivoAprendizaje?: null | string;
+            /** Format: int32 */
+            cantidadParticipantes?: null | number | string;
+            disponibilidadHoraria?: null | string;
+            observaciones?: null | string;
         };
         /** @description Perfil editable; omisión conserva y null se rechaza. */
         PatchUsuarioRequest: {

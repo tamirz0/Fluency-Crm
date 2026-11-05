@@ -52,6 +52,15 @@ public sealed class OportunidadesController(IOportunidadService oportunidades) :
     public async Task<ActionResult<OportunidadResponse>> Get(int id, CancellationToken ct) => Ok(await oportunidades.GetAsync(id, ct));
 
     /// <summary>
+    /// Edita atómicamente los campos enviados de una oportunidad abierta. Solo el responsable vendedor o un superior; una cerrada
+    /// exige reapertura. Responsable, etapa, cierre y baja usan comandos específicos.
+    /// </summary>
+    [HttpPatch("{id:int}"), Authorize(Policy = RolesYPermisos.GestionarOportunidad)]
+    [ProducesResponseType<OportunidadResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<OportunidadResponse>> Patch(int id, [FromBody] PatchOportunidadRequest request, CancellationToken ct)
+        => Ok(await oportunidades.PatchAsync(id, request, ct));
+
+    /// <summary>
     /// Crea una oportunidad con su historial inicial en una sola transacción. Sin etapa usa la primera abierta activa del embudo;
     /// sin valor copia el precio del servicio; sin responsable usa al actor. El vendedor solo crea a su nombre.
     /// </summary>

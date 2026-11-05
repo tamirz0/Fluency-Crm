@@ -166,5 +166,56 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
         return result;
     }
 
+    /// <summary>
+    /// Edita solo los campos enviados de una oportunidad abierta, si el actor es el dueño vendedor o un superior.
+    /// La propiedad y el estado se releen dentro de la transacción; la compatibilidad empresa-contacto solo se valida
+    /// cuando una de esas asociaciones cambia efectivamente (editar otro campo conserva referencias históricas).
+    /// </summary>
+    public async Task<OportunidadResponse> PatchAsync(int id, PatchOportunidadRequest request, CancellationToken ct)
+    {
+        if (!actor.Usuario.Permisos.Contains(RolesYPermisos.GestionarOportunidad))
+            throw new OportunidadOperationException(403, "FORBIDDEN", "No tiene permiso para gestionar oportunidades.");
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        if (!await db.Usuarios.AnyAsync(u => u.Id == actor.Id && u.Activo, ct))
+            throw new OportunidadOperationException(401, "UNAUTHENTICATED", "La sesión ya no está disponible.");
+        var item = await db.Oportunidades.SingleOrDefaultAsync(o => o.Id == id && o.Activo, ct) ?? throw NotFound();
+        if (!EsSuperior && item.IdResponsable != actor.Id)
+            throw new OportunidadOperationException(403, "FORBIDDEN", "Solo el responsable o un superior puede editar esta oportunidad.");
+        var state = await db.EtapaComerciales.Where(e => e.Id == item.IdEtapa).Select(e => e.IdEstadoNavigation.Codigo).SingleAsync(ct);
+        if (state != "ABIERTA")
+            throw new OportunidadOperationException(409, "BUSINESS_CONFLICT", "Una oportunidad cerrada no se edita directamente: reábrala primero.");
+
+        var company = request.HasField(nameof(request.IdEmpresa)) ? request.IdEmpresa : item.IdEmpresa;
+        var contact = request.HasField(nameof(request.IdContacto)) ? request.IdContacto : item.IdContacto;
+        if (company is null && contact is null) throw Invalid("Indique una empresa o un contacto.", "VALIDATION_FAILED");
+        if (company != item.IdEmpresa || contact != item.IdContacto)
+        {
+            if (company != item.IdEmpresa && company is { } newCompany && !await db.Empresas.AnyAsync(e => e.Id == newCompany && e.Activo, ct))
+                throw Invalid("La empresa no está disponible.");
+            if (contact is { } contactId)
+            {
+                var found = await db.Contactos.AsNoTracking().Where(x => x.Id == contactId && (x.Activo || contactId == item.IdContacto))
+                    .Select(x => new { x.IdEmpresa }).SingleOrDefaultAsync(ct) ?? throw Invalid("El contacto no está disponible.");
+                if (company is not null && found.IdEmpresa != company) throw Invalid("El contacto no pertenece a la empresa indicada.", "VALIDATION_FAILED");
+            }
+        }
+        if (request.HasField(nameof(request.IdOrigen)) && request.IdOrigen is { } origin && origin != item.IdOrigen
+            && !await db.OrigenComerciales.AnyAsync(o => o.Id == origin && o.Activo, ct)) throw Invalid("El origen no está disponible.");
+
+        item.IdEmpresa = company; item.IdContacto = contact;
+        if (request.HasField(nameof(request.Titulo))) item.Titulo = Text(request.Titulo);
+        if (request.HasField(nameof(request.IdOrigen))) item.IdOrigen = request.IdOrigen;
+        if (request.HasField(nameof(request.Valor))) item.Valor = request.Valor!.Value;
+        if (request.HasField(nameof(request.FechaEstimadaCierre))) item.FechaEstimadaCierre = request.FechaEstimadaCierre;
+        if (request.HasField(nameof(request.ObjetivoAprendizaje))) item.ObjetivoAprendizaje = Text(request.ObjetivoAprendizaje);
+        if (request.HasField(nameof(request.CantidadParticipantes))) item.CantidadParticipantes = request.CantidadParticipantes;
+        if (request.HasField(nameof(request.DisponibilidadHoraria))) item.DisponibilidadHoraria = Text(request.DisponibilidadHoraria);
+        if (request.HasField(nameof(request.Observaciones))) item.Observaciones = Text(request.Observaciones);
+        await db.SaveChangesAsync(ct);
+        var result = await GetAsync(id, ct);
+        await transaction.CommitAsync(ct);
+        return result;
+    }
+
     private static string? Text(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

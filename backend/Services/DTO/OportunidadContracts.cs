@@ -91,6 +91,35 @@ public sealed record CreateOportunidadRequest : IValidatableObject
     }
 }
 
+/// <summary>
+/// Edición de datos de una oportunidad abierta. Omitir un campo lo conserva; null solo limpia los opcionales.
+/// Responsable, etapa, cierre, baja y derivados no se editan por aquí (propiedades desconocidas: 400).
+/// </summary>
+public sealed record PatchOportunidadRequest : PatchRequest
+{
+    [MaxLength(100)] public string? Titulo { get; init { field = value; ProvidedFields.Add(nameof(Titulo)); } }
+    [Range(1, int.MaxValue)] public int? IdEmpresa { get; init { field = value; ProvidedFields.Add(nameof(IdEmpresa)); } }
+    [Range(1, int.MaxValue)] public int? IdContacto { get; init { field = value; ProvidedFields.Add(nameof(IdContacto)); } }
+    [Range(1, int.MaxValue)] public int? IdOrigen { get; init { field = value; ProvidedFields.Add(nameof(IdOrigen)); } }
+    public decimal? Valor { get; init { field = value; ProvidedFields.Add(nameof(Valor)); } }
+    public DateOnly? FechaEstimadaCierre { get; init { field = value; ProvidedFields.Add(nameof(FechaEstimadaCierre)); } }
+    public string? ObjetivoAprendizaje { get; init { field = value; ProvidedFields.Add(nameof(ObjetivoAprendizaje)); } }
+    [Range(1, int.MaxValue)] public int? CantidadParticipantes { get; init { field = value; ProvidedFields.Add(nameof(CantidadParticipantes)); } }
+    public string? DisponibilidadHoraria { get; init { field = value; ProvidedFields.Add(nameof(DisponibilidadHoraria)); } }
+    public string? Observaciones { get; init { field = value; ProvidedFields.Add(nameof(Observaciones)); } }
+
+    public override IEnumerable<ValidationResult> Validate(ValidationContext context)
+    {
+        foreach (var error in base.Validate(context)) yield return error;
+        if (HasField(nameof(Valor)) && Valor is not { } value)
+            yield return new("El valor no puede quedar vacío.", [nameof(Valor)]);
+        else if (Valor is { } amount && (amount is < 0 or > 9999999999.99m || decimal.Round(amount, 2) != amount))
+            yield return new("El valor debe ser un importe entre 0 y 9.999.999.999,99 con hasta dos decimales.", [nameof(Valor)]);
+        if (HasField(nameof(IdEmpresa)) && HasField(nameof(IdContacto)) && IdEmpresa is null && IdContacto is null)
+            yield return new("Indique una empresa o un contacto.", [nameof(IdEmpresa), nameof(IdContacto)]);
+    }
+}
+
 /// <summary>Error público sin detalles de persistencia.</summary>
 public sealed class OportunidadOperationException(int status, string code, string message) : Exception(message)
 {

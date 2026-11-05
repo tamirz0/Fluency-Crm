@@ -8,5 +8,6 @@ public interface IOportunidadService
     Task<PageResponse<HistorialEtapaResponse>> HistorialAsync(int id, int page, int pageSize, CancellationToken ct);
     Task<FunnelResponse> FunnelAsync(int idEmbudo, int? idResponsable, CancellationToken ct);
     Task<OportunidadResponse> GetAsync(int id, CancellationToken ct);
+    Task<OportunidadResponse> PatchAsync(int id, PatchOportunidadRequest request, CancellationToken ct);
     Task<OportunidadResponse> CreateAsync(CreateOportunidadRequest request, CancellationToken ct);
 }
