@@ -1115,7 +1115,7 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Verificación:** F + UI(src/features/activities/ActivityForm.test.tsx) + D; alta local desde oportunidad cerrada sin modificar su estado.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t42.md](verificaciones/verificacion-t42.md). `ActivityForm.test.tsx` 3/3; frontend 135/135, build correcto, lint solo con la advertencia previa. El montaje en la ficha de empresa queda para T45. Sin merge ni push.
 
 ### CP14 — Registro de actividades
 
