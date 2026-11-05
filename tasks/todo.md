@@ -40,6 +40,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [ ] [T30 — Simplificar el alta de oportunidad en UI](#t30)
 - [x] [T30a — Hacer opcional el título de la oportunidad](#t30a)
 - [ ] [T30b — Renovar la apariencia de la interfaz](#t30b)
+- [x] [T30c — Landing pública con acceso al login](#t30c)
 - [ ] [T31 — Consultar oportunidades e historial de etapas](#t31)
 - [ ] [T32 — Mostrar tabla y ficha de oportunidades compartidas](#t32)
 - [ ] [T33 — Mostrar funnel según el rol](#t33)
@@ -835,6 +836,21 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 **Verificación:** F + UI(suite completa) + D; revisión visual del usuario en el navegador.
 
 **Evidencia técnica (05/11/2026):** [verificacion-t30b.md](verificaciones/verificacion-t30b.md). Frontend 116/116, build correcto. **Pendiente:** revisión visual del usuario en el navegador (sin herramienta de navegador en la sesión); la tarea no se marca terminada hasta entonces.
+
+<a id="t30c"></a>
+
+### T30c — Landing pública con acceso al login
+
+**Resultado:** Pedido del usuario el 05/11/2026: la raíz muestra una landing con «Iniciar sesión» (lleva al login actual) y «Registrarse» (sin flujo hasta que exista el registro).
+
+**Dependencias:** T30b. **Tamaño:** S–M.
+
+**Aceptación:**
+
+- [x] `/` pública con ambos botones; sesión activa → `/inicio`; login sin cambios.
+- [x] «Registrarse» no inventa un registro: informa que no está habilitado y no llama a la API.
+
+**Evidencia técnica (05/11/2026):** [verificacion-t30c.md](verificaciones/verificacion-t30c.md); frontend 120/120. **Pendiente:** revisión visual del usuario.
 
 <a id="t31"></a>
 

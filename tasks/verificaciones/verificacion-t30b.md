@@ -17,3 +17,14 @@ Se conserva MUI, el tema oscuro, la tipografía Source Sans 3, las rutas, los te
 
 - **Revisión visual del usuario en el navegador.** No hay herramienta de navegador en esta sesión: los resultados anteriores prueban compilación y comportamiento, no apariencia. Los ajustes finos se hacen cambiando las variables de `index.css` y la constante `palette`.
 - Pantallas aún sin ver renderizadas: login, inicio, listados, fichas, formularios, configuración.
+
+## Ajustes tras la revisión visual del usuario (05/11/2026)
+
+El usuario aprobó el aspecto general y pidió cuatro correcciones, hechas en el commit siguiente al de T30b:
+
+- **Login:** la frase de marca queda centrada verticalmente en su panel (grilla de tres filas) en lugar de pegada abajo.
+- **Avisos de sesión:** el error, «Comprobando sesión…» y «Reintentar sesión» de `AuthContext` flotan sobre la pantalla (`position: fixed`, por encima del contenido) y ya no desplazan nada. El error de credenciales del propio formulario de login sigue dentro de la tarjeta del formulario.
+- **Tablas responsive:** la tabla de contactos tiene 8 columnas pero las reglas de ancho fijo en porcentaje solo cubrían 7, así que «Responsable» quedaba sin espacio y con `overflow-wrap: anywhere` se partía letra por letra. Se quitaron todos los anchos por columna (contactos, oportunidades, empresas), las tablas pasan a diseño automático con ancho mínimo y el contenedor se desplaza en horizontal cuando no entran; las celdas solo parten palabras que no caben. Las empresas ya cambiaban a tarjetas en móvil; contactos y oportunidades se desplazan en horizontal.
+- **Landing (T30c):** ver [verificacion-t30c.md](verificacion-t30c.md).
+
+Resultados: frontend completo 120/120, build correcto, lint solo con la advertencia previa. **Sigue pendiente la revisión visual de estos cuatro ajustes.**
