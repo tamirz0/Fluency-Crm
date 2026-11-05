@@ -1,5 +1,16 @@
 .records-page { width: min(100%, 1440px); }
 .record-table-wrap { overflow-x: auto; }
 .record-table { min-width: 980px; }
+.opportunity-table th:first-child, .opportunity-table td:first-child { width: 22%; }
+.opportunity-table th:nth-child(2), .opportunity-table td:nth-child(2) { width: 15%; }
+.opportunity-table th:nth-child(3), .opportunity-table td:nth-child(3) { width: 20%; }
+.opportunity-table th:nth-child(4), .opportunity-table td:nth-child(4) { width: 16%; }
+.opportunity-table th:nth-child(5), .opportunity-table td:nth-child(5) { width: 16%; }
+.opportunity-table th:last-child, .opportunity-table td:last-child { width: 16%; }
 .record-contact-links { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: 2px; overflow-wrap: break-word; }
-.contact-table { min-width: 1120px; }
+
+/* Contactos: 8 columnas. Sin anchos fijos, cada columna toma lo que su contenido necesita; si no entra, la tabla se desplaza en horizontal. */
+.company-table.contact-table { table-layout: auto; width: auto; min-width: 0; }
+.company-table.contact-table th:nth-child(n), .company-table.contact-table td:nth-child(n) { width: auto; }
+.company-table.contact-table th:nth-child(n) { white-space: nowrap; }
+.company-table.contact-table td:nth-child(n) { overflow-wrap: break-word; }

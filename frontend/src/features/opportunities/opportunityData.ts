@@ -9,6 +9,11 @@ export function flattenOpportunitiesByStage(stages: EtapaConOportunidades[]): Op
   })))
 }
 
+/** Cliente de la oportunidad: empresa, contacto o «Empresa – Contacto». */
+export function clientLabel(opportunity: { empresaRazonSocial?: string | null; contactoNombre?: string | null }): string {
+  return [opportunity.empresaRazonSocial, opportunity.contactoNombre].filter(Boolean).join(' – ')
+}
+
 export function stageToneClass(index: number): string {
   return `stage-tone-${(index % 5) + 1}`
 }
