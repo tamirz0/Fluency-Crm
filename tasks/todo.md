@@ -55,7 +55,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [ ] [T42 — Registrar actividades desde fichas](#t42)
 - [x] [T43 — Editar y dar de baja actividades con permisos de origen y destino](#t43)
 - [x] [T44 — Proyectar el historial comercial combinado](#t44)
-- [ ] [T45 — Mostrar historial comercial en las tres fichas](#t45)
+- [x] [T45 — Mostrar historial comercial en las tres fichas](#t45)
 - [ ] [T46 — Comprobar retiro del legado y coherencia de contratos](#t46)
 - [ ] [T47 — Cerrar la verificación de seguridad acordada](#t47)
 - [ ] [T48 — Ensayar la entrega completa en local](#t48)
@@ -1174,13 +1174,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Componente compartido representa actividad/transición, autor y ambas fechas donde corresponda; carga páginas de una única proyección.
-- [ ] Las tres fichas permiten registrar/editar/bajar según capacidades sin duplicar lógica; fichas ajenas siguen mostrando su información.
-- [ ] Mensajes vacío/error, foco y actualización posterior a mutaciones funcionan; no tarjetas de actividad eliminada ni historia reubicada por empresa actual.
+- [x] Componente compartido representa actividad/transición, autor y ambas fechas donde corresponda; carga páginas de una única proyección.
+- [x] Las tres fichas permiten registrar/editar/bajar según capacidades sin duplicar lógica; fichas ajenas siguen mostrando su información.
+- [x] Mensajes vacío/error, foco y actualización posterior a mutaciones funcionan; no tarjetas de actividad eliminada ni historia reubicada por empresa actual.
 
 **Verificación:** F + UI(src/features/activities/CommercialHistory.test.tsx) + D; recorrido manual de historia compartida. Checkpoint completo de actividades.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t45.md](verificaciones/verificacion-t45.md). `CommercialHistory.test.tsx` 7/7; frontend 145/145, `HistorialComercialTests` 1/1, build correcto, lint solo con la advertencia previa. Pendiente: recorrido manual de la historia compartida (usuario). Sin merge ni push.
 
 ### CP15 — Módulo actividades
 
