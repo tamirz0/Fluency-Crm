@@ -52,5 +52,5 @@ public partial class Oportunidad
 
     public virtual ICollection<HistorialEtapa> HistorialEtapas { get; set; } = new List<HistorialEtapa>();
 
-    public virtual ICollection<ActividadOportunidad> ActividadOportunidades { get; set; } = new List<ActividadOportunidad>();
+    public virtual ICollection<Actividad> Actividades { get; set; } = new List<Actividad>();
 }

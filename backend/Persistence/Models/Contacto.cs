@@ -32,7 +32,7 @@ public partial class Contacto
 
     public string? Observaciones { get; set; }
 
-    public virtual ICollection<ActividadOportunidad> ActividadOportunidades { get; set; } = new List<ActividadOportunidad>();
+    public virtual ICollection<Actividad> Actividades { get; set; } = new List<Actividad>();
 
     public virtual Empresa? IdEmpresaNavigation { get; set; }
 
