@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -18,6 +19,33 @@ namespace FluencyAPI.Controllers;
 [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
 public sealed class OportunidadesController(IOportunidadService oportunidades) : ControllerBase
 {
+    /// <summary>Lista todas las oportunidades vigentes (lectura compartida), con filtros previos al conteo; creación e ID descendentes.</summary>
+    [HttpGet]
+    [ProducesResponseType<PageResponse<OportunidadResponse>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<PageResponse<OportunidadResponse>>> List([FromQuery] string? q,
+        [FromQuery, Range(1, int.MaxValue)] int? idResponsable, [FromQuery, Range(1, int.MaxValue)] int? idEmpresa,
+        [FromQuery, Range(1, int.MaxValue)] int? idContacto, [FromQuery, Range(1, int.MaxValue)] int? idEmbudo,
+        [FromQuery, Range(1, int.MaxValue)] int? idEtapa, [FromQuery, RegularExpression("^(ABIERTA|GANADA|PERDIDA)$")] string? estado,
+        [FromQuery, Range(1, int.MaxValue)] int? idOrigen, CancellationToken ct,
+        [FromQuery, Range(1, int.MaxValue)] int page = 1, [FromQuery, Range(1, 100)] int pageSize = 25)
+        => Ok(await oportunidades.ListAsync(new(q, idResponsable, idEmpresa, idContacto, idEmbudo, idEtapa, estado, idOrigen), page, pageSize, ct));
+
+    /// <summary>Historial de etapas de una oportunidad vigente, paginado por fecha e ID ascendentes. Solo lectura.</summary>
+    [HttpGet("{id:int}/historial-etapas")]
+    [ProducesResponseType<PageResponse<HistorialEtapaResponse>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<PageResponse<HistorialEtapaResponse>>> Historial(int id, CancellationToken ct,
+        [FromQuery, Range(1, int.MaxValue)] int page = 1, [FromQuery, Range(1, 100)] int pageSize = 25)
+        => Ok(await oportunidades.HistorialAsync(id, page, pageSize, ct));
+
+    /// <summary>
+    /// Funnel de un embudo (activo o no): columnas activas, también vacías y finales. El vendedor siempre recibe su propia cartera;
+    /// administrador y responsable comercial ven todas y pueden filtrar por responsable.
+    /// </summary>
+    [HttpGet("/embudos/{id:int}/funnel")]
+    [ProducesResponseType<FunnelResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<FunnelResponse>> Funnel(int id, [FromQuery, Range(1, int.MaxValue)] int? idResponsable, CancellationToken ct)
+        => Ok(await oportunidades.FunnelAsync(id, idResponsable, ct));
+
     /// <summary>Consulta una oportunidad vigente, también ajena (lectura compartida).</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType<OportunidadResponse>(StatusCodes.Status200OK)]

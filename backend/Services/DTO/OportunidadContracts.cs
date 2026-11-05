@@ -47,6 +47,19 @@ public sealed record OportunidadResponse
     public AccionesOportunidad AccionesPermitidas { get; init; } = new(false, false, false, false, false, false, false);
 }
 
+/// <summary>Filtros del listado; se combinan con AND, así que los incompatibles dan un conjunto vacío.</summary>
+public sealed record OportunidadFilters(string? Q, int? IdResponsable, int? IdEmpresa, int? IdContacto, int? IdEmbudo, int? IdEtapa, string? Estado, int? IdOrigen);
+
+/// <summary>Entrada inmutable del historial de etapas; la etapa anterior es null en el alta.</summary>
+public sealed record HistorialEtapaResponse(int Id, int? IdEtapaAnterior, string? EtapaAnteriorNombre, int IdNuevaEtapa, string EtapaNuevaNombre,
+    DateTime FechaHora, int IdUsuario, string UsuarioNombre, string? Observacion);
+
+/// <summary>Columna del funnel: etapa activa con sus oportunidades vigentes.</summary>
+public sealed record FunnelEtapa(int Id, string Nombre, int Orden, string Estado, IReadOnlyList<OportunidadResponse> Oportunidades);
+
+/// <summary>Embudo con sus columnas activas; puede ser un embudo inactivo, que solo se consulta.</summary>
+public sealed record FunnelResponse(int IdEmbudo, string Nombre, bool Activo, int IdServicio, string ServicioNombre, bool ServicioActivo, IReadOnlyList<FunnelEtapa> Etapas);
+
 /// <summary>
 /// Alta de oportunidad. Requiere embudo (solo contexto, no se persiste) y empresa o contacto; el título es opcional.
 /// Autor, estado y fechas los fija el servidor; propiedades desconocidas se rechazan.

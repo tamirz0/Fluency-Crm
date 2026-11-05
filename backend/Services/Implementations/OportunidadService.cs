@@ -12,7 +12,7 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
     private static OportunidadOperationException Invalid(string message, string code = "REFERENCE_UNAVAILABLE") => new(400, code, message);
     private bool EsSuperior => actor.Usuario.Roles.Contains(RolesYPermisos.Administrador) || actor.Usuario.Roles.Contains(RolesYPermisos.ResponsableComercial);
 
-    private IQueryable<OportunidadResponse> Query() => db.Oportunidades.AsNoTracking().Where(o => o.Activo).Select(o => new OportunidadResponse
+    private IQueryable<OportunidadResponse> Query(IQueryable<Oportunidad>? source = null) => (source ?? db.Oportunidades.AsNoTracking()).Where(o => o.Activo).Select(o => new OportunidadResponse
     {
         Id = o.Id, Titulo = o.Titulo,
         TituloVisible = o.Titulo ?? (o.IdEmpresaNavigation != null
@@ -36,7 +36,73 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
     });
 
     public async Task<OportunidadResponse> GetAsync(int id, CancellationToken ct)
-        => WithActions(await Query().SingleOrDefaultAsync(o => o.Id == id, ct) ?? throw new OportunidadOperationException(404, "NOT_FOUND", "No existe la oportunidad."));
+        => WithActions(await Query().SingleOrDefaultAsync(o => o.Id == id, ct) ?? throw NotFound());
+
+    private static OportunidadOperationException NotFound() => new(404, "NOT_FOUND", "No existe la oportunidad.");
+
+    /// <summary>Todas las vigentes (lectura compartida); los filtros se aplican antes de contar y paginar. Orden: creación e ID descendentes.</summary>
+    public async Task<PageResponse<OportunidadResponse>> ListAsync(OportunidadFilters filters, int page, int pageSize, CancellationToken ct)
+    {
+        var source = db.Oportunidades.AsNoTracking();
+        if (!string.IsNullOrWhiteSpace(filters.Q))
+        {
+            const string accents = "áàäâãåéèëêíìïîóòöôõúùüûñç";
+            const string plain =   "aaaaaaeeeeiiiiooooouuuunc";
+            var search = filters.Q.Trim().ToLowerInvariant();
+            for (var i = 0; i < accents.Length; i++) search = search.Replace(accents[i], plain[i]);
+            source = db.Oportunidades.FromSqlInterpolated($"""
+                SELECT o.* FROM oportunidad o
+                LEFT JOIN empresa e ON e.id = o.id_empresa
+                LEFT JOIN contacto c ON c.id = o.id_contacto
+                WHERE strpos(translate(lower(concat_ws(' ', o.titulo, e.razon_social, c.nombre, c.apellido)), {accents}, {plain}), {search}) > 0
+                """).AsNoTracking();
+        }
+        var query = Query(source);
+        if (filters.IdResponsable is not null) query = query.Where(o => o.IdResponsable == filters.IdResponsable);
+        if (filters.IdEmpresa is not null) query = query.Where(o => o.IdEmpresa == filters.IdEmpresa);
+        if (filters.IdContacto is not null) query = query.Where(o => o.IdContacto == filters.IdContacto);
+        if (filters.IdEmbudo is not null) query = query.Where(o => o.IdEmbudo == filters.IdEmbudo);
+        if (filters.IdEtapa is not null) query = query.Where(o => o.IdEtapa == filters.IdEtapa);
+        if (filters.Estado is not null) query = query.Where(o => o.Estado == filters.Estado);
+        if (filters.IdOrigen is not null) query = query.Where(o => o.IdOrigen == filters.IdOrigen);
+        var total = await query.CountAsync(ct);
+        var items = await query.OrderByDescending(o => o.FechaCreacion).ThenByDescending(o => o.Id)
+            .Skip((int)Math.Min((long)(page - 1) * pageSize, int.MaxValue)).Take(pageSize).ToListAsync(ct);
+        return new(items.Select(WithActions).ToList(), page, pageSize, total);
+    }
+
+    /// <summary>Entradas inmutables de la oportunidad vigente, por fecha e ID ascendentes.</summary>
+    public async Task<PageResponse<HistorialEtapaResponse>> HistorialAsync(int id, int page, int pageSize, CancellationToken ct)
+    {
+        if (!await db.Oportunidades.AnyAsync(o => o.Id == id && o.Activo, ct)) throw NotFound();
+        var query = db.HistorialEtapas.AsNoTracking().Where(h => h.IdOportunidad == id);
+        var total = await query.CountAsync(ct);
+        var items = await query.OrderBy(h => h.FechaHora).ThenBy(h => h.Id)
+            .Skip((int)Math.Min((long)(page - 1) * pageSize, int.MaxValue)).Take(pageSize)
+            .Select(h => new HistorialEtapaResponse(h.Id, h.IdEtapaAnterior, h.IdEtapaAnteriorNavigation == null ? null : h.IdEtapaAnteriorNavigation.Nombre,
+                h.IdNuevaEtapa, h.IdNuevaEtapaNavigation.Nombre, h.FechaHora, h.IdUsuario,
+                h.IdUsuarioNavigation.Nombre + " " + h.IdUsuarioNavigation.Apellido, h.Observacion)).ToListAsync(ct);
+        return new(items, page, pageSize, total);
+    }
+
+    /// <summary>
+    /// Columnas activas del embudo (también vacías y finales) con sus oportunidades vigentes. Un vendedor sin rol superior
+    /// ve siempre su propia cartera: el parámetro de responsable solo rige para superiores.
+    /// </summary>
+    public async Task<FunnelResponse> FunnelAsync(int idEmbudo, int? idResponsable, CancellationToken ct)
+    {
+        var funnel = await db.Embudos.AsNoTracking().Where(b => b.Id == idEmbudo)
+            .Select(b => new { b.Id, b.Nombre, b.Activo, b.IdServicio, ServicioNombre = b.IdServicioNavigation.Nombre, ServicioActivo = b.IdServicioNavigation.Activo })
+            .SingleOrDefaultAsync(ct) ?? throw new OportunidadOperationException(404, "NOT_FOUND", "No existe el embudo.");
+        var owner = EsSuperior ? idResponsable : actor.Id;
+        var stages = await db.EtapaComerciales.AsNoTracking().Where(e => e.IdEmbudo == idEmbudo && e.Activo)
+            .OrderBy(e => e.Orden).ThenBy(e => e.Id).Select(e => new { e.Id, e.Nombre, e.Orden, Estado = e.IdEstadoNavigation.Codigo }).ToListAsync(ct);
+        var query = Query().Where(o => o.IdEmbudo == idEmbudo);
+        if (owner is not null) query = query.Where(o => o.IdResponsable == owner);
+        var cards = (await query.OrderByDescending(o => o.FechaCreacion).ThenByDescending(o => o.Id).ToListAsync(ct)).Select(WithActions).ToLookup(o => o.IdEtapa);
+        return new(funnel.Id, funnel.Nombre, funnel.Activo, funnel.IdServicio, funnel.ServicioNombre, funnel.ServicioActivo,
+            stages.Select(e => new FunnelEtapa(e.Id, e.Nombre, e.Orden, e.Estado, cards[e.Id].ToList())).ToList());
+    }
 
     // Dueño vendedor o superior; la reapertura es solo de superiores. Baja y actividades sobreviven al cierre.
     private OportunidadResponse WithActions(OportunidadResponse item)

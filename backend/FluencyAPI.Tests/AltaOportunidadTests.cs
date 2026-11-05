@@ -7,10 +7,10 @@ namespace FluencyAPI.Tests;
 
 public sealed class AltaOportunidadTests
 {
-    private sealed record Seed(int CompanyA, int CompanyB, int ContactA, int Funnel, int FirstOpen, int SecondOpen, int Won, int OtherFunnelOpen);
+    internal sealed record Seed(int CompanyA, int CompanyB, int ContactA, int Funnel, int FirstOpen, int SecondOpen, int Won, int OtherFunnelOpen);
 
     // Fixture mínimo propio: SeedContextAsync multiplica filas por cada usuario de AuthApiFactory.
-    private static async Task<Seed> SeedAsync(AuthApiFactory factory, HttpClient client)
+    internal static async Task<Seed> SeedAsync(AuthApiFactory factory, HttpClient client)
     {
         async Task<int> CreateAsync(string url, object body) => (await (await client.PostAsJsonAsync(url, body)).Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
         var companyA = await CreateAsync("/empresas", new { razonSocial = "Empresa A" });
