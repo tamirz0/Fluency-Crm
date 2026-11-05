@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BrowserRouter } from 'react-router-dom'
@@ -35,8 +35,9 @@ function catalogResponse(url: string, services = [{ id: 2, nombre: 'Capacitació
 }
 function requestUrl(input: RequestInfo | URL) { if (typeof input === 'object' && input !== null && 'input' in input) return String(input.input); if (typeof input === 'object' && input !== null && 'url' in input) return String(input.url); return String(input) }
 let created: { titulo: string | null; tituloVisible: string } = opportunity
-function installCatalogApi(options: { services?: { id: number; nombre: string; descripcion: string | null; precioReferencia: number }[]; stages?: typeof funnelStages; create?: () => Response | Promise<Response>; funnels?: (typeof funnel)[]; detail?: object; patch?: () => Response | Promise<Response> } = {}) {
-  created = opportunity
+let reassigned: object = {}
+function installCatalogApi(options: { services?: { id: number; nombre: string; descripcion: string | null; precioReferencia: number }[]; stages?: typeof funnelStages; create?: () => Response | Promise<Response>; funnels?: (typeof funnel)[]; detail?: object; patch?: () => Response | Promise<Response>; reassign?: () => Response | Promise<Response> } = {}) {
+  created = opportunity; reassigned = {}
   vi.mocked(fetch).mockImplementation(async (input) => {
     const url = requestUrl(input)
     const catalog = catalogResponse(url, options.services)
@@ -58,7 +59,12 @@ function installCatalogApi(options: { services?: { id: number; nombre: string; d
       if (body.titulo !== undefined) created = { titulo: body.titulo, tituloVisible: body.titulo ?? opportunity.tituloVisible }
       return jsonResponse({ ...opportunity, ...body, ...created })
     }
-    if (/^\/api\/oportunidades\/\d+$/.test(pathname) && method === 'GET') return jsonResponse({ ...opportunity, ...created, ...options.detail })
+    if (/^\/api\/oportunidades\/\d+\/reasignar$/.test(pathname) && method === 'POST') {
+      if (options.reassign) return options.reassign()
+      reassigned = { idResponsable: 9, responsableNombre: 'Ana Ríos', accionesPermitidas: { editar: false, reasignar: false, mover: false, cerrar: false, reabrir: false, darDeBaja: false, gestionarActividades: false } }
+      return jsonResponse({ ...opportunity, ...created, ...reassigned })
+    }
+    if (/^\/api\/oportunidades\/\d+$/.test(pathname) && method === 'GET') return jsonResponse({ ...opportunity, ...created, ...options.detail, ...reassigned })
     if (url.endsWith('/empresas/4') && (input as Request).method === 'GET') return jsonResponse(company)
     if (url.endsWith('/empresas') && (input as Request).method === 'POST') return jsonResponse({ ...company, id: 22, razonSocial: 'Nueva empresa' }, 201)
     if (url.endsWith('/empresas/4') && (input as Request).method === 'PATCH') return jsonResponse(company)
@@ -358,9 +364,45 @@ describe('altas y ediciones', () => {
     cleanup(); installCatalogApi({ detail: readOnly }); renderAuthenticated('/oportunidades/22')
     await screen.findByRole('heading', { name: 'Renovación anual' })
     expect(screen.queryByRole('link', { name: 'Editar' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Reasignar' })).toBeNull()
     cleanup(); installCatalogApi({ detail: readOnly }); renderAuthenticated('/oportunidades/22/editar')
     expect(await screen.findByRole('heading', { name: 'No podés editar esta oportunidad' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Guardar cambios' })).toBeNull()
+  })
+
+  const reassignPosts = () => vi.mocked(fetch).mock.calls.filter(([input]) => requestUrl(input).endsWith('/oportunidades/22/reasignar') && (input as Request).method === 'POST')
+  const optionsRequests = () => vi.mocked(fetch).mock.calls.map(([input]) => new URL(requestUrl(input), 'http://localhost')).filter(url => url.pathname.endsWith('/usuarios/opciones'))
+
+  it('reasigna desde la ficha enviando solo el destino, ofrece solo vendedores y retira la edición', async () => {
+    installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/22', { ...user, roles: ['VENDEDOR'], permisos: ['GestionarOportunidad'] })
+    expect(await screen.findByRole('link', { name: 'Editar' })).toBeTruthy()
+    await actor.click(screen.getByRole('button', { name: 'Reasignar' }))
+    const dialog = within(await screen.findByRole('dialog', { name: 'Reasignar oportunidad' }))
+    expect((dialog.getByRole('button', { name: 'Reasignar' }) as HTMLButtonElement).disabled).toBe(true)
+    await actor.click(dialog.getByRole('combobox', { name: 'Responsable' })); await actor.click(await screen.findByRole('option', { name: 'Ana Ríos' }))
+    expect(optionsRequests().some(url => url.searchParams.get('rol') === 'VENDEDOR')).toBe(true)
+    await actor.click(dialog.getByRole('button', { name: 'Reasignar' }))
+    expect(await screen.findByText(/Oportunidad reasignada/)).toBeTruthy()
+    expect(reassignPosts()).toHaveLength(1)
+    expect(await requestBody(reassignPosts()[0])).toEqual({ idResponsable: 9 })
+    expect(screen.getByText('Ana Ríos')).toBeTruthy()
+    expect(screen.queryByRole('link', { name: 'Editar' })).toBeNull()
+    // El diálogo se cierra con una transición; después ya no queda ningún botón de reasignar.
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Reasignar' })).toBeNull())
+  })
+
+  it('un superior elige entre todos los usuarios y el rechazo del servidor se muestra sin cerrar el diálogo', async () => {
+    installCatalogApi({ reassign: () => jsonResponse({ title: 'Solo el responsable o un superior puede reasignar esta oportunidad.', code: 'FORBIDDEN' }, 403) })
+    const actor = userEvent.setup(); renderAuthenticated('/oportunidades/22', { ...user, roles: ['ADMINISTRADOR'], permisos: ['GestionarOportunidad'] })
+    await actor.click(await screen.findByRole('button', { name: 'Reasignar' }))
+    const dialog = within(await screen.findByRole('dialog', { name: 'Reasignar oportunidad' }))
+    await actor.click(dialog.getByRole('combobox', { name: 'Responsable' })); await actor.click(await screen.findByRole('option', { name: 'Ana Ríos' }))
+    expect(optionsRequests().every(url => !url.searchParams.has('rol'))).toBe(true)
+    await actor.click(dialog.getByRole('button', { name: 'Reasignar' }))
+    expect((await screen.findAllByText(/puede reasignar esta oportunidad/)).length).toBeGreaterThan(0)
+    expect(screen.getByRole('dialog', { name: 'Reasignar oportunidad' })).toBeTruthy()
+    expect(reassignPosts()).toHaveLength(1)
+    expect(screen.queryByText(/Oportunidad reasignada/)).toBeNull()
   })
 
   it.each([

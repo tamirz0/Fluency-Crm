@@ -61,6 +61,15 @@ public sealed class OportunidadesController(IOportunidadService oportunidades) :
         => Ok(await oportunidades.PatchAsync(id, request, ct));
 
     /// <summary>
+    /// Reasigna una oportunidad abierta. El responsable vendedor solo puede elegir otro vendedor activo; un superior, cualquier usuario activo.
+    /// Devuelve las acciones recalculadas: quien la pierde conserva la lectura y recibe 403 en su siguiente mutación.
+    /// </summary>
+    [HttpPost("{id:int}/reasignar"), Authorize(Policy = RolesYPermisos.GestionarOportunidad)]
+    [ProducesResponseType<OportunidadResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<OportunidadResponse>> Reasignar(int id, [FromBody] ReasignarOportunidadRequest request, CancellationToken ct)
+        => Ok(await oportunidades.ReasignarAsync(id, request, ct));
+
+    /// <summary>
     /// Crea una oportunidad con su historial inicial en una sola transacción. Sin etapa usa la primera abierta activa del embudo;
     /// sin valor copia el precio del servicio; sin responsable usa al actor. El vendedor solo crea a su nombre.
     /// </summary>

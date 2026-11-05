@@ -225,6 +225,9 @@ export function getOpportunity(id: number): Promise<Oportunidad> {
 export function patchOpportunity(id: number, body: PatchOportunidadRequest): Promise<Oportunidad> {
   return getResponseData(() => api.PATCH('/oportunidades/{id}', { params: { path: { id } }, body }))
 }
+export function reassignOpportunity(id: number, idResponsable: number): Promise<Oportunidad> {
+  return getResponseData(() => api.POST('/oportunidades/{id}/reasignar', { params: { path: { id } }, body: { idResponsable } }))
+}
 export type OportunidadQuery = {
   q?: string; idResponsable?: number; idEmpresa?: number; idContacto?: number; idEmbudo?: number; idEtapa?: number
   estado?: 'ABIERTA' | 'GANADA' | 'PERDIDA'; idOrigen?: number; page?: number; pageSize?: number

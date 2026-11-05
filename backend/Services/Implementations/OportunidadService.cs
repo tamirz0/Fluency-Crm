@@ -217,5 +217,37 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
         return result;
     }
 
+    /// <summary>
+    /// Cambia el responsable de una oportunidad abierta. El dueño vendedor solo puede pasarla a otro vendedor activo; un superior
+    /// elige cualquier usuario activo. La propiedad se relee dentro de la transacción, así el responsable anterior pierde la edición
+    /// de inmediato y conserva la lectura. No registra un movimiento de etapa ni toca los responsables de los clientes.
+    /// </summary>
+    public async Task<OportunidadResponse> ReasignarAsync(int id, ReasignarOportunidadRequest request, CancellationToken ct)
+    {
+        if (!actor.Usuario.Permisos.Contains(RolesYPermisos.GestionarOportunidad))
+            throw new OportunidadOperationException(403, "FORBIDDEN", "No tiene permiso para gestionar oportunidades.");
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        if (!await db.Usuarios.AnyAsync(u => u.Id == actor.Id && u.Activo, ct))
+            throw new OportunidadOperationException(401, "UNAUTHENTICATED", "La sesión ya no está disponible.");
+        var item = await db.Oportunidades.SingleOrDefaultAsync(o => o.Id == id && o.Activo, ct) ?? throw NotFound();
+        if (!EsSuperior && item.IdResponsable != actor.Id)
+            throw new OportunidadOperationException(403, "FORBIDDEN", "Solo el responsable o un superior puede reasignar esta oportunidad.");
+        var state = await db.EtapaComerciales.Where(e => e.Id == item.IdEtapa).Select(e => e.IdEstadoNavigation.Codigo).SingleAsync(ct);
+        if (state != "ABIERTA")
+            throw new OportunidadOperationException(409, "BUSINESS_CONFLICT", "Una oportunidad cerrada no se reasigna: reábrala primero.");
+        if (request.IdResponsable != item.IdResponsable)
+        {
+            var target = db.Usuarios.Where(u => u.Id == request.IdResponsable && u.Activo);
+            if (!EsSuperior) target = target.Where(u => u.UsuarioRoles.Any(j => j.IdRolNavigation.Nombre == RolesYPermisos.Vendedor));
+            if (!await target.AnyAsync(ct))
+                throw Invalid(EsSuperior ? "El responsable no está disponible." : "Solo podés reasignarla a un vendedor activo.");
+            item.IdResponsable = request.IdResponsable;
+            await db.SaveChangesAsync(ct);
+        }
+        var result = await GetAsync(id, ct);
+        await transaction.CommitAsync(ct);
+        return result;
+    }
+
     private static string? Text(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

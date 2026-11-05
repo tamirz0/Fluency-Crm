@@ -120,6 +120,12 @@ public sealed record PatchOportunidadRequest : PatchRequest
     }
 }
 
+/// <summary>Reasignación: solo el destino; el actor y el estado los fija el servidor.</summary>
+public sealed record ReasignarOportunidadRequest
+{
+    [Range(1, int.MaxValue)] public int IdResponsable { get; init; }
+}
+
 /// <summary>Error público sin detalles de persistencia.</summary>
 public sealed class OportunidadOperationException(int status, string code, string message) : Exception(message)
 {
