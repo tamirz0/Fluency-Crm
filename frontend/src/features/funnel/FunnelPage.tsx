@@ -1,5 +1,5 @@
 import { ChevronRight, ExpandMore, Refresh } from '@mui/icons-material'
-import { Alert, Box, Button, IconButton, MenuItem, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, IconButton, MenuItem, Snackbar, TextField, Typography } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
@@ -7,6 +7,7 @@ import { getFunnel, listFunnels, opportunityQueryKeys, type Oportunidad } from '
 import { useAuth } from '../../auth/useAuth'
 import { CompanyResponsibleSelect } from '../companies/CompanyResponsibleSelect'
 import { displayValue, formatCommercialDate } from '../shared/display'
+import { MoveStageDialog } from '../opportunities/MoveStageDialog'
 import { money, stageToneClass, stateLabels } from '../opportunities/opportunityData'
 import './funnel.css'
 
@@ -21,7 +22,7 @@ function FunnelSkeleton() {
   </div>
 }
 
-function OpportunityCard({ opportunity }: { opportunity: Oportunidad }) {
+function OpportunityCard({ opportunity, onChangeStage }: { opportunity: Oportunidad; onChangeStage: (opportunity: Oportunidad) => void }) {
   const [expanded, setExpanded] = useState(false)
   const detailsId = `opportunity-details-${opportunity.id}`
   return <article className={`funnel-opportunity${expanded ? ' is-expanded' : ''}`}>
@@ -43,6 +44,7 @@ function OpportunityCard({ opportunity }: { opportunity: Oportunidad }) {
         <div><dt>Cierre estimado</dt><dd>{formatCommercialDate(opportunity.fechaEstimadaCierre)}</dd></div>
         <div><dt>Responsable</dt><dd>{opportunity.responsableNombre}{opportunity.responsableActivo ? '' : ' (inactivo)'}</dd></div>
       </dl>
+      {opportunity.accionesPermitidas.mover && <Button size="small" variant="outlined" onClick={() => onChangeStage(opportunity)}>Cambiar etapa</Button>}
     </div>
   </article>
 }
@@ -53,6 +55,8 @@ export function FunnelPage() {
   const isSuperior = Boolean(user?.roles?.includes('ADMINISTRADOR') || user?.roles?.includes('RESPONSABLE_COMERCIAL'))
   const [selected, setSelected] = useState('')
   const [responsible, setResponsible] = useState('')
+  const [moving, setMoving] = useState<Oportunidad | null>(null)
+  const [confirmed, setConfirmed] = useState(false)
   const [collapsedStages, setCollapsedStages] = useState<Set<number | string>>(() => new Set())
   const funnels = useQuery({ queryKey: ['embudos', 'opciones'], queryFn: () => listFunnels({ pageSize: 100 }) })
   const options = funnels.data?.items ?? []
@@ -93,12 +97,14 @@ export function FunnelPage() {
                 </IconButton>
               </header>
               <div id={stageContentId} className="funnel-stage-content" hidden={collapsed}>
-                {stage.oportunidades.length === 0 ? <p className="funnel-stage-empty">Sin oportunidades</p> : <div className="funnel-stage-opportunities">{stage.oportunidades.map((opportunity) => <OpportunityCard key={opportunity.id} opportunity={opportunity} />)}</div>}
+                {stage.oportunidades.length === 0 ? <p className="funnel-stage-empty">Sin oportunidades</p> : <div className="funnel-stage-opportunities">{stage.oportunidades.map((opportunity) => <OpportunityCard key={opportunity.id} opportunity={opportunity} onChangeStage={setMoving} />)}</div>}
               </div>
             </section>
           })}
         </div></div>}
       </>}
     </>}
+    {moving && <MoveStageDialog item={moving} open onClose={() => setMoving(null)} onDone={() => { setMoving(null); setConfirmed(true) }} />}
+    <Snackbar open={confirmed} autoHideDuration={4000} onClose={() => setConfirmed(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}><Alert onClose={() => setConfirmed(false)} severity="success" variant="filled">Etapa actualizada</Alert></Snackbar>
   </Box>
 }

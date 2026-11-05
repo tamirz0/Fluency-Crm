@@ -10,5 +10,6 @@ public interface IOportunidadService
     Task<OportunidadResponse> GetAsync(int id, CancellationToken ct);
     Task<OportunidadResponse> PatchAsync(int id, PatchOportunidadRequest request, CancellationToken ct);
     Task<OportunidadResponse> ReasignarAsync(int id, ReasignarOportunidadRequest request, CancellationToken ct);
+    Task<OportunidadResponse> MoverAsync(int id, MoverOportunidadRequest request, CancellationToken ct);
     Task<OportunidadResponse> CreateAsync(CreateOportunidadRequest request, CancellationToken ct);
 }

@@ -70,6 +70,15 @@ public sealed class OportunidadesController(IOportunidadService oportunidades) :
         => Ok(await oportunidades.ReasignarAsync(id, request, ct));
 
     /// <summary>
+    /// Mueve una oportunidad abierta a otra etapa abierta y activa de su embudo, con su entrada de historial (autor: la sesión).
+    /// Mismo destino: sin cambios ni historial. Las etapas finales se alcanzan con ganar/perder.
+    /// </summary>
+    [HttpPost("{id:int}/mover"), Authorize(Policy = RolesYPermisos.GestionarOportunidad)]
+    [ProducesResponseType<OportunidadResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<OportunidadResponse>> Mover(int id, [FromBody] MoverOportunidadRequest request, CancellationToken ct)
+        => Ok(await oportunidades.MoverAsync(id, request, ct));
+
+    /// <summary>
     /// Crea una oportunidad con su historial inicial en una sola transacción. Sin etapa usa la primera abierta activa del embudo;
     /// sin valor copia el precio del servicio; sin responsable usa al actor. El vendedor solo crea a su nombre.
     /// </summary>

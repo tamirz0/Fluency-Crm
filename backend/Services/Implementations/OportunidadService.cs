@@ -249,5 +249,42 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
         return result;
     }
 
+    /// <summary>
+    /// Mueve una oportunidad abierta a otra etapa abierta y activa de su mismo embudo y registra la entrada de historial, todo en una
+    /// transacción Serializable que relee propiedad y estado. El mismo destino no hace nada; las finales usan ganar/perder.
+    /// </summary>
+    public async Task<OportunidadResponse> MoverAsync(int id, MoverOportunidadRequest request, CancellationToken ct)
+    {
+        if (!actor.Usuario.Permisos.Contains(RolesYPermisos.GestionarOportunidad))
+            throw new OportunidadOperationException(403, "FORBIDDEN", "No tiene permiso para gestionar oportunidades.");
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        if (!await db.Usuarios.AnyAsync(u => u.Id == actor.Id && u.Activo, ct))
+            throw new OportunidadOperationException(401, "UNAUTHENTICATED", "La sesión ya no está disponible.");
+        var item = await db.Oportunidades.SingleOrDefaultAsync(o => o.Id == id && o.Activo, ct) ?? throw NotFound();
+        if (!EsSuperior && item.IdResponsable != actor.Id)
+            throw new OportunidadOperationException(403, "FORBIDDEN", "Solo el responsable o un superior puede mover esta oportunidad.");
+        var current = await db.EtapaComerciales.Where(e => e.Id == item.IdEtapa)
+            .Select(e => new { e.IdEmbudo, Estado = e.IdEstadoNavigation.Codigo }).SingleAsync(ct);
+        if (current.Estado != "ABIERTA")
+            throw new OportunidadOperationException(409, "BUSINESS_CONFLICT", "Una oportunidad cerrada no se mueve: reábrala primero.");
+        var target = await db.EtapaComerciales.AsNoTracking().Where(e => e.Id == request.IdEtapa)
+            .Select(e => new { e.IdEmbudo, e.Activo, Estado = e.IdEstadoNavigation.Codigo }).SingleOrDefaultAsync(ct);
+        if (target is null || target.IdEmbudo != current.IdEmbudo)
+            throw Invalid("La etapa debe pertenecer al embudo de la oportunidad.");
+        if (target.Estado != "ABIERTA")
+            throw Invalid("Para cerrar la oportunidad use ganar o perder: este movimiento solo admite etapas abiertas.", "VALIDATION_FAILED");
+        if (request.IdEtapa != item.IdEtapa)
+        {
+            if (!target.Activo) throw Invalid("La etapa no está disponible.");
+            var previous = item.IdEtapa;
+            item.IdEtapa = request.IdEtapa;
+            db.HistorialEtapas.Add(new HistorialEtapa { IdOportunidad = id, IdEtapaAnterior = previous, IdNuevaEtapa = request.IdEtapa, IdUsuario = actor.Id, Observacion = Text(request.Observacion) });
+            await db.SaveChangesAsync(ct);
+        }
+        var result = await GetAsync(id, ct);
+        await transaction.CommitAsync(ct);
+        return result;
+    }
+
     private static string? Text(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

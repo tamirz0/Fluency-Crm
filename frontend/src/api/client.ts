@@ -228,6 +228,9 @@ export function patchOpportunity(id: number, body: PatchOportunidadRequest): Pro
 export function reassignOpportunity(id: number, idResponsable: number): Promise<Oportunidad> {
   return getResponseData(() => api.POST('/oportunidades/{id}/reasignar', { params: { path: { id } }, body: { idResponsable } }))
 }
+export function moveOpportunity(id: number, idEtapa: number, observacion?: string): Promise<Oportunidad> {
+  return getResponseData(() => api.POST('/oportunidades/{id}/mover', { params: { path: { id } }, body: { idEtapa, ...(observacion ? { observacion } : {}) } }))
+}
 export type OportunidadQuery = {
   q?: string; idResponsable?: number; idEmpresa?: number; idContacto?: number; idEmbudo?: number; idEtapa?: number
   estado?: 'ABIERTA' | 'GANADA' | 'PERDIDA'; idOrigen?: number; page?: number; pageSize?: number

@@ -126,6 +126,13 @@ public sealed record ReasignarOportunidadRequest
     [Range(1, int.MaxValue)] public int IdResponsable { get; init; }
 }
 
+/// <summary>Movimiento entre etapas abiertas; autor y fecha del historial los fija el servidor.</summary>
+public sealed record MoverOportunidadRequest
+{
+    [Range(1, int.MaxValue)] public int IdEtapa { get; init; }
+    public string? Observacion { get; init; }
+}
+
 /// <summary>Error público sin detalles de persistencia.</summary>
 public sealed class OportunidadOperationException(int status, string code, string message) : Exception(message)
 {
