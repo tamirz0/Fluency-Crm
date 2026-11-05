@@ -46,7 +46,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [ ] [T33 — Mostrar funnel según el rol](#t33)
 - [x] [T34 — Editar datos de una oportunidad abierta](#t34)
 - [x] [T35 — Reasignar una oportunidad y retirar permiso anterior](#t35)
-- [ ] [T36 — Mover entre etapas abiertas con historial](#t36)
+- [x] [T36 — Mover entre etapas abiertas con historial](#t36)
 - [ ] [T37 — Cerrar oportunidades como ganadas o perdidas](#t37)
 - [ ] [T38 — Reabrir una oportunidad conservando su cierre](#t38)
 - [ ] [T39 — Dar de baja oportunidades sin cascadas](#t39)
@@ -973,13 +973,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Solo destino abierto activo del mismo embudo; mismo destino es no-op sin duplicar historia; /mover rechaza finales.
-- [ ] Permiso actual, cambio e historial en una transacción; falla/carrera revierte y devuelve conflicto sin reintento automático.
-- [ ] Selector actualiza ficha/funnel/historial; selección final se deriva al flujo de cierre cuando T37 lo habilite, sin bypass.
+- [x] Solo destino abierto activo del mismo embudo; mismo destino es no-op sin duplicar historia; /mover rechaza finales.
+- [x] Permiso actual, cambio e historial en una transacción; falla/carrera revierte y devuelve conflicto sin reintento automático.
+- [x] Selector actualiza ficha/funnel/historial; selección final se deriva al flujo de cierre cuando T37 lo habilite, sin bypass.
 
 **Verificación:** B + F + API(MovimientoTests) + D; destino ajeno/inactivo, no-op y rollback.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t36.md](verificaciones/verificacion-t36.md). `MovimientoTests` 2/2 y `HttpContractTests` 19/19 (21/21); frontend 122/122, build correcto, lint solo con la advertencia previa. El selector no ofrece finales hasta que T37 habilite el cierre. Sin merge ni push.
 
 ### CP12 — Gestión de abiertas
 
