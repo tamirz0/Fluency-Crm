@@ -1,7 +1,7 @@
 import { ArrowBack, Refresh } from '@mui/icons-material'
 import { Alert, Box, Button, Link, Skeleton, Typography } from '@mui/material'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link as RouterLink, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Edit } from '@mui/icons-material'
 import { ApiRequestError, contactoQueryKeys, deleteContact, getContact, type Contacto } from '../../api/client'
@@ -9,6 +9,7 @@ import { CompanyStatus } from '../companies/CompanyStatus'
 import { contactFullName, displayValue, parsePositiveId } from '../shared/display'
 import { useAuth } from '../../auth/useAuth'
 import { confirmationFor } from '../shared/formUtils'
+import { RegisterActivityButton } from '../activities/ActivityForm'
 import { RemoveRecordButton } from '../shared/RemoveRecordButton'
 import '../companies/companies.css'
 import './records.css'
@@ -64,6 +65,7 @@ export function ContactDetailPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const [activityRegistered, setActivityRegistered] = useState(false)
   const idContacto = parsePositiveId(routeId)
   const query = useQuery({ queryKey: contactoQueryKeys.detail(idContacto ?? 0), queryFn: () => getContact(idContacto as number), enabled: idContacto !== undefined })
 
@@ -74,8 +76,9 @@ export function ContactDetailPage() {
   const contact = query.data
   return <Box className="companies-page company-result-page records-page">
     <Link component={RouterLink} to="/contactos" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a contactos</Link>
+    {activityRegistered && <Alert severity="success" className="record-form-confirmation">Actividad registrada.</Alert>}
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
-    <header className="company-detail-header"><div><Typography component="h1" className="companies-page-title">{contactFullName(contact)}</Typography></div><div className="company-detail-header-actions"><CompanyStatus value={contact.estadoDescripcion} />{canCreateOpportunity && <Button component={RouterLink} to={`/oportunidades/nueva?idContacto=${contact.id}`} variant="outlined">Nueva oportunidad</Button>}<Button component={RouterLink} to={`/contactos/${contact.id}/editar`} variant="contained" startIcon={<Edit />}>Editar contacto</Button>
+    <header className="company-detail-header"><div><Typography component="h1" className="companies-page-title">{contactFullName(contact)}</Typography></div><div className="company-detail-header-actions"><CompanyStatus value={contact.estadoDescripcion} />{canCreateOpportunity && <Button component={RouterLink} to={`/oportunidades/nueva?idContacto=${contact.id}`} variant="outlined">Nueva oportunidad</Button>}<RegisterActivityButton context={{ label: contactFullName(contact), idContacto: Number(contact.id) }} onRegistered={() => setActivityRegistered(true)} /><Button component={RouterLink} to={`/contactos/${contact.id}/editar`} variant="contained" startIcon={<Edit />}>Editar contacto</Button>
       <RemoveRecordButton noun="contacto" name={contactFullName(contact)} remove={() => deleteContact(Number(contact.id))} onRemoved={() => {
         navigate('/contactos', { state: { confirmation: confirmationFor('Contacto', 'dado de baja') } })
         void queryClient.invalidateQueries({ queryKey: contactoQueryKeys.all, refetchType: 'inactive' })

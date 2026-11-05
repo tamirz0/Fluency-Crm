@@ -246,6 +246,15 @@ export function reopenOpportunity(id: number, body: ReabrirOportunidadRequest): 
 export async function deleteOpportunity(id: number): Promise<void> {
   await api.DELETE('/oportunidades/{id}', { params: { path: { id } } })
 }
+export type Actividad = components['schemas']['ActividadResponse']
+export type CreateActividadRequest = components['schemas']['CreateActividadRequest']
+export type ActividadQuery = { q?: string; idEmpresa?: number; idContacto?: number; idOportunidad?: number; idTipo?: number; idUsuario?: number; desde?: string; hasta?: string; page?: number; pageSize?: number }
+export function createActivity(body: CreateActividadRequest): Promise<Actividad> {
+  return getResponseData(() => api.POST('/actividades', { body }))
+}
+export function listActivities(query: ActividadQuery = {}) {
+  return getResponseData(() => api.GET('/actividades', { params: { query } }))
+}
 export type OportunidadQuery = {
   q?: string; idResponsable?: number; idEmpresa?: number; idContacto?: number; idEmbudo?: number; idEtapa?: number
   estado?: 'ABIERTA' | 'GANADA' | 'PERDIDA'; idOrigen?: number; page?: number; pageSize?: number

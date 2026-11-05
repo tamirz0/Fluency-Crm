@@ -10,6 +10,7 @@ import { RemoveRecordButton } from '../shared/RemoveRecordButton'
 import { clientLabel, money, stateLabels } from './opportunityData'
 import { CloseOpportunityDialog, type CloseResult } from './CloseOpportunityDialog'
 import { MoveStageDialog } from './MoveStageDialog'
+import { RegisterActivityButton } from '../activities/ActivityForm'
 import { ReassignDialog } from './ReassignDialog'
 import { ReopenOpportunityDialog } from './ReopenOpportunityDialog'
 import '../contacts/records.css'
@@ -92,6 +93,7 @@ export function OpportunityDetailPage() {
   const [reassigning, setReassigning] = useState(false)
   const [moving, setMoving] = useState(false)
   const [reopening, setReopening] = useState(false)
+  const [activityRegistered, setActivityRegistered] = useState(false)
   const [closing, setClosing] = useState<CloseResult | '' | null>(null)
   const [reassigned, setReassigned] = useState(false)
   const back = opportunity?.idEmpresa ? { to: `/empresas/${opportunity.idEmpresa}`, label: 'Volver a la empresa' } : opportunity?.idContacto ? { to: `/contactos/${opportunity.idContacto}`, label: 'Volver al contacto' } : { to: '/inicio', label: 'Volver al inicio' }
@@ -106,11 +108,12 @@ export function OpportunityDetailPage() {
   return <Box className="companies-page company-result-page records-page">
     {backLink}
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
-    <header className="company-detail-header"><div><Typography component="h1" className="companies-page-title">{opportunity.tituloVisible}</Typography>{opportunity.titulo && <Typography className="companies-page-description opportunity-subtitle">{clientLabel(opportunity)}</Typography>}</div><div className="company-detail-header-actions">{opportunity.accionesPermitidas.editar && <Button component={RouterLink} to={`/oportunidades/${opportunity.id}/editar`} variant="outlined">Editar</Button>}{opportunity.accionesPermitidas.mover && <Button variant="outlined" onClick={() => setMoving(true)}>Cambiar etapa</Button>}{opportunity.accionesPermitidas.cerrar && <Button variant="outlined" onClick={() => setClosing('')}>Cerrar</Button>}{opportunity.accionesPermitidas.reabrir && <Button variant="outlined" onClick={() => setReopening(true)}>Reabrir</Button>}{opportunity.accionesPermitidas.darDeBaja && <RemoveRecordButton noun="oportunidad" name={opportunity.tituloVisible} remove={() => deleteOpportunity(Number(opportunity.id))} onRemoved={() => {
+    <header className="company-detail-header"><div><Typography component="h1" className="companies-page-title">{opportunity.tituloVisible}</Typography>{opportunity.titulo && <Typography className="companies-page-description opportunity-subtitle">{clientLabel(opportunity)}</Typography>}</div><div className="company-detail-header-actions">{opportunity.accionesPermitidas.editar && <Button component={RouterLink} to={`/oportunidades/${opportunity.id}/editar`} variant="outlined">Editar</Button>}{opportunity.accionesPermitidas.mover && <Button variant="outlined" onClick={() => setMoving(true)}>Cambiar etapa</Button>}{opportunity.accionesPermitidas.cerrar && <Button variant="outlined" onClick={() => setClosing('')}>Cerrar</Button>}{opportunity.accionesPermitidas.reabrir && <Button variant="outlined" onClick={() => setReopening(true)}>Reabrir</Button>}{opportunity.accionesPermitidas.gestionarActividades && <RegisterActivityButton context={{ label: opportunity.tituloVisible, idOportunidad: Number(opportunity.id), ...(opportunity.idEmpresa == null ? {} : { idEmpresa: Number(opportunity.idEmpresa) }), ...(opportunity.idContacto == null ? {} : { idContacto: Number(opportunity.idContacto) }) }} onRegistered={() => setActivityRegistered(true)} />}{opportunity.accionesPermitidas.darDeBaja && <RemoveRecordButton noun="oportunidad" name={opportunity.tituloVisible} remove={() => deleteOpportunity(Number(opportunity.id))} onRemoved={() => {
       queryClient.removeQueries({ queryKey: opportunityQueryKeys.detail(Number(opportunity.id)) })
       void queryClient.invalidateQueries({ queryKey: ['oportunidades'] })
       navigate('/oportunidades', { state: { confirmation: confirmationFor('Oportunidad', 'dada de baja') } })
     }} />}{opportunity.accionesPermitidas.reasignar && <Button variant="outlined" onClick={() => setReassigning(true)}>Reasignar</Button>}<Chip className="company-status company-status--prospect" label={stateLabels[opportunity.estado] ?? opportunity.estado} size="small" /></div></header>
+    {activityRegistered && <Alert severity="success" className="record-form-confirmation">Actividad registrada.</Alert>}
     {reassigned && <Alert severity="success" className="record-form-confirmation">Oportunidad reasignada. Podés consultarla, pero ya no editarla.</Alert>}
     <OpportunityDetails opportunity={opportunity} />
     <MoveStageDialog item={opportunity} open={moving} onClose={() => setMoving(false)} onDone={() => setMoving(false)} onCloseRequest={result => { setMoving(false); setClosing(result) }} />

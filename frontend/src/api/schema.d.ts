@@ -4,6 +4,294 @@
  */
 
 export interface paths {
+    "/actividades": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista las actividades vigentes (lectura compartida) con filtros previos al conteo, ordenadas por la fecha del hecho descendente.
+         *     `desde` es inclusivo y `hasta` exclusivo.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    q?: string;
+                    idEmpresa?: number | string;
+                    idContacto?: number | string;
+                    idOportunidad?: number | string;
+                    idTipo?: number | string;
+                    idUsuario?: number | string;
+                    desde?: string;
+                    hasta?: string;
+                    page?: number | string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PageResponseOfActividadResponse"];
+                        "application/json": components["schemas"]["PageResponseOfActividadResponse"];
+                        "text/json": components["schemas"]["PageResponseOfActividadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Registra una actividad ya realizada. El autor y la fecha de registro los fija el servidor. Sin oportunidad cualquier usuario activo
+         *     gestiona; con oportunidad, solo su responsable vendedor o un superior (también si está cerrada).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateActividadRequest"];
+                    "text/json": components["schemas"]["CreateActividadRequest"];
+                    "application/*+json": components["schemas"]["CreateActividadRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ActividadResponse"];
+                        "application/json": components["schemas"]["ActividadResponse"];
+                        "text/json": components["schemas"]["ActividadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/actividades/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Consulta una actividad vigente, también ajena. Una dada de baja responde 404. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ActividadResponse"];
+                        "application/json": components["schemas"]["ActividadResponse"];
+                        "text/json": components["schemas"]["ActividadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/catalogos/{catalogo}": {
         parameters: {
             query?: never;
@@ -5488,6 +5776,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description Qué puede intentar el actor sobre una actividad; la API vuelve a comprobarlo al ejecutar. */
+        AccionesActividad: {
+            editar: boolean;
+            darDeBaja: boolean;
+        };
         /** @description Operaciones que el actor puede intentar; la API vuelve a comprobarlas al ejecutar. */
         AccionesOportunidad: {
             editar: boolean;
@@ -5497,6 +5790,35 @@ export interface components {
             reabrir: boolean;
             darDeBaja: boolean;
             gestionarActividades: boolean;
+        };
+        /** @description Actividad con sus referencias etiquetadas. Fecha del hecho y de registro son instantes distintos. */
+        ActividadResponse: {
+            /** Format: int32 */
+            id: number | string;
+            /** Format: int32 */
+            idTipo: number | string;
+            tipoNombre: string;
+            tipoActivo: boolean;
+            /** Format: int32 */
+            idUsuario: number | string;
+            usuarioNombre: string;
+            /** Format: int32 */
+            idEmpresa?: null | number | string;
+            empresaRazonSocial?: null | string;
+            /** Format: int32 */
+            idContacto?: null | number | string;
+            contactoNombre?: null | string;
+            /** Format: int32 */
+            idOportunidad?: null | number | string;
+            oportunidadTitulo?: null | string;
+            /** Format: date-time */
+            fechaHora: string;
+            /** Format: date-time */
+            fechaRegistro: string;
+            descripcion: string;
+            resultado?: null | string;
+            activo: boolean;
+            accionesPermitidas?: components["schemas"]["AccionesActividad"];
         };
         /** @description Alta o edición de la etiqueta obligatoria según el catálogo; omisión y null no la borran. */
         CatalogoRequest: {
@@ -5558,6 +5880,27 @@ export interface components {
             /** Format: date-time */
             fechaCreacion: string;
             activo: boolean;
+        };
+        /**
+         * @description Alta de una actividad ya realizada. Autor, fecha de registro y baja los fija el servidor (propiedades desconocidas: 400).
+         *     Debe indicar empresa o contacto; la oportunidad por sí sola no alcanza.
+         */
+        CreateActividadRequest: {
+            /** Format: int32 */
+            idTipo?: number | string;
+            /** Format: int32 */
+            idEmpresa?: null | number | string;
+            /** Format: int32 */
+            idContacto?: null | number | string;
+            /** Format: int32 */
+            idOportunidad?: null | number | string;
+            /**
+             * Format: date-time
+             * @description Instante en que ocurrió la interacción (no puede ser futuro).
+             */
+            fechaHora?: null | string;
+            descripcion?: null | string;
+            resultado?: null | string;
         };
         /**
          * @description Alta de oportunidad. Requiere embudo (solo contexto, no se persiste) y empresa o contacto; el título es opcional.
@@ -5806,6 +6149,16 @@ export interface components {
         /** @description Incluye todas las etapas activas una vez; admite huecos. */
         OrdenEtapasRequest: {
             etapas: components["schemas"]["PosicionEtapaRequest"][];
+        };
+        /** @description Página de resultados, contados después de aplicar los filtros. */
+        PageResponseOfActividadResponse: {
+            items: components["schemas"]["ActividadResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
         };
         /** @description Página de resultados, contados después de aplicar los filtros. */
         PageResponseOfCatalogoResponse: {
