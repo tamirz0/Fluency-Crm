@@ -9,6 +9,7 @@ import { CompanyStatus } from '../companies/CompanyStatus'
 import { contactFullName, displayValue, parsePositiveId } from '../shared/display'
 import { useAuth } from '../../auth/useAuth'
 import { confirmationFor } from '../shared/formUtils'
+import { CommercialHistory } from '../activities/CommercialHistory'
 import { RegisterActivityButton } from '../activities/ActivityForm'
 import { RemoveRecordButton } from '../shared/RemoveRecordButton'
 import '../companies/companies.css'
@@ -84,5 +85,6 @@ export function ContactDetailPage() {
         void queryClient.invalidateQueries({ queryKey: contactoQueryKeys.all, refetchType: 'inactive' })
       }} /></div></header>
     <ContactDetails contact={contact} />
+    <CommercialHistory kind="contactos" id={Number(contact.id)} />
   </Box>
 }

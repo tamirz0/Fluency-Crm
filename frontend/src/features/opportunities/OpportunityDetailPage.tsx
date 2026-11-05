@@ -1,15 +1,16 @@
 import { ArrowBack, Refresh } from '@mui/icons-material'
-import { Alert, Box, Button, Chip, Link, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, Typography } from '@mui/material'
+import { Alert, Box, Button, Chip, Link, Skeleton, Typography } from '@mui/material'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
 import { Link as RouterLink, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { ApiRequestError, deleteOpportunity, getOpportunity, getOpportunityHistory, opportunityQueryKeys, type Oportunidad } from '../../api/client'
+import { ApiRequestError, deleteOpportunity, getOpportunity, opportunityQueryKeys, type Oportunidad } from '../../api/client'
 import { displayValue, formatCommercialDate, parsePositiveId } from '../shared/display'
 import { confirmationFor } from '../shared/formUtils'
 import { RemoveRecordButton } from '../shared/RemoveRecordButton'
 import { clientLabel, money, stateLabels } from './opportunityData'
 import { CloseOpportunityDialog, type CloseResult } from './CloseOpportunityDialog'
 import { MoveStageDialog } from './MoveStageDialog'
+import { CommercialHistory } from '../activities/CommercialHistory'
 import { RegisterActivityButton } from '../activities/ActivityForm'
 import { ReassignDialog } from './ReassignDialog'
 import { ReopenOpportunityDialog } from './ReopenOpportunityDialog'
@@ -55,33 +56,6 @@ function OpportunityDetails({ opportunity }: { opportunity: Oportunidad }) {
   </article>
 }
 
-const historyDate = (value: string) => new Date(value).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })
-
-/** Historial de etapas de solo lectura, más antiguo primero. */
-function StageHistory({ idOportunidad }: { idOportunidad: number }) {
-  const [page, setPage] = useState(0)
-  const [pageSize, setPageSize] = useState(10)
-  const history = useQuery({ queryKey: opportunityQueryKeys.history(idOportunidad, page + 1, pageSize), queryFn: () => getOpportunityHistory(idOportunidad, page + 1, pageSize) })
-  return <section className="company-detail-section" aria-labelledby="opportunity-history-heading">
-    <Typography component="h2" id="opportunity-history-heading" className="company-section-heading">Historial de etapas</Typography>
-    {history.isPending ? <Skeleton height={80} aria-label="Cargando historial de etapas" role="status" /> : history.isError
-      ? <Alert severity="warning" action={<Button onClick={() => void history.refetch()}>Reintentar</Button>}>No pudimos cargar el historial de etapas.</Alert>
-      : history.data.items.length === 0 ? <Typography color="text.secondary">Sin movimientos registrados.</Typography> : <>
-        <TableContainer><Table size="small" aria-label="Historial de etapas">
-          <TableHead><TableRow><TableCell>Fecha</TableCell><TableCell>Desde</TableCell><TableCell>Hacia</TableCell><TableCell>Autor</TableCell><TableCell>Observación</TableCell></TableRow></TableHead>
-          <TableBody>{history.data.items.map((entry) => <TableRow key={entry.id}>
-            <TableCell>{historyDate(entry.fechaHora)}</TableCell>
-            <TableCell>{entry.etapaAnteriorNombre ?? 'Alta de la oportunidad'}</TableCell>
-            <TableCell>{entry.etapaNuevaNombre}</TableCell>
-            <TableCell>{entry.usuarioNombre}</TableCell>
-            <TableCell>{displayValue(entry.observacion)}</TableCell>
-          </TableRow>)}</TableBody>
-        </Table></TableContainer>
-        <TablePagination component="div" count={Number(history.data.totalCount)} page={page} rowsPerPage={pageSize} rowsPerPageOptions={[10, 25, 50]} onPageChange={(_, next) => setPage(next)} onRowsPerPageChange={(event) => { setPageSize(Number(event.target.value)); setPage(0) }} labelRowsPerPage="Movimientos por página" labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`} getItemAriaLabel={(type) => ({ first: 'Primera página', last: 'Última página', next: 'Página siguiente', previous: 'Página anterior' })[type]} />
-      </>}
-  </section>
-}
-
 export function OpportunityDetailPage() {
   const { idOportunidad: routeId } = useParams()
   const location = useLocation()
@@ -120,6 +94,6 @@ export function OpportunityDetailPage() {
     {closing !== null && <CloseOpportunityDialog item={opportunity} initialResult={closing || undefined} open onClose={() => setClosing(null)} onDone={() => setClosing(null)} />}
     <ReopenOpportunityDialog item={opportunity} open={reopening} onClose={() => setReopening(false)} onDone={() => setReopening(false)} />
     <ReassignDialog item={opportunity} open={reassigning} onClose={() => setReassigning(false)} onDone={() => { setReassigning(false); setReassigned(true) }} />
-    <StageHistory idOportunidad={opportunity.id as number} />
+    <CommercialHistory kind="oportunidades" id={Number(opportunity.id)} />
   </Box>
 }

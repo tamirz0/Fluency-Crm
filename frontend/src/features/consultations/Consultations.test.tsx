@@ -77,9 +77,10 @@ describe('consultas comerciales', () => {
   })
 
   it('muestra el detalle del contacto, sus observaciones y el enlace correcto a empresa', async () => {
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse(contact))
+    vi.mocked(fetch).mockImplementation(async input => new URL((input as Request).url).pathname.endsWith('/historial-comercial') ? jsonResponse(page([])) : jsonResponse(contact))
     renderAuthenticated('/contactos/14')
     expect(await screen.findByRole('heading', { name: 'Pérez, Lucía' })).toBeTruthy()
+    expect(await screen.findByText('Todavía no hay actividades ni cambios de etapa.')).toBeTruthy()
     expect(screen.getByText('30123456')).toBeTruthy()
     expect(screen.getByText('Directora')).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Acme Idiomas' }).getAttribute('href')).toBe('/empresas/4')
@@ -87,7 +88,7 @@ describe('consultas comerciales', () => {
     expect(screen.getByText('Fecha de creación', { selector: 'dt' })).toBeTruthy()
     expect(screen.getByText(/Primera línea\s+Segunda línea/)).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Volver a contactos' })).toBeTruthy()
-    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(fetch).toHaveBeenCalledTimes(2)
   })
 
   it('no consulta un id inválido y representa el 404 como contacto inexistente', async () => {
@@ -185,15 +186,16 @@ describe('consultas comerciales', () => {
   it('muestra detalle, enlaces e historial de etapas de solo lectura; un 404 representa oportunidad inexistente', async () => {
     const detail = { ...listed, responsableActivo: true, idContacto: 14, contactoNombre: 'Lucía Pérez' }
     const history = page([
-      { id: 1, idEtapaAnterior: null, etapaAnteriorNombre: null, idNuevaEtapa: 1, etapaNuevaNombre: 'Consulta', fechaHora: '2026-11-05T12:00:00Z', idUsuario: 8, usuarioNombre: 'Ana Ventas', observacion: null },
-      { id: 2, idEtapaAnterior: 1, etapaAnteriorNombre: 'Consulta', idNuevaEtapa: 3, etapaNuevaNombre: 'Propuesta', fechaHora: '2026-11-06T12:00:00Z', idUsuario: 7, usuarioNombre: 'María Gómez', observacion: 'Envió presupuesto' },
+      { tipo: 'TRANSICION', idOrigen: 2, fechaHora: '2026-11-06T12:00:00Z', idUsuario: 7, usuarioNombre: 'María Gómez', idOportunidad: 91, etapaAnterior: 'Consulta', etapaNueva: 'Propuesta', observacion: 'Envió presupuesto' },
+      { tipo: 'ACTIVIDAD', idOrigen: 5, fechaHora: '2026-11-05T15:00:00Z', fechaRegistro: '2026-11-06T09:00:00Z', idUsuario: 8, usuarioNombre: 'Ana Ventas', idOportunidad: 91, tipoActividad: 'Llamada', descripcion: 'Llamó para pedir presupuesto', resultado: 'Enviar propuesta', accionesPermitidas: { editar: false, darDeBaja: false } },
+      { tipo: 'TRANSICION', idOrigen: 1, fechaHora: '2026-11-05T12:00:00Z', idUsuario: 8, usuarioNombre: 'Ana Ventas', idOportunidad: 91, etapaAnterior: null, etapaNueva: 'Consulta' },
     ])
     const requests: URL[] = []
     vi.mocked(fetch).mockImplementation(async input => {
       const url = new URL((input as Request).url)
       requests.push(url)
       if (url.pathname.endsWith('/oportunidades/92')) return new Response('No existe', { status: 404, headers: { 'Content-Type': 'text/plain' } })
-      if (url.pathname.endsWith('/oportunidades/91/historial-etapas')) return jsonResponse(history)
+      if (url.pathname.endsWith('/oportunidades/91/historial-comercial')) return jsonResponse(history)
       if (url.pathname.endsWith('/oportunidades/91')) return jsonResponse(detail)
       return jsonResponse([])
     })
@@ -203,13 +205,18 @@ describe('consultas comerciales', () => {
     expect(screen.getByRole('link', { name: 'Lucía Pérez' }).getAttribute('href')).toBe('/contactos/14')
     expect(screen.getByText('Capacitación')).toBeTruthy()
     expect(screen.getByText('31/12/2026')).toBeTruthy()
-    const table = within(await screen.findByRole('table', { name: 'Historial de etapas' }))
-    expect(table.getByText('Alta de la oportunidad')).toBeTruthy()
-    expect(table.getByText('Ana Ventas')).toBeTruthy()
-    expect(table.getByText('Envió presupuesto')).toBeTruthy()
+    const timeline = within(await screen.findByRole('list', { name: 'Historial comercial' }))
+    expect(timeline.getByText('Cambio de etapa: Alta de la oportunidad → Consulta')).toBeTruthy()
+    expect(timeline.getByText('Cambio de etapa: Consulta → Propuesta')).toBeTruthy()
+    expect(timeline.getByText('Envió presupuesto')).toBeTruthy()
+    expect(timeline.getByText('Llamó para pedir presupuesto')).toBeTruthy()
+    expect(timeline.getByText(/registrada por Ana Ventas el/)).toBeTruthy()
+    // Una actividad de oportunidad ajena se lee sin acciones.
+    expect(timeline.queryByRole('button', { name: /Editar actividad/ })).toBeNull()
+    expect(timeline.queryByRole('button', { name: 'Dar de baja' })).toBeNull()
     // Solo lectura: ninguna acción de edición aunque la oportunidad sea consultable.
     expect(screen.queryByRole('button', { name: /^(editar|mover|reasignar|cerrar oportunidad|reabrir|eliminar)/i })).toBeNull()
-    expect(requests.every((url) => !url.pathname.includes('/historial-etapas') || url.searchParams.get('page') === '1')).toBe(true)
+    expect(requests.every((url) => !url.pathname.includes('/historial-comercial') || url.searchParams.get('page') === '1')).toBe(true)
 
     renderAuthenticated('/oportunidades/92')
     expect(await screen.findByRole('heading', { name: 'No encontramos esa oportunidad' })).toBeTruthy()

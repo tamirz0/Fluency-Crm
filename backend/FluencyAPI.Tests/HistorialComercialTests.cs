@@ -104,6 +104,14 @@ public sealed class HistorialComercialTests
         Assert.Equal(HttpStatusCode.NoContent, (await admin.DeleteAsync($"/actividades/{both}")).StatusCode);
         Assert.Equal(new[] { ("ACTIVIDAD", viaOpportunity) }, Keys(await Read($"/empresas/{seed.CompanyA}/historial-comercial")));
 
+        // Cada actividad indica qué puede intentar el actor: la de una oportunidad ajena no se edita, la propia y la compartida sí.
+        var adminOpportunity = (await Json(await admin.PostAsJsonAsync("/oportunidades", new { titulo = "Del admin", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA }))).GetProperty("id").GetInt32();
+        var foreign = await Activity(admin, $"\"idEmpresa\":{seed.CompanyA},\"idOportunidad\":{adminOpportunity}", now.AddHours(-1), "De una oportunidad ajena");
+        var shared = await Activity(admin, $"\"idEmpresa\":{seed.CompanyA}", now.AddHours(-2), "Compartida");
+        var withActions = (await Read($"/empresas/{seed.CompanyA}/historial-comercial")).GetProperty("items").EnumerateArray()
+            .Where(i => i.GetProperty("tipo").GetString() == "ACTIVIDAD").ToDictionary(i => i.GetProperty("idOrigen").GetInt32(), i => i.GetProperty("accionesPermitidas").GetProperty("editar").GetBoolean());
+        Assert.False(withActions[foreign]); Assert.True(withActions[shared]); Assert.True(withActions[viaOpportunity]);
+        Assert.Equal(JsonValueKind.Null, (await Read($"/empresas/{seed.CompanyA}/historial-comercial")).GetProperty("items").EnumerateArray().First(i => i.GetProperty("tipo").GetString() == "TRANSICION").GetProperty("accionesPermitidas").ValueKind);
         // Un contexto dado de baja no se consulta (sin papelera) y los parámetros inválidos se rechazan.
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE empresa SET activo=false WHERE id={seed.CompanyB}");

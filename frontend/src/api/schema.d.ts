@@ -3167,6 +3167,240 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/empresas/{id}/historial-comercial": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Actividades de la empresa (por su FK directa) y transiciones de sus oportunidades vigentes. Fecha descendente; `desde` inclusivo, `hasta` exclusivo. */
+        get: {
+            parameters: {
+                query?: {
+                    desde?: string;
+                    hasta?: string;
+                    page?: number | string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PageResponseOfHistorialComercialItem"];
+                        "application/json": components["schemas"]["PageResponseOfHistorialComercialItem"];
+                        "text/json": components["schemas"]["PageResponseOfHistorialComercialItem"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contactos/{id}/historial-comercial": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Igual criterio por contacto: no incluye automáticamente lo de su empresa actual. */
+        get: {
+            parameters: {
+                query?: {
+                    desde?: string;
+                    hasta?: string;
+                    page?: number | string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PageResponseOfHistorialComercialItem"];
+                        "application/json": components["schemas"]["PageResponseOfHistorialComercialItem"];
+                        "text/json": components["schemas"]["PageResponseOfHistorialComercialItem"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oportunidades/{id}/historial-comercial": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Actividades asociadas y transiciones de la oportunidad vigente. */
+        get: {
+            parameters: {
+                query?: {
+                    desde?: string;
+                    hasta?: string;
+                    page?: number | string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PageResponseOfHistorialComercialItem"];
+                        "application/json": components["schemas"]["PageResponseOfHistorialComercialItem"];
+                        "text/json": components["schemas"]["PageResponseOfHistorialComercialItem"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/csrf": {
         parameters: {
             query?: never;
@@ -6227,6 +6461,42 @@ export interface components {
             valor?: null | number | string;
             observacion?: null | string;
         };
+        /**
+         * @description Entrada del historial comercial combinado. `Tipo` discrimina el contenido: ACTIVIDAD (tipo de actividad, descripción, resultado,
+         *     fecha de registro) o TRANSICION (etapa anterior y nueva, observación). No es una tabla: se proyecta desde los registros existentes.
+         */
+        HistorialComercialItem: {
+            tipo: string;
+            /**
+             * Format: int32
+             * @description ID del registro de origen: la actividad o la entrada de historial de etapas.
+             */
+            idOrigen: number | string;
+            /**
+             * Format: date-time
+             * @description Cuándo ocurrió el hecho (actividad) o la transición.
+             */
+            fechaHora: string;
+            /** Format: int32 */
+            idUsuario: number | string;
+            usuarioNombre: string;
+            /** Format: int32 */
+            idOportunidad?: null | number | string;
+            oportunidadTitulo?: null | string;
+            /** Format: int32 */
+            idEmpresa?: null | number | string;
+            /** Format: int32 */
+            idContacto?: null | number | string;
+            /** Format: date-time */
+            fechaRegistro?: null | string;
+            tipoActividad?: null | string;
+            descripcion?: null | string;
+            resultado?: null | string;
+            etapaAnterior?: null | string;
+            etapaNueva?: null | string;
+            observacion?: null | string;
+            accionesPermitidas?: null | components["schemas"]["AccionesActividad"];
+        };
         /** @description Entrada inmutable del historial de etapas; la etapa anterior es null en el alta. */
         HistorialEtapaResponse: {
             /** Format: int32 */
@@ -6356,6 +6626,16 @@ export interface components {
         /** @description Página de resultados, contados después de aplicar los filtros. */
         PageResponseOfEmpresaResponse: {
             items: components["schemas"]["EmpresaResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+        };
+        /** @description Página de resultados, contados después de aplicar los filtros. */
+        PageResponseOfHistorialComercialItem: {
+            items: components["schemas"]["HistorialComercialItem"][];
             /** Format: int32 */
             page: number | string;
             /** Format: int32 */

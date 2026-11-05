@@ -52,7 +52,7 @@ function installCatalogApi(options: { services?: { id: number; nombre: string; d
     if (pathname === '/api/embudos/1/etapas' && method === 'GET') return jsonResponse(options.stages ?? funnelStages)
     if (pathname === '/api/servicios/2' && method === 'GET') return jsonResponse({ id: 2, nombre: 'Capacitación', descripcion: null, precioReferencia: 150, activo: true })
     if (pathname === '/api/oportunidades' && method === 'POST') { if (options.create) return options.create(); const title = ((await (input as Request).clone().json()).titulo as string | undefined) ?? null; created = { titulo: title, tituloVisible: title ?? 'Acme Idiomas' }; return jsonResponse({ ...opportunity, ...created }, 201) }
-    if (/^\/api\/oportunidades\/\d+\/historial-etapas$/.test(pathname) && method === 'GET') return jsonResponse({ items: [], page: 1, pageSize: 10, totalCount: 0 })
+    if (/^\/api\/(oportunidades|contactos|empresas)\/\d+\/historial-comercial$/.test(pathname) && method === 'GET') return jsonResponse({ items: [], page: 1, pageSize: 10, totalCount: 0 })
     if (/^\/api\/oportunidades\/\d+$/.test(pathname) && method === 'PATCH') {
       if (options.patch) return options.patch()
       const body = await (input as Request).clone().json() as { titulo?: string | null }

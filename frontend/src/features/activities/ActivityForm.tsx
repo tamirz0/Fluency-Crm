@@ -46,6 +46,7 @@ export function ActivityDialog({ context, activity, open, onClose, onDone }: { c
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['actividades'] })
+      void queryClient.invalidateQueries({ queryKey: ['oportunidades'] })
       if (!activity) { setType(''); setDescription(''); setResult(''); setOccurred(nowLocal()) }
       setErrors({})
       onDone()

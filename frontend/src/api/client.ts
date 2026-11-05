@@ -259,6 +259,17 @@ export function patchActivity(id: number, body: PatchActividadRequest): Promise<
 export async function deleteActivity(id: number): Promise<void> {
   await api.DELETE('/actividades/{id}', { params: { path: { id } } })
 }
+export type HistorialComercialItem = components['schemas']['HistorialComercialItem']
+export type CommercialHistoryKind = 'empresas' | 'contactos' | 'oportunidades'
+export function getActivity(id: number): Promise<Actividad> {
+  return getResponseData(() => api.GET('/actividades/{id}', { params: { path: { id } } }))
+}
+export function getCommercialHistory(kind: CommercialHistoryKind, id: number, page = 1, pageSize = 10) {
+  const query = { page, pageSize }
+  if (kind === 'empresas') return getResponseData(() => api.GET('/empresas/{id}/historial-comercial', { params: { path: { id }, query } }))
+  if (kind === 'contactos') return getResponseData(() => api.GET('/contactos/{id}/historial-comercial', { params: { path: { id }, query } }))
+  return getResponseData(() => api.GET('/oportunidades/{id}/historial-comercial', { params: { path: { id }, query } }))
+}
 export function listActivities(query: ActividadQuery = {}) {
   return getResponseData(() => api.GET('/actividades', { params: { query } }))
 }

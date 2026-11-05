@@ -26,4 +26,6 @@ public sealed record HistorialComercialItem
     public string? EtapaAnterior { get; init; }
     public string? EtapaNueva { get; init; }
     public string? Observacion { get; init; }
+    /// <summary>Solo en ACTIVIDAD: qué puede intentar el actor (la API lo vuelve a comprobar al ejecutar).</summary>
+    public AccionesActividad? AccionesPermitidas { get; init; }
 }

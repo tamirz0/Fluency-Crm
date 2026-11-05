@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Persistence.Models;
+using Services.Acceso;
 using Services.DTO;
 
 namespace Services.Implementations;
@@ -9,8 +10,10 @@ namespace Services.Implementations;
 /// contar y paginar. Cada cliente usa sus FKs históricas directas (nunca la empresa actual del contacto) y una actividad aparece una
 /// sola vez aunque coincida por dos relaciones. Orden: fecha descendente, tipo e ID de origen descendentes.
 /// </summary>
-public sealed class HistorialComercialService(FluencyLocalDbContext db)
+public sealed class HistorialComercialService(FluencyLocalDbContext db, ActorActual actor)
 {
+    private bool EsSuperior => actor.Usuario.Roles.Contains(RolesYPermisos.Administrador) || actor.Usuario.Roles.Contains(RolesYPermisos.ResponsableComercial);
+
     private enum Scope { Empresa, Contacto, Oportunidad }
 
     public Task<PageResponse<HistorialComercialItem>> ForCompanyAsync(int id, DateTimeOffset? from, DateTimeOffset? to, int page, int pageSize, CancellationToken ct)
@@ -57,12 +60,12 @@ public sealed class HistorialComercialService(FluencyLocalDbContext db)
         {
             Tipo = "ACTIVIDAD", IdOrigen = a.Id, FechaHora = a.FechaHora, IdUsuario = a.IdUsuario, UsuarioNombre = a.IdUsuarioNavigation.Nombre + " " + a.IdUsuarioNavigation.Apellido,
             IdOportunidad = a.IdOportunidad, IdEmpresa = a.IdEmpresa, IdContacto = a.IdContacto, FechaRegistro = a.FechaRegistro,
-            TipoActividad = a.IdTipoNavigation.Nombre, Descripcion = a.Descripcion, Resultado = a.Resultado, EtapaAnterior = null, EtapaNueva = null, Observacion = null,
+            TipoActividad = a.IdTipoNavigation.Nombre, Descripcion = a.Descripcion, Resultado = a.Resultado, OportunidadResponsable = a.IdOportunidadNavigation == null ? null : a.IdOportunidadNavigation.IdResponsable, EtapaAnterior = null, EtapaNueva = null, Observacion = null,
         }).Concat(transitions.Select(h => new Row
         {
             Tipo = "TRANSICION", IdOrigen = h.Id, FechaHora = h.FechaHora, IdUsuario = h.IdUsuario, UsuarioNombre = h.IdUsuarioNavigation.Nombre + " " + h.IdUsuarioNavigation.Apellido,
             IdOportunidad = h.IdOportunidad, IdEmpresa = null, IdContacto = null, FechaRegistro = null,
-            TipoActividad = null, Descripcion = null, Resultado = null,
+            TipoActividad = null, Descripcion = null, Resultado = null, OportunidadResponsable = null,
             EtapaAnterior = h.IdEtapaAnteriorNavigation == null ? null : h.IdEtapaAnteriorNavigation.Nombre, EtapaNueva = h.IdNuevaEtapaNavigation.Nombre, Observacion = h.Observacion,
         }));
 
@@ -87,6 +90,9 @@ public sealed class HistorialComercialService(FluencyLocalDbContext db)
             IdOportunidad = r.IdOportunidad, OportunidadTitulo = r.IdOportunidad is { } o && titles.TryGetValue(o, out var title) ? title : null,
             IdEmpresa = r.IdEmpresa, IdContacto = r.IdContacto, FechaRegistro = r.FechaRegistro, TipoActividad = r.TipoActividad, Descripcion = r.Descripcion,
             Resultado = r.Resultado, EtapaAnterior = r.EtapaAnterior, EtapaNueva = r.EtapaNueva, Observacion = r.Observacion,
+            // Sin oportunidad la gestión es compartida; con oportunidad, su responsable vendedor actual o un superior.
+            AccionesPermitidas = r.Tipo != "ACTIVIDAD" ? null : r.OportunidadResponsable is null || (actor.Usuario.Permisos.Contains(RolesYPermisos.GestionarOportunidad) && (EsSuperior || r.OportunidadResponsable == actor.Id))
+                ? new AccionesActividad(true, true) : new AccionesActividad(false, false),
         }).ToList(), page, pageSize, total);
     }
 
@@ -101,6 +107,7 @@ public sealed class HistorialComercialService(FluencyLocalDbContext db)
         public int? IdOportunidad { get; set; }
         public int? IdEmpresa { get; set; }
         public int? IdContacto { get; set; }
+        public int? OportunidadResponsable { get; set; }
         public DateTime? FechaRegistro { get; set; }
         public string? TipoActividad { get; set; }
         public string? Descripcion { get; set; }
