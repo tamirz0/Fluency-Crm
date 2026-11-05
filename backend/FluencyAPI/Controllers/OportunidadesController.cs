@@ -103,6 +103,18 @@ public sealed class OportunidadesController(IOportunidadService oportunidades) :
         => Ok(await oportunidades.ReabrirAsync(id, request, ct));
 
     /// <summary>
+    /// Baja lógica definitiva (abierta o cerrada, sin reapertura): oculta el recurso, conserva historial y actividades y no se restaura.
+    /// Solo el responsable vendedor o un superior.
+    /// </summary>
+    [HttpDelete("{id:int}"), Authorize(Policy = RolesYPermisos.GestionarOportunidad)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Delete(int id, CancellationToken ct)
+    {
+        await oportunidades.DeleteAsync(id, ct);
+        return NoContent();
+    }
+
+    /// <summary>
     /// Crea una oportunidad con su historial inicial en una sola transacción. Sin etapa usa la primera abierta activa del embudo;
     /// sin valor copia el precio del servicio; sin responsable usa al actor. El vendedor solo crea a su nombre.
     /// </summary>

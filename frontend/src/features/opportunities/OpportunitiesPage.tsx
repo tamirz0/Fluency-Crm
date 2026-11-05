@@ -2,7 +2,7 @@ import { Refresh } from '@mui/icons-material'
 import { Alert, Box, Button, Chip, Link, MenuItem, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 import { getCatalogOptions, listFunnels, listOpportunities, opportunityQueryKeys, type Oportunidad, type OportunidadQuery } from '../../api/client'
 import { CompanyResponsibleSelect } from '../companies/CompanyResponsibleSelect'
 import { displayValue, formatCommercialDate } from '../shared/display'
@@ -39,6 +39,7 @@ function OpportunityListSkeleton() {
 /** Listado compartido: todas las oportunidades vigentes, con filtros y paginación del servidor. */
 export function OpportunitiesPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [search, setSearch] = useState('')
   const [q, setQ] = useState('')
   const [state, setState] = useState('')
@@ -58,6 +59,7 @@ export function OpportunitiesPage() {
   const clear = () => { setSearch(''); setQ(''); setState(''); setOrigin(''); setFunnel(''); setResponsible(''); setPage(0) }
   return <Box className="companies-page records-page">
     <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Oportunidades</Typography><Typography className="companies-page-description">Negociaciones compartidas por todo el equipo comercial.</Typography></div><Button component={RouterLink} to="/oportunidades/nueva" variant="contained">Nueva oportunidad</Button></header>
+    {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
     <Box component="form" onSubmit={(event) => { event.preventDefault(); setQ(search.trim()); setPage(0) }} sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3, alignItems: 'start' }}>
       <TextField label="Buscar oportunidades" type="search" value={search} onChange={(event) => setSearch(event.target.value)} helperText="Título, empresa o contacto" />
       <TextField select label="Estado" value={state} onChange={(event) => { setState(event.target.value); setPage(0) }} sx={{ minWidth: 160 }}>

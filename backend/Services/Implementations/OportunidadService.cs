@@ -368,5 +368,25 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
         return response;
     }
 
+    /// <summary>
+    /// Baja lógica definitiva de una oportunidad abierta o cerrada, sin reapertura ni transición. Solo el responsable vendedor o un
+    /// superior. No restaura ni borra físicamente, conserva su historial y no agrega entradas; repetirla no cambia nada (la oportunidad
+    /// ya no se publica como recurso, por lo que responde 404). No hay cascadas: los clientes y las actividades no se modifican.
+    /// </summary>
+    public async Task DeleteAsync(int id, CancellationToken ct)
+    {
+        if (!actor.Usuario.Permisos.Contains(RolesYPermisos.GestionarOportunidad))
+            throw new OportunidadOperationException(403, "FORBIDDEN", "No tiene permiso para gestionar oportunidades.");
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        if (!await db.Usuarios.AnyAsync(u => u.Id == actor.Id && u.Activo, ct))
+            throw new OportunidadOperationException(401, "UNAUTHENTICATED", "La sesión ya no está disponible.");
+        var item = await db.Oportunidades.SingleOrDefaultAsync(o => o.Id == id && o.Activo, ct) ?? throw NotFound();
+        if (!EsSuperior && item.IdResponsable != actor.Id)
+            throw new OportunidadOperationException(403, "FORBIDDEN", "Solo el responsable o un superior puede dar de baja esta oportunidad.");
+        item.Activo = false;
+        await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
+    }
+
     private static string? Text(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

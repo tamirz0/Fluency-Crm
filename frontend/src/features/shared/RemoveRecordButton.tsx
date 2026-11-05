@@ -4,8 +4,8 @@ import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import { ApiRequestError } from '../../api/client'
 
-/** Baja definitiva de una empresa o un contacto; si la API la bloquea (409) muestra las causas y deja el diálogo abierto. */
-export function RemoveRecordButton({ noun, name, remove, onRemoved }: { noun: 'empresa' | 'contacto'; name: string; remove: () => Promise<void>; onRemoved: () => void }) {
+/** Baja definitiva de una empresa, un contacto o una oportunidad; si la API la bloquea (409) muestra las causas y deja el diálogo abierto. */
+export function RemoveRecordButton({ noun, name, remove, onRemoved }: { noun: 'empresa' | 'contacto' | 'oportunidad'; name: string; remove: () => Promise<void>; onRemoved: () => void }) {
   const [open, setOpen] = useState(false)
   const mutation = useMutation({ mutationFn: remove, onSuccess: onRemoved })
   const close = () => { if (!mutation.isPending) { setOpen(false); mutation.reset() } }
@@ -13,9 +13,9 @@ export function RemoveRecordButton({ noun, name, remove, onRemoved }: { noun: 'e
   return <>
     <Button color="error" variant="outlined" startIcon={<DeleteOutlined />} onClick={() => setOpen(true)}>Dar de baja</Button>
     <Dialog open={open} onClose={close} aria-labelledby="remove-record-title">
-      <DialogTitle id="remove-record-title">Dar de baja {noun === 'empresa' ? 'la empresa' : 'el contacto'}</DialogTitle>
+      <DialogTitle id="remove-record-title">Dar de baja {noun === 'empresa' ? 'la empresa' : noun === 'contacto' ? 'el contacto' : 'la oportunidad'}</DialogTitle>
       <DialogContent>
-        <DialogContentText>Vas a dar de baja «{name}». La baja es definitiva y no se puede restaurar. Las oportunidades y actividades anteriores conservan su referencia.</DialogContentText>
+        <DialogContentText>Vas a dar de baja «{name}». La baja es definitiva y no se puede restaurar. {noun === 'oportunidad' ? 'Funciona también si está cerrada; su historial de etapas y sus actividades se conservan.' : 'Las oportunidades y actividades anteriores conservan su referencia.'}</DialogContentText>
         {mutation.isError && <Alert severity="error" sx={{ mt: 2 }}>{message}</Alert>}
       </DialogContent>
       <DialogActions>

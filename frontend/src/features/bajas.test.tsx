@@ -13,12 +13,18 @@ const user = { id: 7, nombre: 'María', apellido: 'Gómez', correo: 'maria@examp
 const common = { estadoDescripcion: 'Cliente', estadoActivo: true, idEstado: 1, origenActivo: true, idResponsable: 7, responsableNombre: 'María Gómez', responsableActivo: true, fechaCreacion: '2026-10-31T12:00:00Z', activo: true, observaciones: null }
 const company = { ...common, id: 4, razonSocial: 'Acme Idiomas', cuit: null, industria: null, correo: null, telefono: null, direccion: null, idOrigen: null }
 const contact = { ...common, id: 14, nombre: 'Lucía', apellido: 'Pérez', documento: null, cargo: null, correo: 'lucia@example.com', telefono: null, idOrigen: null, idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas' }
+const opportunity = {
+  id: 22, titulo: 'Renovación anual', tituloVisible: 'Renovación anual', idResponsable: 7, responsableNombre: 'María Gómez', responsableActivo: true, idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas',
+  idContacto: null, contactoNombre: null, idEtapa: 3, etapaNombre: 'Propuesta', etapaActiva: true, estado: 'ABIERTA', idEmbudo: 1, embudoNombre: 'Embudo Inglés', embudoActivo: true,
+  idServicio: 2, servicioNombre: 'Capacitación', servicioActivo: true, valor: 150, fechaCreacion: '2026-11-05T12:00:00Z', activo: true,
+  accionesPermitidas: { editar: false, reasignar: false, mover: false, cerrar: false, reabrir: false, darDeBaja: true, gestionarActividades: true },
+}
 const emptyPage = { items: [], page: 1, pageSize: 25, totalCount: 0 }
 
 function json(body: unknown, status = 200) { return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }) }
 
 /** Responde la ficha y, por la ruta de baja, 204 o el conflicto indicado; todo lo demás queda vacío. */
-function mockApi(resource: 'empresas' | 'contactos', record: unknown, removal: () => Response) {
+function mockApi(resource: 'empresas' | 'contactos' | 'oportunidades', record: unknown, removal: () => Response) {
   vi.mocked(fetch).mockImplementation(async input => {
     const request = input as Request; const { pathname } = new URL(request.url)
     if (pathname === '/api/auth/csrf') return json({ requestToken: 'fixture-csrf' })
@@ -40,6 +46,7 @@ beforeEach(() => { sessionStorage.clear(); vi.stubGlobal('fetch', vi.fn()) })
 describe.each([
   { resource: 'empresas' as const, record: company, path: '/empresas/4', ficha: 'Acme Idiomas', list: 'Empresas', done: 'Empresa dada de baja', blocked: 'No se puede dar de baja la empresa porque tiene 1 contacto activo y 1 oportunidad activa.' },
   { resource: 'contactos' as const, record: contact, path: '/contactos/14', ficha: 'Pérez, Lucía', list: 'Contactos', done: 'Contacto dado de baja', blocked: 'No se puede dar de baja el contacto porque tiene 2 oportunidades activas.' },
+  { resource: 'oportunidades' as const, record: opportunity, path: '/oportunidades/22', ficha: 'Renovación anual', list: 'Oportunidades', done: 'Oportunidad dada de baja', blocked: 'Los datos cambiaron. Recargue e intente nuevamente.' },
 ])('baja definitiva de $resource', ({ resource, record, path, ficha, list, done, blocked }) => {
   it('pide confirmación, da de baja y vuelve al listado con el aviso', async () => {
     mockApi(resource, record, () => new Response(null, { status: 204 }))

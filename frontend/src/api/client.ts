@@ -243,6 +243,9 @@ export type ReabrirOportunidadRequest = components['schemas']['ReabrirOportunida
 export function reopenOpportunity(id: number, body: ReabrirOportunidadRequest): Promise<Oportunidad> {
   return getResponseData(() => api.POST('/oportunidades/{id}/reabrir', { params: { path: { id } }, body }))
 }
+export async function deleteOpportunity(id: number): Promise<void> {
+  await api.DELETE('/oportunidades/{id}', { params: { path: { id } } })
+}
 export type OportunidadQuery = {
   q?: string; idResponsable?: number; idEmpresa?: number; idContacto?: number; idEmbudo?: number; idEtapa?: number
   estado?: 'ABIERTA' | 'GANADA' | 'PERDIDA'; idOrigen?: number; page?: number; pageSize?: number
