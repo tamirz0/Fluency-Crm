@@ -26,7 +26,7 @@ public sealed class HttpContractTests
         await using var factory = new ContractApiFactory(includeProbe: false);
         using var client = factory.CreateClient();
         var actions = factory.Services.GetRequiredService<IActionDescriptorCollectionProvider>().ActionDescriptors.Items;
-        Assert.Equal(65, actions.Count);
+        Assert.Equal(67, actions.Count);
         Assert.All(actions, action => Assert.Contains(
             Assert.IsType<Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor>(action).ControllerTypeInfo.AsType(),
             new[] { typeof(LoginController), typeof(EmpresaController), typeof(ContactoController), typeof(UsuariosController), typeof(CatalogosController), typeof(ServiciosController), typeof(EmbudosController), typeof(EtapasComercialesController), typeof(OportunidadesController), typeof(ActividadesController) }));

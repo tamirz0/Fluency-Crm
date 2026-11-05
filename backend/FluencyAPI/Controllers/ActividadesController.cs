@@ -33,6 +33,24 @@ public sealed class ActividadesController(IActividadService actividades) : Contr
     public async Task<ActionResult<ActividadResponse>> Get(int id, CancellationToken ct) => Ok(await actividades.GetAsync(id, ct));
 
     /// <summary>
+    /// Edita los campos enviados. Exige gestionar la oportunidad de origen y, si se cambia o quita, también la de destino; el autor y la
+    /// fecha de registro no cambian.
+    /// </summary>
+    [HttpPatch("{id:int}")]
+    [ProducesResponseType<ActividadResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<ActividadResponse>> Patch(int id, [FromBody] PatchActividadRequest request, CancellationToken ct)
+        => Ok(await actividades.PatchAsync(id, request, ct));
+
+    /// <summary>Baja lógica sin restauración ni cascadas (204). Repetirla responde 404.</summary>
+    [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Delete(int id, CancellationToken ct)
+    {
+        await actividades.DeleteAsync(id, ct);
+        return NoContent();
+    }
+
+    /// <summary>
     /// Registra una actividad ya realizada. El autor y la fecha de registro los fija el servidor. Sin oportunidad cualquier usuario activo
     /// gestiona; con oportunidad, solo su responsable vendedor o un superior (también si está cerrada).
     /// </summary>

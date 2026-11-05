@@ -252,6 +252,13 @@ export type ActividadQuery = { q?: string; idEmpresa?: number; idContacto?: numb
 export function createActivity(body: CreateActividadRequest): Promise<Actividad> {
   return getResponseData(() => api.POST('/actividades', { body }))
 }
+export type PatchActividadRequest = components['schemas']['PatchActividadRequest']
+export function patchActivity(id: number, body: PatchActividadRequest): Promise<Actividad> {
+  return getResponseData(() => api.PATCH('/actividades/{id}', { params: { path: { id } }, body }))
+}
+export async function deleteActivity(id: number): Promise<void> {
+  await api.DELETE('/actividades/{id}', { params: { path: { id } } })
+}
 export function listActivities(query: ActividadQuery = {}) {
   return getResponseData(() => api.GET('/actividades', { params: { query } }))
 }

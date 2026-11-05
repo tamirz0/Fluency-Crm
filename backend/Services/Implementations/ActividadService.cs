@@ -116,4 +116,77 @@ public sealed class ActividadService(FluencyLocalDbContext db, ActorActual actor
         await transaction.CommitAsync(ct);
         return result;
     }
+
+    // Permiso sobre el contexto de una oportunidad: su responsable vendedor actual o un superior. Sin oportunidad, gestión compartida.
+    private async Task EnsureCanManageAsync(int? opportunityId, string denied, CancellationToken ct)
+    {
+        if (opportunityId is not { } id) return;
+        var owner = await db.Oportunidades.AsNoTracking().Where(o => o.Id == id).Select(o => (int?)o.IdResponsable).SingleOrDefaultAsync(ct);
+        if (owner is null) throw Invalid("La oportunidad no está disponible.");
+        if (!actor.Usuario.Permisos.Contains(RolesYPermisos.GestionarOportunidad) || (!EsSuperior && owner != actor.Id))
+            throw new OportunidadOperationException(403, "FORBIDDEN", denied);
+    }
+
+    // Lectura posterior a una escritura: no depende de que quede algún contexto vigente.
+    private async Task<ActividadResponse> ReadAsync(int id, CancellationToken ct)
+        => WithActions(await Project(db.Actividades.AsNoTracking().Where(a => a.Id == id)).SingleAsync(ct));
+
+    /// <summary>
+    /// Edita los campos enviados. Exige gestionar la oportunidad de origen y, si se cambia o quita la oportunidad, también la de destino
+    /// (no se elude un permiso quitando o incorporando una ajena). Editar texto, resultado o fecha no revalida las asociaciones
+    /// históricas; solo un cambio efectivo de asociación valida su nuevo contexto. Autor y fecha de registro no cambian.
+    /// </summary>
+    public async Task<ActividadResponse> PatchAsync(int id, PatchActividadRequest request, CancellationToken ct)
+    {
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        if (!await db.Usuarios.AnyAsync(u => u.Id == actor.Id && u.Activo, ct))
+            throw new OportunidadOperationException(401, "UNAUTHENTICATED", "La sesión ya no está disponible.");
+        var item = await Vigentes(db.Actividades).SingleOrDefaultAsync(a => a.Id == id, ct) ?? throw new OportunidadOperationException(404, "NOT_FOUND", "No existe la actividad.");
+        await EnsureCanManageAsync(item.IdOportunidad, "Solo el responsable o un superior puede modificar actividades de esta oportunidad.", ct);
+
+        var company = request.HasField(nameof(request.IdEmpresa)) ? request.IdEmpresa : item.IdEmpresa;
+        var contact = request.HasField(nameof(request.IdContacto)) ? request.IdContacto : item.IdContacto;
+        var opportunity = request.HasField(nameof(request.IdOportunidad)) ? request.IdOportunidad : item.IdOportunidad;
+        if (company is null && contact is null) throw Invalid("Indique una empresa o un contacto.", "VALIDATION_FAILED");
+        var opportunityChanged = opportunity != item.IdOportunidad;
+        if (opportunityChanged) await EnsureCanManageAsync(opportunity, "Solo el responsable o un superior puede incorporar actividades a esta oportunidad.", ct);
+        if (opportunity is { } linked && (opportunityChanged || company != item.IdEmpresa || contact != item.IdContacto))
+        {
+            var target = await db.Oportunidades.AsNoTracking().Where(o => o.Id == linked).Select(o => new { o.IdEmpresa, o.IdContacto }).SingleAsync(ct);
+            if ((company is not null && company != target.IdEmpresa) || (contact is not null && contact != target.IdContacto))
+                throw Invalid("La empresa y el contacto deben ser los de la oportunidad.", "VALIDATION_FAILED");
+        }
+        else if (opportunity is null)
+        {
+            if (company != item.IdEmpresa && company is { } newCompany && !await db.Empresas.AnyAsync(e => e.Id == newCompany && e.Activo, ct)) throw Invalid("La empresa no está disponible.");
+            if (contact != item.IdContacto && contact is { } newContact && !await db.Contactos.AnyAsync(c => c.Id == newContact && c.Activo, ct)) throw Invalid("El contacto no está disponible.");
+        }
+        if (request.HasField(nameof(request.IdTipo)) && request.IdTipo != item.IdTipo && !await db.TiposActividad.AnyAsync(t => t.Id == request.IdTipo && t.Activo, ct))
+            throw Invalid("El tipo de actividad no está disponible.");
+        if (request.HasField(nameof(request.FechaHora)) && request.FechaHora!.Value.UtcDateTime > DateTime.UtcNow.AddMinutes(5))
+            throw Invalid("La actividad ya debe haber ocurrido: la fecha no puede ser futura.", "VALIDATION_FAILED");
+
+        item.IdEmpresa = company; item.IdContacto = contact; item.IdOportunidad = opportunity;
+        if (request.HasField(nameof(request.IdTipo))) item.IdTipo = request.IdTipo!.Value;
+        if (request.HasField(nameof(request.FechaHora))) item.FechaHora = request.FechaHora!.Value.UtcDateTime;
+        if (request.HasField(nameof(request.Descripcion))) item.Descripcion = request.Descripcion!.Trim();
+        if (request.HasField(nameof(request.Resultado))) item.Resultado = string.IsNullOrWhiteSpace(request.Resultado) ? null : request.Resultado.Trim();
+        await db.SaveChangesAsync(ct);
+        var result = await ReadAsync(id, ct);
+        await transaction.CommitAsync(ct);
+        return result;
+    }
+
+    /// <summary>Baja lógica de la actividad (sin restauración ni cascadas): permiso sobre su oportunidad si la tiene, compartido si no.</summary>
+    public async Task DeleteAsync(int id, CancellationToken ct)
+    {
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        if (!await db.Usuarios.AnyAsync(u => u.Id == actor.Id && u.Activo, ct))
+            throw new OportunidadOperationException(401, "UNAUTHENTICATED", "La sesión ya no está disponible.");
+        var item = await Vigentes(db.Actividades).SingleOrDefaultAsync(a => a.Id == id, ct) ?? throw new OportunidadOperationException(404, "NOT_FOUND", "No existe la actividad.");
+        await EnsureCanManageAsync(item.IdOportunidad, "Solo el responsable o un superior puede dar de baja actividades de esta oportunidad.", ct);
+        item.Activo = false;
+        await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
+    }
 }

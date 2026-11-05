@@ -32,6 +32,29 @@ public sealed record ActividadResponse
 public sealed record ActividadFilters(string? Q, int? IdEmpresa, int? IdContacto, int? IdOportunidad, int? IdTipo, int? IdUsuario, DateTimeOffset? Desde, DateTimeOffset? Hasta);
 
 /// <summary>
+/// Edición de una actividad: omitir un campo lo conserva; null solo limpia el resultado y las asociaciones opcionales.
+/// Autor y fecha de registro no se editan (propiedades desconocidas: 400).
+/// </summary>
+public sealed record PatchActividadRequest : PatchRequest
+{
+    [Range(1, int.MaxValue)] public int? IdTipo { get; init { field = value; ProvidedFields.Add(nameof(IdTipo)); } }
+    [Range(1, int.MaxValue)] public int? IdEmpresa { get; init { field = value; ProvidedFields.Add(nameof(IdEmpresa)); } }
+    [Range(1, int.MaxValue)] public int? IdContacto { get; init { field = value; ProvidedFields.Add(nameof(IdContacto)); } }
+    [Range(1, int.MaxValue)] public int? IdOportunidad { get; init { field = value; ProvidedFields.Add(nameof(IdOportunidad)); } }
+    public DateTimeOffset? FechaHora { get; init { field = value; ProvidedFields.Add(nameof(FechaHora)); } }
+    public string? Descripcion { get; init { field = value; ProvidedFields.Add(nameof(Descripcion)); } }
+    public string? Resultado { get; init { field = value; ProvidedFields.Add(nameof(Resultado)); } }
+
+    public override IEnumerable<ValidationResult> Validate(ValidationContext context)
+    {
+        foreach (var error in base.Validate(context)) yield return error;
+        if (HasField(nameof(IdTipo)) && IdTipo is null) yield return new("El tipo de actividad no puede quedar vacío.", [nameof(IdTipo)]);
+        if (HasField(nameof(FechaHora)) && FechaHora is null) yield return new("La fecha de la actividad no puede quedar vacía.", [nameof(FechaHora)]);
+        if (HasField(nameof(Descripcion)) && string.IsNullOrWhiteSpace(Descripcion)) yield return new("La descripción es obligatoria.", [nameof(Descripcion)]);
+    }
+}
+
+/// <summary>
 /// Alta de una actividad ya realizada. Autor, fecha de registro y baja los fija el servidor (propiedades desconocidas: 400).
 /// Debe indicar empresa o contacto; la oportunidad por sí sola no alcanza.
 /// </summary>
