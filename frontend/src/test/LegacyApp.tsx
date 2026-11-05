@@ -1,9 +1,8 @@
-// Rutas anteriores solo para pruebas de componentes; App no las publica.
+// Arnés exclusivo de pruebas de componentes con una identidad ficticia; App no lo usa.
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthenticatedShell } from '../app/AuthenticatedShell'
 import { ProtectedRoute } from '../app/ProtectedRoute'
-import { HomePage } from '../features/home/HomePage'
 import { LoginPage } from '../features/login/LoginPage'
 
 const CompaniesPage = lazy(() => import('../features/companies/CompaniesPage').then(({ CompaniesPage }) => ({ default: CompaniesPage })))
@@ -34,7 +33,7 @@ function LegacyApp() {
       <Route path="/login" element={<LoginPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AuthenticatedShell />}>
-          <Route path="/inicio" element={<HomePage />} />
+          <Route path="/inicio" element={<main>Inicio</main>} />
           <Route path="/empresas" element={<CompaniesPage />} />
           <Route path="/empresas/nueva" element={<NewCompanyPage />} />
           <Route path="/empresas/:idEmpresa/editar" element={<EditCompanyPage />} />

@@ -28,8 +28,6 @@ function catalogResponse(url: string, services = [{ id: 2, nombre: 'Capacitació
   if (url.includes('/usuarios/opciones')) return jsonResponse({ items: [{ id: 9, nombre: 'Ana', apellido: 'Ríos', roles: ['VENDEDOR'] }], page: 1, pageSize: 25, totalCount: 1 })
   if (url.includes('/catalogos/estados-cliente/opciones')) return jsonResponse([{ id: 1, descripcion: 'Potencial', activo: true }])
   if (url.includes('/catalogos/origenes-comerciales/opciones')) return jsonResponse([{ id: 2, descripcion: 'Referido', activo: true }])
-  if (url.includes('ListadoEstadosCliente')) return jsonResponse([{ id: 1, descripcion: 'Cliente' }])
-  if (url.includes('ListadoOrigenesComerciales')) return jsonResponse([{ id: 2, descripcion: 'Referido' }])
   if (new URL(url, 'http://localhost').pathname.endsWith('/servicios')) return jsonResponse({ items: services, page: 1, pageSize: 25, totalCount: services.length })
   return undefined
 }

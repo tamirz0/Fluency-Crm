@@ -35,7 +35,6 @@ public partial class FluencyLocalDbContext : DbContext
 
     public virtual DbSet<Modalidad> Modalidades { get; set; }
 
-    public virtual DbSet<MotivoRechazo> MotivoRechazos { get; set; }
 
     public virtual DbSet<NivelIngles> NivelesIngles { get; set; }
 
@@ -331,18 +330,6 @@ public partial class FluencyLocalDbContext : DbContext
                 .HasColumnName("descripcion");
             entity.Property(e => e.Activo).HasDefaultValue(true).HasSentinel(true).HasColumnName("activo");
 
-        });
-
-        modelBuilder.Entity<MotivoRechazo>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("motivo_rechazo_pkey");
-
-            entity.ToTable("motivo_rechazo");
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Descripcion)
-                .HasMaxLength(200)
-                .HasColumnName("descripcion");
         });
 
         modelBuilder.Entity<NivelIngles>(entity =>

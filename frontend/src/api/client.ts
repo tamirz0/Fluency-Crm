@@ -1,25 +1,19 @@
 import createClient from 'openapi-fetch'
 import type { components, paths } from './schema'
-import type { components as LegacyComponents, paths as LegacyPaths } from './legacy-schema'
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
 export const api = createClient<paths>({ baseUrl, credentials: 'include', fetch: (...args) => globalThis.fetch(...args) })
-// Contratos históricos de componentes fuera de App; retirar al sustituir cada módulo.
-const legacyApi = createClient<LegacyPaths>({ baseUrl, credentials: 'include', fetch: (...args) => globalThis.fetch(...args) })
 export type AuthUser = components['schemas']['UsuarioResponse']
 export type LoginCredentials = components['schemas']['LoginRequest']
 export type SessionResponse = components['schemas']['SesionResponse']
 export type Empresa = components['schemas']['EmpresaResponse']
 export type Contacto = components['schemas']['ContactoResponse']
-export type EtapaConOportunidades = LegacyComponents['schemas']['EtapaConOportunidadesResponse']
 export type CreateEmpresaRequest = components['schemas']['EmpresaRequest']
 export type PatchEmpresaRequest = components['schemas']['EmpresaRequest']
 export type ContactoRequest = components['schemas']['ContactoRequest']
 export type Oportunidad = components['schemas']['OportunidadResponse']
 export type CreateOportunidadRequest = components['schemas']['CreateOportunidadRequest']
 export type PatchOportunidadRequest = components['schemas']['PatchOportunidadRequest']
-export type EstadoCliente = LegacyComponents['schemas']['EstadoClienteResponse']
-export type OrigenComercial = LegacyComponents['schemas']['OrigenComercialResponse']
 export type Servicio = components['schemas']['ServicioResponse']
 export type ServicioRequest = components['schemas']['ServicioRequest']
 
@@ -67,7 +61,6 @@ export const contactoQueryKeys = {
 }
 
 export const opportunityQueryKeys = {
-  pipeline: ['oportunidades', 'por-etapa'] as const,
   detail: (idOportunidad: number) => ['oportunidades', idOportunidad] as const,
   list: (query: OportunidadQuery) => ['oportunidades', 'lista', query] as const,
   funnel: (idEmbudo: number, idResponsable?: number) => ['oportunidades', 'funnel', idEmbudo, idResponsable ?? null] as const,
@@ -146,8 +139,6 @@ export type EmpresaQuery = { q?: string; idEstado?: number; idOrigen?: number; i
 export function listCompanies(query: EmpresaQuery = {}) {
   return getResponseData(() => api.GET('/empresas', { params: { query } }))
 }
-// Consumidores retirados de App conservan su adaptación hasta su propio incremento.
-export async function getCompanies(): Promise<Empresa[]> { return (await listCompanies()).items }
 export function getCompany(id: number): Promise<Empresa> {
   return getResponseData(() => api.GET('/empresas/{id}', { params: { path: { id } } }))
 }
@@ -156,21 +147,8 @@ export type ContactoQuery = { q?: string; idEstado?: number; idOrigen?: number; 
 export function listContacts(query: ContactoQuery = {}) {
   return getResponseData(() => api.GET('/contactos', { params: { query } }))
 }
-// Consumidores de oportunidades e inicio conservan esta adaptación hasta su propio incremento.
-export async function getContacts(): Promise<Contacto[]> { return (await listContacts({ pageSize: 100 })).items }
 export function getContact(id: number): Promise<Contacto> {
   return getResponseData(() => api.GET('/contactos/{id}', { params: { path: { id } } }))
-}
-
-export async function getOpportunitiesByStage(): Promise<EtapaConOportunidades[]> {
-  try {
-    const { data, error, response } = await legacyApi.GET('/Oportunidades/OportunidadesPorEtapa')
-    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
-    return data
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error
-    throw new ApiRequestError('No pudimos conectar con la API.')
-  }
 }
 
 async function getResponseData<T>(request: () => Promise<{ data?: T; error?: unknown; response: Response }>): Promise<T> {
@@ -182,14 +160,6 @@ async function getResponseData<T>(request: () => Promise<{ data?: T; error?: unk
     if (error instanceof ApiRequestError) throw error
     throw new ApiRequestError('No pudimos conectar con la API.')
   }
-}
-
-export function getCustomerStates(): Promise<EstadoCliente[]> {
-  return getResponseData(() => legacyApi.GET('/EstadosCliente/ListadoEstadosCliente'))
-}
-
-export function getCommercialOrigins(): Promise<OrigenComercial[]> {
-  return getResponseData(() => legacyApi.GET('/OrigenesComerciales/ListadoOrigenesComerciales'))
 }
 
 export async function getServices(): Promise<Servicio[]> {
