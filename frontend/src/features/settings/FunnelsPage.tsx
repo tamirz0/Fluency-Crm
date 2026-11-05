@@ -21,8 +21,8 @@ function FunnelList() {
   const funnels = useQuery({ queryKey: ['embudos', query], queryFn: () => listFunnels(query) })
   const current = funnels.data?.items.find(f => f.id === selected?.id) ?? selected
   return <Box className="companies-page">
-    <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 2, mb: 2 }}><Typography component="h1" variant="h4">Embudos y etapas</Typography><Button variant="contained" onClick={() => setAction({})}>Nuevo embudo</Button></Stack>
-    <Typography sx={{ mb: 3 }} color="text.secondary">Cada embudo pertenece a un servicio. Ganada y Perdida se crean automáticamente; las etapas abiertas se agregan según el proceso.</Typography>
+    <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 2, mb: 2 }}><Typography component="h1" className="companies-page-title">Embudos y etapas</Typography><Button variant="contained" onClick={() => setAction({})}>Nuevo embudo</Button></Stack>
+    <Typography className="companies-page-description" sx={{ mb: 3 }}>Cada embudo pertenece a un servicio. Ganada y Perdida se crean automáticamente; las etapas abiertas se agregan según el proceso.</Typography>
     <Box component="form" onSubmit={e => { e.preventDefault(); setSearch(q.trim()); setPage(0) }} sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
       <TextField label="Buscar embudos" value={q} onChange={e => setQ(e.target.value)} size="small" />
       <TextField select label="Estado de embudos" value={active} onChange={e => { setActive(e.target.value as typeof active); setPage(0) }} size="small"><MenuItem value="todos">Todos</MenuItem><MenuItem value="true">Activos</MenuItem><MenuItem value="false">Inactivos</MenuItem></TextField>

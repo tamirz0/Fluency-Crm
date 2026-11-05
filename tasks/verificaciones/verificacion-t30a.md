@@ -40,3 +40,8 @@ A pedido del usuario, cuando la oportunidad tiene título propio la ficha muestr
 - **Centrado:** Usuarios, Catálogos, Servicios, Embudos y el inicio usaban un contenedor propio alineado a la izquierda (`maxWidth: 1600`), a diferencia de Empresas y Contactos (`.companies-page`, máximo 1440 px centrado). Ahora usan el mismo contenedor (referencias del usuario en `Referencias/mal-centrado`). Esto no tenía relación con el rediseño revertido.
 - **Aviso de sesión:** se retiró el cartel flotante; vuelve a mostrarse en línea como antes. Se conserva la frase de marca del login centrada.
 - Frontend completo 116/116, build correcto. Pendiente la revisión visual del usuario.
+
+## Títulos unificados y base de desarrollo (05/11/2026)
+
+- Los títulos y subtítulos de Inicio, Usuarios, Catálogos, Servicios y Embudos y etapas usan ahora las mismas clases que Empresas y Contactos (`companies-page-title` y `companies-page-description`), en lugar de las variantes `h4` de MUI. Frontend 116/116, build correcto. Pendiente la revisión visual del usuario.
+- Base de desarrollo (`fluency_segunda_entrega_dev`, contenedor `fluency-pg`, puerto 5433), comprobada de forma de solo lectura con `docker exec psql`: `oportunidad.titulo` ya es nulable (`is_nullable = YES`), así que el `ALTER` pendiente ya estaba aplicado y no se ejecutó nada. El MCP de Docker no estaba cargado en esta sesión; se usó el CLI.

@@ -25,7 +25,7 @@ function UsersList() {
   const roles = useQuery({ queryKey: ['roles'], queryFn: getRoles })
   return <Box className="companies-page">
     <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 3 }}>
-      <Box><Typography component="h1" variant="h4">Usuarios</Typography><Typography color="text.secondary" sx={{ mt: 1 }}>Cuentas y roles del equipo comercial.</Typography></Box>
+      <Box><Typography component="h1" className="companies-page-title">Usuarios</Typography><Typography className="companies-page-description">Cuentas y roles del equipo comercial.</Typography></Box>
       <Button variant="contained" startIcon={<Add />} disabled={!roles.data} onClick={() => setAction({ mode: 'create' })}>Nuevo usuario</Button>
     </Stack>
     {message && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setMessage('')}>{message}</Alert>}
