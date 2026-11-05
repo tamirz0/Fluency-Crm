@@ -76,9 +76,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally { identityChange.current = false }
   }, [forget])
   return <AuthContext.Provider value={{ user, isAuthenticated: user !== null, isLoading: isLoading || unavailable, refresh, login, logout }}>
-    {error && <Alert severity="error" onClose={() => setError('')}>{error}</Alert>}
-    {isLoading && <Box role="status" sx={{ p: 3 }}>Comprobando sesión…</Box>}
-    {unavailable && <Button onClick={() => void refresh()}>Reintentar sesión</Button>}
+    {/* Los avisos de sesión flotan sobre la pantalla: no empujan ni reordenan el contenido. */}
+    {(error || isLoading || unavailable) && <Box sx={{ position: 'fixed', top: 16, left: '50%', zIndex: 'tooltip', display: 'flex', width: 'min(92vw, 560px)', transform: 'translateX(-50%)', flexDirection: 'column', gap: 1, filter: 'drop-shadow(0 8px 24px rgba(0, 0, 0, .45))' }}>
+      {error && <Alert severity="error" onClose={() => setError('')}>{error}</Alert>}
+      {isLoading && <Alert severity="info" role="status" icon={false}>Comprobando sesión…</Alert>}
+      {unavailable && <Button variant="contained" onClick={() => void refresh()}>Reintentar sesión</Button>}
+    </Box>}
     {initialized && <Box key={JSON.stringify(user)} inert={isLoading || unavailable || undefined}>{children}</Box>}
   </AuthContext.Provider>
 }

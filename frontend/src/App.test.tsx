@@ -167,3 +167,34 @@ it.each(['/oportunidades', '/embudo'])('conserva retirado el módulo comercial %
   await screen.findByRole('heading', { name: 'Hola, María' })
   expect(vi.mocked(fetch).mock.calls.every(([r]) => new URL((r as Request).url).pathname.startsWith('/api/auth/'))).toBe(true)
 })
+
+it('muestra la landing en la raíz y su botón de ingreso lleva al login', async () => {
+  mount('/')
+  expect(await screen.findByRole('heading', { level: 1, name: /Cada consulta, a un paso de convertirse en alumno/ })).toBeTruthy()
+  expect(screen.getAllByRole('button', { name: 'Registrarse' }).length).toBeGreaterThan(0)
+  await userEvent.click(screen.getAllByRole('link', { name: 'Iniciar sesión' })[0]!)
+  expect(await screen.findByRole('heading', { name: 'Ingresá a tu espacio comercial' })).toBeTruthy()
+})
+
+it('el botón Registrarse solo informa que el registro no está habilitado y no llama a la API', async () => {
+  mount('/')
+  await screen.findByRole('heading', { level: 1 })
+  const callsBefore = vi.mocked(fetch).mock.calls.length
+  await userEvent.click(screen.getAllByRole('button', { name: 'Registrarse' })[0]!)
+  expect(await screen.findByText(/El registro todavía no está habilitado/)).toBeTruthy()
+  expect(vi.mocked(fetch).mock.calls.length).toBe(callsBefore)
+})
+
+it('una sesión activa en la raíz va directo al inicio', async () => {
+  authenticated = true
+  mount('/')
+  expect(await screen.findByRole('heading', { name: 'Hola, María' })).toBeTruthy()
+})
+
+it('los avisos de sesión flotan sobre la pantalla en lugar de empujar el contenido', async () => {
+  mount('/login')
+  await screen.findByRole('heading', { name: 'Ingresá a tu espacio comercial' })
+  window.dispatchEvent(new CustomEvent('fluency:forbidden', { detail: 'No tenés permiso para esta acción.' }))
+  const alert = await screen.findByText('No tenés permiso para esta acción.')
+  expect(getComputedStyle(alert.closest('.MuiAlert-root')!.parentElement!).position).toBe('fixed')
+})

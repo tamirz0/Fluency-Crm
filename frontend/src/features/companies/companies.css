@@ -37,9 +37,10 @@
   box-shadow: var(--shadow);
 }
 
-.company-table {
-  table-layout: fixed;
-}
+/* Diseño automático: cada columna recibe el espacio que su contenido necesita y, si la tabla no entra, el contenedor se desplaza en horizontal. */
+.company-table { table-layout: auto; min-width: 100%; }
+.company-table th { white-space: nowrap; }
+.company-table td { min-width: 6.5rem; }
 
 .company-table th,
 .company-table td {
@@ -47,7 +48,7 @@
   border-bottom: 1px solid var(--border-soft);
   color: var(--text);
   font-size: .98rem;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .company-table td { text-align: left; }
@@ -65,26 +66,13 @@
 }
 
 .company-table th:first-child,
-.company-table td:first-child {
-  padding-left: 20px;
-  width: 21%;
-}
+.company-table td:first-child { padding-left: 20px; }
 
 .company-table th:nth-child(2),
-.company-table td:nth-child(2) { width: 14%; }
 .company-table th:nth-child(3),
-.company-table td:nth-child(3) { width: 15%; }
 .company-table th:nth-child(4),
-.company-table td:nth-child(4) { width: 20%; }
 .company-table th:nth-child(5),
-.company-table td:nth-child(5) { width: 14%; }
 .company-list-table { min-width: 1080px; }
-.company-list-table th:first-child, .company-list-table td:first-child { width: auto; }
-.company-list-table th:nth-child(2), .company-list-table td:nth-child(2) { width: auto; }
-.company-list-table th:nth-child(3), .company-list-table td:nth-child(3) { width: auto; }
-.company-list-table th:nth-child(4), .company-list-table td:nth-child(4) { width: auto; }
-.company-list-table th:nth-child(5), .company-list-table td:nth-child(5) { width: auto; }
-.company-list-table th:nth-child(6), .company-list-table td:nth-child(6) { width: auto; }
 .company-clickable-row { cursor: pointer; }
 .company-clickable-row { transition: background-color 140ms ease; }
 .company-clickable-row:hover td { background: var(--surface-2); }
@@ -114,12 +102,6 @@
 .company-stage-chip { height: auto !important; min-height: 24px; }
 .company-stage-chip .MuiChip-label { display: block; overflow: visible; padding: 4px 8px; text-overflow: clip; white-space: normal; line-height: 1.15; overflow-wrap: anywhere; }
 .opportunity-table { min-width: 900px; }
-.opportunity-table th:first-child, .opportunity-table td:first-child { width: 24%; }
-.opportunity-table th:nth-child(2), .opportunity-table td:nth-child(2) { width: 15%; }
-.opportunity-table th:nth-child(3), .opportunity-table td:nth-child(3) { width: 17%; }
-.opportunity-table th:nth-child(4), .opportunity-table td:nth-child(4) { width: 17%; }
-.opportunity-table th:nth-child(5), .opportunity-table td:nth-child(5) { width: 13%; }
-.opportunity-table th:nth-child(6), .opportunity-table td:nth-child(6) { width: 14%; }
 .opportunity-table th, .opportunity-table td { padding: 12px 8px; }
 
 .company-contact-links,

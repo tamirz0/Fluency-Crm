@@ -3,6 +3,7 @@ import { Typography, Box } from '@mui/material'
 import { AuthenticatedShell } from './app/AuthenticatedShell'
 import { ProtectedRoute } from './app/ProtectedRoute'
 import { LoginPage } from './features/login/LoginPage'
+import { LandingPage } from './features/landing/LandingPage'
 import { useAuth } from './auth/useAuth'
 import { UsersPage } from './features/settings/UsersPage'
 import { CatalogsPage } from './features/settings/CatalogsPage'
@@ -22,6 +23,7 @@ function AccessHome() {
 }
 function App() {
   return <Routes>
+    <Route path="/" element={<LandingPage />} />
     <Route path="/login" element={<LoginPage />} />
     <Route element={<ProtectedRoute />}><Route element={<AuthenticatedShell />}>
       <Route path="/inicio" element={<AccessHome />} />
