@@ -85,8 +85,7 @@ internal static class ApiConventions
     {
         public void PopulateFeature(IEnumerable<ApplicationPart> parts, ControllerFeature feature)
         {
-            Type[] retired = [typeof(OportunidadesController),
-                typeof(EstadosClienteController), typeof(OrigenesComercialesController)];
+            Type[] retired = [typeof(EstadosClienteController), typeof(OrigenesComercialesController)];
             foreach (var type in retired)
                 feature.Controllers.Remove(type.GetTypeInfo());
         }

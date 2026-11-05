@@ -94,8 +94,7 @@ public sealed class EmpresaService(FluencyLocalDbContext db, ActorActual actor) 
             throw new EmpresaOperationException(401, "UNAUTHENTICATED", "La sesión ya no está disponible.");
         var company = await db.Empresas.SingleOrDefaultAsync(e => e.Id == id && e.Activo, ct) ?? throw Missing();
         var contacts = await db.Contactos.CountAsync(c => c.IdEmpresa == id && c.Activo, ct);
-        // El modelo EF de oportunidades es el heredado (sin activo) hasta T28: se cuenta con SQL parametrizado en la misma transacción.
-        var opportunities = await db.Database.SqlQuery<int>($"SELECT count(*)::int AS \"Value\" FROM oportunidad WHERE id_empresa = {id} AND activo").SingleAsync(ct);
+        var opportunities = await db.Oportunidades.CountAsync(o => o.IdEmpresa == id && o.Activo, ct);
         var causes = new List<string>();
         if (contacts > 0) causes.Add(contacts == 1 ? "1 contacto activo" : $"{contacts} contactos activos");
         if (opportunities > 0) causes.Add(opportunities == 1 ? "1 oportunidad activa" : $"{opportunities} oportunidades activas");

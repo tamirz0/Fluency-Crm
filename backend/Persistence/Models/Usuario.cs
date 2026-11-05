@@ -23,8 +23,6 @@ public partial class Usuario
 
     public virtual ICollection<HistorialEtapa> HistorialEtapas { get; set; } = new List<HistorialEtapa>();
 
-    public virtual ICollection<LogOportunidadCambio> LogOportunidadCambios { get; set; } = new List<LogOportunidadCambio>();
-
     public virtual ICollection<Oportunidad> Oportunidades { get; set; } = new List<Oportunidad>();
 
     public virtual ICollection<UsuarioRol> UsuarioRoles { get; set; } = new List<UsuarioRol>();

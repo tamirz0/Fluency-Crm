@@ -33,8 +33,6 @@ public partial class FluencyLocalDbContext : DbContext
 
     public virtual DbSet<HistorialEtapa> HistorialEtapas { get; set; }
 
-    public virtual DbSet<LogOportunidadCambio> LogOportunidadCambios { get; set; }
-
     public virtual DbSet<Modalidad> Modalidades { get; set; }
 
     public virtual DbSet<MotivoRechazo> MotivoRechazos { get; set; }
@@ -42,8 +40,6 @@ public partial class FluencyLocalDbContext : DbContext
     public virtual DbSet<NivelIngles> NivelesIngles { get; set; }
 
     public virtual DbSet<Oportunidad> Oportunidades { get; set; }
-
-    public virtual DbSet<OportunidadItem> OportunidadItems { get; set; }
 
     public virtual DbSet<OrigenComercial> OrigenComerciales { get; set; }
 
@@ -292,11 +288,8 @@ public partial class FluencyLocalDbContext : DbContext
 
             entity.ToTable("historial_etapas");
 
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Fecha)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("fecha");
+            entity.Property(e => e.Id).UseIdentityAlwaysColumn().HasColumnName("id");
+            entity.Property(e => e.FechaHora).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("fecha_hora");
             entity.Property(e => e.IdEtapaAnterior).HasColumnName("id_etapa_anterior");
             entity.Property(e => e.IdNuevaEtapa).HasColumnName("id_nueva_etapa");
             entity.Property(e => e.IdOportunidad).HasColumnName("id_oportunidad");
@@ -305,47 +298,23 @@ public partial class FluencyLocalDbContext : DbContext
 
             entity.HasOne(d => d.IdEtapaAnteriorNavigation).WithMany(p => p.HistorialEtapaIdEtapaAnteriorNavigations)
                 .HasForeignKey(d => d.IdEtapaAnterior)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("historial_etapas_id_etapa_anterior_fkey");
 
             entity.HasOne(d => d.IdNuevaEtapaNavigation).WithMany(p => p.HistorialEtapaIdNuevaEtapaNavigations)
                 .HasForeignKey(d => d.IdNuevaEtapa)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("historial_etapas_id_nueva_etapa_fkey");
 
             entity.HasOne(d => d.IdOportunidadNavigation).WithMany(p => p.HistorialEtapas)
                 .HasForeignKey(d => d.IdOportunidad)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("historial_etapas_id_oportunidad_fkey");
 
             entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.HistorialEtapas)
                 .HasForeignKey(d => d.IdUsuario)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("historial_etapas_id_usuario_fkey");
-        });
-
-        modelBuilder.Entity<LogOportunidadCambio>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("log_oportunidad_cambio_pkey");
-
-            entity.ToTable("log_oportunidad_cambio");
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Campo)
-                .HasMaxLength(100)
-                .HasColumnName("campo");
-            entity.Property(e => e.FechaHora)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("fecha_hora");
-            entity.Property(e => e.IdOportunidad).HasColumnName("id_oportunidad");
-            entity.Property(e => e.IdUsuario).HasColumnName("id_usuario");
-            entity.Property(e => e.ValorAnterior).HasColumnName("valor_anterior");
-            entity.Property(e => e.ValorNuevo).HasColumnName("valor_nuevo");
-
-            entity.HasOne(d => d.IdOportunidadNavigation).WithMany(p => p.LogOportunidadCambios)
-                .HasForeignKey(d => d.IdOportunidad)
-                .HasConstraintName("log_oportunidad_cambio_id_oportunidad_fkey");
-
-            entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.LogOportunidadCambios)
-                .HasForeignKey(d => d.IdUsuario)
-                .HasConstraintName("log_oportunidad_cambio_id_usuario_fkey");
         });
 
         modelBuilder.Entity<Modalidad>(entity =>
@@ -394,79 +363,61 @@ public partial class FluencyLocalDbContext : DbContext
 
             entity.ToTable("oportunidad");
 
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.FechaCierre)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("fecha_cierre");
-            entity.Property(e => e.FechaEstimadaCierre).HasColumnName("fecha_estimada_cierre");
-            entity.Property(e => e.IdContacto).HasColumnName("id_contacto");
+            entity.Property(e => e.Id).UseIdentityAlwaysColumn().HasColumnName("id");
+            entity.Property(e => e.Titulo).HasMaxLength(100).HasColumnName("titulo");
+            entity.Property(e => e.IdResponsable).HasColumnName("id_responsable");
             entity.Property(e => e.IdEmpresa).HasColumnName("id_empresa");
-            entity.Property(e => e.IdEstado).HasColumnName("id_estado");
+            entity.Property(e => e.IdContacto).HasColumnName("id_contacto");
             entity.Property(e => e.IdEtapa).HasColumnName("id_etapa");
             entity.Property(e => e.IdOrigen).HasColumnName("id_origen");
-            entity.Property(e => e.IdServicio).HasColumnName("id_servicio");
-            entity.Property(e => e.IdUsuario).HasColumnName("id_usuario");
+            entity.Property(e => e.Valor).HasPrecision(12, 2).HasColumnName("valor");
+            entity.Property(e => e.FechaCreacion).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("fecha_creacion");
+            entity.Property(e => e.FechaEstimadaCierre).HasColumnName("fecha_estimada_cierre");
+            entity.Property(e => e.FechaCierre).HasColumnName("fecha_cierre");
+            entity.Property(e => e.IdMotivoPerdida).HasColumnName("id_motivo_perdida");
+            entity.Property(e => e.ObjetivoAprendizaje).HasColumnName("objetivo_aprendizaje");
+            entity.Property(e => e.CantidadParticipantes).HasColumnName("cantidad_participantes");
+            entity.Property(e => e.DisponibilidadHoraria).HasColumnName("disponibilidad_horaria");
             entity.Property(e => e.Observaciones).HasColumnName("observaciones");
-            entity.Property(e => e.Titulo)
-                .HasMaxLength(150)
-                .HasColumnName("titulo");
+            entity.Property(e => e.Activo).HasDefaultValue(true).HasSentinel(true).HasColumnName("activo");
 
-            entity.HasOne(d => d.IdContactoNavigation).WithMany(p => p.Oportunidades)
-                .HasForeignKey(d => d.IdContacto)
-                .HasConstraintName("oportunidad_id_contacto_fkey");
+            entity.HasOne(d => d.IdResponsableNavigation).WithMany(p => p.Oportunidades)
+                .HasForeignKey(d => d.IdResponsable)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("oportunidad_id_responsable_fkey");
 
             entity.HasOne(d => d.IdEmpresaNavigation).WithMany(p => p.Oportunidades)
                 .HasForeignKey(d => d.IdEmpresa)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("oportunidad_id_empresa_fkey");
 
-            entity.HasOne(d => d.IdEstadoNavigation).WithMany(p => p.Oportunidades)
-                .HasForeignKey(d => d.IdEstado)
-                .HasConstraintName("oportunidad_id_estado_fkey");
+            entity.HasOne(d => d.IdContactoNavigation).WithMany(p => p.Oportunidades)
+                .HasForeignKey(d => d.IdContacto)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("oportunidad_id_contacto_fkey");
 
             entity.HasOne(d => d.IdEtapaNavigation).WithMany(p => p.Oportunidades)
                 .HasForeignKey(d => d.IdEtapa)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("oportunidad_id_etapa_fkey");
 
             entity.HasOne(d => d.IdOrigenNavigation).WithMany(p => p.Oportunidades)
                 .HasForeignKey(d => d.IdOrigen)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("oportunidad_id_origen_fkey");
 
-            entity.HasOne(d => d.IdServicioNavigation).WithMany(p => p.Oportunidades)
-                .HasForeignKey(d => d.IdServicio)
-                .HasConstraintName("oportunidad_id_servicio_fkey");
+            entity.HasOne(d => d.IdMotivoPerdidaNavigation).WithMany()
+                .HasForeignKey(d => d.IdMotivoPerdida)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("oportunidad_id_motivo_perdida_fkey");
 
-            entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.Oportunidades)
-                .HasForeignKey(d => d.IdUsuario)
-                .HasConstraintName("oportunidad_id_usuario_fkey");
-        });
-
-        modelBuilder.Entity<OportunidadItem>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("oportunidad_item_pkey");
-
-            entity.ToTable("oportunidad_item");
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Cantidad)
-                .HasDefaultValue(1)
-                .HasColumnName("cantidad");
-            entity.Property(e => e.Descuento)
-                .HasPrecision(10, 2)
-                .HasDefaultValue(0m)
-                .HasColumnName("descuento");
-            entity.Property(e => e.IdOportunidad).HasColumnName("id_oportunidad");
-            entity.Property(e => e.IdServicio).HasColumnName("id_servicio");
-            entity.Property(e => e.PrecioUnitario)
-                .HasPrecision(10, 2)
-                .HasColumnName("precio_unitario");
-
-            entity.HasOne(d => d.IdOportunidadNavigation).WithMany(p => p.OportunidadItems)
-                .HasForeignKey(d => d.IdOportunidad)
-                .HasConstraintName("oportunidad_item_id_oportunidad_fkey");
-
-            entity.HasOne(d => d.IdServicioNavigation).WithMany(p => p.OportunidadItems)
-                .HasForeignKey(d => d.IdServicio)
-                .HasConstraintName("oportunidad_item_id_servicio_fkey");
+            entity.HasIndex(e => e.IdResponsable, "ix_oportunidad_responsable");
+            entity.HasIndex(e => e.IdEmpresa, "ix_oportunidad_empresa");
+            entity.HasIndex(e => e.IdContacto, "ix_oportunidad_contacto");
+            entity.HasIndex(e => e.IdEtapa, "ix_oportunidad_etapa");
+            entity.HasIndex(e => e.IdOrigen, "ix_oportunidad_origen");
+            entity.HasIndex(e => e.IdMotivoPerdida, "ix_oportunidad_motivo");
+            // ck_oportunidad_cliente y los CHECK de valor/participantes viven solo en el SQL versionado.
         });
 
         modelBuilder.Entity<OrigenComercial>(entity =>
