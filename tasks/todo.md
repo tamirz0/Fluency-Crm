@@ -785,13 +785,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Alta contextual desde empresa/contacto/embudo evita repetir selecciones y muestra defaults; origen y datos académicos siguen opcionales.
-- [ ] Formulario no pide servicio/estado derivados ni inventa una etapa si faltan abiertas; límites y errores coherentes con API.
-- [ ] Guardar una sola vez actualiza datos visibles y abre la ficha; retirar request de actor arbitrario y contrato de alta anterior.
+- [x] Alta contextual desde empresa/contacto/embudo evita repetir selecciones y muestra defaults; origen y datos académicos siguen opcionales.
+- [x] Formulario no pide servicio/estado derivados ni inventa una etapa si faltan abiertas; límites y errores coherentes con API.
+- [x] Guardar una sola vez actualiza datos visibles y abre la ficha; retirar request de actor arbitrario y contrato de alta anterior.
 
 **Verificación:** F + UI(src/features/forms.test.tsx) + D; recorrido local alta mínima y rechazo comprensible de embudo sin abierta.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t30.md](verificaciones/verificacion-t30.md). `forms.test.tsx` 27/27 y frontend completo 115/115; build correcto y lint solo con la advertencia previa; `schema.d.ts` regenerado desde la API local. **Pendiente:** recorrido local con API real (alta mínima y embudo sin etapa abierta) por el operador; hasta entonces T30 no se marca terminada. Sin merge ni push.
 
 ### CP10 — Alta de oportunidades
 
