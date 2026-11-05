@@ -79,6 +79,21 @@ public sealed class OportunidadesController(IOportunidadService oportunidades) :
         => Ok(await oportunidades.MoverAsync(id, request, ct));
 
     /// <summary>
+    /// Cierra una oportunidad abierta como ganada: exige fecha y valor final (cero es válido) y la mueve a la etapa final ganada del embudo.
+    /// Repetir el cierre responde 409.
+    /// </summary>
+    [HttpPost("{id:int}/ganar"), Authorize(Policy = RolesYPermisos.GestionarOportunidad)]
+    [ProducesResponseType<OportunidadResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<OportunidadResponse>> Ganar(int id, [FromBody] GanarOportunidadRequest request, CancellationToken ct)
+        => Ok(await oportunidades.GanarAsync(id, request, ct));
+
+    /// <summary>Cierra una oportunidad abierta como perdida: exige fecha y un motivo de pérdida activo; conserva el valor vigente.</summary>
+    [HttpPost("{id:int}/perder"), Authorize(Policy = RolesYPermisos.GestionarOportunidad)]
+    [ProducesResponseType<OportunidadResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<OportunidadResponse>> Perder(int id, [FromBody] PerderOportunidadRequest request, CancellationToken ct)
+        => Ok(await oportunidades.PerderAsync(id, request, ct));
+
+    /// <summary>
     /// Crea una oportunidad con su historial inicial en una sola transacción. Sin etapa usa la primera abierta activa del embudo;
     /// sin valor copia el precio del servicio; sin responsable usa al actor. El vendedor solo crea a su nombre.
     /// </summary>

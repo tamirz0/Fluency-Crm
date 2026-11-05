@@ -231,6 +231,14 @@ export function reassignOpportunity(id: number, idResponsable: number): Promise<
 export function moveOpportunity(id: number, idEtapa: number, observacion?: string): Promise<Oportunidad> {
   return getResponseData(() => api.POST('/oportunidades/{id}/mover', { params: { path: { id } }, body: { idEtapa, ...(observacion ? { observacion } : {}) } }))
 }
+export type GanarOportunidadRequest = components['schemas']['GanarOportunidadRequest']
+export type PerderOportunidadRequest = components['schemas']['PerderOportunidadRequest']
+export function winOpportunity(id: number, body: GanarOportunidadRequest): Promise<Oportunidad> {
+  return getResponseData(() => api.POST('/oportunidades/{id}/ganar', { params: { path: { id } }, body }))
+}
+export function loseOpportunity(id: number, body: PerderOportunidadRequest): Promise<Oportunidad> {
+  return getResponseData(() => api.POST('/oportunidades/{id}/perder', { params: { path: { id } }, body }))
+}
 export type OportunidadQuery = {
   q?: string; idResponsable?: number; idEmpresa?: number; idContacto?: number; idEmbudo?: number; idEtapa?: number
   estado?: 'ABIERTA' | 'GANADA' | 'PERDIDA'; idOrigen?: number; page?: number; pageSize?: number

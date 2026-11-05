@@ -286,5 +286,46 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
         return result;
     }
 
+    public Task<OportunidadResponse> GanarAsync(int id, GanarOportunidadRequest request, CancellationToken ct)
+        => CloseAsync(id, "GANADA", request.FechaCierre, request.Valor, null, request.Observacion, ct);
+
+    public Task<OportunidadResponse> PerderAsync(int id, PerderOportunidadRequest request, CancellationToken ct)
+        => CloseAsync(id, "PERDIDA", request.FechaCierre, null, request.IdMotivoPerdida, request.Observacion, ct);
+
+    /// <summary>
+    /// Cierra una oportunidad abierta en la única etapa final del resultado pedido de su embudo: guarda fecha de cierre, valor final
+    /// (ganada) o motivo activo (perdida) y la entrada de historial en una transacción Serializable que relee propiedad y estado.
+    /// Repetir el cierre sobre una cerrada es un conflicto: no duplica historial ni modifica datos.
+    /// </summary>
+    private async Task<OportunidadResponse> CloseAsync(int id, string result, DateOnly closeDate, decimal? finalValue, int? reason, string? note, CancellationToken ct)
+    {
+        if (!actor.Usuario.Permisos.Contains(RolesYPermisos.GestionarOportunidad))
+            throw new OportunidadOperationException(403, "FORBIDDEN", "No tiene permiso para gestionar oportunidades.");
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        if (!await db.Usuarios.AnyAsync(u => u.Id == actor.Id && u.Activo, ct))
+            throw new OportunidadOperationException(401, "UNAUTHENTICATED", "La sesión ya no está disponible.");
+        var item = await db.Oportunidades.SingleOrDefaultAsync(o => o.Id == id && o.Activo, ct) ?? throw NotFound();
+        if (!EsSuperior && item.IdResponsable != actor.Id)
+            throw new OportunidadOperationException(403, "FORBIDDEN", "Solo el responsable o un superior puede cerrar esta oportunidad.");
+        var current = await db.EtapaComerciales.Where(e => e.Id == item.IdEtapa).Select(e => new { e.IdEmbudo, Estado = e.IdEstadoNavigation.Codigo }).SingleAsync(ct);
+        if (current.Estado != "ABIERTA")
+            throw new OportunidadOperationException(409, "BUSINESS_CONFLICT", "La oportunidad ya está cerrada. Para cambiar su resultado, reábrala primero.");
+        var finalStage = await db.EtapaComerciales.Where(e => e.IdEmbudo == current.IdEmbudo && e.Activo && e.IdEstadoNavigation.Codigo == result)
+            .Select(e => (int?)e.Id).SingleOrDefaultAsync(ct)
+            ?? throw new OportunidadOperationException(409, "BUSINESS_CONFLICT", "El embudo no tiene la etapa final correspondiente.");
+        if (reason is { } motive && !await db.MotivosPerdida.AnyAsync(m => m.Id == motive && m.Activo, ct)) throw Invalid("El motivo de pérdida no está disponible.");
+
+        var previous = item.IdEtapa;
+        item.IdEtapa = finalStage;
+        item.FechaCierre = closeDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        if (finalValue is { } value) item.Valor = value;
+        if (reason is { } lostBecause) item.IdMotivoPerdida = lostBecause;
+        db.HistorialEtapas.Add(new HistorialEtapa { IdOportunidad = id, IdEtapaAnterior = previous, IdNuevaEtapa = finalStage, IdUsuario = actor.Id, Observacion = Text(note) });
+        await db.SaveChangesAsync(ct);
+        var response = await GetAsync(id, ct);
+        await transaction.CommitAsync(ct);
+        return response;
+    }
+
     private static string? Text(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

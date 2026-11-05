@@ -147,7 +147,7 @@ describe('funnel por rol', () => {
     return { posts, reads: () => funnelReads }
   }
 
-  it('cambia la etapa con el selector (solo etapas abiertas activas), envía destino y observación y recarga el funnel', async () => {
+  it('cambia la etapa con el selector (etapas activas, finales hacia el cierre), envía destino y observación y recarga el funnel', async () => {
     const { posts, reads } = mockMove(() => jsonResponse({ ...movable, idEtapa: 4, etapaNombre: 'Negociación' }))
     renderFunnel(seller)
     await screen.findByRole('heading', { name: 'Propuesta' })
@@ -158,7 +158,7 @@ describe('funnel por rol', () => {
     expect((dialog.getByRole('button', { name: 'Guardar cambio' }) as HTMLButtonElement).disabled).toBe(true)
     await actor.click(dialog.getByRole('combobox', { name: /Nueva etapa/ }))
     const options = (await screen.findAllByRole('option')).map(option => option.textContent)
-    expect(options).toEqual(['Negociación'])
+    expect(options).toEqual(['Negociación', 'Ganada', 'Perdida'])
     await actor.click(screen.getByRole('option', { name: 'Negociación' }))
     await actor.type(dialog.getByRole('textbox', { name: 'Observación' }), '  Envió propuesta ')
     const before = reads()
@@ -168,6 +168,23 @@ describe('funnel por rol', () => {
     expect(posts[0]!.url).toMatch(/\/oportunidades\/91\/mover$/)
     expect(await posts[0]!.json()).toEqual({ idEtapa: 4, observacion: 'Envió propuesta' })
     await waitFor(() => expect(reads()).toBeGreaterThan(before))
+  })
+
+  it('elegir una etapa final no mueve: continúa en el formulario de cierre con el resultado elegido', async () => {
+    const { posts } = mockMove(() => jsonResponse(movable))
+    renderFunnel(seller)
+    await screen.findByRole('heading', { name: 'Propuesta' })
+    const actor = userEvent.setup()
+    await actor.click(screen.getByRole('button', { name: 'Expandir oportunidad Renovación anual' }))
+    await actor.click(screen.getByRole('button', { name: 'Cambiar etapa' }))
+    const dialog = within(await screen.findByRole('dialog', { name: 'Cambiar etapa' }))
+    await actor.click(dialog.getByRole('combobox', { name: /Nueva etapa/ })); await actor.click(await screen.findByRole('option', { name: 'Perdida' }))
+    expect(dialog.queryByRole('button', { name: 'Guardar cambio' })).toBeNull()
+    await actor.click(dialog.getByRole('button', { name: 'Continuar al cierre' }))
+    const closing = within(await screen.findByRole('dialog', { name: 'Cerrar oportunidad' }))
+    expect(closing.getByRole('combobox', { name: /Resultado/ }).textContent).toBe('Perdida')
+    expect(closing.getByRole('combobox', { name: /Motivo de pérdida/ })).toBeTruthy()
+    expect(posts).toHaveLength(0)
   })
 
   it('muestra el rechazo del servidor sin cerrar el diálogo ni duplicar el envío', async () => {

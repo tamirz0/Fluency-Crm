@@ -133,6 +133,35 @@ public sealed record MoverOportunidadRequest
     public string? Observacion { get; init; }
 }
 
+/// <summary>Cierre como ganada: fecha y valor final obligatorios (cero es válido).</summary>
+public sealed record GanarOportunidadRequest : IValidatableObject
+{
+    public DateOnly FechaCierre { get; init; }
+    public decimal? Valor { get; init; }
+    public string? Observacion { get; init; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext context)
+    {
+        if (FechaCierre == default) yield return new("La fecha de cierre es obligatoria.", [nameof(FechaCierre)]);
+        if (Valor is not { } value) yield return new("El valor es obligatorio (puede ser 0).", [nameof(Valor)]);
+        else if (value is < 0 or > 9999999999.99m || decimal.Round(value, 2) != value)
+            yield return new("El valor debe ser un importe entre 0 y 9.999.999.999,99 con hasta dos decimales.", [nameof(Valor)]);
+    }
+}
+
+/// <summary>Cierre como perdida: fecha y motivo activo obligatorios; conserva el valor vigente.</summary>
+public sealed record PerderOportunidadRequest : IValidatableObject
+{
+    public DateOnly FechaCierre { get; init; }
+    [Range(1, int.MaxValue)] public int IdMotivoPerdida { get; init; }
+    public string? Observacion { get; init; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext context)
+    {
+        if (FechaCierre == default) yield return new("La fecha de cierre es obligatoria.", [nameof(FechaCierre)]);
+    }
+}
+
 /// <summary>Error público sin detalles de persistencia.</summary>
 public sealed class OportunidadOperationException(int status, string code, string message) : Exception(message)
 {

@@ -7,6 +7,7 @@ import { getFunnel, listFunnels, opportunityQueryKeys, type Oportunidad } from '
 import { useAuth } from '../../auth/useAuth'
 import { CompanyResponsibleSelect } from '../companies/CompanyResponsibleSelect'
 import { displayValue, formatCommercialDate } from '../shared/display'
+import { CloseOpportunityDialog, type CloseResult } from '../opportunities/CloseOpportunityDialog'
 import { MoveStageDialog } from '../opportunities/MoveStageDialog'
 import { money, stageToneClass, stateLabels } from '../opportunities/opportunityData'
 import './funnel.css'
@@ -57,6 +58,7 @@ export function FunnelPage() {
   const [responsible, setResponsible] = useState('')
   const [moving, setMoving] = useState<Oportunidad | null>(null)
   const [confirmed, setConfirmed] = useState(false)
+  const [closing, setClosing] = useState<{ item: Oportunidad; result: CloseResult } | null>(null)
   const [collapsedStages, setCollapsedStages] = useState<Set<number | string>>(() => new Set())
   const funnels = useQuery({ queryKey: ['embudos', 'opciones'], queryFn: () => listFunnels({ pageSize: 100 }) })
   const options = funnels.data?.items ?? []
@@ -104,7 +106,8 @@ export function FunnelPage() {
         </div></div>}
       </>}
     </>}
-    {moving && <MoveStageDialog item={moving} open onClose={() => setMoving(null)} onDone={() => { setMoving(null); setConfirmed(true) }} />}
+    {moving && <MoveStageDialog item={moving} open onClose={() => setMoving(null)} onDone={() => { setMoving(null); setConfirmed(true) }} onCloseRequest={result => { setClosing({ item: moving, result }); setMoving(null) }} />}
+    {closing && <CloseOpportunityDialog item={closing.item} initialResult={closing.result} open onClose={() => setClosing(null)} onDone={() => { setClosing(null); setConfirmed(true) }} />}
     <Snackbar open={confirmed} autoHideDuration={4000} onClose={() => setConfirmed(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}><Alert onClose={() => setConfirmed(false)} severity="success" variant="filled">Etapa actualizada</Alert></Snackbar>
   </Box>
 }
