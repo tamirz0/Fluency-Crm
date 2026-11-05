@@ -56,7 +56,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T43 — Editar y dar de baja actividades con permisos de origen y destino](#t43)
 - [x] [T44 — Proyectar el historial comercial combinado](#t44)
 - [x] [T45 — Mostrar historial comercial en las tres fichas](#t45)
-- [ ] [T46 — Comprobar retiro del legado y coherencia de contratos](#t46)
+- [x] [T46 — Comprobar retiro del legado y coherencia de contratos](#t46)
 - [ ] [T47 — Cerrar la verificación de seguridad acordada](#t47)
 - [ ] [T48 — Ensayar la entrega completa en local](#t48)
 - [ ] [T49 — Preparar la publicación académica sin ejecutarla](#t49)
@@ -1203,13 +1203,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Inventario final no contiene endpoints alternativos de modificación, registro público, IDs de actor confiados ni tipos ligados a líneas/log genérico.
-- [ ] EF/SQL/OpenAPI/clientes coinciden y código obsoleto se elimina; si el inventario revela varias limpiezas, dividir por módulo antes de modificar, máximo unas cinco rutas de archivo por subtarea.
-- [ ] Actualizar documentación de contratos implementados y ejemplos sin secretos; pruebas de endpoints retirados demuestran que no mutan por caminos viejos.
+- [x] Inventario final no contiene endpoints alternativos de modificación, registro público, IDs de actor confiados ni tipos ligados a líneas/log genérico.
+- [x] EF/SQL/OpenAPI/clientes coinciden y código obsoleto se elimina; si el inventario revela varias limpiezas, dividir por módulo antes de modificar, máximo unas cinco rutas de archivo por subtarea.
+- [x] Actualizar documentación de contratos implementados y ejemplos sin secretos; pruebas de endpoints retirados demuestran que no mutan por caminos viejos.
 
 **Verificación:** B + F + búsqueda de referencias antiguas + prueba HTTP negativa de rutas retiradas + D; regeneración local de tipos sin cambios manuales.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t46.md](verificaciones/verificacion-t46.md) y [api-implementada.md](../docs/segunda-entrega/api-implementada.md). Backend completo 171/171, frontend 144/144, `schema.d.ts` regenerado sin cambios, build y lint correctos. Deuda: migrar las suites con `LegacyApp` al `App` real. Sin merge ni push.
 
 <a id="t47"></a>
 
@@ -1229,7 +1229,7 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Verificación:** S + D; capturar resultados/fechas/severidades sin valores sensibles. Fallo de red/scanner no equivale a informe limpio.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica parcial (05/11/2026):** [verificacion-seguridad.md](../docs/segunda-entrega/verificacion-seguridad.md). npm raíz y frontend sin vulnerabilidades tras actualizar dirigidamente zod, vite, vitest, @vitest/mocker, undici y source-map-js (deuda B8/CP04 cerrada); .NET sin vulnerabilidades. **Pendiente:** el escaneo de secretos con Gitleaks no se ejecutó (la ejecución del binario descargado fue denegada); por eso T47 no se marca terminada.
 
 <a id="t48"></a>
 
