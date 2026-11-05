@@ -52,7 +52,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T39 — Dar de baja oportunidades sin cascadas](#t39)
 - [x] [T40 — Mapear actividades realizadas](#t40)
 - [x] [T41 — Registrar y consultar actividades por API](#t41)
-- [ ] [T42 — Registrar actividades desde fichas](#t42)
+- [x] [T42 — Registrar actividades desde fichas](#t42)
 - [x] [T43 — Editar y dar de baja actividades con permisos de origen y destino](#t43)
 - [x] [T44 — Proyectar el historial comercial combinado](#t44)
 - [x] [T45 — Mostrar historial comercial en las tres fichas](#t45)
@@ -1109,17 +1109,19 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Editor contextual carga asociaciones sin pedir repetirlas y solo envía campos editables; tipos activos, fecha del hecho y resultado opcional.
-- [ ] Acciones respetan permisos actuales; errores de API y doble envío controlados, sin ocultar actividades ajenas de lectura.
-- [ ] Reutilizar editor en empresa/contacto/oportunidad, completando el montaje de empresa en T45; refrescar datos pertinentes después de guardar.
+- [x] Editor contextual carga asociaciones sin pedir repetirlas y solo envía campos editables; tipos activos, fecha del hecho y resultado opcional.
+- [x] Acciones respetan permisos actuales; errores de API y doble envío controlados, sin ocultar actividades ajenas de lectura.
+- [x] Reutilizar editor en empresa/contacto/oportunidad, completando el montaje de empresa en T45; refrescar datos pertinentes después de guardar.
 
 **Verificación:** F + UI(src/features/activities/ActivityForm.test.tsx) + D; alta local desde oportunidad cerrada sin modificar su estado.
 
 **Evidencia técnica (05/11/2026):** [verificacion-t42.md](verificaciones/verificacion-t42.md). `ActivityForm.test.tsx` 3/3; frontend 135/135, build correcto, lint solo con la advertencia previa. El montaje en la ficha de empresa queda para T45. Sin merge ni push.
 
+**Actualización (05/11/2026):** el montaje en la ficha de empresa se completó en T45 ([verificación T45](verificaciones/verificacion-t45.md)).
+
 ### CP14 — Registro de actividades
 
-- [ ] Crear interacción de ayer, leer fechas/actor y demostrar permiso al operar desde una ficha de cliente.
+- [x] Crear interacción de ayer, leer fechas/actor y demostrar permiso al operar desde una ficha de cliente (`ActividadesTests`, `EdicionActividadTests`; ver [CP15](verificaciones/verificacion-cp15.md)).
 - [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
 
 <a id="t43"></a>
@@ -1184,8 +1186,10 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 ### CP15 — Módulo actividades
 
-- [ ] B + F, suites pertinentes completas y circuito historial combinado→edición→baja→lectura desde otro contexto. Revisar antes del merge.
+- [x] B + F, suites pertinentes completas y circuito historial combinado→edición→baja→lectura desde otro contexto. Revisar antes del merge (**revisión independiente pendiente**).
 - [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+
+**Evidencia técnica (05/11/2026):** [verificacion-cp15.md](verificaciones/verificacion-cp15.md). Backend completo 171/171, frontend 145/145, build correcto y lint solo con la advertencia previa. Pendientes: revisión independiente, validación autenticada del usuario y OK de integración. Sin merge ni push.
 
 <a id="t46"></a>
 
