@@ -14,6 +14,7 @@ import { NewCompanyPage, EditCompanyPage } from './features/companies/CompanyFor
 import { ContactsPage } from './features/contacts/ContactsPage'
 import { ContactDetailPage } from './features/contacts/ContactDetailPage'
 import { NewContactPage, EditContactPage } from './features/contacts/ContactFormPage'
+import { OpportunitiesPage } from './features/opportunities/OpportunitiesPage'
 import { NewOpportunityPage } from './features/opportunities/OpportunityFormPage'
 import { OpportunityDetailPage } from './features/opportunities/OpportunityDetailPage'
 function AccessHome() {
@@ -33,6 +34,7 @@ function App() {
       <Route path="/contactos/nuevo" element={<NewContactPage />} />
       <Route path="/contactos/:idContacto" element={<ContactDetailPage />} />
       <Route path="/contactos/:idContacto/editar" element={<EditContactPage />} />
+      <Route path="/oportunidades" element={<OpportunitiesPage />} />
       <Route path="/oportunidades/nueva" element={<NewOpportunityPage />} />
       <Route path="/oportunidades/:idOportunidad" element={<OpportunityDetailPage />} />
       <Route path="/configuracion/usuarios" element={<UsersPage />} />

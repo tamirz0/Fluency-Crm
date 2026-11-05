@@ -78,6 +78,8 @@ export const contactoQueryKeys = {
 export const opportunityQueryKeys = {
   pipeline: ['oportunidades', 'por-etapa'] as const,
   detail: (idOportunidad: number) => ['oportunidades', idOportunidad] as const,
+  list: (query: OportunidadQuery) => ['oportunidades', 'lista', query] as const,
+  history: (idOportunidad: number, page: number, pageSize: number) => ['oportunidades', idOportunidad, 'historial', page, pageSize] as const,
 }
 
 export const catalogQueryKeys = {
@@ -239,6 +241,17 @@ export function createOpportunity(body: CreateOportunidadRequest): Promise<Oport
 }
 export function getOpportunity(id: number): Promise<Oportunidad> {
   return getResponseData(() => api.GET('/oportunidades/{id}', { params: { path: { id } } }))
+}
+export type OportunidadQuery = {
+  q?: string; idResponsable?: number; idEmpresa?: number; idContacto?: number; idEmbudo?: number; idEtapa?: number
+  estado?: 'ABIERTA' | 'GANADA' | 'PERDIDA'; idOrigen?: number; page?: number; pageSize?: number
+}
+export type HistorialEtapa = components['schemas']['HistorialEtapaResponse']
+export function listOpportunities(query: OportunidadQuery = {}) {
+  return getResponseData(() => api.GET('/oportunidades', { params: { query } }))
+}
+export function getOpportunityHistory(id: number, page = 1, pageSize = 25) {
+  return getResponseData(() => api.GET('/oportunidades/{id}/historial-etapas', { params: { path: { id }, query: { page, pageSize } } }))
 }
 
 export async function updateOpportunityStage(

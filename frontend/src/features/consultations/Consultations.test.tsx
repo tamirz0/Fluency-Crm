@@ -124,36 +124,118 @@ describe('consultas comerciales', () => {
     expect(orderStagesByPosition(stages).map((stage) => stage.nombre)).toEqual(['Consulta recibida', 'Nivelación', 'Propuesta'])
   })
 
-  it('lista oportunidades usando empresa primero, contacto alternativo y fechas es-AR sin mover el día', async () => {
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse(stages))
+  const actions = { editar: false, reasignar: false, mover: false, cerrar: false, reabrir: false, darDeBaja: false, gestionarActividades: false }
+  const listed = {
+    id: 91, titulo: 'Renovación anual', tituloVisible: 'Renovación anual', idResponsable: 7, responsableNombre: 'María Gómez', responsableActivo: false,
+    idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas', idContacto: null, contactoNombre: null, idEtapa: 3, etapaNombre: 'Propuesta', etapaActiva: true, estado: 'ABIERTA',
+    idEmbudo: 1, embudoNombre: 'Embudo Inglés', embudoActivo: true, idServicio: 2, servicioNombre: 'Capacitación', servicioActivo: true, valor: 150,
+    fechaCreacion: '2026-11-05T12:00:00Z', fechaEstimadaCierre: '2026-12-31', activo: true, accionesPermitidas: actions,
+  }
+  const closedListed = {
+    ...listed, id: 92, titulo: null, tituloVisible: 'Lucía Pérez', idEmpresa: null, empresaRazonSocial: null, idContacto: 14, contactoNombre: 'Lucía Pérez',
+    responsableActivo: true, estado: 'GANADA', etapaNombre: 'Ganada', embudoActivo: false, fechaEstimadaCierre: null,
+  }
+  const page = <T,>(items: T[], totalCount = items.length) => ({ items, page: 1, pageSize: 25, totalCount })
+
+  // El listado también consulta embudos, orígenes y responsables para sus filtros.
+  function mockOpportunitiesApi(list: (url: URL) => Response) {
+    const requests: URL[] = []
+    vi.mocked(fetch).mockImplementation(async input => {
+      const url = new URL((input as Request).url)
+      if (url.pathname.endsWith('/oportunidades')) { requests.push(url); return list(url) }
+      if (url.pathname.endsWith('/embudos')) return jsonResponse(page([{ id: 1, nombre: 'Embudo Inglés', activo: true }]))
+      if (url.pathname.endsWith('/usuarios/opciones')) return jsonResponse(page([]))
+      return jsonResponse([])
+    })
+    return requests
+  }
+
+  it('lista todas las oportunidades vigentes con el contrato nuevo, referencias inactivas y fechas es-AR', async () => {
+    const requests = mockOpportunitiesApi(() => jsonResponse(page([listed, closedListed])))
     renderAuthenticated('/oportunidades')
     const table = within(await screen.findByRole('table', { name: 'Oportunidades' }))
-    expect(await table.findByText('Renovación anual')).toBeTruthy()
+    expect(table.getByRole('link', { name: 'Abrir ficha de Renovación anual' }).getAttribute('href')).toBe('/oportunidades/91')
     expect(table.getByRole('link', { name: 'Acme Idiomas' }).getAttribute('href')).toBe('/empresas/4')
-    expect(table.getByText('Propuesta')).toBeTruthy()
-    expect(table.getByText('María Gómez')).toBeTruthy()
+    expect(table.getByRole('link', { name: 'Lucía Pérez' }).getAttribute('href')).toBe('/contactos/14')
+    expect(table.getByRole('link', { name: 'Abrir ficha de Lucía Pérez' }).getAttribute('href')).toBe('/oportunidades/92')
+    expect(table.getByText('María Gómez (inactivo)')).toBeTruthy()
+    expect(table.getByText('Embudo Inglés (inactivo)')).toBeTruthy()
+    expect(table.getByText('Propuesta · Abierta')).toBeTruthy()
+    expect(table.getByText('Ganada · Ganada')).toBeTruthy()
     expect(table.getByText('31/12/2026')).toBeTruthy()
+    expect(screen.getByText('2 oportunidades')).toBeTruthy()
+    expect(requests).toHaveLength(1)
+    expect(requests[0]!.searchParams.get('page')).toBe('1')
+    expect(requests[0]!.searchParams.get('pageSize')).toBe('25')
+    expect(requests[0]!.searchParams.has('q')).toBe(false)
     expect(formatCommercialDate('2026-01-01')).toBe('01/01/2026')
-    expect(fetch).toHaveBeenCalledTimes(1)
   })
 
-  it('muestra el listado de oportunidades vacío cuando todas las etapas están vacías', async () => {
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse(stages.map((stage) => ({ ...stage, oportunidades: [] }))))
+  it('envía búsqueda, filtros y página al servidor sin filtrar en el cliente, y permite limpiarlos', async () => {
+    const requests = mockOpportunitiesApi(() => jsonResponse(page([listed], 60)))
     renderAuthenticated('/oportunidades')
-    expect(await screen.findByRole('heading', { name: 'Todavía no hay oportunidades' })).toBeTruthy()
+    await screen.findByRole('table', { name: 'Oportunidades' })
+    const actor = userEvent.setup()
+
+    await actor.type(screen.getByRole('searchbox', { name: 'Buscar oportunidades' }), 'renov')
+    await actor.click(screen.getByRole('button', { name: 'Buscar' }))
+    await waitFor(() => expect(requests.at(-1)?.searchParams.get('q')).toBe('renov'))
+
+    await actor.click(screen.getByRole('combobox', { name: 'Estado' }))
+    await actor.click(await screen.findByRole('option', { name: 'Ganada' }))
+    await waitFor(() => expect(requests.at(-1)?.searchParams.get('estado')).toBe('GANADA'))
+    expect(requests.at(-1)?.searchParams.get('q')).toBe('renov')
+    expect(requests.at(-1)?.searchParams.get('page')).toBe('1')
+
+    await actor.click(screen.getByRole('button', { name: 'Página siguiente' }))
+    await waitFor(() => expect(requests.at(-1)?.searchParams.get('page')).toBe('2'))
+    expect(requests.at(-1)?.searchParams.get('estado')).toBe('GANADA')
+
+    await actor.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
+    await waitFor(() => expect(requests.at(-1)?.searchParams.has('estado')).toBe(false))
+    expect(requests.at(-1)?.searchParams.has('q')).toBe(false)
+    expect(requests.at(-1)?.searchParams.get('page')).toBe('1')
   })
 
-  it('muestra detalle y enlaces de empresa y contacto; un 404 representa oportunidad inexistente', async () => {
-    const detail = { id: 91, titulo: 'Renovación anual', tituloVisible: 'Renovación anual', idResponsable: 7, responsableNombre: 'María Gómez', responsableActivo: true, idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas', idContacto: 14, contactoNombre: 'Lucía Pérez', idEtapa: 3, etapaNombre: 'Propuesta', etapaActiva: true, estado: 'ABIERTA', idEmbudo: 1, embudoNombre: 'Embudo Inglés', embudoActivo: true, idServicio: 2, servicioNombre: 'Capacitación', servicioActivo: true, valor: 150, fechaCreacion: '2026-11-05T12:00:00Z', fechaEstimadaCierre: '2026-12-31', activo: true }
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse(detail))
+  it('muestra vacío y permite reintentar un listado de oportunidades', async () => {
+    let attempts = 0
+    mockOpportunitiesApi(() => ++attempts === 1 ? jsonResponse({ title: 'Error' }, 503) : jsonResponse(page([])))
+    renderAuthenticated('/oportunidades')
+    expect(await screen.findByRole('heading', { name: 'No pudimos cargar las oportunidades' })).toBeTruthy()
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Reintentar' }))
+    expect(await screen.findByRole('heading', { name: 'Todavía no hay oportunidades' })).toBeTruthy()
+    expect(attempts).toBe(2)
+  })
+
+  it('muestra detalle, enlaces e historial de etapas de solo lectura; un 404 representa oportunidad inexistente', async () => {
+    const detail = { ...listed, responsableActivo: true, idContacto: 14, contactoNombre: 'Lucía Pérez' }
+    const history = page([
+      { id: 1, idEtapaAnterior: null, etapaAnteriorNombre: null, idNuevaEtapa: 1, etapaNuevaNombre: 'Consulta', fechaHora: '2026-11-05T12:00:00Z', idUsuario: 8, usuarioNombre: 'Ana Ventas', observacion: null },
+      { id: 2, idEtapaAnterior: 1, etapaAnteriorNombre: 'Consulta', idNuevaEtapa: 3, etapaNuevaNombre: 'Propuesta', fechaHora: '2026-11-06T12:00:00Z', idUsuario: 7, usuarioNombre: 'María Gómez', observacion: 'Envió presupuesto' },
+    ])
+    const requests: URL[] = []
+    vi.mocked(fetch).mockImplementation(async input => {
+      const url = new URL((input as Request).url)
+      requests.push(url)
+      if (url.pathname.endsWith('/oportunidades/92')) return new Response('No existe', { status: 404, headers: { 'Content-Type': 'text/plain' } })
+      if (url.pathname.endsWith('/oportunidades/91/historial-etapas')) return jsonResponse(history)
+      if (url.pathname.endsWith('/oportunidades/91')) return jsonResponse(detail)
+      return jsonResponse([])
+    })
     renderAuthenticated('/oportunidades/91')
     expect(await screen.findByRole('heading', { name: 'Renovación anual' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Acme Idiomas' }).getAttribute('href')).toBe('/empresas/4')
     expect(screen.getByRole('link', { name: 'Lucía Pérez' }).getAttribute('href')).toBe('/contactos/14')
     expect(screen.getByText('Capacitación')).toBeTruthy()
     expect(screen.getByText('31/12/2026')).toBeTruthy()
+    const table = within(await screen.findByRole('table', { name: 'Historial de etapas' }))
+    expect(table.getByText('Alta de la oportunidad')).toBeTruthy()
+    expect(table.getByText('Ana Ventas')).toBeTruthy()
+    expect(table.getByText('Envió presupuesto')).toBeTruthy()
+    // Solo lectura: ninguna acción de edición aunque la oportunidad sea consultable.
+    expect(screen.queryByRole('button', { name: /^(editar|mover|reasignar|cerrar oportunidad|reabrir|eliminar)/i })).toBeNull()
+    expect(requests.every((url) => !url.pathname.includes('/historial-etapas') || url.searchParams.get('page') === '1')).toBe(true)
 
-    vi.mocked(fetch).mockResolvedValueOnce(new Response('No existe', { status: 404, headers: { 'Content-Type': 'text/plain' } }))
     renderAuthenticated('/oportunidades/92')
     expect(await screen.findByRole('heading', { name: 'No encontramos esa oportunidad' })).toBeTruthy()
   })

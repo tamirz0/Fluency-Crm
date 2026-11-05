@@ -1,16 +1,14 @@
 import { ArrowBack, Refresh } from '@mui/icons-material'
-import { Alert, Box, Button, Chip, Link, Skeleton, Typography } from '@mui/material'
+import { Alert, Box, Button, Chip, Link, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, Typography } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link as RouterLink, useLocation, useParams } from 'react-router-dom'
-import { ApiRequestError, getOpportunity, opportunityQueryKeys, type Oportunidad } from '../../api/client'
+import { ApiRequestError, getOpportunity, getOpportunityHistory, opportunityQueryKeys, type Oportunidad } from '../../api/client'
 import { displayValue, formatCommercialDate, parsePositiveId } from '../shared/display'
-import { clientLabel } from './opportunityData'
+import { clientLabel, money, stateLabels } from './opportunityData'
 import '../contacts/records.css'
 import '../companies/companies.css'
 
-const stateLabels: Record<string, string> = { ABIERTA: 'Abierta', GANADA: 'Ganada', PERDIDA: 'Perdida' }
-const money = (value: number | string) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(Number(value))
 const dateTime = (value: string | null | undefined) => value ? new Date(value).toLocaleDateString('es-AR') : '-'
 const inactive = (name: string, active: boolean | null | undefined) => active === false ? `${name} (inactivo)` : name
 
@@ -50,6 +48,33 @@ function OpportunityDetails({ opportunity }: { opportunity: Oportunidad }) {
   </article>
 }
 
+const historyDate = (value: string) => new Date(value).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })
+
+/** Historial de etapas de solo lectura, más antiguo primero. */
+function StageHistory({ idOportunidad }: { idOportunidad: number }) {
+  const [page, setPage] = useState(0)
+  const [pageSize, setPageSize] = useState(10)
+  const history = useQuery({ queryKey: opportunityQueryKeys.history(idOportunidad, page + 1, pageSize), queryFn: () => getOpportunityHistory(idOportunidad, page + 1, pageSize) })
+  return <section className="company-detail-section" aria-labelledby="opportunity-history-heading">
+    <Typography component="h2" id="opportunity-history-heading" className="company-section-heading">Historial de etapas</Typography>
+    {history.isPending ? <Skeleton height={80} aria-label="Cargando historial de etapas" role="status" /> : history.isError
+      ? <Alert severity="warning" action={<Button onClick={() => void history.refetch()}>Reintentar</Button>}>No pudimos cargar el historial de etapas.</Alert>
+      : history.data.items.length === 0 ? <Typography color="text.secondary">Sin movimientos registrados.</Typography> : <>
+        <TableContainer><Table size="small" aria-label="Historial de etapas">
+          <TableHead><TableRow><TableCell>Fecha</TableCell><TableCell>Desde</TableCell><TableCell>Hacia</TableCell><TableCell>Autor</TableCell><TableCell>Observación</TableCell></TableRow></TableHead>
+          <TableBody>{history.data.items.map((entry) => <TableRow key={entry.id}>
+            <TableCell>{historyDate(entry.fechaHora)}</TableCell>
+            <TableCell>{entry.etapaAnteriorNombre ?? 'Alta de la oportunidad'}</TableCell>
+            <TableCell>{entry.etapaNuevaNombre}</TableCell>
+            <TableCell>{entry.usuarioNombre}</TableCell>
+            <TableCell>{displayValue(entry.observacion)}</TableCell>
+          </TableRow>)}</TableBody>
+        </Table></TableContainer>
+        <TablePagination component="div" count={Number(history.data.totalCount)} page={page} rowsPerPage={pageSize} rowsPerPageOptions={[10, 25, 50]} onPageChange={(_, next) => setPage(next)} onRowsPerPageChange={(event) => { setPageSize(Number(event.target.value)); setPage(0) }} labelRowsPerPage="Movimientos por página" labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`} getItemAriaLabel={(type) => ({ first: 'Primera página', last: 'Última página', next: 'Página siguiente', previous: 'Página anterior' })[type]} />
+      </>}
+  </section>
+}
+
 export function OpportunityDetailPage() {
   const { idOportunidad: routeId } = useParams()
   const location = useLocation()
@@ -70,5 +95,6 @@ export function OpportunityDetailPage() {
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
     <header className="company-detail-header"><div><Typography component="h1" className="companies-page-title">{opportunity.tituloVisible}</Typography>{opportunity.titulo && <Typography className="companies-page-description opportunity-subtitle">{clientLabel(opportunity)}</Typography>}</div><div className="company-detail-header-actions"><Chip className="company-status company-status--prospect" label={stateLabels[opportunity.estado] ?? opportunity.estado} size="small" /></div></header>
     <OpportunityDetails opportunity={opportunity} />
+    <StageHistory idOportunidad={opportunity.id as number} />
   </Box>
 }

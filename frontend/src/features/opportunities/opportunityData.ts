@@ -23,3 +23,7 @@ export function orderStagesByPosition(stages: EtapaConOportunidades[]): EtapaCon
     .sort((left, right) => Number(left.stage.orden) - Number(right.stage.orden) || left.index - right.index)
     .map(({ stage }) => stage)
 }
+
+export const stateLabels: Record<string, string> = { ABIERTA: 'Abierta', GANADA: 'Ganada', PERDIDA: 'Perdida' }
+
+export const money = (value: number | string) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(Number(value))

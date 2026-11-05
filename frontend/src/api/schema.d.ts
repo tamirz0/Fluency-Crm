@@ -2936,6 +2936,394 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/oportunidades": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista todas las oportunidades vigentes (lectura compartida), con filtros previos al conteo; creación e ID descendentes. */
+        get: {
+            parameters: {
+                query?: {
+                    q?: string;
+                    idResponsable?: number | string;
+                    idEmpresa?: number | string;
+                    idContacto?: number | string;
+                    idEmbudo?: number | string;
+                    idEtapa?: number | string;
+                    estado?: string;
+                    idOrigen?: number | string;
+                    page?: number | string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PageResponseOfOportunidadResponse"];
+                        "application/json": components["schemas"]["PageResponseOfOportunidadResponse"];
+                        "text/json": components["schemas"]["PageResponseOfOportunidadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Crea una oportunidad con su historial inicial en una sola transacción. Sin etapa usa la primera abierta activa del embudo;
+         *     sin valor copia el precio del servicio; sin responsable usa al actor. El vendedor solo crea a su nombre.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateOportunidadRequest"];
+                    "text/json": components["schemas"]["CreateOportunidadRequest"];
+                    "application/*+json": components["schemas"]["CreateOportunidadRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OportunidadResponse"];
+                        "application/json": components["schemas"]["OportunidadResponse"];
+                        "text/json": components["schemas"]["OportunidadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oportunidades/{id}/historial-etapas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Historial de etapas de una oportunidad vigente, paginado por fecha e ID ascendentes. Solo lectura. */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PageResponseOfHistorialEtapaResponse"];
+                        "application/json": components["schemas"]["PageResponseOfHistorialEtapaResponse"];
+                        "text/json": components["schemas"]["PageResponseOfHistorialEtapaResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/embudos/{id}/funnel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Funnel de un embudo (activo o no): columnas activas, también vacías y finales. El vendedor siempre recibe su propia cartera;
+         *     administrador y responsable comercial ven todas y pueden filtrar por responsable.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    idResponsable?: number | string;
+                };
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FunnelResponse"];
+                        "application/json": components["schemas"]["FunnelResponse"];
+                        "text/json": components["schemas"]["FunnelResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/oportunidades/{id}": {
         parameters: {
             query?: never;
@@ -3025,108 +3413,6 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/oportunidades": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Crea una oportunidad con su historial inicial en una sola transacción. Sin etapa usa la primera abierta activa del embudo;
-         *     sin valor copia el precio del servicio; sin responsable usa al actor. El vendedor solo crea a su nombre.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["CreateOportunidadRequest"];
-                    "text/json": components["schemas"]["CreateOportunidadRequest"];
-                    "application/*+json": components["schemas"]["CreateOportunidadRequest"];
-                };
-            };
-            responses: {
-                /** @description Created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["OportunidadResponse"];
-                        "application/json": components["schemas"]["OportunidadResponse"];
-                        "text/json": components["schemas"]["OportunidadResponse"];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ValidationProblemDetails"];
-                        "application/json": components["schemas"]["ValidationProblemDetails"];
-                        "text/json": components["schemas"]["ValidationProblemDetails"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ProblemDetails"];
-                        "application/json": components["schemas"]["ProblemDetails"];
-                        "text/json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ProblemDetails"];
-                        "application/json": components["schemas"]["ProblemDetails"];
-                        "text/json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ProblemDetails"];
-                        "application/json": components["schemas"]["ProblemDetails"];
-                        "text/json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Conflict */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ProblemDetails"];
-                        "application/json": components["schemas"]["ProblemDetails"];
-                        "text/json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-            };
-        };
         delete?: never;
         options?: never;
         head?: never;
@@ -4722,6 +5008,45 @@ export interface components {
             estado: string;
             activo: boolean;
         };
+        /** @description Columna del funnel: etapa activa con sus oportunidades vigentes. */
+        FunnelEtapa: {
+            /** Format: int32 */
+            id: number | string;
+            nombre: string;
+            /** Format: int32 */
+            orden: number | string;
+            estado: string;
+            oportunidades: components["schemas"]["OportunidadResponse"][];
+        };
+        /** @description Embudo con sus columnas activas; puede ser un embudo inactivo, que solo se consulta. */
+        FunnelResponse: {
+            /** Format: int32 */
+            idEmbudo: number | string;
+            nombre: string;
+            activo: boolean;
+            /** Format: int32 */
+            idServicio: number | string;
+            servicioNombre: string;
+            servicioActivo: boolean;
+            etapas: components["schemas"]["FunnelEtapa"][];
+        };
+        /** @description Entrada inmutable del historial de etapas; la etapa anterior es null en el alta. */
+        HistorialEtapaResponse: {
+            /** Format: int32 */
+            id: number | string;
+            /** Format: int32 */
+            idEtapaAnterior: null | number | string;
+            etapaAnteriorNombre: null | string;
+            /** Format: int32 */
+            idNuevaEtapa: number | string;
+            etapaNuevaNombre: string;
+            /** Format: date-time */
+            fechaHora: string;
+            /** Format: int32 */
+            idUsuario: number | string;
+            usuarioNombre: string;
+            observacion: null | string;
+        };
         /** @description Credenciales de acceso; no admite campos de identidad o permisos elegidos por el cliente. */
         LoginRequest: {
             username: string;
@@ -4818,6 +5143,26 @@ export interface components {
         /** @description Página de resultados, contados después de aplicar los filtros. */
         PageResponseOfEmpresaResponse: {
             items: components["schemas"]["EmpresaResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+        };
+        /** @description Página de resultados, contados después de aplicar los filtros. */
+        PageResponseOfHistorialEtapaResponse: {
+            items: components["schemas"]["HistorialEtapaResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+        };
+        /** @description Página de resultados, contados después de aplicar los filtros. */
+        PageResponseOfOportunidadResponse: {
+            items: components["schemas"]["OportunidadResponse"][];
             /** Format: int32 */
             page: number | string;
             /** Format: int32 */

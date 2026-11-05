@@ -1,68 +1,84 @@
 import { Refresh } from '@mui/icons-material'
-import { Box, Button, Chip, Link, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
-import { useMemo, useState } from 'react'
+import { Alert, Box, Button, Chip, Link, MenuItem, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
-import { getOpportunitiesByStage, opportunityQueryKeys, type OportunidadResumen } from '../../api/client'
-import { displayValue, formatCommercialDate, opportunityContactName } from '../shared/display'
-import { flattenOpportunitiesByStage, stageToneClass } from './opportunityData'
-import { ListSearch, NoSearchResults } from '../shared/ListSearch'
-import { matchesSearch } from '../shared/searchText'
+import { getCatalogOptions, listFunnels, listOpportunities, opportunityQueryKeys, type Oportunidad, type OportunidadQuery } from '../../api/client'
+import { CompanyResponsibleSelect } from '../companies/CompanyResponsibleSelect'
+import { displayValue, formatCommercialDate } from '../shared/display'
+import { money, stateLabels } from './opportunityData'
 import '../contacts/records.css'
 import '../companies/companies.css'
 
-function OpportunityCompany({ opportunity }: { opportunity: OportunidadResumen }) {
-  if (!opportunity.idEmpresa) return <>-</>
-  return <Link component={RouterLink} to={`/empresas/${opportunity.idEmpresa}`} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(opportunity.empresaRazonSocial)}</Link>
-}
+const columns = ['Título', 'Embudo', 'Etapa', 'Empresa', 'Contacto', 'Responsable', 'Valor', 'Cierre estimado']
 
-function OpportunityContact({ opportunity }: { opportunity: OportunidadResumen }) {
-  if (!opportunity.idContacto) return <>-</>
-  return <Link component={RouterLink} to={`/contactos/${opportunity.idContacto}`} underline="hover" onClick={(event) => event.stopPropagation()}>{opportunityContactName(opportunity)}</Link>
-}
-
-function responsibleName(opportunity: OportunidadResumen) {
-  return [opportunity.usuarioNombre?.trim(), opportunity.usuarioApellido?.trim()].filter(Boolean).join(' ') || '-'
-}
-
-function OpportunityRows({ opportunities, onOpen }: { opportunities: OportunidadResumen[]; onOpen: (id: string | number) => void }) {
+function Rows({ items, onOpen }: { items: Oportunidad[]; onOpen: (id: number | string) => void }) {
   return <TableContainer className="company-table-wrap record-table-wrap"><Table aria-label="Oportunidades" className="company-table record-table opportunity-table">
     <caption className="visually-hidden">Listado de oportunidades</caption>
-    <TableHead><TableRow><TableCell>Título</TableCell><TableCell>Etapa</TableCell><TableCell>Empresa</TableCell><TableCell>Contacto</TableCell><TableCell>Responsable</TableCell><TableCell>Cierre estimado</TableCell></TableRow></TableHead>
-    <TableBody>{opportunities.map((opportunity) => <TableRow key={opportunity.id} className="company-clickable-row" onClick={() => onOpen(opportunity.id)}>
-      <TableCell className="company-name-cell"><Link component={RouterLink} to={`/oportunidades/${opportunity.id}`} aria-label={`Abrir ficha de ${displayValue(opportunity.titulo)}`} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(opportunity.titulo)}</Link></TableCell>
-      <TableCell>{opportunity.etapaNombre?.trim() ? <Chip className={`company-status company-stage-chip ${stageToneClass(Math.max(0, Number(opportunity.etapaOrden ?? 1) - 1))}`} label={opportunity.etapaNombre} size="small" /> : '-'}</TableCell>
-      <TableCell><OpportunityCompany opportunity={opportunity} /></TableCell>
-      <TableCell><OpportunityContact opportunity={opportunity} /></TableCell>
-      <TableCell>{responsibleName(opportunity)}</TableCell>
-      <TableCell>{formatCommercialDate(opportunity.fechaEstimadaCierre)}</TableCell>
+    <TableHead><TableRow>{columns.map((column) => <TableCell key={column}>{column}</TableCell>)}</TableRow></TableHead>
+    <TableBody>{items.map((item) => <TableRow key={item.id} className="company-clickable-row" onClick={() => onOpen(item.id)}>
+      <TableCell className="company-name-cell"><Link component={RouterLink} to={`/oportunidades/${item.id}`} aria-label={`Abrir ficha de ${item.tituloVisible}`} underline="hover" onClick={(event) => event.stopPropagation()}>{item.tituloVisible}</Link></TableCell>
+      <TableCell>{item.embudoNombre}{item.embudoActivo ? '' : ' (inactivo)'}</TableCell>
+      <TableCell><Chip className="company-status company-stage-chip" label={`${item.etapaNombre} · ${stateLabels[item.estado] ?? item.estado}`} size="small" /></TableCell>
+      <TableCell>{item.idEmpresa ? <Link component={RouterLink} to={`/empresas/${item.idEmpresa}`} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(item.empresaRazonSocial)}</Link> : '-'}</TableCell>
+      <TableCell>{item.idContacto ? <Link component={RouterLink} to={`/contactos/${item.idContacto}`} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(item.contactoNombre)}</Link> : '-'}</TableCell>
+      <TableCell>{item.responsableNombre}{item.responsableActivo ? '' : ' (inactivo)'}</TableCell>
+      <TableCell>{money(item.valor)}</TableCell>
+      <TableCell>{formatCommercialDate(item.fechaEstimadaCierre)}</TableCell>
     </TableRow>)}</TableBody>
   </Table></TableContainer>
 }
 
 function OpportunityListSkeleton() {
   return <div role="status" aria-label="Cargando oportunidades"><TableContainer className="company-table-wrap record-table-wrap"><Table aria-hidden="true" className="company-table record-table opportunity-table">
-    <TableHead><TableRow>{['Título', 'Etapa', 'Empresa', 'Contacto', 'Responsable', 'Cierre estimado'].map((label) => <TableCell key={label}>{label}</TableCell>)}</TableRow></TableHead>
-    <TableBody>{[0, 1, 2, 3].map((row) => <TableRow key={row}>{[0, 1, 2, 3, 4, 5].map((cell) => <TableCell key={cell}><Skeleton width={cell === 0 ? '85%' : '70%'} /></TableCell>)}</TableRow>)}</TableBody>
+    <TableHead><TableRow>{columns.map((label) => <TableCell key={label}>{label}</TableCell>)}</TableRow></TableHead>
+    <TableBody>{[0, 1, 2, 3].map((row) => <TableRow key={row}>{columns.map((label, cell) => <TableCell key={label}><Skeleton width={cell === 0 ? '85%' : '70%'} /></TableCell>)}</TableRow>)}</TableBody>
   </Table></TableContainer></div>
 }
 
+/** Listado compartido: todas las oportunidades vigentes, con filtros y paginación del servidor. */
 export function OpportunitiesPage() {
   const navigate = useNavigate()
-  const openOpportunity = (id: string | number) => navigate(`/oportunidades/${id}`)
-  const query = useQuery({ queryKey: opportunityQueryKeys.pipeline, queryFn: getOpportunitiesByStage })
-  const opportunities = useMemo(() => query.data ? flattenOpportunitiesByStage(query.data) : [], [query.data])
   const [search, setSearch] = useState('')
-  const filteredOpportunities = useMemo(() => opportunities.filter((opportunity) => matchesSearch([
-    opportunity.titulo, displayValue(opportunity.etapaNombre),
-    opportunity.empresaRazonSocial, opportunityContactName(opportunity),
-    responsibleName(opportunity), formatCommercialDate(opportunity.fechaEstimadaCierre),
-  ], search)), [opportunities, search])
+  const [q, setQ] = useState('')
+  const [state, setState] = useState('')
+  const [origin, setOrigin] = useState('')
+  const [funnel, setFunnel] = useState('')
+  const [responsible, setResponsible] = useState('')
+  const [page, setPage] = useState(0)
+  const [pageSize, setPageSize] = useState(25)
+  const filters: OportunidadQuery = {
+    ...(q ? { q } : {}), ...(state ? { estado: state as OportunidadQuery['estado'] } : {}), ...(origin ? { idOrigen: Number(origin) } : {}),
+    ...(funnel ? { idEmbudo: Number(funnel) } : {}), ...(responsible ? { idResponsable: Number(responsible) } : {}), page: page + 1, pageSize,
+  }
+  const { data, error, isPending, refetch } = useQuery({ queryKey: opportunityQueryKeys.list(filters), queryFn: () => listOpportunities(filters) })
+  const funnels = useQuery({ queryKey: ['embudos', 'opciones'], queryFn: () => listFunnels({ pageSize: 100 }) })
+  const origins = useQuery({ queryKey: ['catalogos', 'origenes-comerciales'], queryFn: () => getCatalogOptions('origenes-comerciales') })
+  const filtered = Boolean(q || state || origin || funnel || responsible)
+  const clear = () => { setSearch(''); setQ(''); setState(''); setOrigin(''); setFunnel(''); setResponsible(''); setPage(0) }
   return <Box className="companies-page records-page">
-    <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Oportunidades</Typography><Typography className="companies-page-description">Seguimiento de las conversaciones comerciales en curso.</Typography></div><Button component={RouterLink} to="/oportunidades/nueva" variant="contained">Nueva oportunidad</Button></header>
-    {query.isPending ? <OpportunityListSkeleton /> : query.isError ? <section className="company-feedback" aria-labelledby="opportunities-error-title"><Typography component="h2" id="opportunities-error-title" className="company-feedback-title">No pudimos cargar las oportunidades</Typography><Typography color="text.secondary">Revisá la conexión e intentá de nuevo.</Typography><Button onClick={() => void query.refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button></section> : opportunities.length === 0 ? <section className="company-feedback" aria-labelledby="opportunities-empty-title"><Typography component="h2" id="opportunities-empty-title" className="company-feedback-title">Todavía no hay oportunidades</Typography><Typography color="text.secondary">Las oportunidades registradas van a aparecer en este listado.</Typography></section> : <>
-      <ListSearch label="oportunidades" query={search} onQueryChange={setSearch} resultCount={filteredOpportunities.length} totalCount={opportunities.length} />
-      {filteredOpportunities.length === 0 ? <NoSearchResults query={search} onClear={() => setSearch('')} /> : <OpportunityRows opportunities={filteredOpportunities} onOpen={openOpportunity} />}
+    <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Oportunidades</Typography><Typography className="companies-page-description">Negociaciones compartidas por todo el equipo comercial.</Typography></div><Button component={RouterLink} to="/oportunidades/nueva" variant="contained">Nueva oportunidad</Button></header>
+    <Box component="form" onSubmit={(event) => { event.preventDefault(); setQ(search.trim()); setPage(0) }} sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3, alignItems: 'start' }}>
+      <TextField label="Buscar oportunidades" type="search" value={search} onChange={(event) => setSearch(event.target.value)} helperText="Título, empresa o contacto" />
+      <TextField select label="Estado" value={state} onChange={(event) => { setState(event.target.value); setPage(0) }} sx={{ minWidth: 160 }}>
+        <MenuItem value="">Todos</MenuItem>{Object.entries(stateLabels).map(([code, label]) => <MenuItem key={code} value={code}>{label}</MenuItem>)}
+      </TextField>
+      <TextField select label="Embudo" value={funnel} onChange={(event) => { setFunnel(event.target.value); setPage(0) }} sx={{ minWidth: 180 }}>
+        <MenuItem value="">Todos</MenuItem>{funnels.data?.items.map((item) => <MenuItem key={item.id} value={String(item.id)}>{item.nombre}{item.activo ? '' : ' (inactivo)'}</MenuItem>)}
+      </TextField>
+      <TextField select label="Origen" value={origin} onChange={(event) => { setOrigin(event.target.value); setPage(0) }} sx={{ minWidth: 160 }}>
+        <MenuItem value="">Todos</MenuItem>{origins.data?.map((item) => <MenuItem key={item.id} value={String(item.id)}>{item.descripcion}</MenuItem>)}
+      </TextField>
+      <Box sx={{ minWidth: 240, flex: '1 1 240px' }}><CompanyResponsibleSelect value={responsible} onChange={(id) => { setResponsible(id); setPage(0) }} helperText="Sin selección: todos los responsables" /></Box>
+      <Button type="submit" variant="outlined">Buscar</Button><Button type="button" onClick={clear}>Limpiar filtros</Button>
+    </Box>
+    {(funnels.isError || origins.isError) && <Alert severity="warning" action={<Button onClick={() => { void funnels.refetch(); void origins.refetch() }}>Reintentar</Button>}>No pudimos cargar los filtros de embudos u orígenes.</Alert>}
+    {isPending ? <OpportunityListSkeleton /> : error ? <section className="company-feedback" aria-labelledby="opportunities-error-title"><Typography component="h2" id="opportunities-error-title" className="company-feedback-title">No pudimos cargar las oportunidades</Typography><Typography color="text.secondary">{error.message}</Typography><Button onClick={() => void refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button></section> : <>
+      <Typography role="status" sx={{ mb: 2 }}>{data.totalCount} {Number(data.totalCount) === 1 ? 'oportunidad' : 'oportunidades'}</Typography>
+      {data.items.length === 0
+        ? <section className="company-feedback" aria-labelledby="opportunities-empty-title"><Typography component="h2" id="opportunities-empty-title" className="company-feedback-title">{filtered || page ? 'No hay oportunidades para estos filtros o página' : 'Todavía no hay oportunidades'}</Typography><Typography color="text.secondary">Las oportunidades registradas van a aparecer en este listado.</Typography></section>
+        : <Rows items={data.items} onOpen={(id) => navigate(`/oportunidades/${id}`)} />}
+      <TablePagination component="div" count={Number(data.totalCount)} page={page} rowsPerPage={pageSize} rowsPerPageOptions={[10, 25, 50, 100]} onPageChange={(_, next) => setPage(next)} onRowsPerPageChange={(event) => { setPageSize(Number(event.target.value)); setPage(0) }} labelRowsPerPage="Oportunidades por página" labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`} getItemAriaLabel={(type) => ({ first: 'Primera página', last: 'Última página', next: 'Página siguiente', previous: 'Página anterior' })[type]} />
     </>}
   </Box>
 }
