@@ -8,7 +8,6 @@ import { createQueryClient } from '../../app/queryClient'
 import App from '../../test/LegacyApp'
 import { AuthProvider } from '../../test/LegacyAuthProvider'
 import { SESSION_KEY } from '../../auth/session'
-import { flattenOpportunitiesByStage, orderStagesByPosition } from '../opportunities/opportunityData'
 import { formatCommercialDate } from '../shared/display'
 
 const user = { id: 7, nombre: 'María', apellido: 'Gómez', correo: 'maria@example.com', username: 'maria', activo: true }
@@ -18,21 +17,6 @@ const contact = {
   idResponsable: 7, responsableNombre: 'María Gómez', responsableActivo: false, fechaCreacion: '2026-10-31T12:00:00Z', activo: true,
 }
 const blankContact = { ...contact, id: 15, nombre: 'Ana', apellido: 'Álvarez', documento: null, cargo: null, correo: 'ana@example.com', telefono: null, estadoDescripcion: 'Inactivo', idOrigen: null, origenDescripcion: null, origenActivo: null, idEmpresa: null, empresaRazonSocial: null, observaciones: null }
-const opportunity = {
-  id: 91, titulo: 'Renovación anual', idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas', idContacto: 14, contactoNombre: 'Lucía', contactoApellido: 'Pérez',
-  idUsuario: 7, usuarioNombre: 'María', usuarioApellido: 'Gómez', idServicio: 2, servicioNombre: 'Capacitación', idEtapa: 3, etapaNombre: 'Propuesta',
-  fechaEstimadaCierre: '2026-12-31', fechaCierre: null, idOrigen: 2, origenDescripcion: 'Referido', idEstado: 1, estadoDescripcion: 'Activa', observaciones: 'Seguimiento pendiente',
-}
-const summary = {
-  id: 91, titulo: 'Renovación anual', idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas', idContacto: 14, contactoNombre: 'Lucía', contactoApellido: 'Pérez',
-  idUsuario: 7, usuarioNombre: 'María', usuarioApellido: 'Gómez', fechaEstimadaCierre: '2026-12-31',
-}
-const stages = [
-  { idEtapa: 3, nombre: 'Propuesta', orden: 3, oportunidades: [summary] },
-  { idEtapa: 1, nombre: 'Consulta recibida', orden: 1, oportunidades: [] },
-  { idEtapa: 2, nombre: 'Nivelación', orden: 2, oportunidades: [] },
-]
-
 function renderApp(path = '/contactos') {
   window.history.pushState({}, '', path)
   const queryClient = createQueryClient()
@@ -113,15 +97,6 @@ describe('consultas comerciales', () => {
     vi.mocked(fetch).mockResolvedValueOnce(new Response('No existe el contacto', { status: 404, headers: { 'Content-Type': 'text/plain' } }))
     renderAuthenticated('/contactos/999')
     expect(await screen.findByRole('heading', { name: 'No encontramos ese contacto' })).toBeTruthy()
-  })
-
-  it('aplana oportunidades conservando el orden, las etapas y el orden interno', () => {
-    const flat = flattenOpportunitiesByStage([
-      { ...stages[0], oportunidades: [summary, { ...summary, id: 92, titulo: 'Segunda' }] },
-      { ...stages[1], oportunidades: [{ ...summary, id: 93, titulo: 'Tercera' }] },
-    ])
-    expect(flat.map((item) => `${item.id}:${item.etapaNombre}`)).toEqual(['91:Propuesta', '92:Propuesta', '93:Consulta recibida'])
-    expect(orderStagesByPosition(stages).map((stage) => stage.nombre)).toEqual(['Consulta recibida', 'Nivelación', 'Propuesta'])
   })
 
   const actions = { editar: false, reasignar: false, mover: false, cerrar: false, reabrir: false, darDeBaja: false, gestionarActividades: false }
@@ -238,104 +213,6 @@ describe('consultas comerciales', () => {
 
     renderAuthenticated('/oportunidades/92')
     expect(await screen.findByRole('heading', { name: 'No encontramos esa oportunidad' })).toBeTruthy()
-  })
-
-  it('mantiene visibles las columnas vacías, ordenadas por catálogo y permite cambiar etapa persistente', async () => {
-    const stagePayload = stages.map((stage) => ({ ...stage, id: stage.idEtapa, descripcion: null }))
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(jsonResponse(stagePayload))
-      .mockResolvedValueOnce(jsonResponse(stagePayload))
-      .mockResolvedValueOnce(jsonResponse({ ...opportunity, idEtapa: 2, etapaNombre: 'Nivelación' }))
-      .mockResolvedValueOnce(jsonResponse([{ ...stages[0], oportunidades: [] }, { ...stages[1], oportunidades: [{ ...summary, id: 91 }] }, { ...stages[2], oportunidades: [] }]))
-    renderAuthenticated('/embudo')
-    const cardTitle = await screen.findByRole('link', { name: 'Renovación anual' })
-    expect(cardTitle.getAttribute('href')).toBe('/oportunidades/91')
-    expect(screen.getByText('Empresa', { selector: 'dt' })).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Acme Idiomas' }).getAttribute('href')).toBe('/empresas/4')
-    expect(screen.getByText('Contacto', { selector: 'dt' })).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Pérez, Lucía' }).getAttribute('href')).toBe('/contactos/14')
-    const cardDetails = cardTitle.closest('article')?.querySelector('.funnel-opportunity-details')
-    expect(cardDetails?.hasAttribute('hidden')).toBe(true)
-    expect(within(cardTitle.closest('article') as HTMLElement).getByText('Cierre estimado', { selector: 'dt' })).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Cambiar etapa' })).toBeNull()
-    const columnHeadings = screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)
-    expect(columnHeadings).toEqual(['Consulta recibida', 'Nivelación', 'Propuesta'])
-    expect(screen.getAllByText('Sin oportunidades')).toHaveLength(4)
-
-    const user = userEvent.setup()
-    const stageToggle = screen.getByRole('button', { name: 'Contraer etapa Propuesta' })
-    stageToggle.focus()
-    await user.keyboard('{Enter}')
-    expect(screen.getByRole('button', { name: 'Expandir etapa Propuesta' }).getAttribute('aria-expanded')).toBe('false')
-    expect(screen.getByText('1 oportunidad')).toBeTruthy()
-    expect(screen.getByRole('heading', { level: 2, name: 'Propuesta' })).toBeTruthy()
-    expect(document.querySelector('.funnel-board')?.getAttribute('style')).toContain('minmax(160px, .58fr)')
-    expect(screen.queryByRole('link', { name: 'Renovación anual' })).toBeNull()
-    await user.keyboard(' ')
-    expect(screen.getByRole('button', { name: 'Contraer etapa Propuesta' }).getAttribute('aria-expanded')).toBe('true')
-
-    const cardToggle = screen.getByRole('button', { name: 'Expandir oportunidad Renovación anual' })
-    cardToggle.focus()
-    await user.keyboard('{Enter}')
-    expect(screen.getByText('Contacto', { selector: 'dt' })).toBeTruthy()
-    expect(screen.getByText('Pérez, Lucía')).toBeTruthy()
-    expect(screen.getByText('Cierre estimado', { selector: 'dt' })).toBeTruthy()
-    expect(screen.getByText('31/12/2026')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Cambiar etapa' })).toBeTruthy()
-
-    await user.click(screen.getByRole('button', { name: 'Cambiar etapa' }))
-    expect(await screen.findByRole('dialog', { name: 'Cambiar etapa' })).toBeTruthy()
-    const selector = screen.getByRole('combobox', { name: 'Nueva etapa' })
-    expect(within(selector).queryByText('Propuesta')).toBeNull()
-    await user.click(selector)
-    await user.click(await screen.findByRole('option', { name: 'Nivelación' }))
-    await user.type(screen.getByRole('textbox', { name: 'Observación' }), '  Reunión realizada  ')
-    await user.click(screen.getByRole('button', { name: 'Guardar cambio' }))
-    expect(await screen.findByText('Etapa actualizada')).toBeTruthy()
-    await waitFor(() => expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual(['Consulta recibida', 'Nivelación', 'Propuesta']))
-    expect(screen.getAllByRole('link', { name: 'Renovación anual' })).toHaveLength(1)
-    expect(fetch).toHaveBeenCalledTimes(4)
-  })
-
-  it('muestra un guion para el contacto vacío en la tarjeta compacta', async () => {
-    const stagePayload = stages.map((stage) => ({ ...stage, id: stage.idEtapa, descripcion: null }))
-    const withoutContact = { ...summary, idContacto: null, contactoNombre: null, contactoApellido: null }
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(jsonResponse([{ ...stages[0], oportunidades: [withoutContact] }, ...stages.slice(1)]))
-      .mockResolvedValueOnce(jsonResponse(stagePayload))
-    renderAuthenticated('/embudo')
-
-    await screen.findByRole('link', { name: 'Renovación anual' })
-    const user = userEvent.setup()
-    expect(screen.queryByRole('button', { name: 'Cambiar etapa' })).toBeNull()
-    expect(screen.getByText('Contacto', { selector: 'dt' })).toBeTruthy()
-    expect(screen.getByText('-', { selector: 'dd' })).toBeTruthy()
-    expect(screen.queryByRole('link', { name: '-' })).toBeNull()
-    await user.click(screen.getByRole('button', { name: 'Expandir oportunidad Renovación anual' }))
-    expect(screen.getByRole('button', { name: 'Cambiar etapa' })).toBeTruthy()
-  })
-
-  it('conserva el diálogo y la etapa original si el cambio falla; el catálogo permite reintentar', async () => {
-    const stagePayload = stages.map((stage) => ({ ...stage, id: stage.idEtapa, descripcion: null }))
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(jsonResponse(stagePayload))
-      .mockResolvedValueOnce(jsonResponse(stagePayload))
-      .mockResolvedValueOnce(jsonResponse({ detail: 'No se puede cambiar esta oportunidad.' }, 400))
-    renderAuthenticated('/embudo')
-    const user = userEvent.setup()
-    await screen.findByRole('button', { name: 'Expandir oportunidad Renovación anual' })
-    await user.click(screen.getByRole('button', { name: 'Expandir oportunidad Renovación anual' }))
-    await user.click(screen.getByRole('button', { name: 'Cambiar etapa' }))
-    const selector = screen.getByRole('combobox', { name: 'Nueva etapa' })
-    await userEvent.setup().click(selector)
-    await userEvent.setup().click(await screen.findByRole('option', { name: 'Nivelación' }))
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Guardar cambio' }))
-    expect((await screen.findByRole('alert')).textContent).toContain('No se puede cambiar esta oportunidad.')
-    expect(screen.getByRole('dialog')).toBeTruthy()
-    expect(screen.getAllByText('Renovación anual')).toHaveLength(2)
-
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Cancelar' }))
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })
 
   it('protege las nuevas rutas y no consulta contactos con un id inválido', async () => {

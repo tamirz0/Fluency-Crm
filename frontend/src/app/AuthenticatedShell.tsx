@@ -24,7 +24,7 @@ const navigationItemSx = {
   '&.Mui-focusVisible': { outline: '2px solid #8adbd3', outlineOffset: 2 },
 } as const
 
-function NavigationContent({ onNavigate, commercial }: { onNavigate?: () => void; commercial: boolean }) {
+function NavigationContent({ onNavigate }: { onNavigate?: () => void }) {
   const { logout, user } = useAuth()
   const [closing, setClosing] = useState(false)
   const fullName = `${user?.nombre ?? ''} ${user?.apellido ?? ''}`.trim()
@@ -36,7 +36,7 @@ function NavigationContent({ onNavigate, commercial }: { onNavigate?: () => void
       <ListItemButton component={NavLink} to="/empresas" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Business fontSize="small" /></ListItemIcon><ListItemText primary="Empresas" /></ListItemButton>
       <ListItemButton component={NavLink} to="/contactos" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Contacts fontSize="small" /></ListItemIcon><ListItemText primary="Contactos" /></ListItemButton>
       <ListItemButton component={NavLink} to="/oportunidades" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Timeline fontSize="small" /></ListItemIcon><ListItemText primary="Oportunidades" /></ListItemButton>
-      {commercial && <ListItemButton component={NavLink} to="/embudo" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><ViewKanban fontSize="small" /></ListItemIcon><ListItemText primary="Embudo" /></ListItemButton>}
+      <ListItemButton component={NavLink} to="/embudo" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><ViewKanban fontSize="small" /></ListItemIcon><ListItemText primary="Embudo" /></ListItemButton>
       {user?.permisos?.includes('AdministrarUsuarios') && <ListItemButton component={NavLink} to="/configuracion/usuarios" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><ManageAccounts fontSize="small" /></ListItemIcon><ListItemText primary="Usuarios" /></ListItemButton>}
       {user?.roles?.includes('ADMINISTRADOR') && user.permisos?.includes('AdministrarConfiguracion') && <ListItemButton component={NavLink} to="/configuracion/catalogos" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Settings fontSize="small" /></ListItemIcon><ListItemText primary="Catálogos" /></ListItemButton>}
       {user?.roles?.includes('ADMINISTRADOR') && user.permisos?.includes('AdministrarConfiguracion') && <ListItemButton component={NavLink} to="/configuracion/servicios" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Settings fontSize="small" /></ListItemIcon><ListItemText primary="Servicios" /></ListItemButton>}
@@ -45,13 +45,13 @@ function NavigationContent({ onNavigate, commercial }: { onNavigate?: () => void
     <Box sx={{ mt: 'auto', p: 2.25 }}><Divider sx={{ mb: 2 }} /><Typography sx={{ mb: 1.25, color: 'text.secondary', fontSize: '.95rem' }}>{fullName}</Typography><Button color="inherit" fullWidth startIcon={<Logout />} disabled={closing} onClick={async () => { if (closing) return; setClosing(true); try { await logout() } finally { setClosing(false) } }} sx={{ justifyContent: 'flex-start', color: 'text.primary' }}>Cerrar sesión</Button></Box>
   </Box>
 }
-export function AuthenticatedShell({ commercial = false }: { commercial?: boolean }) {
+export function AuthenticatedShell() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const closeMobileDrawer = () => setMobileOpen(false)
   return <Box sx={{ display: 'flex', minHeight: '100svh', bgcolor: 'background.default' }}>
     <Box component="nav" aria-label="Secciones de Fluency CRM">
-      <Drawer variant="permanent" sx={{ display: { xs: 'none', md: 'block' }, '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box', border: 0, bgcolor: '#101C28' } }}><NavigationContent commercial={commercial} /></Drawer>
-      <Drawer open={mobileOpen} onClose={closeMobileDrawer} variant="temporary" sx={{ display: { xs: 'block', md: 'none' }, '& .MuiDrawer-paper': { width: drawerWidth, bgcolor: '#101C28' } }}><NavigationContent commercial={commercial} onNavigate={closeMobileDrawer} /></Drawer>
+      <Drawer variant="permanent" sx={{ display: { xs: 'none', md: 'block' }, '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box', border: 0, bgcolor: '#101C28' } }}><NavigationContent /></Drawer>
+      <Drawer open={mobileOpen} onClose={closeMobileDrawer} variant="temporary" sx={{ display: { xs: 'block', md: 'none' }, '& .MuiDrawer-paper': { width: drawerWidth, bgcolor: '#101C28' } }}><NavigationContent onNavigate={closeMobileDrawer} /></Drawer>
     </Box>
     <Box component="main" sx={{ width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` }, ml: { md: `${drawerWidth}px` } }}><Toolbar sx={{ display: { xs: 'flex', md: 'none' }, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'background.default' }}><IconButton aria-label="Abrir navegación" edge="start" onClick={() => setMobileOpen(true)}><Menu /></IconButton><Typography sx={{ ml: 1, color: 'text.primary', fontWeight: 700 }}>Fluency CRM</Typography></Toolbar><Outlet /></Box>
   </Box>

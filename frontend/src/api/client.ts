@@ -11,11 +11,7 @@ export type LoginCredentials = components['schemas']['LoginRequest']
 export type SessionResponse = components['schemas']['SesionResponse']
 export type Empresa = components['schemas']['EmpresaResponse']
 export type Contacto = components['schemas']['ContactoResponse']
-export type OportunidadDetalle = LegacyComponents['schemas']['OportunidadResponse']
 export type EtapaConOportunidades = LegacyComponents['schemas']['EtapaConOportunidadesResponse']
-export type OportunidadResumenResponse = LegacyComponents['schemas']['OportunidadResumenResponse']
-export type EtapaComercial = LegacyComponents['schemas']['EtapaComercialResponse']
-export type UpdateEtapaOportunidadRequest = LegacyComponents['schemas']['UpdateEtapaOportunidadRequest']
 export type CreateEmpresaRequest = components['schemas']['EmpresaRequest']
 export type PatchEmpresaRequest = components['schemas']['EmpresaRequest']
 export type ContactoRequest = components['schemas']['ContactoRequest']
@@ -59,12 +55,6 @@ api.use({
   onError() { return new ApiRequestError('No pudimos conectar con la API.') },
 })
 
-export type OportunidadResumen = OportunidadResumenResponse & {
-  idEtapa: EtapaConOportunidades['idEtapa']
-  etapaNombre: EtapaConOportunidades['nombre']
-  etapaOrden: EtapaConOportunidades['orden']
-}
-
 export const empresaQueryKeys = {
   all: ['empresas'] as const,
   detail: (idEmpresa: number) => ['empresas', idEmpresa] as const,
@@ -79,11 +69,11 @@ export const opportunityQueryKeys = {
   pipeline: ['oportunidades', 'por-etapa'] as const,
   detail: (idOportunidad: number) => ['oportunidades', idOportunidad] as const,
   list: (query: OportunidadQuery) => ['oportunidades', 'lista', query] as const,
+  funnel: (idEmbudo: number, idResponsable?: number) => ['oportunidades', 'funnel', idEmbudo, idResponsable ?? null] as const,
   history: (idOportunidad: number, page: number, pageSize: number) => ['oportunidades', idOportunidad, 'historial', page, pageSize] as const,
 }
 
 export const catalogQueryKeys = {
-  commercialStages: ['catalogos', 'etapas-comerciales'] as const,
   customerStates: ['catalogos', 'estados-cliente'] as const,
   commercialOrigins: ['catalogos', 'origenes-comerciales'] as const,
   services: ['catalogos', 'servicios'] as const,
@@ -182,17 +172,6 @@ export async function getOpportunitiesByStage(): Promise<EtapaConOportunidades[]
   }
 }
 
-export async function getCommercialStages(): Promise<EtapaComercial[]> {
-  try {
-    const { data, error, response } = await legacyApi.GET('/EtapasComerciales/ListadoEtapasComerciales')
-    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
-    return data
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error
-    throw new ApiRequestError('No pudimos conectar con la API.')
-  }
-}
-
 async function getResponseData<T>(request: () => Promise<{ data?: T; error?: unknown; response: Response }>): Promise<T> {
   try {
     const { data, error, response } = await request()
@@ -250,25 +229,12 @@ export type HistorialEtapa = components['schemas']['HistorialEtapaResponse']
 export function listOpportunities(query: OportunidadQuery = {}) {
   return getResponseData(() => api.GET('/oportunidades', { params: { query } }))
 }
+export type Funnel = components['schemas']['FunnelResponse']
+export function getFunnel(id: number, idResponsable?: number) {
+  return getResponseData(() => api.GET('/embudos/{id}/funnel', { params: { path: { id }, query: { idResponsable } } }))
+}
 export function getOpportunityHistory(id: number, page = 1, pageSize = 25) {
   return getResponseData(() => api.GET('/oportunidades/{id}/historial-etapas', { params: { path: { id }, query: { page, pageSize } } }))
-}
-
-export async function updateOpportunityStage(
-  idOportunidad: number,
-  body: UpdateEtapaOportunidadRequest & { idUsuario: number | string },
-): Promise<OportunidadDetalle> {
-  try {
-    const { data, error, response } = await legacyApi.POST('/Oportunidades/UpdateEtapaOportunidad/{idOportunidad}', {
-      params: { path: { idOportunidad } },
-      body,
-    })
-    if (!response.ok || !data) throw new ApiRequestError(getApiErrorMessage(error, response.status), response.status)
-    return data
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error
-    throw new ApiRequestError('No pudimos conectar con la API.')
-  }
 }
 
 export type CreateUsuarioRequest = components['schemas']['CreateUsuarioRequest']

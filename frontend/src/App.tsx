@@ -15,6 +15,7 @@ import { ContactsPage } from './features/contacts/ContactsPage'
 import { ContactDetailPage } from './features/contacts/ContactDetailPage'
 import { NewContactPage, EditContactPage } from './features/contacts/ContactFormPage'
 import { OpportunitiesPage } from './features/opportunities/OpportunitiesPage'
+import { FunnelPage } from './features/funnel/FunnelPage'
 import { NewOpportunityPage } from './features/opportunities/OpportunityFormPage'
 import { OpportunityDetailPage } from './features/opportunities/OpportunityDetailPage'
 function AccessHome() {
@@ -37,6 +38,7 @@ function App() {
       <Route path="/oportunidades" element={<OpportunitiesPage />} />
       <Route path="/oportunidades/nueva" element={<NewOpportunityPage />} />
       <Route path="/oportunidades/:idOportunidad" element={<OpportunityDetailPage />} />
+      <Route path="/embudo" element={<FunnelPage />} />
       <Route path="/configuracion/usuarios" element={<UsersPage />} />
       <Route path="/configuracion/catalogos" element={<CatalogsPage />} />
       <Route path="/configuracion/servicios" element={<ServicesPage />} />
