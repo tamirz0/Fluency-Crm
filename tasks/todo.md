@@ -35,7 +35,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T25 — Adaptar contactos conservando relaciones históricas](#t25)
 - [x] [T26 — Actualizar pantallas de contactos](#t26)
 - [x] [T27 — Completar bajas definitivas de clientes](#t27)
-- [ ] [T28 — Adaptar el modelo e historial de oportunidades](#t28)
+- [x] [T28 — Adaptar el modelo e historial de oportunidades](#t28)
 - [ ] [T29 — Crear oportunidades con defaults e historial atómico](#t29)
 - [ ] [T30 — Simplificar el alta de oportunidad en UI](#t30)
 - [ ] [T31 — Consultar oportunidades e historial de etapas](#t31)
@@ -745,13 +745,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Modelo objetivo tiene valor total, campos académicos opcionales, fechas, responsable, motivo y activo; deriva embudo/servicio/estado desde etapa.
-- [ ] Historial inmutable admite etapa anterior null para alta, exige autor/nueva etapa/instante; no audita cada edición.
-- [ ] Retirar dependencias de líneas/log/FKs derivadas en los consumidores al hacer el corte de este módulo; dividir limpieza de navegaciones en pasos si supera el tamaño previsto, sin dejar EF apuntando a tablas antiguas.
+- [x] Modelo objetivo tiene valor total, campos académicos opcionales, fechas, responsable, motivo y activo; deriva embudo/servicio/estado desde etapa.
+- [x] Historial inmutable admite etapa anterior null para alta, exige autor/nueva etapa/instante; no audita cada edición.
+- [x] Retirar dependencias de líneas/log/FKs derivadas en los consumidores al hacer el corte de este módulo; dividir limpieza de navegaciones en pasos si supera el tamaño previsto, sin dejar EF apuntando a tablas antiguas.
 
 **Verificación:** B + API(OportunidadesModelTests) + D; lectura de estado derivado, índices/FKs y decimales/fechas en PostgreSQL.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t28.md](verificaciones/verificacion-t28.md). Build sin errores ni advertencias, `OportunidadesModelTests` 2/2 y backend completo 140/140 (7 min 13 s). Commit `0badcd9` en `segunda-entrega-oportunidades-modelo`; sin merge ni push. Pendiente para T29: empresa/contacto activos y escritura Serializable en el alta.
 
 <a id="t29"></a>
 
