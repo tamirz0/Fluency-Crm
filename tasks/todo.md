@@ -51,7 +51,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T38 — Reabrir una oportunidad conservando su cierre](#t38)
 - [x] [T39 — Dar de baja oportunidades sin cascadas](#t39)
 - [x] [T40 — Mapear actividades realizadas](#t40)
-- [ ] [T41 — Registrar y consultar actividades por API](#t41)
+- [x] [T41 — Registrar y consultar actividades por API](#t41)
 - [ ] [T42 — Registrar actividades desde fichas](#t42)
 - [ ] [T43 — Editar y dar de baja actividades con permisos de origen y destino](#t43)
 - [ ] [T44 — Proyectar el historial comercial combinado](#t44)
@@ -1089,13 +1089,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] POST rechaza autor/fechaRegistro del cliente; conserva fecha del hecho y exige contexto válido. Desde oportunidad respeta asociaciones históricas.
-- [ ] Sin oportunidad todos gestionan; con oportunidad solo dueño vigente/superiores, incluso al invocar desde cliente; permitir actividad posterior al cierre sin reabrir.
-- [ ] GET de vigentes aplica filtros/paginación/fechas y etiquetas; no permite elegir nuevas referencias dadas de baja ni filtra como secreto una actividad ajena visible.
+- [x] POST rechaza autor/fechaRegistro del cliente; conserva fecha del hecho y exige contexto válido. Desde oportunidad respeta asociaciones históricas.
+- [x] Sin oportunidad todos gestionan; con oportunidad solo dueño vigente/superiores, incluso al invocar desde cliente; permitir actividad posterior al cierre sin reabrir.
+- [x] GET de vigentes aplica filtros/paginación/fechas y etiquetas; no permite elegir nuevas referencias dadas de baja ni filtra como secreto una actividad ajena visible.
 
 **Verificación:** B + API(ActividadesTests) + D; llamada de ayer registrada hoy, oportunidad propia cerrada y tentativa ajena denegada.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t41.md](verificaciones/verificacion-t41.md). `ActividadesTests` 3/3 y `HttpContractTests` 19/19; build sin errores ni advertencias. Sin merge ni push.
 
 <a id="t42"></a>
 
