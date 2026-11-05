@@ -45,7 +45,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [ ] [T32 — Mostrar tabla y ficha de oportunidades compartidas](#t32)
 - [ ] [T33 — Mostrar funnel según el rol](#t33)
 - [x] [T34 — Editar datos de una oportunidad abierta](#t34)
-- [ ] [T35 — Reasignar una oportunidad y retirar permiso anterior](#t35)
+- [x] [T35 — Reasignar una oportunidad y retirar permiso anterior](#t35)
 - [ ] [T36 — Mover entre etapas abiertas con historial](#t36)
 - [ ] [T37 — Cerrar oportunidades como ganadas o perdidas](#t37)
 - [ ] [T38 — Reabrir una oportunidad conservando su cierre](#t38)
@@ -953,13 +953,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Dueño vendedor reasigna una abierta a vendedor activo; superiores pueden elegir usuario activo; una cerrada requiere reapertura.
-- [ ] Releer propiedad al escribir y devolver permisos recalculados; anterior dueño conserva lectura y recibe 403 en siguiente mutación.
-- [ ] UI actualiza ficha/tabla/funnel/caché sin crear una transición ficticia ni cambiar responsables de clientes.
+- [x] Dueño vendedor reasigna una abierta a vendedor activo; superiores pueden elegir usuario activo; una cerrada requiere reapertura.
+- [x] Releer propiedad al escribir y devolver permisos recalculados; anterior dueño conserva lectura y recibe 403 en siguiente mutación.
+- [x] UI actualiza ficha/tabla/funnel/caché sin crear una transición ficticia ni cambiar responsables de clientes.
 
 **Verificación:** B + F + API(ReasignacionTests) + D; dos sesiones locales y carrera representativa reasignación versus edición.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t35.md](verificaciones/verificacion-t35.md). `ReasignacionTests` 2/2 y `HttpContractTests` 19/19 (21/21); frontend 119/119, build correcto, lint solo con la advertencia previa. Sin merge ni push.
 
 <a id="t36"></a>
 
