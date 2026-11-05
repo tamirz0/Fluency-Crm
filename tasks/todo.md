@@ -47,7 +47,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T34 — Editar datos de una oportunidad abierta](#t34)
 - [x] [T35 — Reasignar una oportunidad y retirar permiso anterior](#t35)
 - [x] [T36 — Mover entre etapas abiertas con historial](#t36)
-- [ ] [T37 — Cerrar oportunidades como ganadas o perdidas](#t37)
+- [x] [T37 — Cerrar oportunidades como ganadas o perdidas](#t37)
 - [ ] [T38 — Reabrir una oportunidad conservando su cierre](#t38)
 - [ ] [T39 — Dar de baja oportunidades sin cascadas](#t39)
 - [ ] [T40 — Mapear actividades realizadas](#t40)
@@ -998,13 +998,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Ganar exige fecha/valor y perder fecha/motivo activo; API resuelve final única y guarda transición/historial atómicamente.
-- [ ] Repetir cierre da 409 sin duplicación; /mover y PATCH no eluden campos de cierre; cerrada no admite edición ordinaria.
-- [ ] Formulario de cierre se usa desde ficha/funnel/selector final; respeta permisos, estados pendientes y recarga de datos. Integrar consumidores en subpaso si excede cinco archivos.
+- [x] Ganar exige fecha/valor y perder fecha/motivo activo; API resuelve final única y guarda transición/historial atómicamente.
+- [x] Repetir cierre da 409 sin duplicación; /mover y PATCH no eluden campos de cierre; cerrada no admite edición ordinaria.
+- [x] Formulario de cierre se usa desde ficha/funnel/selector final; respeta permisos, estados pendientes y recarga de datos. Integrar consumidores en subpaso si excede cinco archivos.
 
 **Verificación:** B + F + API(CierreTests) + UI(src/features/opportunities/CloseOpportunityDialog.test.tsx, nuevo) + D; comprobar que valor cero se acepta y pérdida sin motivo se rechaza. Contar el test y el montaje del diálogo al subdividir el incremento.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t37.md](verificaciones/verificacion-t37.md). `CierreTests` 2/2 y `HttpContractTests` 19/19 (21/21); frontend 127/127 (`CloseOpportunityDialog.test.tsx` 4/4), build correcto, lint solo con la advertencia previa. Sin merge ni push.
 
 <a id="t38"></a>
 
