@@ -136,7 +136,7 @@ describe('búsqueda de listados', () => {
     const opportunity = { id: 10, titulo: 'Renovación anual', idEmpresa: null, empresaRazonSocial: null, idContacto: null, contactoNombre: null, contactoApellido: null, idUsuario: null, usuarioNombre: null, usuarioApellido: null, fechaEstimadaCierre: null }
     vi.mocked(fetch)
       .mockResolvedValueOnce(jsonResponse([{ idEtapa: 3, nombre: 'Propuesta', orden: 2, oportunidades: [opportunity] }]))
-      .mockResolvedValueOnce(jsonResponse({ ...opportunity, idServicio: null, servicioNombre: null, idEtapa: 3, etapaNombre: 'Propuesta', fechaCierre: null, idOrigen: null, origenDescripcion: null, idEstado: null, estadoDescripcion: null, observaciones: null }))
+      .mockResolvedValueOnce(jsonResponse({ ...opportunity, tituloVisible: 'Renovación anual', idServicio: null, servicioNombre: null, idEtapa: 3, etapaNombre: 'Propuesta', fechaCierre: null, idOrigen: null, origenDescripcion: null, idEstado: null, estadoDescripcion: null, observaciones: null }))
     renderAuthenticated('/oportunidades')
 
     const table = within(await screen.findByRole('table', { name: 'Oportunidades' }))

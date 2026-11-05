@@ -19,7 +19,7 @@ const secondContact = { ...contact, id: 15, nombre: 'Ana', apellido: 'López', i
 const funnel = { id: 1, nombre: 'Embudo Inglés', descripcion: null, servicio: { id: 2, nombre: 'Capacitación', activo: true }, activo: true }
 const stageOf = (id: number, nombre: string, orden: number, estado: string) => ({ id, nombre, descripcion: null, orden, idEmbudo: 1, estado, activo: true })
 const funnelStages = [stageOf(5, 'Ganada', 1, 'GANADA'), stageOf(6, 'Perdida', 2, 'PERDIDA'), stageOf(3, 'Propuesta', 3, 'ABIERTA'), stageOf(4, 'Negociación', 4, 'ABIERTA')]
-const opportunity = { id: 22, titulo: 'Renovación anual', idResponsable: 7, responsableNombre: 'María Gómez', responsableActivo: true, idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas', idContacto: null, contactoNombre: null, idEtapa: 3, etapaNombre: 'Propuesta', etapaActiva: true, estado: 'ABIERTA', idEmbudo: 1, embudoNombre: 'Embudo Inglés', embudoActivo: true, idServicio: 2, servicioNombre: 'Capacitación', servicioActivo: true, idOrigen: null, valor: 150, fechaCreacion: '2026-11-05T12:00:00Z', activo: true, accionesPermitidas: { editar: true, reasignar: true, mover: true, cerrar: true, reabrir: false, darDeBaja: true, gestionarActividades: true } }
+const opportunity = { id: 22, titulo: 'Renovación anual', tituloVisible: 'Renovación anual', idResponsable: 7, responsableNombre: 'María Gómez', responsableActivo: true, idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas', idContacto: null, contactoNombre: null, idEtapa: 3, etapaNombre: 'Propuesta', etapaActiva: true, estado: 'ABIERTA', idEmbudo: 1, embudoNombre: 'Embudo Inglés', embudoActivo: true, idServicio: 2, servicioNombre: 'Capacitación', servicioActivo: true, idOrigen: null, valor: 150, fechaCreacion: '2026-11-05T12:00:00Z', activo: true, accionesPermitidas: { editar: true, reasignar: true, mover: true, cerrar: true, reabrir: false, darDeBaja: true, gestionarActividades: true } }
 
 function jsonResponse(body: unknown, status = 200) { return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }) }
 function renderAuthenticated(path: string, sessionUser: object = user) { sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser)); window.history.pushState({}, '', path); const queryClient = createQueryClient(); const Wrapper = ({ children }: { children: ReactNode }) => <AppProviders queryClient={queryClient}><BrowserRouter><AuthProvider>{children}</AuthProvider></BrowserRouter></AppProviders>; return render(<App />, { wrapper: Wrapper }) }
@@ -34,9 +34,9 @@ function catalogResponse(url: string, services = [{ id: 2, nombre: 'Capacitació
   return undefined
 }
 function requestUrl(input: RequestInfo | URL) { if (typeof input === 'object' && input !== null && 'input' in input) return String(input.input); if (typeof input === 'object' && input !== null && 'url' in input) return String(input.url); return String(input) }
-let createdTitle = opportunity.titulo
-function installCatalogApi(options: { services?: { id: number; nombre: string; descripcion: string | null; precioReferencia: number }[]; stages?: typeof funnelStages; create?: () => Response | Promise<Response> } = {}) {
-  createdTitle = opportunity.titulo
+let created: { titulo: string | null; tituloVisible: string } = opportunity
+function installCatalogApi(options: { services?: { id: number; nombre: string; descripcion: string | null; precioReferencia: number }[]; stages?: typeof funnelStages; create?: () => Response | Promise<Response>; funnels?: (typeof funnel)[] } = {}) {
+  created = opportunity
   vi.mocked(fetch).mockImplementation(async (input) => {
     const url = requestUrl(input)
     const catalog = catalogResponse(url, options.services)
@@ -47,11 +47,11 @@ function installCatalogApi(options: { services?: { id: number; nombre: string; d
     if (pathname === '/api/contactos/14' && method === 'GET') return jsonResponse(contact)
     if (pathname === '/api/contactos/14' && method === 'PATCH') return jsonResponse(contact)
     if (pathname === '/api/empresas' && method === 'GET') return jsonResponse({ items: [company, { ...company, id: 8, razonSocial: 'Otra empresa' }], page: 1, pageSize: 25, totalCount: 2 })
-    if (pathname === '/api/embudos' && method === 'GET') return jsonResponse({ items: [funnel], page: 1, pageSize: 100, totalCount: 1 })
+    if (pathname === '/api/embudos' && method === 'GET') { const items = options.funnels ?? [funnel]; return jsonResponse({ items, page: 1, pageSize: 100, totalCount: items.length }) }
     if (pathname === '/api/embudos/1/etapas' && method === 'GET') return jsonResponse(options.stages ?? funnelStages)
     if (pathname === '/api/servicios/2' && method === 'GET') return jsonResponse({ id: 2, nombre: 'Capacitación', descripcion: null, precioReferencia: 150, activo: true })
-    if (pathname === '/api/oportunidades' && method === 'POST') { if (options.create) return options.create(); createdTitle = String((await (input as Request).clone().json()).titulo); return jsonResponse({ ...opportunity, titulo: createdTitle }, 201) }
-    if (/^\/api\/oportunidades\/\d+$/.test(pathname) && method === 'GET') return jsonResponse({ ...opportunity, titulo: createdTitle })
+    if (pathname === '/api/oportunidades' && method === 'POST') { if (options.create) return options.create(); const title = ((await (input as Request).clone().json()).titulo as string | undefined) ?? null; created = { titulo: title, tituloVisible: title ?? 'Acme Idiomas' }; return jsonResponse({ ...opportunity, ...created }, 201) }
+    if (/^\/api\/oportunidades\/\d+$/.test(pathname) && method === 'GET') return jsonResponse({ ...opportunity, ...created })
     if (url.endsWith('/empresas/4') && (input as Request).method === 'GET') return jsonResponse(company)
     if (url.endsWith('/empresas') && (input as Request).method === 'POST') return jsonResponse({ ...company, id: 22, razonSocial: 'Nueva empresa' }, 201)
     if (url.endsWith('/empresas/4') && (input as Request).method === 'PATCH') return jsonResponse(company)
@@ -174,6 +174,16 @@ describe('altas y ediciones', () => {
     expect(await requestBody(opportunityPosts()[0])).toEqual({ titulo: 'Nueva venta', idEmbudo: 1, idEmpresa: 4 })
   })
 
+  it('crea con tres clics y sin escribir nada: embudo único preseleccionado y el título es el nombre del cliente', async () => {
+    const actor = await startOpportunity('/oportunidades/nueva?idEmpresa=4')
+    expect(await screen.findByText('Propuesta (por defecto)')).toBeTruthy()
+    expect(screen.getByRole('combobox', { name: /^Embudo/ })).toHaveProperty('textContent', expect.stringContaining('Embudo Inglés'))
+    expect(screen.getByText(/Opcional\. Si lo dejás vacío se muestra el nombre de la empresa/)).toBeTruthy()
+    await actor.click(screen.getByRole('button', { name: 'Crear oportunidad' }))
+    expect(await screen.findByRole('heading', { name: 'Acme Idiomas' })).toBeTruthy()
+    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 1, idEmpresa: 4 })
+  })
+
   it('evita repetir selecciones al crear desde una empresa o desde un contacto', async () => {
     let actor = await startOpportunity('/oportunidades/nueva?idEmpresa=4&idEmbudo=1')
     expect(await screen.findByRole('combobox', { name: 'Empresa' })).toHaveProperty('value', 'Acme Idiomas')
@@ -245,10 +255,11 @@ describe('altas y ediciones', () => {
     expect(opportunityPosts()).toHaveLength(0)
   })
 
-  it('valida título, embudo, relación comercial, valor y participantes antes de enviar', async () => {
-    const actor = await startOpportunity()
+  it('valida título largo, embudo, relación comercial, valor y participantes antes de enviar', async () => {
+    const actor = await startOpportunity('/oportunidades/nueva', { funnels: [funnel, { ...funnel, id: 3, nombre: 'Embudo Cursos' }] })
+    await actor.click(screen.getByRole('textbox', { name: 'Título' })); await actor.paste('x'.repeat(101))
     await actor.click(screen.getByRole('button', { name: 'Crear oportunidad' }))
-    expect(await screen.findByText('Ingresá el título.')).toBeTruthy(); expect(screen.getByText('Seleccioná el embudo.')).toBeTruthy(); expect(screen.getByText('Seleccioná una empresa o un contacto.')).toBeTruthy()
+    expect(await screen.findByText('Máximo 100 caracteres.')).toBeTruthy(); expect(screen.getByText('Seleccioná el embudo.')).toBeTruthy(); expect(screen.getByText('Seleccioná una empresa o un contacto.')).toBeTruthy()
     await actor.type(screen.getByRole('textbox', { name: 'Valor' }), '1,005'); await actor.type(screen.getByRole('textbox', { name: 'Cantidad de participantes' }), '0')
     await actor.click(screen.getByRole('button', { name: 'Crear oportunidad' }))
     expect(await screen.findByText(/hasta dos decimales/)).toBeTruthy(); expect(screen.getByText('Ingresá un número entero mayor que cero.')).toBeTruthy()

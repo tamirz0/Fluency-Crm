@@ -5,7 +5,8 @@ public partial class Oportunidad
 {
     public int Id { get; set; }
 
-    public string Titulo { get; set; } = null!;
+    // Opcional: sin título se muestra el nombre de la empresa y/o el contacto.
+    public string? Titulo { get; set; }
 
     public int IdResponsable { get; set; }
 

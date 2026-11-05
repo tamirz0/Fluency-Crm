@@ -4591,7 +4591,7 @@ export interface components {
             activo: boolean;
         };
         /**
-         * @description Alta de oportunidad. Requiere título, embudo (solo contexto, no se persiste) y empresa o contacto.
+         * @description Alta de oportunidad. Requiere embudo (solo contexto, no se persiste) y empresa o contacto; el título es opcional.
          *     Autor, estado y fechas los fija el servidor; propiedades desconocidas se rechazan.
          */
         CreateOportunidadRequest: {
@@ -4731,7 +4731,10 @@ export interface components {
         OportunidadResponse: {
             /** Format: int32 */
             id: number | string;
-            titulo: string;
+            /** @description Título propio, si se informó. */
+            titulo?: null | string;
+            /** @description Lo que se muestra: el título propio o, si falta, el nombre de la empresa y/o el contacto. */
+            tituloVisible: string;
             /** Format: int32 */
             idResponsable: number | string;
             responsableNombre: string;

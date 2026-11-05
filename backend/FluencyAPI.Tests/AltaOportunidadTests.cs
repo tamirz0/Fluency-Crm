@@ -63,6 +63,7 @@ public sealed class AltaOportunidadTests
         var id = created.GetProperty("id").GetInt32();
         Assert.EndsWith($"/oportunidades/{id}", response.Headers.Location!.ToString());
         Assert.Equal("Curso B1", created.GetProperty("titulo").GetString());
+        Assert.Equal("Curso B1", created.GetProperty("tituloVisible").GetString());
         Assert.Equal(seed.FirstOpen, created.GetProperty("idEtapa").GetInt32());
         Assert.Equal("ABIERTA", created.GetProperty("estado").GetString());
         Assert.Equal(seed.Funnel, created.GetProperty("idEmbudo").GetInt32());
@@ -122,6 +123,29 @@ public sealed class AltaOportunidadTests
     }
 
     [Fact]
+    public async Task WithoutATitleTheClientNameIsShownAndAnExplicitTitlePrevails()
+    {
+        await using var factory = new AuthApiFactory(); await factory.InitializeAsync();
+        using var admin = factory.Client(); await UsuariosTests.SignIn(admin, factory);
+        var seed = await SeedAsync(factory, admin);
+        async Task<JsonElement> Create(object body) { var r = await admin.PostAsJsonAsync("/oportunidades", body); Assert.Equal(HttpStatusCode.Created, r.StatusCode); return await Json(r); }
+
+        var company = await Create(new { idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
+        Assert.Equal(JsonValueKind.Null, company.GetProperty("titulo").ValueKind);
+        Assert.Equal("Empresa A", company.GetProperty("tituloVisible").GetString());
+        var contact = await Create(new { idEmbudo = seed.Funnel, idContacto = seed.ContactA });
+        Assert.Equal("Ana Prueba", contact.GetProperty("tituloVisible").GetString());
+        var both = await Create(new { idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idContacto = seed.ContactA, titulo = "   " });
+        Assert.Equal(JsonValueKind.Null, both.GetProperty("titulo").ValueKind);
+        Assert.Equal("Empresa A – Ana Prueba", both.GetProperty("tituloVisible").GetString());
+        var titled = await Create(new { idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, titulo = "Curso B1" });
+        Assert.Equal("Curso B1", titled.GetProperty("titulo").GetString());
+        Assert.Equal("Curso B1", titled.GetProperty("tituloVisible").GetString());
+        // La lectura posterior muestra lo mismo.
+        Assert.Equal("Empresa A – Ana Prueba", (await Json(await admin.GetAsync($"/oportunidades/{both.GetProperty("id").GetInt32()}"))).GetProperty("tituloVisible").GetString());
+    }
+
+    [Fact]
     public async Task ResponsibleRulesAndForgedFieldsAreRejected()
     {
         await using var factory = new AuthApiFactory(); await factory.InitializeAsync();
@@ -177,7 +201,7 @@ public sealed class AltaOportunidadTests
         var cases = new (string Name, object Body, string Code)[]
         {
             ("sin cliente", new { titulo = "A", idEmbudo = seed.Funnel }, "VALIDATION_FAILED"),
-            ("sin título", new { titulo = " ", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA }, "VALIDATION_FAILED"),
+            ("título demasiado largo", new { titulo = new string('x', 101), idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA }, "VALIDATION_FAILED"),
             ("sin embudo", new { titulo = "A", idEmpresa = seed.CompanyA }, "VALIDATION_FAILED"),
             ("valor negativo", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, valor = -1 }, "VALIDATION_FAILED"),
             ("valor con tres decimales", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, valor = 1.005 }, "VALIDATION_FAILED"),

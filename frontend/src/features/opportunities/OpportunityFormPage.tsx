@@ -3,7 +3,7 @@ import { Alert, Autocomplete, Box, Button, MenuItem, TextField } from '@mui/mate
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Controller, useForm, useWatch, type SubmitHandler } from 'react-hook-form'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
@@ -20,7 +20,7 @@ import '../shared/recordForms.css'
 const maxValue = 9999999999.99
 const parseValue = (text: string) => Number(text.trim().replace(',', '.'))
 const opportunitySchema = z.object({
-  titulo: z.string().trim().min(1, 'Ingresá el título.').max(100, 'Máximo 100 caracteres.'),
+  titulo: z.string().trim().max(100, 'Máximo 100 caracteres.').optional(),
   idEmbudo: z.string().min(1, 'Seleccioná el embudo.'),
   idEtapa: z.string().optional(), idEmpresa: z.string().optional(), idContacto: z.string().optional(), idResponsable: z.string().optional(), idOrigen: z.string().optional(),
   valor: z.string().optional().refine(value => !value?.trim() || (/^\d+([.,]\d{1,2})?$/.test(value.trim()) && parseValue(value) <= maxValue), 'Ingresá un importe no negativo, hasta 9999999999,99 y con hasta dos decimales.'),
@@ -75,6 +75,9 @@ function OpportunityEditor({ context }: { context: Context }) {
   const funnels = useQuery({ queryKey: ['embudos', 'opciones'], queryFn: () => listFunnels({ pageSize: 100 }) })
   const origins = useQuery({ queryKey: catalogQueryKeys.commercialOrigins, queryFn: () => getCatalogOptions('origenes-comerciales') })
   const funnel = funnels.data?.items.find(item => String(item.id) === selectedFunnel)
+  // Con un único embudo disponible no hay nada que elegir.
+  const onlyFunnel = funnels.data?.items.length === 1 ? String(funnels.data.items[0].id) : ''
+  useEffect(() => { if (onlyFunnel && !selectedFunnel) setValue('idEmbudo', onlyFunnel) }, [onlyFunnel, selectedFunnel, setValue])
   const funnelId = normalizeId(selectedFunnel)
   const stages = useQuery({ queryKey: ['embudos', funnelId, 'etapas', 'true'], queryFn: () => listStages(funnelId as number), enabled: funnelId !== null })
   const service = useQuery({ queryKey: [...catalogQueryKeys.services, funnel?.servicio.id], queryFn: () => getService(funnel!.servicio.id), enabled: funnel !== undefined })
@@ -83,7 +86,9 @@ function OpportunityEditor({ context }: { context: Context }) {
   const relationshipError = errors.root?.message as string | undefined
 
   const mutation = useMutation({ mutationFn: (values: OpportunityFormValues) => {
-    const payload: CreateOportunidadRequest = { titulo: values.titulo.trim(), idEmbudo: Number(values.idEmbudo) }
+    const payload: CreateOportunidadRequest = { idEmbudo: Number(values.idEmbudo) }
+    const title = normalizeOptionalText(values.titulo)
+    if (title) payload.titulo = title
     const ids = { idEmpresa: normalizeId(values.idEmpresa), idContacto: normalizeId(values.idContacto), idEtapa: normalizeId(values.idEtapa), idOrigen: normalizeId(values.idOrigen), cantidadParticipantes: normalizeId(values.cantidadParticipantes) }
     Object.entries(ids).forEach(([key, id]) => { if (id !== null) Object.assign(payload, { [key]: id }) })
     // Solo un superior elige a otra persona; el servidor asigna al actor cuando se omite.
@@ -114,7 +119,7 @@ function OpportunityEditor({ context }: { context: Context }) {
 
   return <RecordFormPage backLabel={context.company ? 'Volver a la empresa' : context.contact ? 'Volver al contacto' : 'Volver al inicio'} backTo={backTo} title="Nueva oportunidad" description="Registrá una negociación. La etapa inicial, el valor y el responsable se completan por defecto." onSubmit={() => { if (canSubmit) void handleSubmit(submit)() }} submitLabel="Crear oportunidad" submitting={mutation.isPending} disabled={!canSubmit} error={errors.root?.serverError?.message}>
     <FormSection title="Datos principales" description="El título permite encontrar rápidamente la oportunidad.">
-      <TextField {...register('titulo')} label="Título" required fullWidth error={Boolean(errors.titulo)} helperText={errors.titulo?.message} />
+      <TextField {...register('titulo')} label="Título" fullWidth error={Boolean(errors.titulo)} helperText={errors.titulo?.message ?? 'Opcional. Si lo dejás vacío se muestra el nombre de la empresa y/o el contacto.'} />
       {isSuperior
         ? <Controller name="idResponsable" control={control} render={({ field }) => <CompanyResponsibleSelect value={field.value ?? ''} onChange={field.onChange} current={user ? { id: user.id, nombre: ownName, activo: true } : undefined} helperText="Por defecto, vos." />} />
         : <ReadOnlyValue label="Responsable" value={ownName} description="Se asignará a tu usuario." />}

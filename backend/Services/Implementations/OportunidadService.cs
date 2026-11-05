@@ -15,6 +15,9 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
     private IQueryable<OportunidadResponse> Query() => db.Oportunidades.AsNoTracking().Where(o => o.Activo).Select(o => new OportunidadResponse
     {
         Id = o.Id, Titulo = o.Titulo,
+        TituloVisible = o.Titulo ?? (o.IdEmpresaNavigation != null
+            ? o.IdEmpresaNavigation.RazonSocial + (o.IdContactoNavigation != null ? " – " + o.IdContactoNavigation.Nombre + " " + o.IdContactoNavigation.Apellido : "")
+            : o.IdContactoNavigation!.Nombre + " " + o.IdContactoNavigation.Apellido),
         IdResponsable = o.IdResponsable, ResponsableNombre = o.IdResponsableNavigation.Nombre + " " + o.IdResponsableNavigation.Apellido,
         ResponsableActivo = o.IdResponsableNavigation.Activo,
         IdEmpresa = o.IdEmpresa, EmpresaRazonSocial = o.IdEmpresaNavigation == null ? null : o.IdEmpresaNavigation.RazonSocial,
@@ -83,7 +86,7 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
 
         var item = new Oportunidad
         {
-            Titulo = request.Titulo!.Trim(), IdResponsable = responsible, IdEmpresa = request.IdEmpresa, IdContacto = request.IdContacto,
+            Titulo = Text(request.Titulo), IdResponsable = responsible, IdEmpresa = request.IdEmpresa, IdContacto = request.IdContacto,
             IdEtapa = stageId.Value, IdOrigen = request.IdOrigen, Valor = request.Valor ?? funnel.Price,
             FechaEstimadaCierre = request.FechaEstimadaCierre, ObjetivoAprendizaje = Text(request.ObjetivoAprendizaje),
             CantidadParticipantes = request.CantidadParticipantes, DisponibilidadHoraria = Text(request.DisponibilidadHoraria),

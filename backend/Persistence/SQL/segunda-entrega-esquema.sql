@@ -173,7 +173,7 @@ CREATE TABLE motivo_perdida (
 );
 CREATE TABLE oportunidad (
     id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    titulo varchar(100) NOT NULL CHECK (btrim(titulo) <> ''),
+    titulo varchar(100) CHECK (titulo IS NULL OR btrim(titulo) <> ''),
     id_responsable integer NOT NULL REFERENCES usuario(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     id_empresa integer REFERENCES empresa(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     id_contacto integer REFERENCES contacto(id) ON UPDATE RESTRICT ON DELETE RESTRICT,

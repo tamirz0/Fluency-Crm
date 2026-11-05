@@ -9,7 +9,10 @@ public sealed record AccionesOportunidad(bool Editar, bool Reasignar, bool Mover
 public sealed record OportunidadResponse
 {
     public required int Id { get; init; }
-    public required string Titulo { get; init; }
+    /// <summary>Título propio, si se informó.</summary>
+    public string? Titulo { get; init; }
+    /// <summary>Lo que se muestra: el título propio o, si falta, el nombre de la empresa y/o el contacto.</summary>
+    public required string TituloVisible { get; init; }
     public required int IdResponsable { get; init; }
     public required string ResponsableNombre { get; init; }
     public required bool ResponsableActivo { get; init; }
@@ -45,7 +48,7 @@ public sealed record OportunidadResponse
 }
 
 /// <summary>
-/// Alta de oportunidad. Requiere título, embudo (solo contexto, no se persiste) y empresa o contacto.
+/// Alta de oportunidad. Requiere embudo (solo contexto, no se persiste) y empresa o contacto; el título es opcional.
 /// Autor, estado y fechas los fija el servidor; propiedades desconocidas se rechazan.
 /// </summary>
 public sealed record CreateOportunidadRequest : IValidatableObject
@@ -67,7 +70,6 @@ public sealed record CreateOportunidadRequest : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext context)
     {
-        if (string.IsNullOrWhiteSpace(Titulo)) yield return new("El título es obligatorio.", [nameof(Titulo)]);
         if (IdEmbudo <= 0) yield return new("El embudo es obligatorio.", [nameof(IdEmbudo)]);
         if (IdEmpresa is null && IdContacto is null)
             yield return new("Indique una empresa o un contacto.", [nameof(IdEmpresa), nameof(IdContacto)]);

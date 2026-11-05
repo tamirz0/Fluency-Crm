@@ -41,9 +41,9 @@ public sealed class OportunidadesModelTests
         Assert.Null(item.IdMotivoPerdida);
         Assert.Null(item.CantidadParticipantes);
 
-        foreach (var name in new[] { "IdResponsable", "IdEtapa", "Valor", "FechaCreacion", "Activo", "Titulo" })
+        foreach (var name in new[] { "IdResponsable", "IdEtapa", "Valor", "FechaCreacion", "Activo" })
             Assert.False(model.FindEntityType(typeof(Oportunidad))!.FindProperty(name)!.IsNullable);
-        foreach (var name in new[] { "IdEmpresa", "IdContacto", "IdOrigen", "FechaEstimadaCierre", "FechaCierre", "IdMotivoPerdida",
+        foreach (var name in new[] { "Titulo", "IdEmpresa", "IdContacto", "IdOrigen", "FechaEstimadaCierre", "FechaCierre", "IdMotivoPerdida",
                      "ObjetivoAprendizaje", "CantidadParticipantes", "DisponibilidadHoraria", "Observaciones" })
             Assert.True(model.FindEntityType(typeof(Oportunidad))!.FindProperty(name)!.IsNullable);
     }
