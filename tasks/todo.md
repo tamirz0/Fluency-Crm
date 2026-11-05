@@ -48,7 +48,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T35 — Reasignar una oportunidad y retirar permiso anterior](#t35)
 - [x] [T36 — Mover entre etapas abiertas con historial](#t36)
 - [x] [T37 — Cerrar oportunidades como ganadas o perdidas](#t37)
-- [ ] [T38 — Reabrir una oportunidad conservando su cierre](#t38)
+- [x] [T38 — Reabrir una oportunidad conservando su cierre](#t38)
 - [ ] [T39 — Dar de baja oportunidades sin cascadas](#t39)
 - [ ] [T40 — Mapear actividades realizadas](#t40)
 - [ ] [T41 — Registrar y consultar actividades por API](#t41)
@@ -1018,13 +1018,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Solo administrador/responsable comercial reabre cerrada activa; vendedor dueño recibe 403. Exige embudo activo, destino abierto activo y justificación.
-- [ ] Historial conserva en texto resultado/fecha/valor/motivo anteriores y justificación; limpia cierre/motivo actuales y mantiene valor, todo atómico.
-- [ ] Responsable o servicio inactivos no obligan a reasignar ni bloquean reapertura; UI explica límites y ofrece destinos válidos.
+- [x] Solo administrador/responsable comercial reabre cerrada activa; vendedor dueño recibe 403. Exige embudo activo, destino abierto activo y justificación.
+- [x] Historial conserva en texto resultado/fecha/valor/motivo anteriores y justificación; limpia cierre/motivo actuales y mantiene valor, todo atómico.
+- [x] Responsable o servicio inactivos no obligan a reasignar ni bloquean reapertura; UI explica límites y ofrece destinos válidos.
 
 **Verificación:** B + F + API(ReaperturaTests) + D; cerrar→reabrir→corregir→cerrar con evidencia del primer cierre.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t38.md](verificaciones/verificacion-t38.md). `ReaperturaTests` 2/2 y `HttpContractTests` 19/19 (21/21); frontend 130/130 (`ReopenOpportunityDialog.test.tsx` 3/3), build correcto, lint solo con la advertencia previa. Sin merge ni push.
 
 <a id="t39"></a>
 
