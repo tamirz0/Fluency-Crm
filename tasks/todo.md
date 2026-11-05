@@ -39,8 +39,8 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T29 — Crear oportunidades con defaults e historial atómico](#t29)
 - [ ] [T30 — Simplificar el alta de oportunidad en UI](#t30)
 - [x] [T30a — Hacer opcional el título de la oportunidad](#t30a)
-- [ ] [T30b — Renovar la apariencia de la interfaz](#t30b)
-- [x] [T30c — Landing pública con acceso al login](#t30c)
+- [x] ~~[T30b — Renovar la apariencia de la interfaz](#t30b)~~ (revertida a pedido del usuario)
+- [x] ~~[T30c — Landing pública con acceso al login](#t30c)~~ (revertida a pedido del usuario)
 - [ ] [T31 — Consultar oportunidades e historial de etapas](#t31)
 - [ ] [T32 — Mostrar tabla y ficha de oportunidades compartidas](#t32)
 - [ ] [T33 — Mostrar funnel según el rol](#t33)
@@ -823,6 +823,8 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 ### T30b — Renovar la apariencia de la interfaz
 
+> **Revertida el 05/11/2026 a pedido del usuario** (pantallas descentradas). Los estilos vuelven al estado de T30a; ver el commit `revert:` y [verificacion-t30b.md](verificaciones/verificacion-t30b.md). Lo siguiente queda solo como historia.
+
 **Resultado:** Lavado de cara acordado el 05/11/2026: aspecto más moderno conservando MUI, tema oscuro, accesibilidad y el comportamiento actual.
 
 **Dependencias:** T30a. **Tamaño previsto:** M; tema, estilos compartidos, menú lateral y pantallas existentes.
@@ -840,6 +842,8 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 <a id="t30c"></a>
 
 ### T30c — Landing pública con acceso al login
+
+> **Revertida el 05/11/2026 a pedido del usuario** junto con T30b. Lo siguiente queda solo como historia.
 
 **Resultado:** Pedido del usuario el 05/11/2026: la raíz muestra una landing con «Iniciar sesión» (lleva al login actual) y «Registrarse» (sin flujo hasta que exista el registro).
 

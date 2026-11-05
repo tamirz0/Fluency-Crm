@@ -29,3 +29,11 @@ ALTER TABLE oportunidad ALTER COLUMN titulo DROP NOT NULL;
 ```
 
 El `CHECK` previo (`btrim(titulo) <> ''`) se mantiene y sigue rechazando textos en blanco (un `NULL` no lo viola). Hasta aplicarlo, un alta sin título falla contra esa base.
+
+## Subtítulo de cliente en la ficha (05/11/2026)
+
+A pedido del usuario, cuando la oportunidad tiene título propio la ficha muestra debajo la empresa, el contacto o «Empresa – Contacto» (`clientLabel` en `opportunityData.ts`, reutilizable por la tabla y el tablero de T32/T33). Sin título, el encabezado ya es ese nombre y no se repite. Cubierto en `forms.test.tsx`; frontend completo 117/117, build correcto.
+
+## Contactos: tabla sin anchos fijos (05/11/2026)
+
+La tabla de contactos tiene 8 columnas pero los anchos fijos en porcentaje cubrían 7, de modo que «Responsable» quedaba sin espacio y sus palabras se partían letra por letra. Se quitaron esos anchos solo para `.contact-table`: las columnas se ajustan a su contenido, la tabla no se estira para llenar el contenedor y se desplaza en horizontal si no entra. Empresas y oportunidades no cambian. Pendiente la revisión visual del usuario.

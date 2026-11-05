@@ -62,7 +62,8 @@ Se mantiene el flujo de [AGENTS.md](../../AGENTS.md): ramas y commits autónomos
 ## 5.1. Actualizaciones posteriores
 
 - **05/11/2026, título opcional.** Por indicación del docente (CRM de referencia), la oportunidad no necesita título: sin él se muestra el nombre de la empresa, del contacto o de ambos. Cambia `oportunidad.titulo` a nulable y añade `tituloVisible` al contrato; ver [SPEC-oportunidades.md](../../SPEC-oportunidades.md).
-- **05/11/2026, renovación visual.** Se conserva MUI y se renueva la apariencia hacia un aspecto más moderno antes de T31 (tarea T30b del [seguimiento](../../tasks/todo.md)). No cambia reglas funcionales.
+- **05/11/2026, renovación visual: revertida.** Se intentó un lavado de cara con MUI (T30b) y una landing (T30c); el usuario pidió deshacerlo el mismo día porque las pantallas se veían descentradas. La interfaz vuelve al estilo de T30a. Un rediseño futuro, si se retoma, será una decisión nueva.
+- **05/11/2026, ficha de oportunidad.** Con título propio, la ficha muestra debajo la empresa, el contacto o «Empresa – Contacto» como subtítulo.
 
 ## 6. Cómo usar estos acuerdos
 
