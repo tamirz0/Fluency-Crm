@@ -36,7 +36,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T26 — Actualizar pantallas de contactos](#t26)
 - [x] [T27 — Completar bajas definitivas de clientes](#t27)
 - [x] [T28 — Adaptar el modelo e historial de oportunidades](#t28)
-- [ ] [T29 — Crear oportunidades con defaults e historial atómico](#t29)
+- [x] [T29 — Crear oportunidades con defaults e historial atómico](#t29)
 - [ ] [T30 — Simplificar el alta de oportunidad en UI](#t30)
 - [ ] [T31 — Consultar oportunidades e historial de etapas](#t31)
 - [ ] [T32 — Mostrar tabla y ficha de oportunidades compartidas](#t32)
@@ -765,13 +765,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Alta exige empresa o contacto y compatibilidad cuando ambos se envían; embudo/etapa abierta activos. Sin etapa explícita usa la primera abierta activa.
-- [ ] Vendedor crea propia; superiores pueden asignar activo. Valor omitido copia precio, cero prevalece y participantes no multiplican; servicio inactivo no bloquea su embudo activo.
-- [ ] Insertar oportunidad e historial inicial juntos con actor de sesión; fallos no dejan escrituras parciales y body no puede falsificar autor/estado.
+- [x] Alta exige empresa o contacto y compatibilidad cuando ambos se envían; embudo/etapa abierta activos. Sin etapa explícita usa la primera abierta activa.
+- [x] Vendedor crea propia; superiores pueden asignar activo. Valor omitido copia precio, cero prevalece y participantes no multiplican; servicio inactivo no bloquea su embudo activo.
+- [x] Insertar oportunidad e historial inicial juntos con actor de sesión; fallos no dejan escrituras parciales y body no puede falsificar autor/estado.
 
 **Verificación:** B + API(AltaOportunidadTests) + D; defaults, ausencia de abierta, cero y rollback con PostgreSQL.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t29.md](verificaciones/verificacion-t29.md). `AltaOportunidadTests` 6/6; backend completo 145/146 con el único fallo (contrato de rutas) corregido y `HttpContractTests` 19/19; build sin errores ni advertencias. Sin merge ni push; `schema.d.ts` se regenera en T30.
 
 <a id="t30"></a>
 
