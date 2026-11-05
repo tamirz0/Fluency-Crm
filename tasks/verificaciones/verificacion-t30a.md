@@ -34,6 +34,9 @@ El `CHECK` previo (`btrim(titulo) <> ''`) se mantiene y sigue rechazando textos 
 
 A pedido del usuario, cuando la oportunidad tiene título propio la ficha muestra debajo la empresa, el contacto o «Empresa – Contacto» (`clientLabel` en `opportunityData.ts`, reutilizable por la tabla y el tablero de T32/T33). Sin título, el encabezado ya es ese nombre y no se repite. Cubierto en `forms.test.tsx`; frontend completo 117/117, build correcto.
 
-## Contactos: tabla sin anchos fijos (05/11/2026)
+## Contactos y centrado (05/11/2026)
 
-La tabla de contactos tiene 8 columnas pero los anchos fijos en porcentaje cubrían 7, de modo que «Responsable» quedaba sin espacio y sus palabras se partían letra por letra. Se quitaron esos anchos solo para `.contact-table`: las columnas se ajustan a su contenido, la tabla no se estira para llenar el contenedor y se desplaza en horizontal si no entra. Empresas y oportunidades no cambian. Pendiente la revisión visual del usuario.
+- **Tabla de contactos:** tiene 8 columnas pero los anchos fijos en porcentaje cubrían 7, de modo que «Responsable» quedaba sin espacio y se partía letra por letra. Un primer intento con diseño automático dejó la tabla más angosta que su contenedor y con estilos rotos, y se descartó. Ahora hay anchos explícitos para las 8 columnas (suman 100 %, tabla con ancho completo y desplazamiento horizontal bajo 980 px) y, bajo 900 px, el listado cambia a tarjetas, igual que Empresas (`ContactCards`).
+- **Centrado:** Usuarios, Catálogos, Servicios, Embudos y el inicio usaban un contenedor propio alineado a la izquierda (`maxWidth: 1600`), a diferencia de Empresas y Contactos (`.companies-page`, máximo 1440 px centrado). Ahora usan el mismo contenedor (referencias del usuario en `Referencias/mal-centrado`). Esto no tenía relación con el rediseño revertido.
+- **Aviso de sesión:** se retiró el cartel flotante; vuelve a mostrarse en línea como antes. Se conserva la frase de marca del login centrada.
+- Frontend completo 116/116, build correcto. Pendiente la revisión visual del usuario.

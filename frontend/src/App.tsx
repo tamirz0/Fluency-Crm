@@ -18,7 +18,7 @@ import { NewOpportunityPage } from './features/opportunities/OpportunityFormPage
 import { OpportunityDetailPage } from './features/opportunities/OpportunityDetailPage'
 function AccessHome() {
   const { user } = useAuth()
-  return <Box sx={{ p: { xs: 3, md: 5 } }}><Typography variant="h4" component="h1">Hola, {user?.nombre}</Typography><Typography sx={{ mt: 2 }}>Bienvenido a Fluency CRM.</Typography></Box>
+  return <Box sx={{ p: { xs: 3, md: 5 }, maxWidth: 1440, mx: 'auto' }}><Typography variant="h4" component="h1">Hola, {user?.nombre}</Typography><Typography sx={{ mt: 2 }}>Bienvenido a Fluency CRM.</Typography></Box>
 }
 function App() {
   return <Routes>

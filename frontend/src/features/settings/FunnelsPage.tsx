@@ -6,6 +6,7 @@ import { useAuth } from '../../auth/useAuth'
 import { FunnelDialog } from './FunnelDialog'
 import { StageEditor } from './StageEditor'
 import { StageOrderEditor } from './StageOrderEditor'
+import '../companies/companies.css'
 
 export function FunnelsPage() {
   const { user } = useAuth()
@@ -19,7 +20,7 @@ function FunnelList() {
   const query = { q: search, activo: active, page: page + 1, pageSize: 25 }
   const funnels = useQuery({ queryKey: ['embudos', query], queryFn: () => listFunnels(query) })
   const current = funnels.data?.items.find(f => f.id === selected?.id) ?? selected
-  return <Box sx={{ p: { xs: 2.5, md: 5 }, maxWidth: 1600 }}>
+  return <Box className="companies-page">
     <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 2, mb: 2 }}><Typography component="h1" variant="h4">Embudos y etapas</Typography><Button variant="contained" onClick={() => setAction({})}>Nuevo embudo</Button></Stack>
     <Typography sx={{ mb: 3 }} color="text.secondary">Cada embudo pertenece a un servicio. Ganada y Perdida se crean automáticamente; las etapas abiertas se agregan según el proceso.</Typography>
     <Box component="form" onSubmit={e => { e.preventDefault(); setSearch(q.trim()); setPage(0) }} sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>

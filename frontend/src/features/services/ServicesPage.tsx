@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { listServices, type Servicio } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { ServiceDialog, type ServiceAction } from './ServiceDialog'
+import '../companies/companies.css'
 
 export function ServicesPage() {
   const { user } = useAuth()
@@ -20,7 +21,7 @@ function ServiceList() {
   const [message, setMessage] = useState('')
   const query = { q: search, activo: active, page: page + 1, pageSize: 25 }
   const items = useQuery({ queryKey: ['servicios', query], queryFn: () => listServices(query) })
-  return <Box sx={{ p: { xs: 2.5, md: 5 }, maxWidth: 1600 }}>
+  return <Box className="companies-page">
     <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2 }}>
       <Typography component="h1" variant="h4">Servicios</Typography>
       <Button variant="contained" startIcon={<Add />} onClick={() => setAction({ mode: 'create' })}>Nuevo servicio</Button>

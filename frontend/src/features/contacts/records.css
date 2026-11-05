@@ -1,16 +1,18 @@
 .records-page { width: min(100%, 1440px); }
 .record-table-wrap { overflow-x: auto; }
 .record-table { min-width: 980px; }
+.contact-table th:first-child, .contact-table td:first-child { width: 17%; }
+.contact-table th:nth-child(2), .contact-table td:nth-child(2) { width: 9%; }
+.contact-table th:nth-child(3), .contact-table td:nth-child(3) { width: 14%; }
+.contact-table th:nth-child(4), .contact-table td:nth-child(4) { width: 10%; }
+.contact-table th:nth-child(5), .contact-table td:nth-child(5) { width: 17%; }
+.contact-table th:nth-child(6), .contact-table td:nth-child(6) { width: 11%; }
+.contact-table th:nth-child(7), .contact-table td:nth-child(7) { width: 10%; }
+.contact-table th:nth-child(8), .contact-table td:nth-child(8) { width: 12%; }
 .opportunity-table th:first-child, .opportunity-table td:first-child { width: 22%; }
 .opportunity-table th:nth-child(2), .opportunity-table td:nth-child(2) { width: 15%; }
 .opportunity-table th:nth-child(3), .opportunity-table td:nth-child(3) { width: 20%; }
 .opportunity-table th:nth-child(4), .opportunity-table td:nth-child(4) { width: 16%; }
 .opportunity-table th:nth-child(5), .opportunity-table td:nth-child(5) { width: 16%; }
 .opportunity-table th:last-child, .opportunity-table td:last-child { width: 16%; }
-.record-contact-links { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: 2px; overflow-wrap: break-word; }
-
-/* Contactos: 8 columnas. Sin anchos fijos, cada columna toma lo que su contenido necesita; si no entra, la tabla se desplaza en horizontal. */
-.company-table.contact-table { table-layout: auto; width: auto; min-width: 0; }
-.company-table.contact-table th:nth-child(n), .company-table.contact-table td:nth-child(n) { width: auto; }
-.company-table.contact-table th:nth-child(n) { white-space: nowrap; }
-.company-table.contact-table td:nth-child(n) { overflow-wrap: break-word; }
+.record-contact-links { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: 2px; overflow-wrap: anywhere; }

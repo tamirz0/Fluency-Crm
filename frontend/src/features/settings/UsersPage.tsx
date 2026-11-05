@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getRoles, getUsers, usuarioQueryKeys, type AuthUser } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { UserDialog, type UserAction } from './UserDialog'
+import '../companies/companies.css'
 
 export function UsersPage() {
   const { user } = useAuth()
@@ -22,7 +23,7 @@ function UsersList() {
   const query = { q: search, activo: active === '' ? undefined : active === 'true', rol: role || undefined, page: page + 1, pageSize: 25 }
   const users = useQuery({ queryKey: [...usuarioQueryKeys.all, query], queryFn: () => getUsers(query) })
   const roles = useQuery({ queryKey: ['roles'], queryFn: getRoles })
-  return <Box sx={{ p: { xs: 2.5, md: 5 }, maxWidth: 1600 }}>
+  return <Box className="companies-page">
     <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 3 }}>
       <Box><Typography component="h1" variant="h4">Usuarios</Typography><Typography color="text.secondary" sx={{ mt: 1 }}>Cuentas y roles del equipo comercial.</Typography></Box>
       <Button variant="contained" startIcon={<Add />} disabled={!roles.data} onClick={() => setAction({ mode: 'create' })}>Nuevo usuario</Button>

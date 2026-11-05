@@ -1,6 +1,6 @@
 # Verificación T30b: renovación de la apariencia
 
-> **Revertida el 05/11/2026 a pedido del usuario:** las pantallas se veían descentradas. T30b ya no está en el código; esta nota queda como registro histórico. Se conservaron el título opcional (T30a), el subtítulo de cliente en la ficha, la tabla de contactos sin anchos fijos, el centrado de la frase del login y los avisos de sesión flotantes.
+> **Revertida el 05/11/2026 a pedido del usuario:** las pantallas se veían descentradas. T30b ya no está en el código; esta nota queda como registro histórico. Se conservaron el título opcional (T30a), el subtítulo de cliente en la ficha, la tabla de contactos corregida y el centrado de la frase del login; el aviso de sesión flotante se retiró después. Detalle en [verificacion-t30a.md](verificacion-t30a.md).
 
 Fecha: 05/11/2026. Rama `segunda-entrega-oportunidades-modelo`, commit `0998eeb`. Sin merge ni push.
 

@@ -167,11 +167,3 @@ it.each(['/oportunidades', '/embudo'])('conserva retirado el módulo comercial %
   await screen.findByRole('heading', { name: 'Hola, María' })
   expect(vi.mocked(fetch).mock.calls.every(([r]) => new URL((r as Request).url).pathname.startsWith('/api/auth/'))).toBe(true)
 })
-
-it('los avisos de sesión flotan sobre la pantalla en lugar de empujar el contenido', async () => {
-  mount('/login')
-  await screen.findByRole('heading', { name: 'Ingresá a tu espacio comercial' })
-  window.dispatchEvent(new CustomEvent('fluency:forbidden', { detail: 'No tenés permiso para esta acción.' }))
-  const alert = await screen.findByText('No tenés permiso para esta acción.')
-  expect(getComputedStyle(alert.closest('.MuiAlert-root')!.parentElement!).position).toBe('fixed')
-})

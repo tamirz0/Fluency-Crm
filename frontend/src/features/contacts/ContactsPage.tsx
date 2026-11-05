@@ -42,6 +42,22 @@ function ContactRows({ contacts, onOpen }: { contacts: Contacto[]; onOpen: (id: 
   </Table></TableContainer>
 }
 
+function ContactCards({ contacts, onOpen }: { contacts: Contacto[]; onOpen: (id: string | number) => void }) {
+  return <ul className="company-record-list" aria-label="Contactos">
+    {contacts.map((contact) => <li className="company-record company-clickable-record" key={contact.id} onClick={() => onOpen(contact.id)}>
+      <div className="company-record-heading"><h2><Link component={RouterLink} to={`/contactos/${contact.id}`} aria-label={`Abrir ficha de ${contactFullName(contact)}`} underline="hover" onClick={(event) => event.stopPropagation()}>{contactFullName(contact)}</Link></h2><CompanyStatus value={contact.estadoDescripcion} /></div>
+      <dl className="company-record-fields">
+        <div><dt>Empresa</dt><dd>{contact.idEmpresa ? <Link component={RouterLink} to={`/empresas/${contact.idEmpresa}`} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(contact.empresaRazonSocial)}</Link> : displayValue(contact.empresaRazonSocial)}</dd></div>
+        <div><dt>Cargo</dt><dd>{displayValue(contact.cargo)}</dd></div>
+        <div><dt>Correo</dt><dd><ContactEmail contact={contact} /></dd></div>
+        <div><dt>Teléfono</dt><dd><ContactPhone contact={contact} /></dd></div>
+        <div><dt>Origen</dt><dd>{displayValue(contact.origenDescripcion)}</dd></div>
+        <div><dt>Responsable</dt><dd>{displayValue(contact.responsableNombre)}{contact.responsableActivo === false ? ' (inactivo)' : ''}</dd></div>
+      </dl>
+    </li>)}
+  </ul>
+}
+
 function ContactListSkeleton() {
   return <div className="companies-loading" role="status" aria-label="Cargando contactos">
     <TableContainer className="company-table-wrap record-table-wrap"><Table aria-hidden="true" className="company-table record-table contact-table">
@@ -86,7 +102,10 @@ export function ContactsPage() {
       <Typography role="status" sx={{ mb: 2 }}>{data.totalCount} {data.totalCount === 1 ? 'contacto' : 'contactos'}</Typography>
       {data.items.length === 0 ? <section className="company-feedback" aria-labelledby="contacts-empty-title">
         <Typography id="contacts-empty-title" component="h2" className="company-feedback-title">{filtered || page ? 'No hay contactos para estos filtros o página' : 'Todavía no hay contactos'}</Typography><Typography color="text.secondary">Los contactos registrados van a aparecer en este listado.</Typography>
-      </section> : <ContactRows contacts={data.items} onOpen={(id) => navigate(`/contactos/${id}`)} />}
+      </section> : <>
+        <div className="company-list-desktop"><ContactRows contacts={data.items} onOpen={(id) => navigate(`/contactos/${id}`)} /></div>
+        <div className="company-list-mobile"><ContactCards contacts={data.items} onOpen={(id) => navigate(`/contactos/${id}`)} /></div>
+      </>}
       <TablePagination component="div" count={Number(data.totalCount)} page={page} rowsPerPage={pageSize} rowsPerPageOptions={[10, 25, 50, 100]} onPageChange={(_, p) => setPage(p)} onRowsPerPageChange={e => { setPageSize(Number(e.target.value)); setPage(0) }} labelRowsPerPage="Contactos por página" labelDisplayedRows={({ from, to, count }) => from + '–' + to + ' de ' + count} getItemAriaLabel={type => ({ first: 'Primera página', last: 'Última página', next: 'Página siguiente', previous: 'Página anterior' })[type]} />
     </>}
   </Box>
