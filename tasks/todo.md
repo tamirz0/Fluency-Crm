@@ -49,7 +49,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T36 — Mover entre etapas abiertas con historial](#t36)
 - [x] [T37 — Cerrar oportunidades como ganadas o perdidas](#t37)
 - [x] [T38 — Reabrir una oportunidad conservando su cierre](#t38)
-- [ ] [T39 — Dar de baja oportunidades sin cascadas](#t39)
+- [x] [T39 — Dar de baja oportunidades sin cascadas](#t39)
 - [ ] [T40 — Mapear actividades realizadas](#t40)
 - [ ] [T41 — Registrar y consultar actividades por API](#t41)
 - [ ] [T42 — Registrar actividades desde fichas](#t42)
@@ -1038,13 +1038,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Dueño/superior da de baja abierta o cerrada sin reapertura; repetir no cambia nada y no agrega historia ficticia.
-- [ ] No restaura ni borra físicamente; oculta recurso principal y conserva historia/actividades. Listas/funnel se invalidan correctamente.
-- [ ] Reevaluar bloqueos de clientes/embudos tras baja y verificar carrera con una mutación; comprobar con altas reales las reglas antes cubiertas con fixtures.
+- [x] Dueño/superior da de baja abierta o cerrada sin reapertura; repetir no cambia nada y no agrega historia ficticia.
+- [x] No restaura ni borra físicamente; oculta recurso principal y conserva historia/actividades. Listas/funnel se invalidan correctamente.
+- [x] Reevaluar bloqueos de clientes/embudos tras baja y verificar carrera con una mutación; comprobar con altas reales las reglas antes cubiertas con fixtures.
 
 **Verificación:** B + F + API(BajaOportunidadTests) + suites Clientes/Embudos afectadas + D; checkpoint completo de oportunidades y regresión de bloqueos.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t39.md](verificaciones/verificacion-t39.md). `BajaOportunidadTests` 3/3 más `HttpContractTests`, `BajasClientesTests`, `EmbudosTests` y `EtapasTests` (31/31); frontend 132/132, build correcto, lint solo con la advertencia previa. Sin merge ni push.
 
 ### CP13 — Módulo oportunidades
 
