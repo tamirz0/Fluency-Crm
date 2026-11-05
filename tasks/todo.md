@@ -54,7 +54,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T41 — Registrar y consultar actividades por API](#t41)
 - [ ] [T42 — Registrar actividades desde fichas](#t42)
 - [x] [T43 — Editar y dar de baja actividades con permisos de origen y destino](#t43)
-- [ ] [T44 — Proyectar el historial comercial combinado](#t44)
+- [x] [T44 — Proyectar el historial comercial combinado](#t44)
 - [ ] [T45 — Mostrar historial comercial en las tres fichas](#t45)
 - [ ] [T46 — Comprobar retiro del legado y coherencia de contratos](#t46)
 - [ ] [T47 — Cerrar la verificación de seguridad acordada](#t47)
@@ -1154,13 +1154,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Unir actividades y transiciones antes de contar/paginar; orden fecha descendente, tipo e ID como desempate, fechas desde inclusiva/hasta exclusiva.
-- [ ] Clientes usan FKs históricas directas, sin importar lo de la empresa actual ni duplicar actividades que coinciden por dos relaciones.
-- [ ] Bajas respetan contextos vigentes: actividad puede seguir en contacto tras baja de oportunidad; todos los contextos dados de baja no originan papelera ni recuperación.
+- [x] Unir actividades y transiciones antes de contar/paginar; orden fecha descendente, tipo e ID como desempate, fechas desde inclusiva/hasta exclusiva.
+- [x] Clientes usan FKs históricas directas, sin importar lo de la empresa actual ni duplicar actividades que coinciden por dos relaciones.
+- [x] Bajas respetan contextos vigentes: actividad puede seguir en contacto tras baja de oportunidad; todos los contextos dados de baja no originan papelera ni recuperación.
 
 **Verificación:** B + API(HistorialComercialTests) + D; páginas intercaladas con empates, cambio A→B y oportunidad dada de baja.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t44.md](verificaciones/verificacion-t44.md). `HistorialComercialTests` 1/1 y `HttpContractTests` 19/19 (20/20); build sin errores ni advertencias. Sin merge ni push.
 
 <a id="t45"></a>
 
