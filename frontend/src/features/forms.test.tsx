@@ -181,7 +181,7 @@ describe('altas y ediciones', () => {
     await actor.click(screen.getByRole('button', { name: 'Crear oportunidad' }))
     expect(await screen.findByRole('heading', { name: 'Nueva venta' })).toBeTruthy()
     expect(screen.getByText('Oportunidad creada')).toBeTruthy()
-    expect(document.querySelector('.opportunity-subtitle')?.textContent).toBe('Acme Idiomas')
+    expect(document.querySelector('.profile-subtitle')?.textContent).toBe('Acme Idiomas')
     expect(opportunityPosts()).toHaveLength(1)
     expect(await requestBody(opportunityPosts()[0])).toEqual({ titulo: 'Nueva venta', idEmbudo: 1, idEmpresa: 4 })
   })
@@ -193,7 +193,7 @@ describe('altas y ediciones', () => {
     expect(screen.getByText(/Opcional\. Si lo dejás vacío se muestra el nombre de la empresa/)).toBeTruthy()
     await actor.click(screen.getByRole('button', { name: 'Crear oportunidad' }))
     expect(await screen.findByRole('heading', { name: 'Acme Idiomas' })).toBeTruthy()
-    expect(document.querySelector('.opportunity-subtitle')).toBeNull()
+    expect(document.querySelector('.profile-subtitle')).toBeNull()
     expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 1, idEmpresa: 4 })
   })
 

@@ -7,6 +7,7 @@ import { ApiRequestError, deleteOpportunity, getOpportunity, opportunityQueryKey
 import { displayValue, formatCommercialDate, parsePositiveId } from '../shared/display'
 import { confirmationFor } from '../shared/formUtils'
 import { RemoveRecordButton } from '../shared/RemoveRecordButton'
+import { ProfileHeader, ProfileRows, ProfileStats } from '../shared/RecordProfile'
 import { clientLabel, money, stateLabels } from './opportunityData'
 import { CloseOpportunityDialog, type CloseResult } from './CloseOpportunityDialog'
 import { MoveStageDialog } from './MoveStageDialog'
@@ -20,39 +21,28 @@ import '../companies/companies.css'
 const dateTime = (value: string | null | undefined) => value ? new Date(value).toLocaleDateString('es-AR') : '-'
 const inactive = (name: string, active: boolean | null | undefined) => active === false ? `${name} (inactivo)` : name
 
-function OpportunityField({ label, children }: { label: string; children: ReactNode }) {
-  return <div><dt>{label}</dt><dd>{typeof children === 'string' ? displayValue(children) : children ?? '-'}</dd></div>
-}
-
-function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
-  return <section className="company-detail-section" aria-labelledby={id}><Typography component="h2" id={id} className="company-section-heading">{title}</Typography><dl className="company-detail-fields">{children}</dl></section>
-}
-
-function OpportunityDetails({ opportunity }: { opportunity: Oportunidad }) {
-  return <article className="company-sheet" aria-label={`Ficha de ${opportunity.tituloVisible}`}>
-    <Section id="opportunity-relations-heading" title="Relación comercial">
-      <OpportunityField label="Empresa">{opportunity.idEmpresa ? <Link component={RouterLink} to={`/empresas/${opportunity.idEmpresa}`} underline="hover">{displayValue(opportunity.empresaRazonSocial)}</Link> : '-'}</OpportunityField>
-      <OpportunityField label="Contacto">{opportunity.idContacto ? <Link component={RouterLink} to={`/contactos/${opportunity.idContacto}`} underline="hover">{displayValue(opportunity.contactoNombre)}</Link> : '-'}</OpportunityField>
-    </Section>
-    <Section id="opportunity-management-heading" title="Gestión">
-      <OpportunityField label="Responsable">{inactive(opportunity.responsableNombre, opportunity.responsableActivo)}</OpportunityField>
-      <OpportunityField label="Embudo">{inactive(opportunity.embudoNombre, opportunity.embudoActivo)}</OpportunityField>
-      <OpportunityField label="Servicio">{inactive(opportunity.servicioNombre, opportunity.servicioActivo)}</OpportunityField>
-      <OpportunityField label="Etapa">{inactive(opportunity.etapaNombre, opportunity.etapaActiva)}</OpportunityField>
-      <OpportunityField label="Valor">{money(opportunity.valor)}</OpportunityField>
-      <OpportunityField label="Origen">{opportunity.idOrigen ? inactive(opportunity.origenDescripcion ?? '', opportunity.origenActivo) : '-'}</OpportunityField>
-    </Section>
-    <Section id="opportunity-dates-heading" title="Fechas">
-      <OpportunityField label="Creación">{dateTime(opportunity.fechaCreacion)}</OpportunityField>
-      <OpportunityField label="Cierre estimado">{formatCommercialDate(opportunity.fechaEstimadaCierre)}</OpportunityField>
-      <OpportunityField label="Cierre real">{dateTime(opportunity.fechaCierre)}</OpportunityField>
-    </Section>
-    <Section id="opportunity-academic-heading" title="Datos académicos">
-      <OpportunityField label="Objetivo de aprendizaje">{opportunity.objetivoAprendizaje ?? ''}</OpportunityField>
-      <OpportunityField label="Participantes">{opportunity.cantidadParticipantes == null ? '' : String(opportunity.cantidadParticipantes)}</OpportunityField>
-      <OpportunityField label="Disponibilidad horaria">{opportunity.disponibilidadHoraria ?? ''}</OpportunityField>
-    </Section>
-    <section className="company-detail-section" aria-labelledby="opportunity-notes-heading"><Typography component="h2" id="opportunity-notes-heading" className="company-section-heading">Observaciones</Typography><p className="company-observations">{displayValue(opportunity.observaciones)}</p></section>
+function OpportunityProfile({ opportunity, actions }: { opportunity: Oportunidad; actions: ReactNode }) {
+  return <article className="profile-sheet" aria-label={`Ficha de ${opportunity.tituloVisible}`}>
+    <ProfileHeader name={opportunity.tituloVisible} subtitle={opportunity.titulo ? clientLabel(opportunity) : undefined} status={<Chip className="company-status company-status--prospect" label={stateLabels[opportunity.estado] ?? opportunity.estado} size="small" />} actions={actions} />
+    <ProfileStats items={[
+      { label: 'Etapa', value: inactive(opportunity.etapaNombre, opportunity.etapaActiva) },
+      { label: 'Valor', value: money(opportunity.valor) },
+      { label: 'Responsable', value: inactive(opportunity.responsableNombre, opportunity.responsableActivo) },
+      { label: 'Cierre estimado', value: formatCommercialDate(opportunity.fechaEstimadaCierre) },
+    ]} />
+    <ProfileRows rows={[
+      { label: 'Empresa', value: opportunity.idEmpresa ? <Link component={RouterLink} to={`/empresas/${opportunity.idEmpresa}`} underline="hover">{displayValue(opportunity.empresaRazonSocial)}</Link> : undefined },
+      { label: 'Contacto', value: opportunity.idContacto ? <Link component={RouterLink} to={`/contactos/${opportunity.idContacto}`} underline="hover">{displayValue(opportunity.contactoNombre)}</Link> : undefined },
+      { label: 'Embudo', value: inactive(opportunity.embudoNombre, opportunity.embudoActivo) },
+      { label: 'Servicio', value: inactive(opportunity.servicioNombre, opportunity.servicioActivo) },
+      { label: 'Origen', value: opportunity.idOrigen ? inactive(opportunity.origenDescripcion ?? '', opportunity.origenActivo) : undefined },
+      { label: 'Creación', value: dateTime(opportunity.fechaCreacion) },
+      { label: 'Cierre real', value: dateTime(opportunity.fechaCierre) },
+      { label: 'Objetivo de aprendizaje', value: opportunity.objetivoAprendizaje?.trim() },
+      { label: 'Participantes', value: opportunity.cantidadParticipantes == null ? undefined : String(opportunity.cantidadParticipantes) },
+      { label: 'Disponibilidad horaria', value: opportunity.disponibilidadHoraria?.trim() },
+      { label: 'Observaciones', value: opportunity.observaciones?.trim() },
+    ]} />
   </article>
 }
 
@@ -82,14 +72,13 @@ export function OpportunityDetailPage() {
   return <Box className="companies-page company-result-page records-page">
     {backLink}
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
-    <header className="company-detail-header"><div><Typography component="h1" className="companies-page-title">{opportunity.tituloVisible}</Typography>{opportunity.titulo && <Typography className="companies-page-description opportunity-subtitle">{clientLabel(opportunity)}</Typography>}</div><div className="company-detail-header-actions">{opportunity.accionesPermitidas.editar && <Button component={RouterLink} to={`/oportunidades/${opportunity.id}/editar`} variant="outlined">Editar</Button>}{opportunity.accionesPermitidas.mover && <Button variant="outlined" onClick={() => setMoving(true)}>Cambiar etapa</Button>}{opportunity.accionesPermitidas.cerrar && <Button variant="outlined" onClick={() => setClosing('')}>Cerrar</Button>}{opportunity.accionesPermitidas.reabrir && <Button variant="outlined" onClick={() => setReopening(true)}>Reabrir</Button>}{opportunity.accionesPermitidas.gestionarActividades && <RegisterActivityButton context={{ label: opportunity.tituloVisible, idOportunidad: Number(opportunity.id), ...(opportunity.idEmpresa == null ? {} : { idEmpresa: Number(opportunity.idEmpresa) }), ...(opportunity.idContacto == null ? {} : { idContacto: Number(opportunity.idContacto) }) }} onRegistered={() => setActivityRegistered(true)} />}{opportunity.accionesPermitidas.darDeBaja && <RemoveRecordButton noun="oportunidad" name={opportunity.tituloVisible} remove={() => deleteOpportunity(Number(opportunity.id))} onRemoved={() => {
+    {activityRegistered && <Alert severity="success" className="record-form-confirmation">Actividad registrada.</Alert>}
+    {reassigned && <Alert severity="success" className="record-form-confirmation">Oportunidad reasignada. Podés consultarla, pero ya no editarla.</Alert>}
+    <OpportunityProfile opportunity={opportunity} actions={<>{opportunity.accionesPermitidas.editar && <Button component={RouterLink} to={`/oportunidades/${opportunity.id}/editar`} variant="outlined">Editar</Button>}{opportunity.accionesPermitidas.mover && <Button variant="outlined" onClick={() => setMoving(true)}>Cambiar etapa</Button>}{opportunity.accionesPermitidas.cerrar && <Button variant="outlined" onClick={() => setClosing('')}>Cerrar</Button>}{opportunity.accionesPermitidas.reabrir && <Button variant="outlined" onClick={() => setReopening(true)}>Reabrir</Button>}{opportunity.accionesPermitidas.gestionarActividades && <RegisterActivityButton context={{ label: opportunity.tituloVisible, idOportunidad: Number(opportunity.id), ...(opportunity.idEmpresa == null ? {} : { idEmpresa: Number(opportunity.idEmpresa) }), ...(opportunity.idContacto == null ? {} : { idContacto: Number(opportunity.idContacto) }) }} onRegistered={() => setActivityRegistered(true)} />}{opportunity.accionesPermitidas.darDeBaja && <RemoveRecordButton noun="oportunidad" name={opportunity.tituloVisible} remove={() => deleteOpportunity(Number(opportunity.id))} onRemoved={() => {
       queryClient.removeQueries({ queryKey: opportunityQueryKeys.detail(Number(opportunity.id)) })
       void queryClient.invalidateQueries({ queryKey: ['oportunidades'] })
       navigate('/oportunidades', { state: { confirmation: confirmationFor('Oportunidad', 'dada de baja') } })
-    }} />}{opportunity.accionesPermitidas.reasignar && <Button variant="outlined" onClick={() => setReassigning(true)}>Reasignar</Button>}<Chip className="company-status company-status--prospect" label={stateLabels[opportunity.estado] ?? opportunity.estado} size="small" /></div></header>
-    {activityRegistered && <Alert severity="success" className="record-form-confirmation">Actividad registrada.</Alert>}
-    {reassigned && <Alert severity="success" className="record-form-confirmation">Oportunidad reasignada. Podés consultarla, pero ya no editarla.</Alert>}
-    <OpportunityDetails opportunity={opportunity} />
+    }} />}{opportunity.accionesPermitidas.reasignar && <Button variant="outlined" onClick={() => setReassigning(true)}>Reasignar</Button>}</>} />
     <MoveStageDialog item={opportunity} open={moving} onClose={() => setMoving(false)} onDone={() => setMoving(false)} onCloseRequest={result => { setMoving(false); setClosing(result) }} />
     {closing !== null && <CloseOpportunityDialog item={opportunity} initialResult={closing || undefined} open onClose={() => setClosing(null)} onDone={() => setClosing(null)} />}
     <ReopenOpportunityDialog item={opportunity} open={reopening} onClose={() => setReopening(false)} onDone={() => setReopening(false)} />
