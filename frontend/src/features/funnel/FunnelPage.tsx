@@ -7,7 +7,7 @@ import { Link as RouterLink } from 'react-router-dom'
 import { getFunnel, listFunnels, moveOpportunity, opportunityQueryKeys, type Oportunidad } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { CompanyResponsibleSelect } from '../companies/CompanyResponsibleSelect'
-import { displayValue } from '../shared/display'
+import { displayValue, initials } from '../shared/display'
 import { saveErrorMessage } from '../shared/formUtils'
 import { CloseOpportunityDialog, type CloseResult } from '../opportunities/CloseOpportunityDialog'
 import { money, stageToneClass, stateLabels } from '../opportunities/opportunityData'
@@ -19,8 +19,6 @@ function countLabel(count: number) {
   if (count === 0) return 'Sin oportunidades'
   return `${count} ${count === 1 ? 'oportunidad' : 'oportunidades'}`
 }
-
-const initials = (text: string) => text.split(/s+/).filter(Boolean).slice(0, 2).map((word) => word[0]!.toUpperCase()).join('')
 
 function FunnelSkeleton() {
   return <div className="funnel-skeleton" role="status" aria-label="Cargando embudo">

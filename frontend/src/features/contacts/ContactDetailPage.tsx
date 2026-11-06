@@ -12,13 +12,9 @@ import { confirmationFor } from '../shared/formUtils'
 import { CommercialHistory } from '../activities/CommercialHistory'
 import { RegisterActivityButton } from '../activities/ActivityForm'
 import { RemoveRecordButton } from '../shared/RemoveRecordButton'
+import { ProfileHeader, ProfileRows, ProfileStats } from '../shared/RecordProfile'
 import '../companies/companies.css'
 import './records.css'
-
-function ContactField({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
-  const shownValue = typeof children === 'string' ? displayValue(children) : children ?? '-'
-  return <div className={className}><dt>{label}</dt><dd>{shownValue}</dd></div>
-}
 
 function ContactSkeleton() {
   return <div className="company-detail-skeleton" aria-label="Cargando detalle del contacto" role="status">
@@ -27,36 +23,24 @@ function ContactSkeleton() {
   </div>
 }
 
-function ContactDetails({ contact }: { contact: Contacto }) {
+function ContactProfile({ contact, actions }: { contact: Contacto; actions: ReactNode }) {
+  const name = contactFullName(contact)
   const hasEmail = Boolean(contact.correo?.trim())
   const hasPhone = Boolean(contact.telefono?.trim())
-  return <article className="company-sheet" aria-label={`Ficha de ${contactFullName(contact)}`}>
-    <section className="company-detail-section" aria-labelledby="contact-identification-heading">
-      <Typography component="h2" id="contact-identification-heading" className="company-section-heading">Identificación</Typography>
-      <dl className="company-detail-fields"><ContactField label="Documento">{contact.documento?.trim()}</ContactField><ContactField label="Cargo">{contact.cargo?.trim()}</ContactField></dl>
-    </section>
-    <section className="company-detail-section" aria-labelledby="contact-commercial-heading">
-      <Typography component="h2" id="contact-commercial-heading" className="company-section-heading">Datos comerciales</Typography>
-      <dl className="company-detail-fields">
-        <ContactField label="Responsable">{contact.responsableNombre + (contact.responsableActivo ? '' : ' (inactivo)')}</ContactField>
-        <ContactField label="Fecha de creación">{new Date(contact.fechaCreacion).toLocaleString('es-AR')}</ContactField>
-        <ContactField label="Estado" className="company-detail-commercial-field"><CompanyStatus value={contact.estadoDescripcion} /></ContactField>
-        {contact.estadoActivo === false && <ContactField label="Disponibilidad del estado">Estado inactivo para nuevas asignaciones</ContactField>}
-        <ContactField label="Origen">{contact.origenDescripcion ? contact.origenDescripcion + (contact.origenActivo === false ? ' (inactivo)' : '') : undefined}</ContactField>
-      </dl>
-    </section>
-    <section className="company-detail-section" aria-labelledby="contact-method-heading">
-      <Typography component="h2" id="contact-method-heading" className="company-section-heading">Contacto</Typography>
-      <dl className="company-detail-fields"><ContactField label="Correo y teléfono"><span className="record-contact-links">{hasEmail && <Link href={`mailto:${contact.correo}`} underline="hover">{contact.correo}</Link>}{hasPhone && <Link href={`tel:${contact.telefono}`} underline="hover">{contact.telefono}</Link>}{!hasEmail && !hasPhone && '-'}</span></ContactField></dl>
-    </section>
-    <section className="company-detail-section" aria-labelledby="contact-company-heading">
-      <Typography component="h2" id="contact-company-heading" className="company-section-heading">Empresa relacionada</Typography>
-      <dl className="company-detail-fields"><ContactField label="Empresa">{contact.idEmpresa ? <Link component={RouterLink} to={`/empresas/${contact.idEmpresa}`} underline="hover">{displayValue(contact.empresaRazonSocial)}</Link> : contact.empresaRazonSocial?.trim()}</ContactField></dl>
-    </section>
-    <section className="company-detail-section" aria-labelledby="contact-notes-heading">
-      <Typography component="h2" id="contact-notes-heading" className="company-section-heading">Observaciones</Typography>
-      <p className="company-observations">{displayValue(contact.observaciones)}</p>
-    </section>
+  return <article className="profile-sheet" aria-label={`Ficha de ${name}`}>
+    <ProfileHeader name={name} subtitle={contact.cargo} status={<CompanyStatus value={contact.estadoDescripcion} />} actions={actions} />
+    <ProfileStats items={[
+      { label: 'Responsable', value: contact.responsableNombre + (contact.responsableActivo ? '' : ' (inactivo)') },
+      { label: 'Origen', value: contact.origenDescripcion ? contact.origenDescripcion + (contact.origenActivo === false ? ' (inactivo)' : '') : undefined },
+      { label: 'Fecha de creación', value: new Date(contact.fechaCreacion).toLocaleString('es-AR') },
+    ]} />
+    <ProfileRows rows={[
+      { label: 'Contacto', value: (hasEmail || hasPhone) && <span className="record-contact-links">{hasEmail && <Link href={`mailto:${contact.correo}`} underline="hover">{contact.correo}</Link>}{hasPhone && <Link href={`tel:${contact.telefono}`} underline="hover">{contact.telefono}</Link>}</span> },
+      { label: 'Empresa', value: contact.idEmpresa ? <Link component={RouterLink} to={`/empresas/${contact.idEmpresa}`} underline="hover">{displayValue(contact.empresaRazonSocial)}</Link> : contact.empresaRazonSocial?.trim() },
+      { label: 'Documento', value: contact.documento?.trim() },
+      ...(contact.estadoActivo === false ? [{ label: 'Disponibilidad del estado', value: 'Estado inactivo para nuevas asignaciones' }] : []),
+      { label: 'Observaciones', value: contact.observaciones?.trim() },
+    ]} />
   </article>
 }
 
@@ -79,12 +63,11 @@ export function ContactDetailPage() {
     <Link component={RouterLink} to="/contactos" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a contactos</Link>
     {activityRegistered && <Alert severity="success" className="record-form-confirmation">Actividad registrada.</Alert>}
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
-    <header className="company-detail-header"><div><Typography component="h1" className="companies-page-title">{contactFullName(contact)}</Typography></div><div className="company-detail-header-actions"><CompanyStatus value={contact.estadoDescripcion} />{canCreateOpportunity && <Button component={RouterLink} to={`/oportunidades/nueva?idContacto=${contact.id}`} variant="outlined">Nueva oportunidad</Button>}<RegisterActivityButton context={{ label: contactFullName(contact), idContacto: Number(contact.id) }} onRegistered={() => setActivityRegistered(true)} /><Button component={RouterLink} to={`/contactos/${contact.id}/editar`} variant="contained" startIcon={<Edit />}>Editar contacto</Button>
+    <ContactProfile contact={contact} actions={<>{canCreateOpportunity && <Button component={RouterLink} to={`/oportunidades/nueva?idContacto=${contact.id}`} variant="outlined">Nueva oportunidad</Button>}<RegisterActivityButton context={{ label: contactFullName(contact), idContacto: Number(contact.id) }} onRegistered={() => setActivityRegistered(true)} /><Button component={RouterLink} to={`/contactos/${contact.id}/editar`} variant="contained" startIcon={<Edit />}>Editar contacto</Button>
       <RemoveRecordButton noun="contacto" name={contactFullName(contact)} remove={() => deleteContact(Number(contact.id))} onRemoved={() => {
         navigate('/contactos', { state: { confirmation: confirmationFor('Contacto', 'dado de baja') } })
         void queryClient.invalidateQueries({ queryKey: contactoQueryKeys.all, refetchType: 'inactive' })
-      }} /></div></header>
-    <ContactDetails contact={contact} />
+      }} /></>} />
     <CommercialHistory kind="contactos" id={Number(contact.id)} />
   </Box>
 }
