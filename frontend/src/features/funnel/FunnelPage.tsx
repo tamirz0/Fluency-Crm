@@ -20,6 +20,12 @@ function countLabel(count: number) {
   return `${count} ${count === 1 ? 'oportunidad' : 'oportunidades'}`
 }
 
+const finalRank = (state: string) => state === 'ABIERTA' ? 0 : state === 'GANADA' ? 1 : 2
+/** El servidor ordena por `orden` y las finales nacen con 1 y 2: abiertas primero, luego Ganada y Perdida al final. */
+function sortStages<T extends { estado: string }>(stages: T[]): T[] {
+  return stages.map((stage, index) => ({ stage, index })).sort((a, b) => finalRank(a.stage.estado) - finalRank(b.stage.estado) || a.index - b.index).map(({ stage }) => stage)
+}
+
 function FunnelSkeleton() {
   return <div className="funnel-skeleton" role="status" aria-label="Cargando embudo">
     {[0, 1, 2, 3].map((column) => <div className="funnel-skeleton-column" key={column}><span /><span /><span /><span /></div>)}
@@ -92,7 +98,7 @@ export function FunnelPage() {
   const funnel = useQuery({
     queryKey: opportunityQueryKeys.funnel(Number(funnelId), owner), queryFn: () => getFunnel(Number(funnelId), owner), enabled: funnelId !== '',
   })
-  const stages = funnel.data?.etapas ?? []
+  const stages = sortStages(funnel.data?.etapas ?? [])
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }), useSensor(KeyboardSensor))
   const move = useMutation({
     mutationFn: ({ item, stage }: { item: Oportunidad; stage: Stage }) => moveOpportunity(Number(item.id), Number(stage.id)),
@@ -121,7 +127,7 @@ export function FunnelPage() {
       {funnel.isPending ? <FunnelSkeleton /> : funnel.isError ? <section className="company-feedback" aria-labelledby="funnel-load-error-title"><Typography component="h2" id="funnel-load-error-title" className="company-feedback-title">No pudimos cargar el embudo</Typography><Typography color="text.secondary">{funnel.error.message}</Typography><Button onClick={() => void funnel.refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button></section> : <>
         {!funnel.data.activo && <Alert className="funnel-catalog-message" severity="info">Este embudo está inactivo: se puede consultar, pero no admite oportunidades nuevas.</Alert>}
         {total === 0 && <p className="funnel-empty-summary">No hay oportunidades en este embudo{owner || !isSuperior ? ' para tu selección' : ''}.</p>}
-        {stages.length === 0 ? <section className="company-feedback"><Typography component="h2" className="company-feedback-title">No hay etapas para mostrar</Typography><Typography color="text.secondary">Cuando el embudo tenga etapas activas, van a aparecer acá.</Typography></section> : <DndContext sensors={sensors} accessibility={{ announcements, screenReaderInstructions: { draggable: 'Para mover la oportunidad a otra etapa, presioná espacio, elegí la etapa con las flechas y presioná espacio otra vez para soltarla. Escape cancela.' } }} onDragStart={({ active }) => setDragging(active.data.current?.opportunity ?? null)} onDragCancel={() => setDragging(null)} onDragEnd={onDragEnd}><div className="funnel-board-scroll" role="region" aria-label="Etapas del embudo comercial" tabIndex={0}><div className="funnel-board" style={{ gridTemplateColumns: stages.map((stage) => collapsedStages.has(stage.id) ? 'minmax(160px, .58fr)' : 'minmax(270px, 1fr)').join(' ') }}>
+        {stages.length === 0 ? <section className="company-feedback"><Typography component="h2" className="company-feedback-title">No hay etapas para mostrar</Typography><Typography color="text.secondary">Cuando el embudo tenga etapas activas, van a aparecer acá.</Typography></section> : <DndContext sensors={sensors} accessibility={{ announcements, screenReaderInstructions: { draggable: 'Para mover la oportunidad a otra etapa, presioná espacio, elegí la etapa con las flechas y presioná espacio otra vez para soltarla. Escape cancela.' } }} onDragStart={({ active }) => setDragging(active.data.current?.opportunity ?? null)} onDragCancel={() => setDragging(null)} onDragEnd={onDragEnd}><div className="funnel-board-scroll" role="region" aria-label="Etapas del embudo comercial" tabIndex={0}><div className="funnel-board" style={{ gridTemplateColumns: stages.map((stage) => collapsedStages.has(stage.id) ? 'minmax(120px, .5fr)' : 'minmax(200px, 1fr)').join(' ') }}>
           {stages.map((stage, stageIndex) => <StageColumn key={stage.id} stage={stage} index={stageIndex} count={stage.oportunidades.length} collapsed={collapsedStages.has(stage.id)} onToggle={() => setCollapsedStages((current) => {
             const next = new Set(current)
             if (next.has(stage.id)) next.delete(stage.id)

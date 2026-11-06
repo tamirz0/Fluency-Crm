@@ -30,10 +30,11 @@ const wonCard = { ...card, id: 92, titulo: null, tituloVisible: 'Acme Idiomas', 
 const funnelBody = (overrides: Record<string, unknown> = {}) => ({
   idEmbudo: 1, nombre: 'Embudo Inglés', activo: true, idServicio: 2, servicioNombre: 'Capacitación', servicioActivo: true,
   etapas: [
-    { id: 3, nombre: 'Propuesta', orden: 3, estado: 'ABIERTA', oportunidades: [card] },
-    { id: 4, nombre: 'Negociación', orden: 4, estado: 'ABIERTA', oportunidades: [] },
+    // El servidor ordena por `orden`: las finales (1 y 2) llegan primero y la pantalla debe mostrarlas al final.
     { id: 5, nombre: 'Ganada', orden: 1, estado: 'GANADA', oportunidades: [wonCard] },
     { id: 6, nombre: 'Perdida', orden: 2, estado: 'PERDIDA', oportunidades: [] },
+    { id: 3, nombre: 'Propuesta', orden: 3, estado: 'ABIERTA', oportunidades: [card] },
+    { id: 4, nombre: 'Negociación', orden: 4, estado: 'ABIERTA', oportunidades: [] },
   ],
   ...overrides,
 })
