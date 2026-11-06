@@ -217,11 +217,68 @@ describe('altas y ediciones', () => {
   it('ofrece crear una oportunidad desde las fichas de empresa y contacto solo con permiso', async () => {
     const allowed = { ...user, permisos: ['GestionarOportunidad'] }
     installCatalogApi(); renderAuthenticated('/empresas/4', allowed)
-    expect(await screen.findByRole('link', { name: 'Nueva oportunidad' })).toHaveProperty('href', expect.stringContaining('/oportunidades/nueva?idEmpresa=4'))
+    expect(await screen.findByRole('button', { name: 'Nueva oportunidad' })).toBeTruthy()
     cleanup(); renderAuthenticated('/contactos/14', allowed)
-    expect(await screen.findByRole('link', { name: 'Nueva oportunidad' })).toHaveProperty('href', expect.stringContaining('/oportunidades/nueva?idContacto=14'))
+    expect(await screen.findByRole('button', { name: 'Nueva oportunidad' })).toBeTruthy()
     cleanup(); renderAuthenticated('/empresas/4')
-    await screen.findByRole('heading', { name: 'Acme Idiomas' }); expect(screen.queryByRole('link', { name: 'Nueva oportunidad' })).toBeNull()
+    await screen.findByRole('heading', { name: 'Acme Idiomas' }); expect(screen.queryByRole('button', { name: 'Nueva oportunidad' })).toBeNull()
+  })
+
+  const allowed = { ...user, permisos: ['GestionarOportunidad'] }
+  const openQuick = async (path: string, services?: Parameters<typeof installCatalogApi>[0]) => {
+    installCatalogApi(services); const actor = userEvent.setup(); renderAuthenticated(path, allowed)
+    await actor.click(await screen.findByRole('button', { name: 'Nueva oportunidad' }))
+    return { actor, dialog: within(await screen.findByRole('dialog', { name: 'Nueva oportunidad' })) }
+  }
+
+  it('alta rápida desde una empresa: con un solo servicio solo hay que confirmar y viaja solo embudo y empresa', async () => {
+    const { actor, dialog } = await openQuick('/empresas/4')
+    expect(await dialog.findByRole('combobox', { name: /Servicio/ })).toBeTruthy()
+    await waitFor(() => expect((dialog.getByRole('button', { name: 'Crear oportunidad' }) as HTMLButtonElement).disabled).toBe(false))
+    expect(dialog.queryByRole('combobox', { name: /Embudo/ })).toBeNull()
+    await actor.click(dialog.getByRole('button', { name: 'Crear oportunidad' }))
+    expect(await screen.findByText('Oportunidad creada')).toBeTruthy()
+    expect(opportunityPosts()).toHaveLength(1)
+    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 1, idEmpresa: 4 })
+  })
+
+  it('alta rápida desde un contacto envía también la empresa del contacto', async () => {
+    const { actor, dialog } = await openQuick('/contactos/14')
+    await waitFor(() => expect((dialog.getByRole('button', { name: 'Crear oportunidad' }) as HTMLButtonElement).disabled).toBe(false))
+    await actor.click(dialog.getByRole('button', { name: 'Crear oportunidad' }))
+    await screen.findByText('Oportunidad creada')
+    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 1, idEmpresa: 4, idContacto: 14 })
+  })
+
+  it('alta rápida: con varios servicios hay que elegir uno y el embudo se deriva de él', async () => {
+    const cursos = { ...funnel, id: 3, nombre: 'Embudo Cursos', servicio: { id: 5, nombre: 'Cursos', activo: true } }
+    const { actor, dialog } = await openQuick('/empresas/4', { funnels: [funnel, cursos, { ...funnel, id: 9, nombre: 'Embudo inactivo', activo: false }] })
+    await waitFor(() => expect((dialog.getByRole('combobox', { name: /Servicio/ }) as HTMLElement).getAttribute('aria-disabled')).not.toBe('true'))
+    expect((dialog.getByRole('button', { name: 'Crear oportunidad' }) as HTMLButtonElement).disabled).toBe(true)
+    await actor.click(dialog.getByRole('combobox', { name: /Servicio/ }))
+    expect((await screen.findAllByRole('option')).map(option => option.textContent)).toEqual(['Capacitación', 'Cursos'])
+    await actor.click(screen.getByRole('option', { name: 'Cursos' }))
+    await actor.click(dialog.getByRole('button', { name: 'Crear oportunidad' }))
+    await screen.findByText('Oportunidad creada')
+    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 3, idEmpresa: 4 })
+  })
+
+  it('alta rápida: si el servicio tiene varios embudos activos pide elegir el embudo', async () => {
+    const { actor, dialog } = await openQuick('/empresas/4', { funnels: [funnel, { ...funnel, id: 3, nombre: 'Embudo Cursos' }] })
+    const embudo = await dialog.findByRole('combobox', { name: /Embudo/ })
+    expect((dialog.getByRole('button', { name: 'Crear oportunidad' }) as HTMLButtonElement).disabled).toBe(true)
+    await actor.click(embudo); await actor.click(await screen.findByRole('option', { name: 'Embudo Cursos' }))
+    await actor.click(dialog.getByRole('button', { name: 'Crear oportunidad' }))
+    await screen.findByText('Oportunidad creada')
+    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 3, idEmpresa: 4 })
+  })
+
+  it('alta rápida: muestra el rechazo del servidor sin cerrar el diálogo', async () => {
+    const { actor, dialog } = await openQuick('/empresas/4', { create: async () => jsonResponse({ title: 'El embudo no tiene una etapa abierta activa. Configure una antes de crear oportunidades.', status: 409 }, 409) })
+    await waitFor(() => expect((dialog.getByRole('button', { name: 'Crear oportunidad' }) as HTMLButtonElement).disabled).toBe(false))
+    await actor.click(dialog.getByRole('button', { name: 'Crear oportunidad' }))
+    expect((await dialog.findByRole('alert')).textContent).toContain('no tiene una etapa abierta activa')
+    expect(opportunityPosts()).toHaveLength(1)
   })
 
   it('filtra los contactos por la empresa elegida', async () => {

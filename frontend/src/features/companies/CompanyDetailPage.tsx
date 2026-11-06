@@ -10,6 +10,7 @@ import { confirmationFor } from '../shared/formUtils'
 import { CommercialHistory } from '../activities/CommercialHistory'
 import { RegisterActivityButton } from '../activities/ActivityForm'
 import { RemoveRecordButton } from '../shared/RemoveRecordButton'
+import { QuickOpportunityButton } from '../opportunities/QuickOpportunityButton'
 import { ProfileHeader, ProfileRows, ProfileStats } from '../shared/RecordProfile'
 import './companies.css'
 
@@ -68,7 +69,7 @@ export function CompanyDetailPage() {
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
     {query.isFetching && query.isPlaceholderData && <Typography className="company-detail-loading" role="status">Actualizando ficha…</Typography>}
     <article className="profile-sheet" aria-label={`Ficha de ${company.razonSocial}`}>
-      <ProfileHeader name={company.razonSocial} subtitle={[company.cuit?.trim() && `CUIT ${company.cuit.trim()}`, company.industria?.trim()].filter(Boolean).join(' · ')} status={<CompanyStatus value={status} />} actions={<>{canCreateOpportunity && <Button component={RouterLink} to={`/oportunidades/nueva?idEmpresa=${company.id}`} variant="outlined">Nueva oportunidad</Button>}<RegisterActivityButton context={{ label: company.razonSocial, idEmpresa: Number(company.id) }} onRegistered={() => setActivityRegistered(true)} /><Button component={RouterLink} to={`/empresas/${company.id}/editar`} variant="contained">Editar empresa</Button>
+      <ProfileHeader name={company.razonSocial} subtitle={[company.cuit?.trim() && `CUIT ${company.cuit.trim()}`, company.industria?.trim()].filter(Boolean).join(' · ')} status={<CompanyStatus value={status} />} actions={<>{canCreateOpportunity && <QuickOpportunityButton idEmpresa={Number(company.id)} label={company.razonSocial} />}<RegisterActivityButton context={{ label: company.razonSocial, idEmpresa: Number(company.id) }} onRegistered={() => setActivityRegistered(true)} /><Button component={RouterLink} to={`/empresas/${company.id}/editar`} variant="contained">Editar empresa</Button>
         <RemoveRecordButton noun="empresa" name={company.razonSocial} remove={() => deleteCompany(Number(company.id))} onRemoved={() => {
           navigate('/empresas', { state: { confirmation: confirmationFor('Empresa', 'dada de baja') } })
           void queryClient.invalidateQueries({ queryKey: empresaQueryKeys.all, refetchType: 'inactive' })

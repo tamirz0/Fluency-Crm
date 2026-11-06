@@ -12,6 +12,7 @@ import { confirmationFor } from '../shared/formUtils'
 import { CommercialHistory } from '../activities/CommercialHistory'
 import { RegisterActivityButton } from '../activities/ActivityForm'
 import { RemoveRecordButton } from '../shared/RemoveRecordButton'
+import { QuickOpportunityButton } from '../opportunities/QuickOpportunityButton'
 import { ProfileHeader, ProfileRows, ProfileStats } from '../shared/RecordProfile'
 import '../companies/companies.css'
 import './records.css'
@@ -63,7 +64,7 @@ export function ContactDetailPage() {
     <Link component={RouterLink} to="/contactos" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a contactos</Link>
     {activityRegistered && <Alert severity="success" className="record-form-confirmation">Actividad registrada.</Alert>}
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
-    <ContactProfile contact={contact} actions={<>{canCreateOpportunity && <Button component={RouterLink} to={`/oportunidades/nueva?idContacto=${contact.id}`} variant="outlined">Nueva oportunidad</Button>}<RegisterActivityButton context={{ label: contactFullName(contact), idContacto: Number(contact.id) }} onRegistered={() => setActivityRegistered(true)} /><Button component={RouterLink} to={`/contactos/${contact.id}/editar`} variant="contained" startIcon={<Edit />}>Editar contacto</Button>
+    <ContactProfile contact={contact} actions={<>{canCreateOpportunity && <QuickOpportunityButton idContacto={Number(contact.id)} {...(contact.idEmpresa == null ? {} : { idEmpresa: Number(contact.idEmpresa) })} label={contactFullName(contact)} />}<RegisterActivityButton context={{ label: contactFullName(contact), idContacto: Number(contact.id) }} onRegistered={() => setActivityRegistered(true)} /><Button component={RouterLink} to={`/contactos/${contact.id}/editar`} variant="contained" startIcon={<Edit />}>Editar contacto</Button>
       <RemoveRecordButton noun="contacto" name={contactFullName(contact)} remove={() => deleteContact(Number(contact.id))} onRemoved={() => {
         navigate('/contactos', { state: { confirmation: confirmationFor('Contacto', 'dado de baja') } })
         void queryClient.invalidateQueries({ queryKey: contactoQueryKeys.all, refetchType: 'inactive' })
