@@ -29,7 +29,7 @@ function FunnelList() {
       <Button type="submit">Buscar</Button><Button onClick={() => void funnels.refetch()}>Actualizar embudos</Button>
     </Box>
     {funnels.isPending ? <Box role="status">Cargando embudos…</Box> : funnels.error ? <Alert severity="error" action={<Button onClick={() => void funnels.refetch()}>Reintentar</Button>}>{funnels.error.message}</Alert> : <>
-      <TableContainer><Table size="small" aria-label="Embudos"><TableHead><TableRow><TableCell>Nombre</TableCell><TableCell>Servicio</TableCell><TableCell>Estado</TableCell><TableCell>Acciones</TableCell></TableRow></TableHead>
+      <TableContainer className="data-table-wrap"><Table size="small" aria-label="Embudos"><TableHead><TableRow><TableCell>Nombre</TableCell><TableCell>Servicio</TableCell><TableCell>Estado</TableCell><TableCell>Acciones</TableCell></TableRow></TableHead>
         <TableBody>{funnels.data.items.map(f => <TableRow key={f.id} selected={f.id === current?.id}>
           <TableCell>{f.nombre}</TableCell><TableCell>{f.servicio.descripcion}{!f.servicio.activo && ' (Inactivo)'}</TableCell><TableCell><Chip size="small" variant="outlined" label={f.activo ? 'Activo' : 'Inactivo'} color={f.activo ? 'success' : 'default'} /></TableCell>
           <TableCell><Button aria-label={`Etapas de ${f.nombre}`} onClick={() => setSelected(f)}>Etapas</Button><Button aria-label={`Editar ${f.nombre}`} onClick={() => setAction({ item: f })}>Editar</Button><Button aria-label={`${f.activo ? 'Desactivar' : 'Reactivar'} ${f.nombre}`} onClick={() => setAction({ item: f, active: true })}>{f.activo ? 'Desactivar' : 'Reactivar'}</Button></TableCell>

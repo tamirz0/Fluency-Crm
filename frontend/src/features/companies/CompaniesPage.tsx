@@ -32,8 +32,8 @@ function CompanyPhone({ company }: { company: Empresa }) {
 }
 
 function DesktopRows({ companies, onOpen }: { companies: Empresa[]; onOpen: (id: string | number) => void }) {
-  return <TableContainer className="company-table-wrap">
-    <Table aria-label="Empresas" className="company-table company-list-table">
+  return <TableContainer className="data-table-wrap">
+    <Table aria-label="Empresas" size="small">
       <caption className="visually-hidden">Listado de empresas</caption>
       <TableHead><TableRow>
         <TableCell>Razón social</TableCell><TableCell>Estado</TableCell><TableCell>Industria</TableCell><TableCell>Correo</TableCell><TableCell>Teléfono</TableCell><TableCell>Origen</TableCell><TableCell>Responsable</TableCell>
@@ -65,8 +65,8 @@ function MobileRecords({ companies, onOpen }: { companies: Empresa[]; onOpen: (i
 
 function CompanyListSkeleton() {
   return <div className="companies-loading" role="status" aria-label="Cargando empresas">
-    <TableContainer className="company-table-wrap company-skeleton-table">
-      <Table aria-hidden="true" className="company-list-table"><TableHead><TableRow>{['Razón social', 'Estado', 'Industria', 'Correo', 'Teléfono', 'Origen'].map((heading) => <TableCell key={heading}>{heading}</TableCell>)}</TableRow></TableHead>
+    <TableContainer className="data-table-wrap company-skeleton-table">
+      <Table aria-hidden="true" size="small"><TableHead><TableRow>{['Razón social', 'Estado', 'Industria', 'Correo', 'Teléfono', 'Origen'].map((heading) => <TableCell key={heading}>{heading}</TableCell>)}</TableRow></TableHead>
         <TableBody>{[0, 1, 2, 3].map((row) => <TableRow key={row}>{[0, 1, 2, 3, 4, 5].map((cell) => <TableCell key={cell}><Skeleton width={cell === 0 ? '85%' : '70%'} /></TableCell>)}</TableRow>)}</TableBody>
       </Table>
     </TableContainer>

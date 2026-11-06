@@ -26,7 +26,7 @@ function ContactPhone({ contact }: { contact: Contacto }) {
 }
 
 function ContactRows({ contacts, onOpen }: { contacts: Contacto[]; onOpen: (id: string | number) => void }) {
-  return <TableContainer className="company-table-wrap record-table-wrap"><Table aria-label="Contactos" className="company-table record-table contact-table">
+  return <TableContainer className="data-table-wrap"><Table aria-label="Contactos" size="small">
     <caption className="visually-hidden">Listado de contactos</caption>
     <TableHead><TableRow>{columns.map((label) => <TableCell key={label}>{label}</TableCell>)}</TableRow></TableHead>
     <TableBody>{contacts.map((contact) => <TableRow key={contact.id} className="company-clickable-row" onClick={() => onOpen(contact.id)}>
@@ -60,7 +60,7 @@ function ContactCards({ contacts, onOpen }: { contacts: Contacto[]; onOpen: (id:
 
 function ContactListSkeleton() {
   return <div className="companies-loading" role="status" aria-label="Cargando contactos">
-    <TableContainer className="company-table-wrap record-table-wrap"><Table aria-hidden="true" className="company-table record-table contact-table">
+    <TableContainer className="data-table-wrap"><Table aria-hidden="true" size="small">
       <TableHead><TableRow>{columns.map((label) => <TableCell key={label}>{label}</TableCell>)}</TableRow></TableHead>
       <TableBody>{[0, 1, 2, 3].map((row) => <TableRow key={row}>{columns.map((label, cell) => <TableCell key={label}><Skeleton width={cell === 0 ? '85%' : '70%'} /></TableCell>)}</TableRow>)}</TableBody>
     </Table></TableContainer>

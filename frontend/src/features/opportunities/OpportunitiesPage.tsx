@@ -11,26 +11,51 @@ import '../contacts/records.css'
 import '../companies/companies.css'
 
 const columns = ['Título', 'Embudo', 'Etapa', 'Empresa', 'Contacto', 'Responsable', 'Valor', 'Cierre estimado']
+const nowrapColumns = ['Valor', 'Cierre estimado']
 
 function Rows({ items, onOpen }: { items: Oportunidad[]; onOpen: (id: number | string) => void }) {
-  return <TableContainer className="company-table-wrap record-table-wrap"><Table aria-label="Oportunidades" className="company-table record-table opportunity-table">
+  return <TableContainer className="data-table-wrap"><Table aria-label="Oportunidades" size="small">
     <caption className="visually-hidden">Listado de oportunidades</caption>
-    <TableHead><TableRow>{columns.map((column) => <TableCell key={column}>{column}</TableCell>)}</TableRow></TableHead>
+    <TableHead><TableRow>{columns.map((column) => <TableCell key={column} className={nowrapColumns.includes(column) ? 'nowrap' : undefined}>{column}</TableCell>)}</TableRow></TableHead>
     <TableBody>{items.map((item) => <TableRow key={item.id} className="company-clickable-row" onClick={() => onOpen(item.id)}>
       <TableCell className="company-name-cell"><Link component={RouterLink} to={`/oportunidades/${item.id}`} aria-label={`Abrir ficha de ${item.tituloVisible}`} underline="hover" onClick={(event) => event.stopPropagation()}>{item.tituloVisible}</Link></TableCell>
       <TableCell>{item.embudoNombre}{item.embudoActivo ? '' : ' (inactivo)'}</TableCell>
       <TableCell><Chip className="company-status company-stage-chip" label={`${item.etapaNombre} · ${stateLabels[item.estado] ?? item.estado}`} size="small" /></TableCell>
-      <TableCell>{item.idEmpresa ? <Link component={RouterLink} to={`/empresas/${item.idEmpresa}`} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(item.empresaRazonSocial)}</Link> : '-'}</TableCell>
-      <TableCell>{item.idContacto ? <Link component={RouterLink} to={`/contactos/${item.idContacto}`} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(item.contactoNombre)}</Link> : '-'}</TableCell>
+      <TableCell><CompanyLink item={item} /></TableCell>
+      <TableCell><ContactLink item={item} /></TableCell>
       <TableCell>{item.responsableNombre}{item.responsableActivo ? '' : ' (inactivo)'}</TableCell>
-      <TableCell>{money(item.valor)}</TableCell>
-      <TableCell>{formatCommercialDate(item.fechaEstimadaCierre)}</TableCell>
+      <TableCell className="nowrap">{money(item.valor)}</TableCell>
+      <TableCell className="nowrap">{formatCommercialDate(item.fechaEstimadaCierre)}</TableCell>
     </TableRow>)}</TableBody>
   </Table></TableContainer>
 }
 
+function CompanyLink({ item }: { item: Oportunidad }) {
+  return item.idEmpresa ? <Link component={RouterLink} to={`/empresas/${item.idEmpresa}`} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(item.empresaRazonSocial)}</Link> : <>-</>
+}
+
+function ContactLink({ item }: { item: Oportunidad }) {
+  return item.idContacto ? <Link component={RouterLink} to={`/contactos/${item.idContacto}`} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(item.contactoNombre)}</Link> : <>-</>
+}
+
+function Cards({ items, onOpen }: { items: Oportunidad[]; onOpen: (id: number | string) => void }) {
+  return <ul className="company-record-list" aria-label="Oportunidades">
+    {items.map((item) => <li className="company-record company-clickable-record" key={item.id} onClick={() => onOpen(item.id)}>
+      <div className="company-record-heading"><h2><Link component={RouterLink} to={`/oportunidades/${item.id}`} aria-label={`Abrir ficha de ${item.tituloVisible}`} underline="hover" onClick={(event) => event.stopPropagation()}>{item.tituloVisible}</Link></h2><Chip className="company-status company-stage-chip" label={`${item.etapaNombre} · ${stateLabels[item.estado] ?? item.estado}`} size="small" /></div>
+      <dl className="company-record-fields">
+        <div><dt>Embudo</dt><dd>{item.embudoNombre}{item.embudoActivo ? '' : ' (inactivo)'}</dd></div>
+        <div><dt>Responsable</dt><dd>{item.responsableNombre}{item.responsableActivo ? '' : ' (inactivo)'}</dd></div>
+        <div><dt>Empresa</dt><dd><CompanyLink item={item} /></dd></div>
+        <div><dt>Contacto</dt><dd><ContactLink item={item} /></dd></div>
+        <div><dt>Valor</dt><dd>{money(item.valor)}</dd></div>
+        <div><dt>Cierre estimado</dt><dd>{formatCommercialDate(item.fechaEstimadaCierre)}</dd></div>
+      </dl>
+    </li>)}
+  </ul>
+}
+
 function OpportunityListSkeleton() {
-  return <div role="status" aria-label="Cargando oportunidades"><TableContainer className="company-table-wrap record-table-wrap"><Table aria-hidden="true" className="company-table record-table opportunity-table">
+  return <div role="status" aria-label="Cargando oportunidades"><TableContainer className="data-table-wrap"><Table aria-hidden="true" size="small">
     <TableHead><TableRow>{columns.map((label) => <TableCell key={label}>{label}</TableCell>)}</TableRow></TableHead>
     <TableBody>{[0, 1, 2, 3].map((row) => <TableRow key={row}>{columns.map((label, cell) => <TableCell key={label}><Skeleton width={cell === 0 ? '85%' : '70%'} /></TableCell>)}</TableRow>)}</TableBody>
   </Table></TableContainer></div>
@@ -79,7 +104,7 @@ export function OpportunitiesPage() {
       <Typography role="status" sx={{ mb: 2 }}>{data.totalCount} {Number(data.totalCount) === 1 ? 'oportunidad' : 'oportunidades'}</Typography>
       {data.items.length === 0
         ? <section className="company-feedback" aria-labelledby="opportunities-empty-title"><Typography component="h2" id="opportunities-empty-title" className="company-feedback-title">{filtered || page ? 'No hay oportunidades para estos filtros o página' : 'Todavía no hay oportunidades'}</Typography><Typography color="text.secondary">Las oportunidades registradas van a aparecer en este listado.</Typography></section>
-        : <Rows items={data.items} onOpen={(id) => navigate(`/oportunidades/${id}`)} />}
+        : <><div className="company-list-desktop"><Rows items={data.items} onOpen={(id) => navigate(`/oportunidades/${id}`)} /></div><div className="company-list-mobile"><Cards items={data.items} onOpen={(id) => navigate(`/oportunidades/${id}`)} /></div></>}
       <TablePagination component="div" count={Number(data.totalCount)} page={page} rowsPerPage={pageSize} rowsPerPageOptions={[10, 25, 50, 100]} onPageChange={(_, next) => setPage(next)} onRowsPerPageChange={(event) => { setPageSize(Number(event.target.value)); setPage(0) }} labelRowsPerPage="Oportunidades por página" labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`} getItemAriaLabel={(type) => ({ first: 'Primera página', last: 'Última página', next: 'Página siguiente', previous: 'Página anterior' })[type]} />
     </>}
   </Box>
