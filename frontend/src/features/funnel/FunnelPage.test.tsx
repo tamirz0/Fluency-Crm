@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { BrowserRouter } from 'react-router-dom'
@@ -8,6 +8,13 @@ import { createQueryClient } from '../../app/queryClient'
 import App from '../../test/LegacyApp'
 import { AuthProvider } from '../../test/LegacyAuthProvider'
 import { SESSION_KEY } from '../../auth/session'
+
+const dnd = vi.hoisted(() => ({ onDragEnd: null as null | ((event: unknown) => void) }))
+// jsdom no calcula geometría: se captura el manejador de DndContext y se simula el «soltar» con los datos que dnd-kit entrega.
+vi.mock('@dnd-kit/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dnd-kit/core')>()
+  return { ...actual, DndContext: (props: React.ComponentProps<typeof actual.DndContext>) => { dnd.onDragEnd = props.onDragEnd as typeof dnd.onDragEnd; return <actual.DndContext {...props} /> } }
+})
 
 const seller = { id: 7, nombre: 'María', apellido: 'Gómez', correo: 'maria@example.com', username: 'maria', activo: true, roles: ['VENDEDOR'], permisos: ['GestionarOportunidad'] }
 const manager = { ...seller, id: 8, nombre: 'Rocío', roles: ['RESPONSABLE_COMERCIAL'] }
@@ -63,7 +70,7 @@ beforeEach(() => {
 })
 
 describe('funnel por rol', () => {
-  it('muestra las columnas del servidor, también vacías y finales, con tarjetas resumidas que se expanden', async () => {
+  it('muestra las columnas del servidor, también vacías y finales, con tarjetas resumidas', async () => {
     const requests = mockApi()
     renderFunnel(seller)
     expect(await screen.findByRole('heading', { name: 'Propuesta' })).toBeTruthy()
@@ -80,13 +87,8 @@ describe('funnel por rol', () => {
     expect(screen.getByRole('link', { name: 'Renovación anual' }).getAttribute('href')).toBe('/oportunidades/91')
     expect(screen.getByRole('link', { name: 'Lucía Pérez' }).getAttribute('href')).toBe('/contactos/14')
 
+    expect(screen.queryByRole('button', { name: 'Cambiar etapa' })).toBeNull()
     const actor = userEvent.setup()
-    const details = document.getElementById('opportunity-details-91')!
-    expect(details.hasAttribute('hidden')).toBe(true)
-    await actor.click(screen.getByRole('button', { name: 'Expandir oportunidad Renovación anual' }))
-    expect(details.hasAttribute('hidden')).toBe(false)
-    expect(within(details).getByText('31/12/2026')).toBeTruthy()
-    expect(within(details).getByText('María Gómez')).toBeTruthy()
     await actor.click(screen.getByRole('button', { name: 'Contraer etapa Propuesta' }))
     expect(document.getElementById('stage-content-3')!.hasAttribute('hidden')).toBe(true)
   })
@@ -147,66 +149,57 @@ describe('funnel por rol', () => {
     return { posts, reads: () => funnelReads }
   }
 
-  it('cambia la etapa con el selector (etapas activas, finales hacia el cierre), envía destino y observación y recarga el funnel', async () => {
+  const dropOn = (stage: { id: number; nombre: string; estado: string }, item = movable) => act(() => { screen.getByRole('link', { name: 'Renovación anual' }).focus(); dnd.onDragEnd!({ active: { data: { current: { opportunity: item } } }, over: { data: { current: { stage } } } }) })
+  const negotiation = { id: 4, nombre: 'Negociación', estado: 'ABIERTA' }
+
+  it('soltar la tarjeta en otra etapa abierta mueve la oportunidad y recarga el funnel', async () => {
     const { posts, reads } = mockMove(() => jsonResponse({ ...movable, idEtapa: 4, etapaNombre: 'Negociación' }))
     renderFunnel(seller)
     await screen.findByRole('heading', { name: 'Propuesta' })
-    const actor = userEvent.setup()
-    await actor.click(screen.getByRole('button', { name: 'Expandir oportunidad Renovación anual' }))
-    await actor.click(screen.getByRole('button', { name: 'Cambiar etapa' }))
-    const dialog = within(await screen.findByRole('dialog', { name: 'Cambiar etapa' }))
-    expect((dialog.getByRole('button', { name: 'Guardar cambio' }) as HTMLButtonElement).disabled).toBe(true)
-    await actor.click(dialog.getByRole('combobox', { name: /Nueva etapa/ }))
-    const options = (await screen.findAllByRole('option')).map(option => option.textContent)
-    expect(options).toEqual(['Negociación', 'Ganada', 'Perdida'])
-    await actor.click(screen.getByRole('option', { name: 'Negociación' }))
-    await actor.type(dialog.getByRole('textbox', { name: 'Observación' }), '  Envió propuesta ')
     const before = reads()
-    await actor.click(dialog.getByRole('button', { name: 'Guardar cambio' }))
+    await dropOn(negotiation)
     expect(await screen.findByText('Etapa actualizada')).toBeTruthy()
     expect(posts).toHaveLength(1)
     expect(posts[0]!.url).toMatch(/\/oportunidades\/91\/mover$/)
-    expect(await posts[0]!.json()).toEqual({ idEtapa: 4, observacion: 'Envió propuesta' })
+    expect(await posts[0]!.json()).toEqual({ idEtapa: 4 })
     await waitFor(() => expect(reads()).toBeGreaterThan(before))
   })
 
-  it('elegir una etapa final no mueve: continúa en el formulario de cierre con el resultado elegido', async () => {
+  it('soltar en una etapa final no mueve: abre el formulario de cierre con el resultado elegido', async () => {
     const { posts } = mockMove(() => jsonResponse(movable))
     renderFunnel(seller)
     await screen.findByRole('heading', { name: 'Propuesta' })
-    const actor = userEvent.setup()
-    await actor.click(screen.getByRole('button', { name: 'Expandir oportunidad Renovación anual' }))
-    await actor.click(screen.getByRole('button', { name: 'Cambiar etapa' }))
-    const dialog = within(await screen.findByRole('dialog', { name: 'Cambiar etapa' }))
-    await actor.click(dialog.getByRole('combobox', { name: /Nueva etapa/ })); await actor.click(await screen.findByRole('option', { name: 'Perdida' }))
-    expect(dialog.queryByRole('button', { name: 'Guardar cambio' })).toBeNull()
-    await actor.click(dialog.getByRole('button', { name: 'Continuar al cierre' }))
+    await dropOn({ id: 6, nombre: 'Perdida', estado: 'PERDIDA' })
     const closing = within(await screen.findByRole('dialog', { name: 'Cerrar oportunidad' }))
     expect(closing.getByRole('combobox', { name: /Resultado/ }).textContent).toBe('Perdida')
     expect(closing.getByRole('combobox', { name: /Motivo de pérdida/ })).toBeTruthy()
     expect(posts).toHaveLength(0)
   })
 
-  it('muestra el rechazo del servidor sin cerrar el diálogo ni duplicar el envío', async () => {
+  it('soltar en la misma etapa no envía nada y el rechazo del servidor se muestra sin confirmar', async () => {
     const { posts } = mockMove(() => jsonResponse({ title: 'Los datos cambiaron. Recargue e intente nuevamente.', code: 'CONCURRENT_CHANGE' }, 409))
     renderFunnel(seller)
     await screen.findByRole('heading', { name: 'Propuesta' })
-    const actor = userEvent.setup()
-    await actor.click(screen.getByRole('button', { name: 'Expandir oportunidad Renovación anual' }))
-    await actor.click(screen.getByRole('button', { name: 'Cambiar etapa' }))
-    const dialog = within(await screen.findByRole('dialog', { name: 'Cambiar etapa' }))
-    await actor.click(dialog.getByRole('combobox', { name: /Nueva etapa/ })); await actor.click(await screen.findByRole('option', { name: 'Negociación' }))
-    await actor.click(dialog.getByRole('button', { name: 'Guardar cambio' }))
-    expect((await dialog.findByRole('alert')).textContent).toContain('Los datos cambiaron')
+    await dropOn({ id: 3, nombre: 'Propuesta', estado: 'ABIERTA' })
+    expect(posts).toHaveLength(0)
+    await dropOn(negotiation)
+    expect(await screen.findByText(/Los datos cambiaron/)).toBeTruthy()
     expect(posts).toHaveLength(1)
     expect(screen.queryByText('Etapa actualizada')).toBeNull()
   })
 
-  it('no ofrece cambiar etapa si el servidor no lo permite', async () => {
+  it('solo son arrastrables las tarjetas abiertas que el servidor permite mover', async () => {
     mockApi()
     renderFunnel(seller)
     await screen.findByRole('heading', { name: 'Propuesta' })
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Expandir oportunidad Renovación anual' }))
+    expect(document.querySelector('[aria-roledescription="oportunidad arrastrable"]')).toBeNull()
     expect(screen.queryByRole('button', { name: 'Cambiar etapa' })).toBeNull()
+  })
+
+  it('con permiso de mover, la tarjeta abierta es arrastrable y la de una etapa final no', async () => {
+    mockMove(() => jsonResponse(movable))
+    renderFunnel(seller)
+    await screen.findByRole('heading', { name: 'Propuesta' })
+    expect(document.querySelectorAll('[aria-roledescription="oportunidad arrastrable"]')).toHaveLength(1)
   })
 })
