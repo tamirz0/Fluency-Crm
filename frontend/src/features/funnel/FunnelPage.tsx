@@ -3,7 +3,7 @@ import { ChevronRight, ExpandMore, Refresh } from '@mui/icons-material'
 import { Alert, Box, Button, IconButton, MenuItem, Snackbar, TextField, Typography } from '@mui/material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link as RouterLink } from 'react-router-dom'
+import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import { getFunnel, listFunnels, moveOpportunity, opportunityQueryKeys, type Oportunidad } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { CompanyResponsibleSelect } from '../companies/CompanyResponsibleSelect'
@@ -32,15 +32,18 @@ function FunnelSkeleton() {
   </div>
 }
 
+/** La tarjeta entera abre la ficha; empresa y contacto son texto para no llevar a otro perfil por error. */
+const detailState = { from: { to: '/embudo', label: 'Volver al embudo' } }
+
 function CardContent({ opportunity }: { opportunity: Oportunidad }) {
   return <>
     <span className="funnel-avatar" aria-hidden="true">{initials(opportunity.tituloVisible)}</span>
     <div className="funnel-opportunity-main">
-      <h3><RouterLink to={`/oportunidades/${opportunity.id}`}>{opportunity.tituloVisible}</RouterLink></h3>
+      <h3><RouterLink to={`/oportunidades/${opportunity.id}`} state={detailState}>{opportunity.tituloVisible}</RouterLink></h3>
       {(opportunity.idEmpresa || opportunity.idContacto) && <p className="funnel-opportunity-client">
-        {opportunity.idEmpresa && <RouterLink className="funnel-related-link" to={`/empresas/${opportunity.idEmpresa}`}>{displayValue(opportunity.empresaRazonSocial)}</RouterLink>}
+        {opportunity.idEmpresa && displayValue(opportunity.empresaRazonSocial)}
         {opportunity.idEmpresa && opportunity.idContacto && ' – '}
-        {opportunity.idContacto && <RouterLink className="funnel-related-link" to={`/contactos/${opportunity.idContacto}`}>{displayValue(opportunity.contactoNombre)}</RouterLink>}
+        {opportunity.idContacto && displayValue(opportunity.contactoNombre)}
       </p>}
       <p className="funnel-opportunity-value">{money(opportunity.valor)}</p>
     </div>
@@ -52,7 +55,10 @@ function OpportunityCard({ opportunity, stage }: { opportunity: Oportunidad; sta
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, isDragging } = useDraggable({
     id: `opportunity-${opportunity.id}`, data: { opportunity }, disabled: !draggable, attributes: { roleDescription: 'oportunidad arrastrable' },
   })
-  return <article ref={(node) => { setNodeRef(node); setActivatorNodeRef(node) }} className={`funnel-opportunity${draggable ? ' is-draggable' : ''}${isDragging ? ' is-dragging' : ''}`} {...(draggable ? { ...attributes, ...listeners } : {})}>
+  const navigate = useNavigate()
+  /** Un clic en cualquier parte de la tarjeta abre la ficha; arrastrar no dispara el clic y el título sigue siendo un enlace normal. */
+  const open = (event: React.MouseEvent) => { if (!(event.target as HTMLElement).closest('a')) navigate(`/oportunidades/${opportunity.id}`, { state: detailState }) }
+  return <article ref={(node) => { setNodeRef(node); setActivatorNodeRef(node) }} onClick={open} className={`funnel-opportunity${draggable ? ' is-draggable' : ''}${isDragging ? ' is-dragging' : ''}`} {...(draggable ? { ...attributes, ...listeners } : {})}>
     <CardContent opportunity={opportunity} />
   </article>
 }

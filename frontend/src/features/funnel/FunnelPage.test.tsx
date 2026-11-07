@@ -86,12 +86,28 @@ describe('funnel por rol', () => {
     expect(screen.getByText('1 oportunidad · Ganada')).toBeTruthy()
     expect(screen.getByText('Sin oportunidades · Perdida')).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Renovación anual' }).getAttribute('href')).toBe('/oportunidades/91')
-    expect(screen.getByRole('link', { name: 'Lucía Pérez' }).getAttribute('href')).toBe('/contactos/14')
+    // Empresa y contacto son texto: no llevan a otro perfil por error.
+    expect(screen.getByText('Acme Idiomas – Lucía Pérez', { selector: '.funnel-opportunity-client' })).toBeTruthy()
+    expect(document.querySelector('a[href^="/empresas/"], a[href^="/contactos/"]')).toBeNull()
 
     expect(screen.queryByRole('button', { name: 'Cambiar etapa' })).toBeNull()
     const actor = userEvent.setup()
     await actor.click(screen.getByRole('button', { name: 'Contraer etapa Propuesta' }))
     expect(document.getElementById('stage-content-3')!.hasAttribute('hidden')).toBe(true)
+  })
+
+  it('un clic en cualquier parte de la tarjeta abre la ficha de la oportunidad, recordando que se vuelve al embudo', async () => {
+    mockApi()
+    const funnelApi = vi.mocked(fetch).getMockImplementation()!
+    vi.mocked(fetch).mockImplementation(async (input, init) => new URL((input as Request).url).pathname.endsWith('/oportunidades/91') ? jsonResponse(card) : funnelApi(input, init))
+    renderFunnel(seller)
+    await screen.findByRole('heading', { name: 'Propuesta' })
+    await userEvent.setup().click(screen.getByText('Acme Idiomas – Lucía Pérez'))
+    // La ficha ofrece volver al embudo (y no a la empresa), aunque la oportunidad tenga empresa.
+    const back = await screen.findByRole('link', { name: 'Volver al embudo' })
+    expect(window.location.pathname).toBe('/oportunidades/91')
+    expect(back.getAttribute('href')).toBe('/embudo')
+    expect(screen.queryByRole('link', { name: 'Volver a la empresa' })).toBeNull()
   })
 
   it('un superior filtra por responsable y el selector de embudo separa los procesos', async () => {

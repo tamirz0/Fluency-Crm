@@ -60,7 +60,8 @@ export function OpportunityDetailPage() {
   const [activityRegistered, setActivityRegistered] = useState(false)
   const [closing, setClosing] = useState<CloseResult | '' | null>(null)
   const [reassigned, setReassigned] = useState(false)
-  const back = opportunity?.idEmpresa ? { to: `/empresas/${opportunity.idEmpresa}`, label: 'Volver a la empresa' } : opportunity?.idContacto ? { to: `/contactos/${opportunity.idContacto}`, label: 'Volver al contacto' } : { to: '/inicio', label: 'Volver al inicio' }
+  const from = (location.state as { from?: { to?: unknown; label?: unknown } } | null)?.from
+  const back = typeof from?.to === 'string' && typeof from.label === 'string' ? { to: from.to, label: from.label } : opportunity?.idEmpresa ?{ to: `/empresas/${opportunity.idEmpresa}`, label: 'Volver a la empresa' } : opportunity?.idContacto ? { to: `/contactos/${opportunity.idContacto}`, label: 'Volver al contacto' } : { to: '/inicio', label: 'Volver al inicio' }
   const backLink = <Link component={RouterLink} to={back.to} className="company-back-link" underline="hover"><ArrowBack fontSize="small" />{back.label}</Link>
 
   if (idOportunidad === undefined || (query.isError && query.error instanceof ApiRequestError && query.error.status === 404))
