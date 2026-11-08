@@ -30,7 +30,7 @@ public partial class Empresa
 
     public string? Observaciones { get; set; }
 
-    public virtual ICollection<ActividadOportunidad> ActividadOportunidades { get; set; } = new List<ActividadOportunidad>();
+    public virtual ICollection<Actividad> Actividades { get; set; } = new List<Actividad>();
 
     public virtual ICollection<Contacto> Contactos { get; set; } = new List<Contacto>();
 

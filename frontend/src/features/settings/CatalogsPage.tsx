@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { configurableCatalogs, getCatalog, getOpportunityStates, type CatalogOption, type ConfigurableCatalog } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { CatalogDialog, type CatalogAction } from './CatalogDialog'
+import '../companies/companies.css'
 
 export function CatalogsPage() {
   const { user } = useAuth()
@@ -13,9 +14,9 @@ export function CatalogsPage() {
 }
 function CatalogSettings() {
   const [catalog, setCatalog] = useState<ConfigurableCatalog | 'estados-oportunidad'>('origenes-comerciales')
-  return <Box sx={{ p: { xs: 2.5, md: 5 }, maxWidth: 1600 }}>
-    <Typography component="h1" variant="h4">Catálogos</Typography>
-    <Typography color="text.secondary" sx={{ mt: 1, mb: 3 }}>Opciones del circuito comercial. Desactivarlas conserva sus referencias y etiquetas.</Typography>
+  return <Box className="companies-page">
+    <Typography component="h1" className="companies-page-title">Catálogos</Typography>
+    <Typography className="companies-page-description" sx={{ mb: 3 }}>Opciones del circuito comercial. Desactivarlas conserva sus referencias y etiquetas.</Typography>
     <TextField select label="Catálogo" size="small" value={catalog} onChange={e => setCatalog(e.target.value as typeof catalog)} sx={{ minWidth: 260, mb: 3 }}>
       {configurableCatalogs.map(c => <MenuItem key={c.id} value={c.id}>{c.label}</MenuItem>)}
       <MenuItem value="estados-oportunidad">Estados de oportunidad</MenuItem>

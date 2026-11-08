@@ -16,7 +16,7 @@ export const theme = createTheme({
     MuiInputLabel: { styleOverrides: { root: { color: '#B7C6CB', '&.Mui-focused': { color: '#9CCDC8' } } } },
     MuiFormHelperText: { styleOverrides: { root: { color: '#B7C6CB', '&.Mui-error': { color: '#FFB4AB' } } } },
     MuiAlert: { styleOverrides: { root: { '&.MuiAlert-standardError': { color: '#FFD8D3', backgroundColor: '#3A1D20' }, '&.MuiAlert-standardWarning': { color: '#F3DDA8', backgroundColor: '#382D17' } } } },
-    MuiTableCell: { styleOverrides: { root: { borderColor: '#344A55' }, head: { color: '#B7C6CB' } } },
+    MuiTableCell: { styleOverrides: { root: { borderColor: '#344A55' }, head: { backgroundColor: '#1B2C36', color: '#D7E2E5', fontWeight: 700 } } },
     MuiPaper: { styleOverrides: { root: { backgroundImage: 'none' } } },
   },
 })

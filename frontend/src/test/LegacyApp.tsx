@@ -1,9 +1,8 @@
-// Rutas anteriores solo para pruebas de componentes; App no las publica.
+// Arnés exclusivo de pruebas de componentes con una identidad ficticia; App no lo usa.
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthenticatedShell } from '../app/AuthenticatedShell'
 import { ProtectedRoute } from '../app/ProtectedRoute'
-import { HomePage } from '../features/home/HomePage'
 import { LoginPage } from '../features/login/LoginPage'
 
 const CompaniesPage = lazy(() => import('../features/companies/CompaniesPage').then(({ CompaniesPage }) => ({ default: CompaniesPage })))
@@ -16,8 +15,8 @@ const EditContactPage = lazy(() => import('../features/contacts/ContactFormPage'
 const NewContactPage = lazy(() => import('../features/contacts/ContactFormPage').then(({ NewContactPage }) => ({ default: NewContactPage })))
 const OpportunitiesPage = lazy(() => import('../features/opportunities/OpportunitiesPage').then(({ OpportunitiesPage }) => ({ default: OpportunitiesPage })))
 const OpportunityDetailPage = lazy(() => import('../features/opportunities/OpportunityDetailPage').then(({ OpportunityDetailPage }) => ({ default: OpportunityDetailPage })))
-const EditOpportunityPage = lazy(() => import('../features/opportunities/OpportunityFormPage').then(({ EditOpportunityPage }) => ({ default: EditOpportunityPage })))
 const NewOpportunityPage = lazy(() => import('../features/opportunities/OpportunityFormPage').then(({ NewOpportunityPage }) => ({ default: NewOpportunityPage })))
+const EditOpportunityPage = lazy(() => import('../features/opportunities/OpportunityFormPage').then(({ EditOpportunityPage }) => ({ default: EditOpportunityPage })))
 const FunnelPage = lazy(() => import('../features/funnel/FunnelPage').then(({ FunnelPage }) => ({ default: FunnelPage })))
 
 function RouteLoadingFallback() {
@@ -33,8 +32,8 @@ function LegacyApp() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route element={<ProtectedRoute />}>
-        <Route element={<AuthenticatedShell commercial />}>
-          <Route path="/inicio" element={<HomePage />} />
+        <Route element={<AuthenticatedShell />}>
+          <Route path="/inicio" element={<main>Inicio</main>} />
           <Route path="/empresas" element={<CompaniesPage />} />
           <Route path="/empresas/nueva" element={<NewCompanyPage />} />
           <Route path="/empresas/:idEmpresa/editar" element={<EditCompanyPage />} />
@@ -45,8 +44,8 @@ function LegacyApp() {
           <Route path="/contactos/:idContacto" element={<ContactDetailPage />} />
           <Route path="/oportunidades" element={<OpportunitiesPage />} />
           <Route path="/oportunidades/nueva" element={<NewOpportunityPage />} />
-          <Route path="/oportunidades/:idOportunidad/editar" element={<EditOpportunityPage />} />
           <Route path="/oportunidades/:idOportunidad" element={<OpportunityDetailPage />} />
+          <Route path="/oportunidades/:idOportunidad/editar" element={<EditOpportunityPage />} />
           <Route path="/embudo" element={<FunnelPage />} />
         </Route>
       </Route>

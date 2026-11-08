@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 31/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T15/CP05 completas, verificadas por pruebas y validadas manualmente por el usuario; integradas localmente en `segunda-entrega` mediante fast-forward a `809a23a`; sin publicar. T16–T18 implementadas/verificadas en `segunda-entrega-cp06-servicios`; CP06 cerrada con validación del usuario e integrada localmente en `segunda-entrega` / `c0c6a26` el 22/10/2026, sin publicar. T19–T21/CP07 implementadas, verificadas y validadas por el usuario; integradas localmente en `segunda-entrega` el 31/10/2026, sin publicar. T22–T24 implementadas y verificadas técnicamente en `segunda-entrega-cp08-empresas`, con revisión independiente; CP08 pendiente de validación autenticada del usuario e integración. T25–T49 pendientes.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
+Plan del 08/10/2026, actualizado el 31/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T15/CP05 completas, verificadas por pruebas y validadas manualmente por el usuario; integradas localmente en `segunda-entrega` mediante fast-forward a `809a23a`; sin publicar. T16–T18 implementadas/verificadas en `segunda-entrega-cp06-servicios`; CP06 cerrada con validación del usuario e integrada localmente en `segunda-entrega` / `c0c6a26` el 22/10/2026, sin publicar. T19–T21/CP07 implementadas, verificadas y validadas por el usuario; integradas localmente en `segunda-entrega` el 31/10/2026, sin publicar. T22–T24 implementadas y verificadas técnicamente en `segunda-entrega-cp08-empresas`, con revisión independiente; CP08 pendiente de validación autenticada del usuario e integración. T25–T46 implementadas y verificadas; T30 y el recorrido de perfiles de T48 validados por el usuario el 08/11/2026. T47 cerrada el 08/11/2026 (Gitleaks y auditorías sin hallazgos). T48 y CP16 cerradas el 08/11/2026. Pendiente: T49.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -35,27 +35,30 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T25 — Adaptar contactos conservando relaciones históricas](#t25)
 - [x] [T26 — Actualizar pantallas de contactos](#t26)
 - [x] [T27 — Completar bajas definitivas de clientes](#t27)
-- [ ] [T28 — Adaptar el modelo e historial de oportunidades](#t28)
-- [ ] [T29 — Crear oportunidades con defaults e historial atómico](#t29)
-- [ ] [T30 — Simplificar el alta de oportunidad en UI](#t30)
-- [ ] [T31 — Consultar oportunidades e historial de etapas](#t31)
-- [ ] [T32 — Mostrar tabla y ficha de oportunidades compartidas](#t32)
-- [ ] [T33 — Mostrar funnel según el rol](#t33)
-- [ ] [T34 — Editar datos de una oportunidad abierta](#t34)
-- [ ] [T35 — Reasignar una oportunidad y retirar permiso anterior](#t35)
-- [ ] [T36 — Mover entre etapas abiertas con historial](#t36)
-- [ ] [T37 — Cerrar oportunidades como ganadas o perdidas](#t37)
-- [ ] [T38 — Reabrir una oportunidad conservando su cierre](#t38)
-- [ ] [T39 — Dar de baja oportunidades sin cascadas](#t39)
-- [ ] [T40 — Mapear actividades realizadas](#t40)
-- [ ] [T41 — Registrar y consultar actividades por API](#t41)
-- [ ] [T42 — Registrar actividades desde fichas](#t42)
-- [ ] [T43 — Editar y dar de baja actividades con permisos de origen y destino](#t43)
-- [ ] [T44 — Proyectar el historial comercial combinado](#t44)
-- [ ] [T45 — Mostrar historial comercial en las tres fichas](#t45)
-- [ ] [T46 — Comprobar retiro del legado y coherencia de contratos](#t46)
-- [ ] [T47 — Cerrar la verificación de seguridad acordada](#t47)
-- [ ] [T48 — Ensayar la entrega completa en local](#t48)
+- [x] [T28 — Adaptar el modelo e historial de oportunidades](#t28)
+- [x] [T29 — Crear oportunidades con defaults e historial atómico](#t29)
+- [x] [T30 — Simplificar el alta de oportunidad en UI](#t30)
+- [x] [T30a — Hacer opcional el título de la oportunidad](#t30a)
+- [x] ~~[T30b — Renovar la apariencia de la interfaz](#t30b)~~ (revertida a pedido del usuario)
+- [x] ~~[T30c — Landing pública con acceso al login](#t30c)~~ (revertida a pedido del usuario)
+- [x] [T31 — Consultar oportunidades e historial de etapas](#t31)
+- [x] [T32 — Mostrar tabla y ficha de oportunidades compartidas](#t32)
+- [x] [T33 — Mostrar funnel según el rol](#t33)
+- [x] [T34 — Editar datos de una oportunidad abierta](#t34)
+- [x] [T35 — Reasignar una oportunidad y retirar permiso anterior](#t35)
+- [x] [T36 — Mover entre etapas abiertas con historial](#t36)
+- [x] [T37 — Cerrar oportunidades como ganadas o perdidas](#t37)
+- [x] [T38 — Reabrir una oportunidad conservando su cierre](#t38)
+- [x] [T39 — Dar de baja oportunidades sin cascadas](#t39)
+- [x] [T40 — Mapear actividades realizadas](#t40)
+- [x] [T41 — Registrar y consultar actividades por API](#t41)
+- [x] [T42 — Registrar actividades desde fichas](#t42)
+- [x] [T43 — Editar y dar de baja actividades con permisos de origen y destino](#t43)
+- [x] [T44 — Proyectar el historial comercial combinado](#t44)
+- [x] [T45 — Mostrar historial comercial en las tres fichas](#t45)
+- [x] [T46 — Comprobar retiro del legado y coherencia de contratos](#t46)
+- [x] [T47 — Cerrar la verificación de seguridad acordada](#t47)
+- [x] [T48 — Ensayar la entrega completa en local](#t48)
 - [ ] [T49 — Preparar la publicación académica sin ejecutarla](#t49)
 
 ## Detalle
@@ -745,13 +748,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Modelo objetivo tiene valor total, campos académicos opcionales, fechas, responsable, motivo y activo; deriva embudo/servicio/estado desde etapa.
-- [ ] Historial inmutable admite etapa anterior null para alta, exige autor/nueva etapa/instante; no audita cada edición.
-- [ ] Retirar dependencias de líneas/log/FKs derivadas en los consumidores al hacer el corte de este módulo; dividir limpieza de navegaciones en pasos si supera el tamaño previsto, sin dejar EF apuntando a tablas antiguas.
+- [x] Modelo objetivo tiene valor total, campos académicos opcionales, fechas, responsable, motivo y activo; deriva embudo/servicio/estado desde etapa.
+- [x] Historial inmutable admite etapa anterior null para alta, exige autor/nueva etapa/instante; no audita cada edición.
+- [x] Retirar dependencias de líneas/log/FKs derivadas en los consumidores al hacer el corte de este módulo; dividir limpieza de navegaciones en pasos si supera el tamaño previsto, sin dejar EF apuntando a tablas antiguas.
 
 **Verificación:** B + API(OportunidadesModelTests) + D; lectura de estado derivado, índices/FKs y decimales/fechas en PostgreSQL.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t28.md](verificaciones/verificacion-t28.md). Build sin errores ni advertencias, `OportunidadesModelTests` 2/2 y backend completo 140/140 (7 min 13 s). Commit `0badcd9` en `segunda-entrega-oportunidades-modelo`; sin merge ni push. Pendiente para T29: empresa/contacto activos y escritura Serializable en el alta.
 
 <a id="t29"></a>
 
@@ -765,13 +768,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Alta exige empresa o contacto y compatibilidad cuando ambos se envían; embudo/etapa abierta activos. Sin etapa explícita usa la primera abierta activa.
-- [ ] Vendedor crea propia; superiores pueden asignar activo. Valor omitido copia precio, cero prevalece y participantes no multiplican; servicio inactivo no bloquea su embudo activo.
-- [ ] Insertar oportunidad e historial inicial juntos con actor de sesión; fallos no dejan escrituras parciales y body no puede falsificar autor/estado.
+- [x] Alta exige empresa o contacto y compatibilidad cuando ambos se envían; embudo/etapa abierta activos. Sin etapa explícita usa la primera abierta activa.
+- [x] Vendedor crea propia; superiores pueden asignar activo. Valor omitido copia precio, cero prevalece y participantes no multiplican; servicio inactivo no bloquea su embudo activo.
+- [x] Insertar oportunidad e historial inicial juntos con actor de sesión; fallos no dejan escrituras parciales y body no puede falsificar autor/estado.
 
 **Verificación:** B + API(AltaOportunidadTests) + D; defaults, ausencia de abierta, cero y rollback con PostgreSQL.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t29.md](verificaciones/verificacion-t29.md). `AltaOportunidadTests` 6/6; backend completo 145/146 con el único fallo (contrato de rutas) corregido y `HttpContractTests` 19/19; build sin errores ni advertencias. Sin merge ni push; `schema.d.ts` se regenera en T30.
 
 <a id="t30"></a>
 
@@ -785,18 +788,73 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Alta contextual desde empresa/contacto/embudo evita repetir selecciones y muestra defaults; origen y datos académicos siguen opcionales.
-- [ ] Formulario no pide servicio/estado derivados ni inventa una etapa si faltan abiertas; límites y errores coherentes con API.
-- [ ] Guardar una sola vez actualiza datos visibles y abre la ficha; retirar request de actor arbitrario y contrato de alta anterior.
+- [x] Alta contextual desde empresa/contacto/embudo evita repetir selecciones y muestra defaults; origen y datos académicos siguen opcionales.
+- [x] Formulario no pide servicio/estado derivados ni inventa una etapa si faltan abiertas; límites y errores coherentes con API.
+- [x] Guardar una sola vez actualiza datos visibles y abre la ficha; retirar request de actor arbitrario y contrato de alta anterior.
 
 **Verificación:** F + UI(src/features/forms.test.tsx) + D; recorrido local alta mínima y rechazo comprensible de embudo sin abierta.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t30.md](verificaciones/verificacion-t30.md). `forms.test.tsx` 27/27 y frontend completo 115/115; build correcto y lint solo con la advertencia previa; `schema.d.ts` regenerado desde la API local. **Validación (08/11/2026):** el usuario aprobó el recorrido local con API real. Sin merge ni push.
 
 ### CP10 — Alta de oportunidades
 
-- [ ] Crear oportunidad desde cliente con defaults y comprobar historial inicial; no basta el formulario con mocks.
+- [x] Crear oportunidad desde cliente con defaults y comprobar historial inicial; no basta el formulario con mocks.
 - [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+
+<a id="t30a"></a>
+
+### T30a — Hacer opcional el título de la oportunidad
+
+**Resultado:** Cambio acordado el 05/11/2026 (CRM de referencia del docente): sin título, la oportunidad se muestra con el nombre de la empresa, del contacto o de ambos.
+
+**Dependencias:** T29, T30. **Tamaño:** S–M.
+
+**Aceptación:**
+
+- [x] `oportunidad.titulo` nulable (con CHECK si existe); alta sin título válida; vacío o en blanco se guarda como null; máximo 100.
+- [x] Respuesta con `titulo` y `tituloVisible` calculado al leer (título propio, empresa, contacto o `Empresa – Contacto`).
+- [x] Formulario sin título obligatorio, embudo preseleccionado si es el único; la ficha muestra `tituloVisible`.
+
+**Verificación:** B + API(`AltaOportunidadTests`) + F + D.
+
+**Evidencia técnica (05/11/2026):** [verificacion-t30a.md](verificaciones/verificacion-t30a.md). Backend 147/147 y frontend 116/116. **Operación manual pendiente en bases ya creadas:** `ALTER TABLE oportunidad ALTER COLUMN titulo DROP NOT NULL;` (solo está en el SQL versionado; no se ejecutó en ninguna base existente).
+
+<a id="t30b"></a>
+
+### T30b — Renovar la apariencia de la interfaz
+
+> **Revertida el 05/11/2026 a pedido del usuario** (pantallas descentradas). Los estilos vuelven al estado de T30a; ver el commit `revert:` y [verificacion-t30b.md](verificaciones/verificacion-t30b.md). Lo siguiente queda solo como historia.
+
+**Resultado:** Lavado de cara acordado el 05/11/2026: aspecto más moderno conservando MUI, tema oscuro, accesibilidad y el comportamiento actual.
+
+**Dependencias:** T30a. **Tamaño previsto:** M; tema, estilos compartidos, menú lateral y pantallas existentes.
+
+**Aceptación:**
+
+- [x] Tema de MUI renovado (paleta, tipografía, radios, sombras, botones, campos, tablas, chips y diálogos) definido en un solo lugar.
+- [x] Menú lateral, cabeceras, fichas, listados y formularios existentes usan el estilo nuevo sin cambiar rutas, textos accesibles ni flujos.
+- [x] Sin librerías nuevas; contraste, foco y teclado se conservan.
+
+**Verificación:** F + UI(suite completa) + D; revisión visual del usuario en el navegador.
+
+**Evidencia técnica (05/11/2026):** [verificacion-t30b.md](verificaciones/verificacion-t30b.md). Frontend 116/116, build correcto. **Pendiente:** revisión visual del usuario en el navegador (sin herramienta de navegador en la sesión); la tarea no se marca terminada hasta entonces.
+
+<a id="t30c"></a>
+
+### T30c — Landing pública con acceso al login
+
+> **Revertida el 05/11/2026 a pedido del usuario** junto con T30b. Lo siguiente queda solo como historia.
+
+**Resultado:** Pedido del usuario el 05/11/2026: la raíz muestra una landing con «Iniciar sesión» (lleva al login actual) y «Registrarse» (sin flujo hasta que exista el registro).
+
+**Dependencias:** T30b. **Tamaño:** S–M.
+
+**Aceptación:**
+
+- [x] `/` pública con ambos botones; sesión activa → `/inicio`; login sin cambios.
+- [x] «Registrarse» no inventa un registro: informa que no está habilitado y no llama a la API.
+
+**Evidencia técnica (05/11/2026):** [verificacion-t30c.md](verificaciones/verificacion-t30c.md); frontend 120/120. **Pendiente:** revisión visual del usuario.
 
 <a id="t31"></a>
 
@@ -810,13 +868,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Tabla/detalle permiten lectura de todas las oportunidades vigentes; filtros por cliente/responsable/embudo/etapa/estado/origen y búsqueda antes de paginar.
-- [ ] DTO deriva relaciones y accionesPermitidas; historial paginado fecha/ID ascendentes, sin endpoints de edición.
-- [ ] Query de funnel por embudo devuelve columnas activas vacías/finales; fuerza dueño autenticado para vendedor y admite filtro de responsable para superiores, sin filtrar la tabla global.
+- [x] Tabla/detalle permiten lectura de todas las oportunidades vigentes; filtros por cliente/responsable/embudo/etapa/estado/origen y búsqueda antes de paginar.
+- [x] DTO deriva relaciones y accionesPermitidas; historial paginado fecha/ID ascendentes, sin endpoints de edición.
+- [x] Query de funnel por embudo devuelve columnas activas vacías/finales; fuerza dueño autenticado para vendedor y admite filtro de responsable para superiores, sin filtrar la tabla global.
 
 **Verificación:** B + API(ConsultaOportunidadesTests) + D; vendedor fuerza ID de otro en funnel y no amplía su cartera, pero sí consulta su detalle en tabla.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t31.md](verificaciones/verificacion-t31.md). `ConsultaOportunidadesTests` 3/3; `HttpContractTests` + `AltaOportunidadTests` 26/26; build sin errores ni advertencias. Sin merge ni push.
 
 <a id="t32"></a>
 
@@ -830,13 +888,15 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Tabla lista todas las vigentes con filtros/paginación; ficha ajena se puede leer completa e incluye historial de etapas.
-- [ ] Acciones se muestran según permisos del servidor; no se confunde ocultar botones con autorización.
-- [ ] Referencias inactivas siguen legibles; búsqueda y caché incluyen filtros/página y no mezclan resultados.
+- [x] Tabla lista todas las vigentes con filtros/paginación; ficha ajena se puede leer completa e incluye historial de etapas.
+- [x] Acciones se muestran según permisos del servidor; no se confunde ocultar botones con autorización.
+- [x] Referencias inactivas siguen legibles; búsqueda y caché incluyen filtros/página y no mezclan resultados.
 
 **Verificación:** F + UI(src/features/consultations/Consultations.test.tsx) + D; vendedor consulta detalle ajeno sin editar.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t32.md](verificaciones/verificacion-t32.md). Frontend 113/113, build correcto, lint solo con la advertencia previa. **Pendiente:** la segunda aceptación (acciones según permisos) espera a los comandos de T34–T39; por eso T32 no se marca terminada. Sin merge ni push.
+
+**Actualización (05/11/2026):** la aceptación pendiente quedó cubierta por T34–T39: las acciones de la ficha (editar, reasignar, cambiar etapa, cerrar, reabrir, dar de baja) se muestran según `accionesPermitidas` del servidor y el selector de transición del funnel existe. Ver [verificación T36](verificaciones/verificacion-t36.md) y [CP13](verificaciones/verificacion-cp13.md).
 
 <a id="t33"></a>
 
@@ -850,13 +910,15 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Selector de embudo separa procesos; vendedor solo ve propias y no puede sustituir su responsable; superiores ven todas con filtro opcional.
-- [ ] Mantener columnas vacías, finales y cerradas vigentes; embudo inactivo explica su situación.
-- [ ] Conservar tarjetas resumidas/expansión y selector de transición; no agregar drag-and-drop ni paginación por columna obligatorios.
+- [x] Selector de embudo separa procesos; vendedor solo ve propias y no puede sustituir su responsable; superiores ven todas con filtro opcional.
+- [x] Mantener columnas vacías, finales y cerradas vigentes; embudo inactivo explica su situación.
+- [x] Conservar tarjetas resumidas/expansión y selector de transición; no agregar drag-and-drop ni paginación por columna obligatorios.
 
 **Verificación:** F + UI(src/features/funnel/FunnelPage.test.tsx) + D; dos vendedores, mismo embudo, tabla global y funnels distintos.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t33.md](verificaciones/verificacion-t33.md). `FunnelPage.test.tsx` 3/3; frontend 113/113, build correcto, lint solo con la advertencia previa. **Pendiente:** el selector de transición espera a `/mover` (T36); por eso T33 no se marca terminada. Sin merge ni push.
+
+**Actualización (05/11/2026):** la aceptación pendiente quedó cubierta por T34–T39: las acciones de la ficha (editar, reasignar, cambiar etapa, cerrar, reabrir, dar de baja) se muestran según `accionesPermitidas` del servidor y el selector de transición del funnel existe. Ver [verificación T36](verificaciones/verificacion-t36.md) y [CP13](verificaciones/verificacion-cp13.md).
 
 ### CP11 — Visibilidad comercial
 
@@ -875,13 +937,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] PATCH admite solo los campos acordados de abierta activa y valida dueño/superior; no cambia responsable, etapa, cierre, activo ni derivados.
-- [ ] Editar título/valor conserva asociaciones históricas tras cambio de empresa del contacto; validar compatibilidad solo al cambiar asociaciones.
-- [ ] Valor no acepta null, participantes positivos si presentes y fechas correctas; rechazo de cerrada/ajena atómico y visible en UI.
+- [x] PATCH admite solo los campos acordados de abierta activa y valida dueño/superior; no cambia responsable, etapa, cierre, activo ni derivados.
+- [x] Editar título/valor conserva asociaciones históricas tras cambio de empresa del contacto; validar compatibilidad solo al cambiar asociaciones.
+- [x] Valor no acepta null, participantes positivos si presentes y fechas correctas; rechazo de cerrada/ajena atómico y visible en UI.
 
 **Verificación:** B + F + API(EdicionOportunidadTests) + UI(src/features/forms.test.tsx) + D; editar propia versus ajena y cambio histórico A→B.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t34.md](verificaciones/verificacion-t34.md). `EdicionOportunidadTests` 2/2 y `HttpContractTests` 19/19 (21/21); frontend 117/117, build correcto, lint solo con la advertencia previa. Sin merge ni push.
 
 <a id="t35"></a>
 
@@ -895,13 +957,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Dueño vendedor reasigna una abierta a vendedor activo; superiores pueden elegir usuario activo; una cerrada requiere reapertura.
-- [ ] Releer propiedad al escribir y devolver permisos recalculados; anterior dueño conserva lectura y recibe 403 en siguiente mutación.
-- [ ] UI actualiza ficha/tabla/funnel/caché sin crear una transición ficticia ni cambiar responsables de clientes.
+- [x] Dueño vendedor reasigna una abierta a vendedor activo; superiores pueden elegir usuario activo; una cerrada requiere reapertura.
+- [x] Releer propiedad al escribir y devolver permisos recalculados; anterior dueño conserva lectura y recibe 403 en siguiente mutación.
+- [x] UI actualiza ficha/tabla/funnel/caché sin crear una transición ficticia ni cambiar responsables de clientes.
 
 **Verificación:** B + F + API(ReasignacionTests) + D; dos sesiones locales y carrera representativa reasignación versus edición.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t35.md](verificaciones/verificacion-t35.md). `ReasignacionTests` 2/2 y `HttpContractTests` 19/19 (21/21); frontend 119/119, build correcto, lint solo con la advertencia previa. Sin merge ni push.
 
 <a id="t36"></a>
 
@@ -915,13 +977,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Solo destino abierto activo del mismo embudo; mismo destino es no-op sin duplicar historia; /mover rechaza finales.
-- [ ] Permiso actual, cambio e historial en una transacción; falla/carrera revierte y devuelve conflicto sin reintento automático.
-- [ ] Selector actualiza ficha/funnel/historial; selección final se deriva al flujo de cierre cuando T37 lo habilite, sin bypass.
+- [x] Solo destino abierto activo del mismo embudo; mismo destino es no-op sin duplicar historia; /mover rechaza finales.
+- [x] Permiso actual, cambio e historial en una transacción; falla/carrera revierte y devuelve conflicto sin reintento automático.
+- [x] Selector actualiza ficha/funnel/historial; selección final se deriva al flujo de cierre cuando T37 lo habilite, sin bypass.
 
 **Verificación:** B + F + API(MovimientoTests) + D; destino ajeno/inactivo, no-op y rollback.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t36.md](verificaciones/verificacion-t36.md). `MovimientoTests` 2/2 y `HttpContractTests` 19/19 (21/21); frontend 122/122, build correcto, lint solo con la advertencia previa. El selector no ofrece finales hasta que T37 habilite el cierre. Sin merge ni push.
 
 ### CP12 — Gestión de abiertas
 
@@ -940,13 +1002,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Ganar exige fecha/valor y perder fecha/motivo activo; API resuelve final única y guarda transición/historial atómicamente.
-- [ ] Repetir cierre da 409 sin duplicación; /mover y PATCH no eluden campos de cierre; cerrada no admite edición ordinaria.
-- [ ] Formulario de cierre se usa desde ficha/funnel/selector final; respeta permisos, estados pendientes y recarga de datos. Integrar consumidores en subpaso si excede cinco archivos.
+- [x] Ganar exige fecha/valor y perder fecha/motivo activo; API resuelve final única y guarda transición/historial atómicamente.
+- [x] Repetir cierre da 409 sin duplicación; /mover y PATCH no eluden campos de cierre; cerrada no admite edición ordinaria.
+- [x] Formulario de cierre se usa desde ficha/funnel/selector final; respeta permisos, estados pendientes y recarga de datos. Integrar consumidores en subpaso si excede cinco archivos.
 
 **Verificación:** B + F + API(CierreTests) + UI(src/features/opportunities/CloseOpportunityDialog.test.tsx, nuevo) + D; comprobar que valor cero se acepta y pérdida sin motivo se rechaza. Contar el test y el montaje del diálogo al subdividir el incremento.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t37.md](verificaciones/verificacion-t37.md). `CierreTests` 2/2 y `HttpContractTests` 19/19 (21/21); frontend 127/127 (`CloseOpportunityDialog.test.tsx` 4/4), build correcto, lint solo con la advertencia previa. Sin merge ni push.
 
 <a id="t38"></a>
 
@@ -960,13 +1022,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Solo administrador/responsable comercial reabre cerrada activa; vendedor dueño recibe 403. Exige embudo activo, destino abierto activo y justificación.
-- [ ] Historial conserva en texto resultado/fecha/valor/motivo anteriores y justificación; limpia cierre/motivo actuales y mantiene valor, todo atómico.
-- [ ] Responsable o servicio inactivos no obligan a reasignar ni bloquean reapertura; UI explica límites y ofrece destinos válidos.
+- [x] Solo administrador/responsable comercial reabre cerrada activa; vendedor dueño recibe 403. Exige embudo activo, destino abierto activo y justificación.
+- [x] Historial conserva en texto resultado/fecha/valor/motivo anteriores y justificación; limpia cierre/motivo actuales y mantiene valor, todo atómico.
+- [x] Responsable o servicio inactivos no obligan a reasignar ni bloquean reapertura; UI explica límites y ofrece destinos válidos.
 
 **Verificación:** B + F + API(ReaperturaTests) + D; cerrar→reabrir→corregir→cerrar con evidencia del primer cierre.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t38.md](verificaciones/verificacion-t38.md). `ReaperturaTests` 2/2 y `HttpContractTests` 19/19 (21/21); frontend 130/130 (`ReopenOpportunityDialog.test.tsx` 3/3), build correcto, lint solo con la advertencia previa. Sin merge ni push.
 
 <a id="t39"></a>
 
@@ -980,18 +1042,20 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Dueño/superior da de baja abierta o cerrada sin reapertura; repetir no cambia nada y no agrega historia ficticia.
-- [ ] No restaura ni borra físicamente; oculta recurso principal y conserva historia/actividades. Listas/funnel se invalidan correctamente.
-- [ ] Reevaluar bloqueos de clientes/embudos tras baja y verificar carrera con una mutación; comprobar con altas reales las reglas antes cubiertas con fixtures.
+- [x] Dueño/superior da de baja abierta o cerrada sin reapertura; repetir no cambia nada y no agrega historia ficticia.
+- [x] No restaura ni borra físicamente; oculta recurso principal y conserva historia/actividades. Listas/funnel se invalidan correctamente.
+- [x] Reevaluar bloqueos de clientes/embudos tras baja y verificar carrera con una mutación; comprobar con altas reales las reglas antes cubiertas con fixtures.
 
 **Verificación:** B + F + API(BajaOportunidadTests) + suites Clientes/Embudos afectadas + D; checkpoint completo de oportunidades y regresión de bloqueos.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t39.md](verificaciones/verificacion-t39.md). `BajaOportunidadTests` 3/3 más `HttpContractTests`, `BajasClientesTests`, `EmbudosTests` y `EtapasTests` (31/31); frontend 132/132, build correcto, lint solo con la advertencia previa. Sin merge ni push.
 
 ### CP13 — Módulo oportunidades
 
-- [ ] B + F, suites completas pertinentes y circuito alta→reasignación→movimiento→cierre→reapertura→baja. Repetir bloqueos de clientes/configuración usando operaciones reales. Revisar antes del merge.
+- [x] B + F, suites completas pertinentes y circuito alta→reasignación→movimiento→cierre→reapertura→baja. Repetir bloqueos de clientes/configuración usando operaciones reales. Revisar antes del merge (**revisión independiente pendiente**).
 - [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+
+**Evidencia técnica (05/11/2026):** [verificacion-cp13.md](verificaciones/verificacion-cp13.md). Backend completo 163/163, frontend 132/132, build correcto y lint solo con la advertencia previa. Pendientes: revisión independiente, validación autenticada del usuario y OK de integración. Sin merge ni push.
 
 <a id="t40"></a>
 
@@ -1005,13 +1069,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Actividad es un hecho, TipoActividad su catálogo; relaciones directas opcionales a empresa/contacto/oportunidad y al menos empresa o contacto.
-- [ ] Instante del hecho y de registro separados; creador real e inmutable, descripción obligatoria y resultado opcional.
-- [ ] Mapeo sin agenda, auditoría adicional ni cascadas; retirar relación antigua ActividadOportunidad al adaptar sus navegaciones en pasos pequeños.
+- [x] Actividad es un hecho, TipoActividad su catálogo; relaciones directas opcionales a empresa/contacto/oportunidad y al menos empresa o contacto.
+- [x] Instante del hecho y de registro separados; creador real e inmutable, descripción obligatoria y resultado opcional.
+- [x] Mapeo sin agenda, auditoría adicional ni cascadas; retirar relación antigua ActividadOportunidad al adaptar sus navegaciones en pasos pequeños.
 
 **Verificación:** B + API(ActividadesModelTests) + D; lectura/escritura UTC y conservación de las dos fechas.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t40.md](verificaciones/verificacion-t40.md). `ActividadesModelTests` 2/2 y, con `OportunidadesModelTests`, `ClientesModelTests` y `SchemaTests`, 25/25; build sin errores ni advertencias. Sin merge ni push.
 
 <a id="t41"></a>
 
@@ -1025,13 +1089,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] POST rechaza autor/fechaRegistro del cliente; conserva fecha del hecho y exige contexto válido. Desde oportunidad respeta asociaciones históricas.
-- [ ] Sin oportunidad todos gestionan; con oportunidad solo dueño vigente/superiores, incluso al invocar desde cliente; permitir actividad posterior al cierre sin reabrir.
-- [ ] GET de vigentes aplica filtros/paginación/fechas y etiquetas; no permite elegir nuevas referencias dadas de baja ni filtra como secreto una actividad ajena visible.
+- [x] POST rechaza autor/fechaRegistro del cliente; conserva fecha del hecho y exige contexto válido. Desde oportunidad respeta asociaciones históricas.
+- [x] Sin oportunidad todos gestionan; con oportunidad solo dueño vigente/superiores, incluso al invocar desde cliente; permitir actividad posterior al cierre sin reabrir.
+- [x] GET de vigentes aplica filtros/paginación/fechas y etiquetas; no permite elegir nuevas referencias dadas de baja ni filtra como secreto una actividad ajena visible.
 
 **Verificación:** B + API(ActividadesTests) + D; llamada de ayer registrada hoy, oportunidad propia cerrada y tentativa ajena denegada.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t41.md](verificaciones/verificacion-t41.md). `ActividadesTests` 3/3 y `HttpContractTests` 19/19; build sin errores ni advertencias. Sin merge ni push.
 
 <a id="t42"></a>
 
@@ -1045,17 +1109,19 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Editor contextual carga asociaciones sin pedir repetirlas y solo envía campos editables; tipos activos, fecha del hecho y resultado opcional.
-- [ ] Acciones respetan permisos actuales; errores de API y doble envío controlados, sin ocultar actividades ajenas de lectura.
-- [ ] Reutilizar editor en empresa/contacto/oportunidad, completando el montaje de empresa en T45; refrescar datos pertinentes después de guardar.
+- [x] Editor contextual carga asociaciones sin pedir repetirlas y solo envía campos editables; tipos activos, fecha del hecho y resultado opcional.
+- [x] Acciones respetan permisos actuales; errores de API y doble envío controlados, sin ocultar actividades ajenas de lectura.
+- [x] Reutilizar editor en empresa/contacto/oportunidad, completando el montaje de empresa en T45; refrescar datos pertinentes después de guardar.
 
 **Verificación:** F + UI(src/features/activities/ActivityForm.test.tsx) + D; alta local desde oportunidad cerrada sin modificar su estado.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t42.md](verificaciones/verificacion-t42.md). `ActivityForm.test.tsx` 3/3; frontend 135/135, build correcto, lint solo con la advertencia previa. El montaje en la ficha de empresa queda para T45. Sin merge ni push.
+
+**Actualización (05/11/2026):** el montaje en la ficha de empresa se completó en T45 ([verificación T45](verificaciones/verificacion-t45.md)).
 
 ### CP14 — Registro de actividades
 
-- [ ] Crear interacción de ayer, leer fechas/actor y demostrar permiso al operar desde una ficha de cliente.
+- [x] Crear interacción de ayer, leer fechas/actor y demostrar permiso al operar desde una ficha de cliente (`ActividadesTests`, `EdicionActividadTests`; ver [CP15](verificaciones/verificacion-cp15.md)).
 - [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
 
 <a id="t43"></a>
@@ -1070,13 +1136,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] PATCH/DELETE verifican dueño actual de oportunidad o superiores; relink/desvinculación valida tanto origen como destino, sin eludir permiso.
-- [ ] Editar texto/resultado/fecha no revalida empresa actual del contacto contra historia ni altera autor/fechaRegistro.
-- [ ] Baja lógica sin restauración ni marcador; una relación comercial dada de baja no causa cascada y solo desaparece la actividad al darla de baja a ella.
+- [x] PATCH/DELETE verifican dueño actual de oportunidad o superiores; relink/desvinculación valida tanto origen como destino, sin eludir permiso.
+- [x] Editar texto/resultado/fecha no revalida empresa actual del contacto contra historia ni altera autor/fechaRegistro.
+- [x] Baja lógica sin restauración ni marcador; una relación comercial dada de baja no causa cascada y solo desaparece la actividad al darla de baja a ella.
 
 **Verificación:** B + F + API(EdicionActividadTests) + UI(src/features/activities/ActivityForm.test.tsx) + D; cambio de dueño, quitar oportunidad ajena y texto histórico.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t43.md](verificaciones/verificacion-t43.md). `EdicionActividadTests` 2/2 más `ActividadesTests` y `HttpContractTests` (24/24); frontend 138/138 (`ActivityForm.test.tsx` 6/6), build correcto, lint solo con la advertencia previa. Sin merge ni push.
 
 <a id="t44"></a>
 
@@ -1090,13 +1156,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Unir actividades y transiciones antes de contar/paginar; orden fecha descendente, tipo e ID como desempate, fechas desde inclusiva/hasta exclusiva.
-- [ ] Clientes usan FKs históricas directas, sin importar lo de la empresa actual ni duplicar actividades que coinciden por dos relaciones.
-- [ ] Bajas respetan contextos vigentes: actividad puede seguir en contacto tras baja de oportunidad; todos los contextos dados de baja no originan papelera ni recuperación.
+- [x] Unir actividades y transiciones antes de contar/paginar; orden fecha descendente, tipo e ID como desempate, fechas desde inclusiva/hasta exclusiva.
+- [x] Clientes usan FKs históricas directas, sin importar lo de la empresa actual ni duplicar actividades que coinciden por dos relaciones.
+- [x] Bajas respetan contextos vigentes: actividad puede seguir en contacto tras baja de oportunidad; todos los contextos dados de baja no originan papelera ni recuperación.
 
 **Verificación:** B + API(HistorialComercialTests) + D; páginas intercaladas con empates, cambio A→B y oportunidad dada de baja.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t44.md](verificaciones/verificacion-t44.md). `HistorialComercialTests` 1/1 y `HttpContractTests` 19/19 (20/20); build sin errores ni advertencias. Sin merge ni push.
 
 <a id="t45"></a>
 
@@ -1110,18 +1176,20 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Componente compartido representa actividad/transición, autor y ambas fechas donde corresponda; carga páginas de una única proyección.
-- [ ] Las tres fichas permiten registrar/editar/bajar según capacidades sin duplicar lógica; fichas ajenas siguen mostrando su información.
-- [ ] Mensajes vacío/error, foco y actualización posterior a mutaciones funcionan; no tarjetas de actividad eliminada ni historia reubicada por empresa actual.
+- [x] Componente compartido representa actividad/transición, autor y ambas fechas donde corresponda; carga páginas de una única proyección.
+- [x] Las tres fichas permiten registrar/editar/bajar según capacidades sin duplicar lógica; fichas ajenas siguen mostrando su información.
+- [x] Mensajes vacío/error, foco y actualización posterior a mutaciones funcionan; no tarjetas de actividad eliminada ni historia reubicada por empresa actual.
 
 **Verificación:** F + UI(src/features/activities/CommercialHistory.test.tsx) + D; recorrido manual de historia compartida. Checkpoint completo de actividades.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t45.md](verificaciones/verificacion-t45.md). `CommercialHistory.test.tsx` 7/7; frontend 145/145, `HistorialComercialTests` 1/1, build correcto, lint solo con la advertencia previa. Pendiente: recorrido manual de la historia compartida (usuario). Sin merge ni push.
 
 ### CP15 — Módulo actividades
 
-- [ ] B + F, suites pertinentes completas y circuito historial combinado→edición→baja→lectura desde otro contexto. Revisar antes del merge.
+- [x] B + F, suites pertinentes completas y circuito historial combinado→edición→baja→lectura desde otro contexto. Revisar antes del merge (**revisión independiente pendiente**).
 - [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+
+**Evidencia técnica (05/11/2026):** [verificacion-cp15.md](verificaciones/verificacion-cp15.md). Backend completo 171/171, frontend 145/145, build correcto y lint solo con la advertencia previa. Pendientes: revisión independiente, validación autenticada del usuario y OK de integración. Sin merge ni push.
 
 <a id="t46"></a>
 
@@ -1135,13 +1203,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Inventario final no contiene endpoints alternativos de modificación, registro público, IDs de actor confiados ni tipos ligados a líneas/log genérico.
-- [ ] EF/SQL/OpenAPI/clientes coinciden y código obsoleto se elimina; si el inventario revela varias limpiezas, dividir por módulo antes de modificar, máximo unas cinco rutas de archivo por subtarea.
-- [ ] Actualizar documentación de contratos implementados y ejemplos sin secretos; pruebas de endpoints retirados demuestran que no mutan por caminos viejos.
+- [x] Inventario final no contiene endpoints alternativos de modificación, registro público, IDs de actor confiados ni tipos ligados a líneas/log genérico.
+- [x] EF/SQL/OpenAPI/clientes coinciden y código obsoleto se elimina; si el inventario revela varias limpiezas, dividir por módulo antes de modificar, máximo unas cinco rutas de archivo por subtarea.
+- [x] Actualizar documentación de contratos implementados y ejemplos sin secretos; pruebas de endpoints retirados demuestran que no mutan por caminos viejos.
 
 **Verificación:** B + F + búsqueda de referencias antiguas + prueba HTTP negativa de rutas retiradas + D; regeneración local de tipos sin cambios manuales.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica (05/11/2026):** [verificacion-t46.md](verificaciones/verificacion-t46.md) y [api-implementada.md](../docs/segunda-entrega/api-implementada.md). Backend completo 171/171, frontend 144/144, `schema.d.ts` regenerado sin cambios, build y lint correctos. Deuda: migrar las suites con `LegacyApp` al `App` real. Sin merge ni push.
 
 <a id="t47"></a>
 
@@ -1155,13 +1223,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Ejecutar auditorías npm/.NET y escaneo de secretos con redacción sobre dependencias, nuevos y cambios; comparar identidad/severidad contra T01.
-- [ ] Ningún hallazgo nuevo alto/crítico ni secreto nuevo queda sin resolver; los previos se registran sin empeorar, sin audit fix indiscriminado.
-- [ ] Comprobar que no quedan fallback de credenciales ni excepciones nuevas a controles; si se requiere corregir código, crear tarea acotada y repetir solo checks afectados antes de cerrar.
+- [x] Ejecutar auditorías npm/.NET y escaneo de secretos con redacción sobre dependencias, nuevos y cambios; comparar identidad/severidad contra T01.
+- [x] Ningún hallazgo nuevo alto/crítico ni secreto nuevo queda sin resolver; los previos se registran sin empeorar, sin audit fix indiscriminado.
+- [x] Comprobar que no quedan fallback de credenciales ni excepciones nuevas a controles; si se requiere corregir código, crear tarea acotada y repetir solo checks afectados antes de cerrar.
 
 **Verificación:** S + D; capturar resultados/fechas/severidades sin valores sensibles. Fallo de red/scanner no equivale a informe limpio.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia técnica parcial (05/11/2026):** [verificacion-seguridad.md](../docs/segunda-entrega/verificacion-seguridad.md). npm raíz y frontend sin vulnerabilidades tras actualizar dirigidamente zod, vite, vitest, @vitest/mocker, undici y source-map-js (deuda B8/CP04 cerrada); .NET sin vulnerabilidades. **Cierre (08/11/2026):** con autorización del usuario se ejecutó Gitleaks 8.30.1 (historial 179 commits, índice y árbol de trabajo de 337 archivos): sin hallazgos. Auditorías npm (raíz y frontend) y .NET repetidas por la nueva dependencia `@dnd-kit/core`: 0 vulnerabilidades. Deuda previa observada, sin tocar: `creacion-tablas.sql` de la primera entrega, con un usuario de demostración. Detalle en el informe enlazado.
 
 <a id="t48"></a>
 
@@ -1175,18 +1243,18 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Ejecutar suites pertinentes completas, builds/lint y recorrido con perfiles separados: admin configura/crea usuarios, vendedor gestiona clientes y propia, responsable supervisa/reabre.
-- [ ] Demostrar tabla global/funnel propio, reasignación, cierre/reapertura, historia, bajas y persistencia tras reinicio; no usar Azure ni usuarios automáticos de demo del producto.
-- [ ] Registrar evidencia y deuda por caso; ningún fundamental sin verificar se marca completo. Defectos descubiertos generan tareas pequeñas y nueva verificación afectada, no excepciones tácitas.
+- [x] Ejecutar suites pertinentes completas, builds/lint y recorrido con perfiles separados: admin configura/crea usuarios, vendedor gestiona clientes y propia, responsable supervisa/reabre.
+- [x] Demostrar tabla global/funnel propio, reasignación, cierre/reapertura, historia, bajas y persistencia tras reinicio; no usar Azure ni usuarios automáticos de demo del producto.
+- [x] Registrar evidencia y deuda por caso; ningún fundamental sin verificar se marca completo. Defectos descubiertos generan tareas pequeñas y nueva verificación afectada, no excepciones tácitas.
 
 **Verificación:** B + F + suite backend completa + suite frontend completa + D; ensayo manual local con datos ficticios y evidencia por rol. Sin repetir S si no hubo cambios desde T47.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Avance (08/11/2026):** el usuario aprobó el recorrido con perfiles separados, probado con varias cuentas de vendedor. Como resultado se añadió la regla Potencial → Cliente al ganar (SPEC-oportunidades; `CierreTests` y `ReaperturaTests` 5/5). **Evidencia (08/11/2026):** [verificacion-final-local.md](../docs/segunda-entrega/verificacion-final-local.md). Backend 172/172 (10 min 40 s) y frontend 151/151 (43,6 s), cero omisiones; build correcto y lint solo con la advertencia previa. Recorrido con perfiles separados y persistencia tras reiniciar la API comprobados por el usuario. Seguridad: ver T47. Deuda: suites con `LegacyApp` sin migrar y `creacion-tablas.sql` de la primera entrega. Sin merge ni push.
 
 ### CP16 — Aceptación local
 
-- [ ] Recorridos fundamentales, compilación, pruebas y seguridad documentados. No declarar entrega integral si un control fundamental sigue pendiente.
-- [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+- [x] Recorridos fundamentales, compilación, pruebas y seguridad documentados. No declarar entrega integral si un control fundamental sigue pendiente.
+- [x] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
 
 <a id="t49"></a>
 

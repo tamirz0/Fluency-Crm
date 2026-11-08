@@ -14,9 +14,13 @@ import { NewCompanyPage, EditCompanyPage } from './features/companies/CompanyFor
 import { ContactsPage } from './features/contacts/ContactsPage'
 import { ContactDetailPage } from './features/contacts/ContactDetailPage'
 import { NewContactPage, EditContactPage } from './features/contacts/ContactFormPage'
+import { OpportunitiesPage } from './features/opportunities/OpportunitiesPage'
+import { FunnelPage } from './features/funnel/FunnelPage'
+import { EditOpportunityPage, NewOpportunityPage } from './features/opportunities/OpportunityFormPage'
+import { OpportunityDetailPage } from './features/opportunities/OpportunityDetailPage'
 function AccessHome() {
   const { user } = useAuth()
-  return <Box sx={{ p: { xs: 3, md: 5 } }}><Typography variant="h4" component="h1">Hola, {user?.nombre}</Typography><Typography sx={{ mt: 2 }}>Bienvenido a Fluency CRM.</Typography></Box>
+  return <Box sx={{ p: { xs: 3, md: 5 }, maxWidth: 1440, mx: 'auto' }}><Typography component="h1" className="companies-page-title">Hola, {user?.nombre}</Typography><Typography sx={{ mt: 2 }}>Bienvenido a Fluency CRM.</Typography></Box>
 }
 function App() {
   return <Routes>
@@ -31,6 +35,11 @@ function App() {
       <Route path="/contactos/nuevo" element={<NewContactPage />} />
       <Route path="/contactos/:idContacto" element={<ContactDetailPage />} />
       <Route path="/contactos/:idContacto/editar" element={<EditContactPage />} />
+      <Route path="/oportunidades" element={<OpportunitiesPage />} />
+      <Route path="/oportunidades/nueva" element={<NewOpportunityPage />} />
+      <Route path="/oportunidades/:idOportunidad" element={<OpportunityDetailPage />} />
+      <Route path="/oportunidades/:idOportunidad/editar" element={<EditOpportunityPage />} />
+      <Route path="/embudo" element={<FunnelPage />} />
       <Route path="/configuracion/usuarios" element={<UsersPage />} />
       <Route path="/configuracion/catalogos" element={<CatalogsPage />} />
       <Route path="/configuracion/servicios" element={<ServicesPage />} />

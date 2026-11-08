@@ -1,230 +1,182 @@
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
 
 namespace Services.DTO;
 
-/// <summary>Resumen de una oportunidad para las vistas de embudo comercial.</summary>
-public sealed record OportunidadResumenResponse(
-    int Id,
-    string Titulo,
-    int? IdEmpresa,
-    string? EmpresaRazonSocial,
-    int? IdContacto,
-    string? ContactoNombre,
-    string? ContactoApellido,
-    int? IdUsuario,
-    string? UsuarioNombre,
-    string? UsuarioApellido,
-    DateOnly? FechaEstimadaCierre);
+/// <summary>Operaciones que el actor puede intentar; la API vuelve a comprobarlas al ejecutar.</summary>
+public sealed record AccionesOportunidad(bool Editar, bool Reasignar, bool Mover, bool Cerrar, bool Reabrir, bool DarDeBaja, bool GestionarActividades);
 
-/// <summary>Una etapa comercial junto con las oportunidades que se encuentran en ella.</summary>
-public sealed record EtapaConOportunidadesResponse(
-    int IdEtapa,
-    string Nombre,
-    int Orden,
-    IReadOnlyList<OportunidadResumenResponse> Oportunidades);
+/// <summary>Oportunidad con referencias etiquetadas; embudo, servicio y estado se derivan de la etapa.</summary>
+public sealed record OportunidadResponse
+{
+    public required int Id { get; init; }
+    /// <summary>Título propio, si se informó.</summary>
+    public string? Titulo { get; init; }
+    /// <summary>Lo que se muestra: el título propio o, si falta, el nombre de la empresa y/o el contacto.</summary>
+    public required string TituloVisible { get; init; }
+    public required int IdResponsable { get; init; }
+    public required string ResponsableNombre { get; init; }
+    public required bool ResponsableActivo { get; init; }
+    public int? IdEmpresa { get; init; }
+    public string? EmpresaRazonSocial { get; init; }
+    public int? IdContacto { get; init; }
+    public string? ContactoNombre { get; init; }
+    public required int IdEtapa { get; init; }
+    public required string EtapaNombre { get; init; }
+    public required bool EtapaActiva { get; init; }
+    public required string Estado { get; init; }
+    public required int IdEmbudo { get; init; }
+    public required string EmbudoNombre { get; init; }
+    public required bool EmbudoActivo { get; init; }
+    public required int IdServicio { get; init; }
+    public required string ServicioNombre { get; init; }
+    public required bool ServicioActivo { get; init; }
+    public int? IdOrigen { get; init; }
+    public string? OrigenDescripcion { get; init; }
+    public bool? OrigenActivo { get; init; }
+    public required decimal Valor { get; init; }
+    public required DateTime FechaCreacion { get; init; }
+    public DateOnly? FechaEstimadaCierre { get; init; }
+    public DateTime? FechaCierre { get; init; }
+    public int? IdMotivoPerdida { get; init; }
+    public string? MotivoPerdidaDescripcion { get; init; }
+    public string? ObjetivoAprendizaje { get; init; }
+    public int? CantidadParticipantes { get; init; }
+    public string? DisponibilidadHoraria { get; init; }
+    public string? Observaciones { get; init; }
+    public required bool Activo { get; init; }
+    public AccionesOportunidad AccionesPermitidas { get; init; } = new(false, false, false, false, false, false, false);
+}
+
+/// <summary>Filtros del listado; se combinan con AND, así que los incompatibles dan un conjunto vacío.</summary>
+public sealed record OportunidadFilters(string? Q, int? IdResponsable, int? IdEmpresa, int? IdContacto, int? IdEmbudo, int? IdEtapa, string? Estado, int? IdOrigen);
+
+/// <summary>Entrada inmutable del historial de etapas; la etapa anterior es null en el alta.</summary>
+public sealed record HistorialEtapaResponse(int Id, int? IdEtapaAnterior, string? EtapaAnteriorNombre, int IdNuevaEtapa, string EtapaNuevaNombre,
+    DateTime FechaHora, int IdUsuario, string UsuarioNombre, string? Observacion);
+
+/// <summary>Columna del funnel: etapa activa con sus oportunidades vigentes.</summary>
+public sealed record FunnelEtapa(int Id, string Nombre, int Orden, string Estado, IReadOnlyList<OportunidadResponse> Oportunidades);
+
+/// <summary>Embudo con sus columnas activas; puede ser un embudo inactivo, que solo se consulta.</summary>
+public sealed record FunnelResponse(int IdEmbudo, string Nombre, bool Activo, int IdServicio, string ServicioNombre, bool ServicioActivo, IReadOnlyList<FunnelEtapa> Etapas);
 
 /// <summary>
-/// Detalle completo de una oportunidad. Los campos <c>*Nombre</c>/<c>*Apellido</c>/<c>*RazonSocial</c>/
-/// <c>*Descripcion</c> acompañan a su id correspondiente con el valor legible desde la tabla referenciada,
-/// para que el frontend no tenga que resolverlo con una consulta aparte.
+/// Alta de oportunidad. Requiere embudo (solo contexto, no se persiste) y empresa o contacto; el título es opcional.
+/// Autor, estado y fechas los fija el servidor; propiedades desconocidas se rechazan.
 /// </summary>
-public sealed record OportunidadResponse(
-    int Id,
-    string Titulo,
-    int? IdUsuario,
-    string? UsuarioNombre,
-    string? UsuarioApellido,
-    int? IdEmpresa,
-    string? EmpresaRazonSocial,
-    int? IdContacto,
-    string? ContactoNombre,
-    string? ContactoApellido,
-    int? IdServicio,
-    string? ServicioNombre,
-    int? IdEtapa,
-    string? EtapaNombre,
-    DateOnly? FechaEstimadaCierre,
-    DateTime? FechaCierre,
-    int? IdOrigen,
-    string? OrigenDescripcion,
-    int? IdEstado,
-    string? EstadoDescripcion,
-    string? Observaciones);
-
-/// <summary>Payload para mover una oportunidad a una nueva etapa comercial.</summary>
-public sealed record UpdateEtapaOportunidadRequest
+public sealed record CreateOportunidadRequest : IValidatableObject
 {
-    /// <summary>Id de la nueva etapa comercial.</summary>
-    public required int IdNuevaEtapa { get; init; }
+    [MaxLength(100)] public string? Titulo { get; init; }
+    [Range(1, int.MaxValue)] public int IdEmbudo { get; init; }
+    [Range(1, int.MaxValue)] public int? IdEmpresa { get; init; }
+    [Range(1, int.MaxValue)] public int? IdContacto { get; init; }
+    [Range(1, int.MaxValue)] public int? IdEtapa { get; init; }
+    [Range(1, int.MaxValue)] public int? IdResponsable { get; init; }
+    [Range(1, int.MaxValue)] public int? IdOrigen { get; init; }
+    /// <summary>Omitido o null: copia el precio del servicio. Un importe informado, incluido cero, prevalece.</summary>
+    public decimal? Valor { get; init; }
+    public DateOnly? FechaEstimadaCierre { get; init; }
+    public string? ObjetivoAprendizaje { get; init; }
+    [Range(1, int.MaxValue)] public int? CantidadParticipantes { get; init; }
+    public string? DisponibilidadHoraria { get; init; }
+    public string? Observaciones { get; init; }
 
-    /// <summary>Usuario que realiza el cambio, para dejarlo asentado en el historial.</summary>
-    public int? IdUsuario { get; init; }
+    public IEnumerable<ValidationResult> Validate(ValidationContext context)
+    {
+        if (IdEmbudo <= 0) yield return new("El embudo es obligatorio.", [nameof(IdEmbudo)]);
+        if (IdEmpresa is null && IdContacto is null)
+            yield return new("Indique una empresa o un contacto.", [nameof(IdEmpresa), nameof(IdContacto)]);
+        if (Valor is { } value && (value is < 0 or > 9999999999.99m || decimal.Round(value, 2) != value))
+            yield return new("El valor debe ser un importe entre 0 y 9.999.999.999,99 con hasta dos decimales.", [nameof(Valor)]);
+    }
+}
 
-    /// <summary>Observación opcional sobre el cambio de etapa.</summary>
+/// <summary>
+/// Edición de datos de una oportunidad abierta. Omitir un campo lo conserva; null solo limpia los opcionales.
+/// Responsable, etapa, cierre, baja y derivados no se editan por aquí (propiedades desconocidas: 400).
+/// </summary>
+public sealed record PatchOportunidadRequest : PatchRequest
+{
+    [MaxLength(100)] public string? Titulo { get; init { field = value; ProvidedFields.Add(nameof(Titulo)); } }
+    [Range(1, int.MaxValue)] public int? IdEmpresa { get; init { field = value; ProvidedFields.Add(nameof(IdEmpresa)); } }
+    [Range(1, int.MaxValue)] public int? IdContacto { get; init { field = value; ProvidedFields.Add(nameof(IdContacto)); } }
+    [Range(1, int.MaxValue)] public int? IdOrigen { get; init { field = value; ProvidedFields.Add(nameof(IdOrigen)); } }
+    public decimal? Valor { get; init { field = value; ProvidedFields.Add(nameof(Valor)); } }
+    public DateOnly? FechaEstimadaCierre { get; init { field = value; ProvidedFields.Add(nameof(FechaEstimadaCierre)); } }
+    public string? ObjetivoAprendizaje { get; init { field = value; ProvidedFields.Add(nameof(ObjetivoAprendizaje)); } }
+    [Range(1, int.MaxValue)] public int? CantidadParticipantes { get; init { field = value; ProvidedFields.Add(nameof(CantidadParticipantes)); } }
+    public string? DisponibilidadHoraria { get; init { field = value; ProvidedFields.Add(nameof(DisponibilidadHoraria)); } }
+    public string? Observaciones { get; init { field = value; ProvidedFields.Add(nameof(Observaciones)); } }
+
+    public override IEnumerable<ValidationResult> Validate(ValidationContext context)
+    {
+        foreach (var error in base.Validate(context)) yield return error;
+        if (HasField(nameof(Valor)) && Valor is not { } value)
+            yield return new("El valor no puede quedar vacío.", [nameof(Valor)]);
+        else if (Valor is { } amount && (amount is < 0 or > 9999999999.99m || decimal.Round(amount, 2) != amount))
+            yield return new("El valor debe ser un importe entre 0 y 9.999.999.999,99 con hasta dos decimales.", [nameof(Valor)]);
+        if (HasField(nameof(IdEmpresa)) && HasField(nameof(IdContacto)) && IdEmpresa is null && IdContacto is null)
+            yield return new("Indique una empresa o un contacto.", [nameof(IdEmpresa), nameof(IdContacto)]);
+    }
+}
+
+/// <summary>Reasignación: solo el destino; el actor y el estado los fija el servidor.</summary>
+public sealed record ReasignarOportunidadRequest
+{
+    [Range(1, int.MaxValue)] public int IdResponsable { get; init; }
+}
+
+/// <summary>Movimiento entre etapas abiertas; autor y fecha del historial los fija el servidor.</summary>
+public sealed record MoverOportunidadRequest
+{
+    [Range(1, int.MaxValue)] public int IdEtapa { get; init; }
     public string? Observacion { get; init; }
 }
 
-/// <summary>Resultado posible de intentar actualizar la etapa de una oportunidad.</summary>
-public enum UpdateEtapaOportunidadOutcome
+/// <summary>Cierre como ganada: fecha y valor final obligatorios (cero es válido).</summary>
+public sealed record GanarOportunidadRequest : IValidatableObject
 {
-    Success,
-    OportunidadNotFound,
-    EtapaNotFound,
-    UsuarioNotFound
-}
+    public DateOnly FechaCierre { get; init; }
+    public decimal? Valor { get; init; }
+    public string? Observacion { get; init; }
 
-/// <summary>Envuelve el resultado de la operación y, si tuvo éxito, la oportunidad ya actualizada.</summary>
-public sealed record UpdateEtapaOportunidadResult(
-    UpdateEtapaOportunidadOutcome Outcome,
-    OportunidadResponse? Oportunidad);
-
-/// <summary>Payload para registrar una nueva oportunidad.</summary>
-public sealed record CreateOportunidadRequest
-{
-    [Required, MaxLength(150)]
-    public required string Titulo { get; init; }
-
-    /// <summary>Usuario responsable de la oportunidad (toda oportunidad debe tener un responsable).</summary>
-    public required int IdUsuario { get; init; }
-
-    /// <summary>Etapa comercial inicial de la oportunidad.</summary>
-    public required int IdEtapa { get; init; }
-
-    /// <summary>Empresa asociada. La oportunidad debe tener empresa y/o contacto.</summary>
-    public int? IdEmpresa { get; init; }
-
-    /// <summary>Contacto asociado. Si se indica empresa, el contacto debe pertenecer a ella. Sin empresa puede seleccionarse cualquier contacto existente.</summary>
-    public int? IdContacto { get; init; }
-
-    public int? IdServicio { get; init; }
-
-    public DateOnly? FechaEstimadaCierre { get; init; }
-
-    public int? IdOrigen { get; init; }
-
-    public int? IdEstado { get; init; }
-
-    public string? Observaciones { get; init; }
-}
-
-/// <summary>Resultado posible de intentar registrar una nueva oportunidad.</summary>
-public enum CreateOportunidadOutcome
-{
-    Success,
-    ValidationFailed
-}
-
-/// <summary>
-/// Envuelve el resultado de dar de alta una oportunidad: si falló la validación de negocio,
-/// <see cref="Errors"/> detalla cada motivo; si tuvo éxito, <see cref="Oportunidad"/> trae la oportunidad creada.
-/// </summary>
-public sealed record CreateOportunidadResult(
-    CreateOportunidadOutcome Outcome,
-    OportunidadResponse? Oportunidad,
-    IReadOnlyList<string> Errors);
-
-/// <summary>
-/// Payload para modificar una oportunidad existente. Solo los campos enviados (no nulos) se actualizan; el
-/// resto conserva su valor actual. No incluye la etapa comercial: eso es responsabilidad exclusiva de
-/// <see cref="UpdateEtapaOportunidadRequest"/>.
-/// La combinación final de empresa y contacto debe ser compatible: si ambos están presentes,
-/// el contacto debe pertenecer a esa empresa, incluyendo los valores conservados al omitir campos.
-/// </summary>
-public sealed record UpdateOportunidadRequest
-{
-    [MaxLength(150)]
-    public string? Titulo { get; init; }
-
-    public int? IdUsuario { get; init; }
-
-    public int? IdEmpresa { get; init; }
-
-    public int? IdContacto { get; init; }
-
-    public int? IdServicio { get; init; }
-
-    public DateOnly? FechaEstimadaCierre { get; init; }
-
-    public int? IdOrigen { get; init; }
-
-    public int? IdEstado { get; init; }
-
-    public string? Observaciones { get; init; }
-}
-
-/// <summary>Resultado posible de intentar modificar una oportunidad.</summary>
-public enum UpdateOportunidadOutcome
-{
-    Success,
-    NotFound,
-    ValidationFailed
-}
-
-/// <summary>
-/// Envuelve el resultado de modificar una oportunidad: si falló la validación de negocio,
-/// <see cref="Errors"/> detalla cada motivo; si tuvo éxito, <see cref="Oportunidad"/> trae la oportunidad
-/// ya actualizada.
-/// </summary>
-public sealed record UpdateOportunidadResult(
-    UpdateOportunidadOutcome Outcome,
-    OportunidadResponse? Oportunidad,
-    IReadOnlyList<string> Errors);
-
-/// <summary>
-/// Actualización parcial de oportunidad. Un campo omitido conserva su valor y un null explícito borra un
-/// campo opcional. Titulo e IdUsuario no pueden borrarse. La etapa se modifica solo mediante su endpoint
-/// específico; FechaCierre queda fuera del contrato de actualización actual. No admite campos desconocidos.
-/// </summary>
-[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
-public sealed record PatchOportunidadRequest : IValidatableObject
-{
-    private readonly HashSet<string> providedFields = [];
-
-    /// <summary>Título; si se envía, no puede ser null, vacío ni solo espacios.</summary>
-    [MaxLength(150)]
-    public string? Titulo { get; init { field = value; providedFields.Add(nameof(Titulo)); } }
-
-    /// <summary>Usuario responsable existente; si se envía no puede ser null.</summary>
-    public int? IdUsuario { get; init { field = value; providedFields.Add(nameof(IdUsuario)); } }
-
-    /// <summary>Empresa existente; null elimina la asociación si permanece un contacto.</summary>
-    public int? IdEmpresa { get; init { field = value; providedFields.Add(nameof(IdEmpresa)); } }
-
-    /// <summary>Contacto existente; null elimina la asociación si permanece una empresa.</summary>
-    public int? IdContacto { get; init { field = value; providedFields.Add(nameof(IdContacto)); } }
-
-    /// <summary>Servicio existente; null elimina la asociación.</summary>
-    public int? IdServicio { get; init { field = value; providedFields.Add(nameof(IdServicio)); } }
-
-    /// <summary>Fecha estimada de cierre; null elimina el valor guardado.</summary>
-    public DateOnly? FechaEstimadaCierre { get; init { field = value; providedFields.Add(nameof(FechaEstimadaCierre)); } }
-
-    /// <summary>Origen comercial existente; null elimina la asociación.</summary>
-    public int? IdOrigen { get; init { field = value; providedFields.Add(nameof(IdOrigen)); } }
-
-    /// <summary>Estado de cliente existente; null elimina la asociación.</summary>
-    public int? IdEstado { get; init { field = value; providedFields.Add(nameof(IdEstado)); } }
-
-    /// <summary>Observaciones; null elimina el valor guardado.</summary>
-    public string? Observaciones { get; init { field = value; providedFields.Add(nameof(Observaciones)); } }
-
-    /// <summary>Indica si el campo fue enviado, incluso si su valor es null.</summary>
-    public bool HasField(string propertyName) => providedFields.Contains(propertyName);
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    public IEnumerable<ValidationResult> Validate(ValidationContext context)
     {
-        if (HasField(nameof(Titulo)) && string.IsNullOrWhiteSpace(Titulo))
-        {
-            yield return new ValidationResult(
-                "Titulo no puede ser nulo, vacío ni contener solo espacios.", [nameof(Titulo)]);
-        }
-
-        if (HasField(nameof(IdUsuario)) && IdUsuario is null)
-        {
-            yield return new ValidationResult(
-                "IdUsuario no puede ser nulo porque toda oportunidad debe tener un responsable.",
-                [nameof(IdUsuario)]);
-        }
+        if (FechaCierre == default) yield return new("La fecha de cierre es obligatoria.", [nameof(FechaCierre)]);
+        if (Valor is not { } value) yield return new("El valor es obligatorio (puede ser 0).", [nameof(Valor)]);
+        else if (value is < 0 or > 9999999999.99m || decimal.Round(value, 2) != value)
+            yield return new("El valor debe ser un importe entre 0 y 9.999.999.999,99 con hasta dos decimales.", [nameof(Valor)]);
     }
+}
+
+/// <summary>Cierre como perdida: fecha y motivo activo obligatorios; conserva el valor vigente.</summary>
+public sealed record PerderOportunidadRequest : IValidatableObject
+{
+    public DateOnly FechaCierre { get; init; }
+    [Range(1, int.MaxValue)] public int IdMotivoPerdida { get; init; }
+    public string? Observacion { get; init; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext context)
+    {
+        if (FechaCierre == default) yield return new("La fecha de cierre es obligatoria.", [nameof(FechaCierre)]);
+    }
+}
+
+/// <summary>Reapertura: etapa abierta de destino y justificación obligatoria; autor y cierre anterior los fija el servidor.</summary>
+public sealed record ReabrirOportunidadRequest : IValidatableObject
+{
+    [Range(1, int.MaxValue)] public int IdEtapa { get; init; }
+    public string? Justificacion { get; init; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext context)
+    {
+        if (string.IsNullOrWhiteSpace(Justificacion)) yield return new("La justificación es obligatoria.", [nameof(Justificacion)]);
+    }
+}
+
+/// <summary>Error público sin detalles de persistencia.</summary>
+public sealed class OportunidadOperationException(int status, string code, string message) : Exception(message)
+{
+    public int Status { get; } = status;
+    public string Code { get; } = code;
 }

@@ -61,6 +61,8 @@ builder.Services.AddDbContext<FluencyLocalDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IOportunidadService, OportunidadService>();
+builder.Services.AddScoped<IActividadService, ActividadService>();
+builder.Services.AddScoped<HistorialComercialService>();
 builder.Services.AddScoped<IContactoService, ContactoService>();
 builder.Services.AddScoped<IEmpresaService, EmpresaService>();
 builder.Services.AddScoped<ILoginService, LoginService>();

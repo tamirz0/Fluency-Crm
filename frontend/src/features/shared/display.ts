@@ -37,3 +37,7 @@ export function commercialDateToIso(value: string): { value?: string; error?: 'f
   if (date.getUTCFullYear() !== Number(year) || date.getUTCMonth() !== Number(month) - 1 || date.getUTCDate() !== Number(day)) return { error: 'invalid' }
   return { value: `${year}-${month}-${day}` }
 }
+
+export function initials(text: string): string {
+  return text.split(/[\s,]+/).filter(Boolean).slice(0, 2).map((word) => word[0]!.toUpperCase()).join('')
+}

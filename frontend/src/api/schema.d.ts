@@ -4,6 +4,457 @@
  */
 
 export interface paths {
+    "/actividades": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista las actividades vigentes (lectura compartida) con filtros previos al conteo, ordenadas por la fecha del hecho descendente.
+         *     `desde` es inclusivo y `hasta` exclusivo.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    q?: string;
+                    idEmpresa?: number | string;
+                    idContacto?: number | string;
+                    idOportunidad?: number | string;
+                    idTipo?: number | string;
+                    idUsuario?: number | string;
+                    desde?: string;
+                    hasta?: string;
+                    page?: number | string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PageResponseOfActividadResponse"];
+                        "application/json": components["schemas"]["PageResponseOfActividadResponse"];
+                        "text/json": components["schemas"]["PageResponseOfActividadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Registra una actividad ya realizada. El autor y la fecha de registro los fija el servidor. Sin oportunidad cualquier usuario activo
+         *     gestiona; con oportunidad, solo su responsable vendedor o un superior (también si está cerrada).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateActividadRequest"];
+                    "text/json": components["schemas"]["CreateActividadRequest"];
+                    "application/*+json": components["schemas"]["CreateActividadRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ActividadResponse"];
+                        "application/json": components["schemas"]["ActividadResponse"];
+                        "text/json": components["schemas"]["ActividadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/actividades/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Consulta una actividad vigente, también ajena. Una dada de baja responde 404. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ActividadResponse"];
+                        "application/json": components["schemas"]["ActividadResponse"];
+                        "text/json": components["schemas"]["ActividadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Baja lógica sin restauración ni cascadas (204). Repetirla responde 404. */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /**
+         * Edita los campos enviados. Exige gestionar la oportunidad de origen y, si se cambia o quita, también la de destino; el autor y la
+         *     fecha de registro no cambian.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PatchActividadRequest"];
+                    "text/json": components["schemas"]["PatchActividadRequest"];
+                    "application/*+json": components["schemas"]["PatchActividadRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ActividadResponse"];
+                        "application/json": components["schemas"]["ActividadResponse"];
+                        "text/json": components["schemas"]["ActividadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/catalogos/{catalogo}": {
         parameters: {
             query?: never;
@@ -2716,6 +3167,240 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/empresas/{id}/historial-comercial": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Actividades de la empresa (por su FK directa) y transiciones de sus oportunidades vigentes. Fecha descendente; `desde` inclusivo, `hasta` exclusivo. */
+        get: {
+            parameters: {
+                query?: {
+                    desde?: string;
+                    hasta?: string;
+                    page?: number | string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PageResponseOfHistorialComercialItem"];
+                        "application/json": components["schemas"]["PageResponseOfHistorialComercialItem"];
+                        "text/json": components["schemas"]["PageResponseOfHistorialComercialItem"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contactos/{id}/historial-comercial": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Igual criterio por contacto: no incluye automáticamente lo de su empresa actual. */
+        get: {
+            parameters: {
+                query?: {
+                    desde?: string;
+                    hasta?: string;
+                    page?: number | string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PageResponseOfHistorialComercialItem"];
+                        "application/json": components["schemas"]["PageResponseOfHistorialComercialItem"];
+                        "text/json": components["schemas"]["PageResponseOfHistorialComercialItem"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oportunidades/{id}/historial-comercial": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Actividades asociadas y transiciones de la oportunidad vigente. */
+        get: {
+            parameters: {
+                query?: {
+                    desde?: string;
+                    hasta?: string;
+                    page?: number | string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PageResponseOfHistorialComercialItem"];
+                        "application/json": components["schemas"]["PageResponseOfHistorialComercialItem"];
+                        "text/json": components["schemas"]["PageResponseOfHistorialComercialItem"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/csrf": {
         parameters: {
             query?: never;
@@ -2919,6 +3604,1172 @@ export interface paths {
                 };
                 /** @description Unauthorized */
                 401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oportunidades": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista todas las oportunidades vigentes (lectura compartida), con filtros previos al conteo; creación e ID descendentes. */
+        get: {
+            parameters: {
+                query?: {
+                    q?: string;
+                    idResponsable?: number | string;
+                    idEmpresa?: number | string;
+                    idContacto?: number | string;
+                    idEmbudo?: number | string;
+                    idEtapa?: number | string;
+                    estado?: string;
+                    idOrigen?: number | string;
+                    page?: number | string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PageResponseOfOportunidadResponse"];
+                        "application/json": components["schemas"]["PageResponseOfOportunidadResponse"];
+                        "text/json": components["schemas"]["PageResponseOfOportunidadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Crea una oportunidad con su historial inicial en una sola transacción. Sin etapa usa la primera abierta activa del embudo;
+         *     sin valor copia el precio del servicio; sin responsable usa al actor. El vendedor solo crea a su nombre.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateOportunidadRequest"];
+                    "text/json": components["schemas"]["CreateOportunidadRequest"];
+                    "application/*+json": components["schemas"]["CreateOportunidadRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OportunidadResponse"];
+                        "application/json": components["schemas"]["OportunidadResponse"];
+                        "text/json": components["schemas"]["OportunidadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oportunidades/{id}/historial-etapas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Historial de etapas de una oportunidad vigente, paginado por fecha e ID ascendentes. Solo lectura. */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PageResponseOfHistorialEtapaResponse"];
+                        "application/json": components["schemas"]["PageResponseOfHistorialEtapaResponse"];
+                        "text/json": components["schemas"]["PageResponseOfHistorialEtapaResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/embudos/{id}/funnel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Funnel de un embudo (activo o no): columnas activas, también vacías y finales. El vendedor siempre recibe su propia cartera;
+         *     administrador y responsable comercial ven todas y pueden filtrar por responsable.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    idResponsable?: number | string;
+                };
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FunnelResponse"];
+                        "application/json": components["schemas"]["FunnelResponse"];
+                        "text/json": components["schemas"]["FunnelResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oportunidades/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Consulta una oportunidad vigente, también ajena (lectura compartida). */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OportunidadResponse"];
+                        "application/json": components["schemas"]["OportunidadResponse"];
+                        "text/json": components["schemas"]["OportunidadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /**
+         * Baja lógica definitiva (abierta o cerrada, sin reapertura): oculta el recurso, conserva historial y actividades y no se restaura.
+         *     Solo el responsable vendedor o un superior.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /**
+         * Edita atómicamente los campos enviados de una oportunidad abierta. Solo el responsable vendedor o un superior; una cerrada
+         *     exige reapertura. Responsable, etapa, cierre y baja usan comandos específicos.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PatchOportunidadRequest"];
+                    "text/json": components["schemas"]["PatchOportunidadRequest"];
+                    "application/*+json": components["schemas"]["PatchOportunidadRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OportunidadResponse"];
+                        "application/json": components["schemas"]["OportunidadResponse"];
+                        "text/json": components["schemas"]["OportunidadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/oportunidades/{id}/reasignar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reasigna una oportunidad abierta. El responsable vendedor solo puede elegir otro vendedor activo; un superior, cualquier usuario activo.
+         *     Devuelve las acciones recalculadas: quien la pierde conserva la lectura y recibe 403 en su siguiente mutación.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ReasignarOportunidadRequest"];
+                    "text/json": components["schemas"]["ReasignarOportunidadRequest"];
+                    "application/*+json": components["schemas"]["ReasignarOportunidadRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OportunidadResponse"];
+                        "application/json": components["schemas"]["OportunidadResponse"];
+                        "text/json": components["schemas"]["OportunidadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oportunidades/{id}/mover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mueve una oportunidad abierta a otra etapa abierta y activa de su embudo, con su entrada de historial (autor: la sesión).
+         *     Mismo destino: sin cambios ni historial. Las etapas finales se alcanzan con ganar/perder.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["MoverOportunidadRequest"];
+                    "text/json": components["schemas"]["MoverOportunidadRequest"];
+                    "application/*+json": components["schemas"]["MoverOportunidadRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OportunidadResponse"];
+                        "application/json": components["schemas"]["OportunidadResponse"];
+                        "text/json": components["schemas"]["OportunidadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oportunidades/{id}/ganar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cierra una oportunidad abierta como ganada: exige fecha y valor final (cero es válido) y la mueve a la etapa final ganada del embudo.
+         *     Repetir el cierre responde 409.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GanarOportunidadRequest"];
+                    "text/json": components["schemas"]["GanarOportunidadRequest"];
+                    "application/*+json": components["schemas"]["GanarOportunidadRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OportunidadResponse"];
+                        "application/json": components["schemas"]["OportunidadResponse"];
+                        "text/json": components["schemas"]["OportunidadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oportunidades/{id}/perder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cierra una oportunidad abierta como perdida: exige fecha y un motivo de pérdida activo; conserva el valor vigente. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PerderOportunidadRequest"];
+                    "text/json": components["schemas"]["PerderOportunidadRequest"];
+                    "application/*+json": components["schemas"]["PerderOportunidadRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OportunidadResponse"];
+                        "application/json": components["schemas"]["OportunidadResponse"];
+                        "text/json": components["schemas"]["OportunidadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oportunidades/{id}/reabrir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reabre una cerrada en una etapa abierta activa de su embudo (solo administrador y responsable comercial). Conserva en el
+         *     historial, como texto, el cierre anterior y la justificación; limpia fecha y motivo de cierre y mantiene el valor.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ReabrirOportunidadRequest"];
+                    "text/json": components["schemas"]["ReabrirOportunidadRequest"];
+                    "application/*+json": components["schemas"]["ReabrirOportunidadRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OportunidadResponse"];
+                        "application/json": components["schemas"]["OportunidadResponse"];
+                        "text/json": components["schemas"]["OportunidadResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -4322,6 +6173,50 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description Qué puede intentar el actor sobre una actividad; la API vuelve a comprobarlo al ejecutar. */
+        AccionesActividad: {
+            editar: boolean;
+            darDeBaja: boolean;
+        };
+        /** @description Operaciones que el actor puede intentar; la API vuelve a comprobarlas al ejecutar. */
+        AccionesOportunidad: {
+            editar: boolean;
+            reasignar: boolean;
+            mover: boolean;
+            cerrar: boolean;
+            reabrir: boolean;
+            darDeBaja: boolean;
+            gestionarActividades: boolean;
+        };
+        /** @description Actividad con sus referencias etiquetadas. Fecha del hecho y de registro son instantes distintos. */
+        ActividadResponse: {
+            /** Format: int32 */
+            id: number | string;
+            /** Format: int32 */
+            idTipo: number | string;
+            tipoNombre: string;
+            tipoActivo: boolean;
+            /** Format: int32 */
+            idUsuario: number | string;
+            usuarioNombre: string;
+            /** Format: int32 */
+            idEmpresa?: null | number | string;
+            empresaRazonSocial?: null | string;
+            /** Format: int32 */
+            idContacto?: null | number | string;
+            contactoNombre?: null | string;
+            /** Format: int32 */
+            idOportunidad?: null | number | string;
+            oportunidadTitulo?: null | string;
+            /** Format: date-time */
+            fechaHora: string;
+            /** Format: date-time */
+            fechaRegistro: string;
+            descripcion: string;
+            resultado?: null | string;
+            activo: boolean;
+            accionesPermitidas?: components["schemas"]["AccionesActividad"];
+        };
         /** @description Alta o edición de la etiqueta obligatoria según el catálogo; omisión y null no la borran. */
         CatalogoRequest: {
             descripcion?: null | string;
@@ -4382,6 +6277,58 @@ export interface components {
             /** Format: date-time */
             fechaCreacion: string;
             activo: boolean;
+        };
+        /**
+         * @description Alta de una actividad ya realizada. Autor, fecha de registro y baja los fija el servidor (propiedades desconocidas: 400).
+         *     Debe indicar empresa o contacto; la oportunidad por sí sola no alcanza.
+         */
+        CreateActividadRequest: {
+            /** Format: int32 */
+            idTipo?: number | string;
+            /** Format: int32 */
+            idEmpresa?: null | number | string;
+            /** Format: int32 */
+            idContacto?: null | number | string;
+            /** Format: int32 */
+            idOportunidad?: null | number | string;
+            /**
+             * Format: date-time
+             * @description Instante en que ocurrió la interacción (no puede ser futuro).
+             */
+            fechaHora?: null | string;
+            descripcion?: null | string;
+            resultado?: null | string;
+        };
+        /**
+         * @description Alta de oportunidad. Requiere embudo (solo contexto, no se persiste) y empresa o contacto; el título es opcional.
+         *     Autor, estado y fechas los fija el servidor; propiedades desconocidas se rechazan.
+         */
+        CreateOportunidadRequest: {
+            titulo?: null | string;
+            /** Format: int32 */
+            idEmbudo?: number | string;
+            /** Format: int32 */
+            idEmpresa?: null | number | string;
+            /** Format: int32 */
+            idContacto?: null | number | string;
+            /** Format: int32 */
+            idEtapa?: null | number | string;
+            /** Format: int32 */
+            idResponsable?: null | number | string;
+            /** Format: int32 */
+            idOrigen?: null | number | string;
+            /**
+             * Format: double
+             * @description Omitido o null: copia el precio del servicio. Un importe informado, incluido cero, prevalece.
+             */
+            valor?: null | number | string;
+            /** Format: date */
+            fechaEstimadaCierre?: null | string;
+            objetivoAprendizaje?: null | string;
+            /** Format: int32 */
+            cantidadParticipantes?: null | number | string;
+            disponibilidadHoraria?: null | string;
+            observaciones?: null | string;
         };
         /** @description Alta administrativa; siempre inicia activa. */
         CreateUsuarioRequest: {
@@ -4484,14 +6431,167 @@ export interface components {
             estado: string;
             activo: boolean;
         };
+        /** @description Columna del funnel: etapa activa con sus oportunidades vigentes. */
+        FunnelEtapa: {
+            /** Format: int32 */
+            id: number | string;
+            nombre: string;
+            /** Format: int32 */
+            orden: number | string;
+            estado: string;
+            oportunidades: components["schemas"]["OportunidadResponse"][];
+        };
+        /** @description Embudo con sus columnas activas; puede ser un embudo inactivo, que solo se consulta. */
+        FunnelResponse: {
+            /** Format: int32 */
+            idEmbudo: number | string;
+            nombre: string;
+            activo: boolean;
+            /** Format: int32 */
+            idServicio: number | string;
+            servicioNombre: string;
+            servicioActivo: boolean;
+            etapas: components["schemas"]["FunnelEtapa"][];
+        };
+        /** @description Cierre como ganada: fecha y valor final obligatorios (cero es válido). */
+        GanarOportunidadRequest: {
+            /** Format: date */
+            fechaCierre?: string;
+            /** Format: double */
+            valor?: null | number | string;
+            observacion?: null | string;
+        };
+        /**
+         * @description Entrada del historial comercial combinado. `Tipo` discrimina el contenido: ACTIVIDAD (tipo de actividad, descripción, resultado,
+         *     fecha de registro) o TRANSICION (etapa anterior y nueva, observación). No es una tabla: se proyecta desde los registros existentes.
+         */
+        HistorialComercialItem: {
+            tipo: string;
+            /**
+             * Format: int32
+             * @description ID del registro de origen: la actividad o la entrada de historial de etapas.
+             */
+            idOrigen: number | string;
+            /**
+             * Format: date-time
+             * @description Cuándo ocurrió el hecho (actividad) o la transición.
+             */
+            fechaHora: string;
+            /** Format: int32 */
+            idUsuario: number | string;
+            usuarioNombre: string;
+            /** Format: int32 */
+            idOportunidad?: null | number | string;
+            oportunidadTitulo?: null | string;
+            /** Format: int32 */
+            idEmpresa?: null | number | string;
+            /** Format: int32 */
+            idContacto?: null | number | string;
+            /** Format: date-time */
+            fechaRegistro?: null | string;
+            tipoActividad?: null | string;
+            descripcion?: null | string;
+            resultado?: null | string;
+            etapaAnterior?: null | string;
+            etapaNueva?: null | string;
+            observacion?: null | string;
+            accionesPermitidas?: null | components["schemas"]["AccionesActividad"];
+        };
+        /** @description Entrada inmutable del historial de etapas; la etapa anterior es null en el alta. */
+        HistorialEtapaResponse: {
+            /** Format: int32 */
+            id: number | string;
+            /** Format: int32 */
+            idEtapaAnterior: null | number | string;
+            etapaAnteriorNombre: null | string;
+            /** Format: int32 */
+            idNuevaEtapa: number | string;
+            etapaNuevaNombre: string;
+            /** Format: date-time */
+            fechaHora: string;
+            /** Format: int32 */
+            idUsuario: number | string;
+            usuarioNombre: string;
+            observacion: null | string;
+        };
         /** @description Credenciales de acceso; no admite campos de identidad o permisos elegidos por el cliente. */
         LoginRequest: {
             username: string;
             password: string;
         };
+        /** @description Movimiento entre etapas abiertas; autor y fecha del historial los fija el servidor. */
+        MoverOportunidadRequest: {
+            /** Format: int32 */
+            idEtapa?: number | string;
+            observacion?: null | string;
+        };
+        /** @description Oportunidad con referencias etiquetadas; embudo, servicio y estado se derivan de la etapa. */
+        OportunidadResponse: {
+            /** Format: int32 */
+            id: number | string;
+            /** @description Título propio, si se informó. */
+            titulo?: null | string;
+            /** @description Lo que se muestra: el título propio o, si falta, el nombre de la empresa y/o el contacto. */
+            tituloVisible: string;
+            /** Format: int32 */
+            idResponsable: number | string;
+            responsableNombre: string;
+            responsableActivo: boolean;
+            /** Format: int32 */
+            idEmpresa?: null | number | string;
+            empresaRazonSocial?: null | string;
+            /** Format: int32 */
+            idContacto?: null | number | string;
+            contactoNombre?: null | string;
+            /** Format: int32 */
+            idEtapa: number | string;
+            etapaNombre: string;
+            etapaActiva: boolean;
+            estado: string;
+            /** Format: int32 */
+            idEmbudo: number | string;
+            embudoNombre: string;
+            embudoActivo: boolean;
+            /** Format: int32 */
+            idServicio: number | string;
+            servicioNombre: string;
+            servicioActivo: boolean;
+            /** Format: int32 */
+            idOrigen?: null | number | string;
+            origenDescripcion?: null | string;
+            origenActivo?: null | boolean;
+            /** Format: double */
+            valor: number | string;
+            /** Format: date-time */
+            fechaCreacion: string;
+            /** Format: date */
+            fechaEstimadaCierre?: null | string;
+            /** Format: date-time */
+            fechaCierre?: null | string;
+            /** Format: int32 */
+            idMotivoPerdida?: null | number | string;
+            motivoPerdidaDescripcion?: null | string;
+            objetivoAprendizaje?: null | string;
+            /** Format: int32 */
+            cantidadParticipantes?: null | number | string;
+            disponibilidadHoraria?: null | string;
+            observaciones?: null | string;
+            activo: boolean;
+            accionesPermitidas?: components["schemas"]["AccionesOportunidad"];
+        };
         /** @description Incluye todas las etapas activas una vez; admite huecos. */
         OrdenEtapasRequest: {
             etapas: components["schemas"]["PosicionEtapaRequest"][];
+        };
+        /** @description Página de resultados, contados después de aplicar los filtros. */
+        PageResponseOfActividadResponse: {
+            items: components["schemas"]["ActividadResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
         };
         /** @description Página de resultados, contados después de aplicar los filtros. */
         PageResponseOfCatalogoResponse: {
@@ -4534,6 +6634,36 @@ export interface components {
             totalCount: number | string;
         };
         /** @description Página de resultados, contados después de aplicar los filtros. */
+        PageResponseOfHistorialComercialItem: {
+            items: components["schemas"]["HistorialComercialItem"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+        };
+        /** @description Página de resultados, contados después de aplicar los filtros. */
+        PageResponseOfHistorialEtapaResponse: {
+            items: components["schemas"]["HistorialEtapaResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+        };
+        /** @description Página de resultados, contados después de aplicar los filtros. */
+        PageResponseOfOportunidadResponse: {
+            items: components["schemas"]["OportunidadResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+        };
+        /** @description Página de resultados, contados después de aplicar los filtros. */
         PageResponseOfServicioResponse: {
             items: components["schemas"]["ServicioResponse"][];
             /** Format: int32 */
@@ -4563,6 +6693,46 @@ export interface components {
             /** Format: int32 */
             totalCount: number | string;
         };
+        /**
+         * @description Edición de una actividad: omitir un campo lo conserva; null solo limpia el resultado y las asociaciones opcionales.
+         *     Autor y fecha de registro no se editan (propiedades desconocidas: 400).
+         */
+        PatchActividadRequest: {
+            /** Format: int32 */
+            idTipo?: null | number | string;
+            /** Format: int32 */
+            idEmpresa?: null | number | string;
+            /** Format: int32 */
+            idContacto?: null | number | string;
+            /** Format: int32 */
+            idOportunidad?: null | number | string;
+            /** Format: date-time */
+            fechaHora?: null | string;
+            descripcion?: null | string;
+            resultado?: null | string;
+        };
+        /**
+         * @description Edición de datos de una oportunidad abierta. Omitir un campo lo conserva; null solo limpia los opcionales.
+         *     Responsable, etapa, cierre, baja y derivados no se editan por aquí (propiedades desconocidas: 400).
+         */
+        PatchOportunidadRequest: {
+            titulo?: null | string;
+            /** Format: int32 */
+            idEmpresa?: null | number | string;
+            /** Format: int32 */
+            idContacto?: null | number | string;
+            /** Format: int32 */
+            idOrigen?: null | number | string;
+            /** Format: double */
+            valor?: null | number | string;
+            /** Format: date */
+            fechaEstimadaCierre?: null | string;
+            objetivoAprendizaje?: null | string;
+            /** Format: int32 */
+            cantidadParticipantes?: null | number | string;
+            disponibilidadHoraria?: null | string;
+            observaciones?: null | string;
+        };
         /** @description Perfil editable; omisión conserva y null se rechaza. */
         PatchUsuarioRequest: {
             nombre?: null | string;
@@ -4570,6 +6740,14 @@ export interface components {
             correo?: null | string;
             username?: null | string;
             roles?: null | string[];
+        };
+        /** @description Cierre como perdida: fecha y motivo activo obligatorios; conserva el valor vigente. */
+        PerderOportunidadRequest: {
+            /** Format: date */
+            fechaCierre?: string;
+            /** Format: int32 */
+            idMotivoPerdida?: number | string;
+            observacion?: null | string;
         };
         /** @description Posición definitiva de una etapa activa. */
         PosicionEtapaRequest: {
@@ -4585,6 +6763,17 @@ export interface components {
             status?: null | number | string;
             detail?: null | string;
             instance?: null | string;
+        };
+        /** @description Reapertura: etapa abierta de destino y justificación obligatoria; autor y cierre anterior los fija el servidor. */
+        ReabrirOportunidadRequest: {
+            /** Format: int32 */
+            idEtapa?: number | string;
+            justificacion?: null | string;
+        };
+        /** @description Reasignación: solo el destino; el actor y el estado los fija el servidor. */
+        ReasignarOportunidadRequest: {
+            /** Format: int32 */
+            idResponsable?: number | string;
         };
         /** @description Rol preconfigurado; no admite edición. */
         RolResponse: {

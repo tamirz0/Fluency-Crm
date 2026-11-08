@@ -4,27 +4,16 @@ namespace Services.Interface;
 
 public interface IOportunidadService
 {
-    Task<IReadOnlyList<EtapaConOportunidadesResponse>> GetOportunidadesPorEtapaAsync(
-        CancellationToken cancellationToken);
-
-    Task<UpdateEtapaOportunidadResult> UpdateEtapaAsync(
-        int idOportunidad,
-        UpdateEtapaOportunidadRequest request,
-        CancellationToken cancellationToken);
-
-    Task<CreateOportunidadResult> CreateAsync(
-        CreateOportunidadRequest request,
-        CancellationToken cancellationToken);
-
-    Task<OportunidadResponse?> GetByIdAsync(int idOportunidad, CancellationToken cancellationToken);
-
-    Task<UpdateOportunidadResult> UpdateAsync(
-        int idOportunidad,
-        UpdateOportunidadRequest request,
-        CancellationToken cancellationToken);
-
-    Task<UpdateOportunidadResult> PatchAsync(
-        int idOportunidad,
-        PatchOportunidadRequest request,
-        CancellationToken cancellationToken);
+    Task<PageResponse<OportunidadResponse>> ListAsync(OportunidadFilters filters, int page, int pageSize, CancellationToken ct);
+    Task<PageResponse<HistorialEtapaResponse>> HistorialAsync(int id, int page, int pageSize, CancellationToken ct);
+    Task<FunnelResponse> FunnelAsync(int idEmbudo, int? idResponsable, CancellationToken ct);
+    Task<OportunidadResponse> GetAsync(int id, CancellationToken ct);
+    Task<OportunidadResponse> PatchAsync(int id, PatchOportunidadRequest request, CancellationToken ct);
+    Task<OportunidadResponse> ReasignarAsync(int id, ReasignarOportunidadRequest request, CancellationToken ct);
+    Task<OportunidadResponse> MoverAsync(int id, MoverOportunidadRequest request, CancellationToken ct);
+    Task<OportunidadResponse> GanarAsync(int id, GanarOportunidadRequest request, CancellationToken ct);
+    Task<OportunidadResponse> PerderAsync(int id, PerderOportunidadRequest request, CancellationToken ct);
+    Task<OportunidadResponse> ReabrirAsync(int id, ReabrirOportunidadRequest request, CancellationToken ct);
+    Task DeleteAsync(int id, CancellationToken ct);
+    Task<OportunidadResponse> CreateAsync(CreateOportunidadRequest request, CancellationToken ct);
 }

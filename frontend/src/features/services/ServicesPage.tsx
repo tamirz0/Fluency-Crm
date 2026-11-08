@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { listServices, type Servicio } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { ServiceDialog, type ServiceAction } from './ServiceDialog'
+import '../companies/companies.css'
 
 export function ServicesPage() {
   const { user } = useAuth()
@@ -20,12 +21,12 @@ function ServiceList() {
   const [message, setMessage] = useState('')
   const query = { q: search, activo: active, page: page + 1, pageSize: 25 }
   const items = useQuery({ queryKey: ['servicios', query], queryFn: () => listServices(query) })
-  return <Box sx={{ p: { xs: 2.5, md: 5 }, maxWidth: 1600 }}>
+  return <Box className="companies-page">
     <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2 }}>
-      <Typography component="h1" variant="h4">Servicios</Typography>
+      <Typography component="h1" className="companies-page-title">Servicios</Typography>
       <Button variant="contained" startIcon={<Add />} onClick={() => setAction({ mode: 'create' })}>Nuevo servicio</Button>
     </Stack>
-    <Typography color="text.secondary" sx={{ mb: 3 }}>Precio de referencia total, sin multiplicaciones. Desactivar un servicio conserva sus embudos.</Typography>
+    <Typography className="companies-page-description" sx={{ mb: 3 }}>Precio de referencia total, sin multiplicaciones. Desactivar un servicio conserva sus embudos.</Typography>
     {message && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setMessage('')}>{message}</Alert>}
     <Box component="form" onSubmit={e => { e.preventDefault(); setPage(0); setSearch(q.trim()) }} sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
       <TextField label="Buscar servicios" type="search" size="small" value={q} onChange={e => setQ(e.target.value)} sx={{ flex: '1 1 220px' }} />

@@ -1,25 +1,29 @@
+import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { ChevronRight, ExpandMore, Refresh } from '@mui/icons-material'
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, IconButton, InputLabel, MenuItem, Select, Snackbar, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, IconButton, MenuItem, Snackbar, TextField, Typography } from '@mui/material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link as RouterLink } from 'react-router-dom'
-import { catalogQueryKeys, getCommercialStages, getOpportunitiesByStage, opportunityQueryKeys, updateOpportunityStage, type EtapaConOportunidades, type OportunidadResumen } from '../../api/client'
+import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { getFunnel, listFunnels, moveOpportunity, opportunityQueryKeys, type Oportunidad } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
-import { displayValue, formatCommercialDate, opportunityContactName } from '../shared/display'
-import { orderStagesByPosition, stageToneClass } from '../opportunities/opportunityData'
+import { CompanyResponsibleSelect } from '../companies/CompanyResponsibleSelect'
+import { displayValue, initials } from '../shared/display'
+import { saveErrorMessage } from '../shared/formUtils'
+import { CloseOpportunityDialog, type CloseResult } from '../opportunities/CloseOpportunityDialog'
+import { money, stageToneClass, stateLabels } from '../opportunities/opportunityData'
 import './funnel.css'
 
-function opportunityCustomer(opportunity: OportunidadResumen) {
-  return opportunity.idEmpresa ? displayValue(opportunity.empresaRazonSocial) : '-'
-}
-
-function opportunityResponsible(opportunity: OportunidadResumen) {
-  return displayValue([opportunity.usuarioNombre?.trim(), opportunity.usuarioApellido?.trim()].filter(Boolean).join(' '))
-}
+type Stage = { id: number | string; nombre: string; estado: string }
 
 function countLabel(count: number) {
   if (count === 0) return 'Sin oportunidades'
   return `${count} ${count === 1 ? 'oportunidad' : 'oportunidades'}`
+}
+
+const finalRank = (state: string) => state === 'ABIERTA' ? 0 : state === 'GANADA' ? 1 : 2
+/** El servidor ordena por `orden` y las finales nacen con 1 y 2: abiertas primero, luego Ganada y Perdida al final. */
+function sortStages<T extends { estado: string }>(stages: T[]): T[] {
+  return stages.map((stage, index) => ({ stage, index })).sort((a, b) => finalRank(a.stage.estado) - finalRank(b.stage.estado) || a.index - b.index).map(({ stage }) => stage)
 }
 
 function FunnelSkeleton() {
@@ -28,146 +32,121 @@ function FunnelSkeleton() {
   </div>
 }
 
-function OpportunityCard({ opportunity, disabled, disabledReason, onChangeStage }: {
-  opportunity: OportunidadResumen
-  disabled: boolean
-  disabledReason: string
-  onChangeStage: (opportunity: OportunidadResumen) => void
-}) {
-  const [expanded, setExpanded] = useState(false)
-  const detailsId = `opportunity-details-${opportunity.id}`
-  const contactName = opportunityContactName(opportunity)
+/** La tarjeta entera abre la ficha; empresa y contacto son texto para no llevar a otro perfil por error. */
+const detailState = { from: { to: '/embudo', label: 'Volver al embudo' } }
 
-  return <article className={`funnel-opportunity${expanded ? ' is-expanded' : ''}`}>
-    <div className="funnel-opportunity-summary">
-      <div className="funnel-opportunity-main">
-        <h3><RouterLink to={`/oportunidades/${opportunity.id}`}>{displayValue(opportunity.titulo)}</RouterLink></h3>
-        <dl className="funnel-card-fields funnel-card-fields--compact">
-          <div><dt>Empresa</dt><dd>{opportunity.idEmpresa ? <RouterLink className="funnel-related-link" to={`/empresas/${opportunity.idEmpresa}`}>{opportunityCustomer(opportunity)}</RouterLink> : '-'}</dd></div>
-          <div><dt>Contacto</dt><dd>{opportunity.idContacto ? <RouterLink className="funnel-related-link" to={`/contactos/${opportunity.idContacto}`}>{contactName}</RouterLink> : '-'}</dd></div>
-        </dl>
-      </div>
-      <IconButton className="funnel-expand-button" aria-label={`${expanded ? 'Contraer' : 'Expandir'} oportunidad ${displayValue(opportunity.titulo)}`} aria-expanded={expanded} aria-controls={detailsId} onClick={() => setExpanded((current) => !current)} size="small">
-        {expanded ? <ExpandMore fontSize="small" /> : <ChevronRight fontSize="small" />}
-      </IconButton>
+function CardContent({ opportunity }: { opportunity: Oportunidad }) {
+  return <>
+    <span className="funnel-avatar" aria-hidden="true">{initials(opportunity.tituloVisible)}</span>
+    <div className="funnel-opportunity-main">
+      <h3><RouterLink to={`/oportunidades/${opportunity.id}`} state={detailState}>{opportunity.tituloVisible}</RouterLink></h3>
+      {(opportunity.idEmpresa || opportunity.idContacto) && <p className="funnel-opportunity-client">
+        {opportunity.idEmpresa && displayValue(opportunity.empresaRazonSocial)}
+        {opportunity.idEmpresa && opportunity.idContacto && ' – '}
+        {opportunity.idContacto && displayValue(opportunity.contactoNombre)}
+      </p>}
+      <p className="funnel-opportunity-value">{money(opportunity.valor)}</p>
     </div>
-    <div id={detailsId} className="funnel-opportunity-details" hidden={!expanded}>
-      <dl className="funnel-card-fields funnel-card-fields--details">
-        <div><dt>Cierre estimado</dt><dd>{formatCommercialDate(opportunity.fechaEstimadaCierre)}</dd></div>
-        <div><dt>Responsable</dt><dd>{opportunityResponsible(opportunity)}</dd></div>
-      </dl>
-      <Button size="small" variant="outlined" disabled={disabled} title={disabled ? disabledReason : undefined} onClick={() => onChangeStage(opportunity)}>Cambiar etapa</Button>
-    </div>
+  </>
+}
+
+function OpportunityCard({ opportunity, stage }: { opportunity: Oportunidad; stage: Stage }) {
+  const draggable = Boolean(opportunity.accionesPermitidas.mover) && stage.estado === 'ABIERTA'
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, isDragging } = useDraggable({
+    id: `opportunity-${opportunity.id}`, data: { opportunity }, disabled: !draggable, attributes: { roleDescription: 'oportunidad arrastrable' },
+  })
+  const navigate = useNavigate()
+  /** Un clic en cualquier parte de la tarjeta abre la ficha; arrastrar no dispara el clic y el título sigue siendo un enlace normal. */
+  const open = (event: React.MouseEvent) => { if (!(event.target as HTMLElement).closest('a')) navigate(`/oportunidades/${opportunity.id}`, { state: detailState }) }
+  return <article ref={(node) => { setNodeRef(node); setActivatorNodeRef(node) }} onClick={open} className={`funnel-opportunity${draggable ? ' is-draggable' : ''}${isDragging ? ' is-dragging' : ''}`} {...(draggable ? { ...attributes, ...listeners } : {})}>
+    <CardContent opportunity={opportunity} />
   </article>
 }
 
+function StageColumn({ stage, index, collapsed, onToggle, children, count }: { stage: Stage; index: number; collapsed: boolean; onToggle: () => void; children: React.ReactNode; count: number }) {
+  const { setNodeRef, isOver } = useDroppable({ id: `stage-${stage.id}`, data: { stage } })
+  const stageContentId = `stage-content-${stage.id}`
+  return <section ref={setNodeRef} className={`funnel-stage ${stageToneClass(index)}${collapsed ? ' is-collapsed' : ''}${isOver ? ' is-over' : ''}`} aria-labelledby={`stage-${stage.id}`}>
+    <header className="funnel-stage-heading">
+      <div className="funnel-stage-copy"><h2 id={`stage-${stage.id}`}>{stage.nombre}</h2><p className="funnel-stage-count">{countLabel(count)}{stage.estado === 'ABIERTA' ? '' : ` · ${stateLabels[stage.estado] ?? stage.estado}`}</p></div>
+      <IconButton className="funnel-stage-collapse" type="button" size="small" aria-expanded={!collapsed} aria-controls={stageContentId} aria-label={`${collapsed ? 'Expandir' : 'Contraer'} etapa ${stage.nombre}`} onClick={onToggle}>
+        {collapsed ? <ChevronRight fontSize="small" /> : <ExpandMore fontSize="small" />}
+      </IconButton>
+    </header>
+    <div id={stageContentId} className="funnel-stage-content" hidden={collapsed}>{children}</div>
+  </section>
+}
+
+const titleOf = (data: unknown) => (data as { opportunity?: Oportunidad } | undefined)?.opportunity?.tituloVisible ?? 'La oportunidad'
+const stageNameOf = (data: unknown) => (data as { stage?: Stage } | undefined)?.stage?.nombre ?? ''
+const announcements = {
+  onDragStart: ({ active }: { active: { data: { current?: unknown } } }) => `${titleOf(active.data.current)}: tomada. Elegí la etapa con las flechas.`,
+  onDragOver: ({ active, over }: { active: { data: { current?: unknown } }; over: { data: { current?: unknown } } | null }) => over ? `${titleOf(active.data.current)} sobre la etapa ${stageNameOf(over.data.current)}.` : `${titleOf(active.data.current)} fuera de una etapa.`,
+  onDragEnd: ({ active, over }: { active: { data: { current?: unknown } }; over: { data: { current?: unknown } } | null }) => over ? `${titleOf(active.data.current)} soltada en ${stageNameOf(over.data.current)}.` : `${titleOf(active.data.current)} no se movió.`,
+  onDragCancel: ({ active }: { active: { data: { current?: unknown } } }) => `Movimiento de ${titleOf(active.data.current)} cancelado.`,
+}
+
+/** Funnel por embudo: el servidor decide la cartera (la propia para un vendedor, todas para los superiores). */
 export function FunnelPage() {
-  const queryClient = useQueryClient()
   const { user } = useAuth()
-  const pipelineQuery = useQuery({ queryKey: opportunityQueryKeys.pipeline, queryFn: getOpportunitiesByStage })
-  const stagesQuery = useQuery({ queryKey: catalogQueryKeys.commercialStages, queryFn: getCommercialStages })
-  const [selectedOpportunity, setSelectedOpportunity] = useState<OportunidadResumen | null>(null)
-  const [newStageId, setNewStageId] = useState('')
-  const [observation, setObservation] = useState('')
+  const isSuperior = Boolean(user?.roles?.includes('ADMINISTRADOR') || user?.roles?.includes('RESPONSABLE_COMERCIAL'))
+  const [selected, setSelected] = useState('')
+  const [responsible, setResponsible] = useState('')
+  const [dragging, setDragging] = useState<Oportunidad | null>(null)
+  const queryClient = useQueryClient()
   const [confirmed, setConfirmed] = useState(false)
+  const [closing, setClosing] = useState<{ item: Oportunidad; result: CloseResult } | null>(null)
   const [collapsedStages, setCollapsedStages] = useState<Set<number | string>>(() => new Set())
-
-  const mutation = useMutation({
-    mutationFn: (input: { idOportunidad: number; idNuevaEtapa: number | string; observacion?: string }) => updateOpportunityStage(input.idOportunidad, {
-      idNuevaEtapa: input.idNuevaEtapa,
-      idUsuario: user!.id,
-      ...(input.observacion ? { observacion: input.observacion } : {}),
-    }),
-    onSuccess: async (updated, input) => {
-      queryClient.setQueryData(opportunityQueryKeys.detail(input.idOportunidad), updated)
-      await queryClient.invalidateQueries({ queryKey: opportunityQueryKeys.pipeline })
-      setSelectedOpportunity(null)
-      setNewStageId('')
-      setObservation('')
-      setConfirmed(true)
-    },
+  const funnels = useQuery({ queryKey: ['embudos', 'opciones'], queryFn: () => listFunnels({ pageSize: 100 }) })
+  const options = funnels.data?.items ?? []
+  const funnelId = selected || String((options.find((item) => item.activo) ?? options[0])?.id ?? '')
+  const owner = isSuperior && responsible ? Number(responsible) : undefined
+  const funnel = useQuery({
+    queryKey: opportunityQueryKeys.funnel(Number(funnelId), owner), queryFn: () => getFunnel(Number(funnelId), owner), enabled: funnelId !== '',
   })
-
-  const groupedStages = pipelineQuery.data ?? []
-  const catalogStages = stagesQuery.data ?? []
-  const stages: EtapaConOportunidades[] = groupedStages.length > 0
-    ? orderStagesByPosition(groupedStages)
-    : catalogStages.map((stage) => ({ idEtapa: stage.id, nombre: stage.nombre, orden: stage.orden, oportunidades: [] }))
-  const totalOpportunities = groupedStages.reduce((total, stage) => total + stage.oportunidades.length, 0)
-  const alternatives = selectedOpportunity ? catalogStages.filter((stage) => String(stage.id) !== String(selectedOpportunity.idEtapa)) : []
-  const selectedStage = alternatives.find((stage) => String(stage.id) === newStageId)
-  const catalogUnavailable = stagesQuery.isError || catalogStages.length === 0
-  const actionDisabledReason = stagesQuery.isError ? 'No pudimos cargar las etapas comerciales.' : stagesQuery.isPending ? 'Cargando las etapas comerciales.' : catalogStages.length === 0 ? 'No hay etapas comerciales disponibles.' : ''
-
-  const openDialog = (opportunity: OportunidadResumen) => {
-    mutation.reset()
-    setSelectedOpportunity(opportunity)
-    setNewStageId('')
-    setObservation('')
+  const stages = sortStages(funnel.data?.etapas ?? [])
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }), useSensor(KeyboardSensor))
+  const move = useMutation({
+    mutationFn: ({ item, stage }: { item: Oportunidad; stage: Stage }) => moveOpportunity(Number(item.id), Number(stage.id)),
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ['oportunidades'] }); setConfirmed(true) },
+  })
+  /** Soltar en una etapa abierta mueve; soltar en Ganada/Perdida abre el cierre, que pide los datos obligatorios. */
+  const onDragEnd = ({ active, over }: DragEndEvent) => {
+    setDragging(null)
+    const item = active.data.current?.opportunity as Oportunidad | undefined
+    const stage = over?.data.current?.stage as Stage | undefined
+    if (!item || !stage || Number(stage.id) === Number(item.idEtapa)) return
+    if (stage.estado === 'ABIERTA') move.mutate({ item, stage })
+    else setClosing({ item, result: stage.estado as CloseResult })
   }
-
-  const closeDialog = () => {
-    setSelectedOpportunity(null)
-    setNewStageId('')
-    setObservation('')
-    mutation.reset()
-  }
-
-  const saveStageChange = () => {
-    if (mutation.isPending || !selectedOpportunity || !selectedStage || user?.id === undefined) return
-    mutation.mutate({
-      idOportunidad: Number(selectedOpportunity.id),
-      idNuevaEtapa: selectedStage.id,
-      ...(observation.trim() ? { observacion: observation.trim() } : {}),
-    })
-  }
+  const total = stages.reduce((sum, stage) => sum + stage.oportunidades.length, 0)
 
   return <Box className="companies-page funnel-page">
-    <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Embudo comercial</Typography><Typography className="companies-page-description">Oportunidades organizadas por etapa.</Typography></div></header>
-    {pipelineQuery.isPending ? <FunnelSkeleton /> : pipelineQuery.isError ? <section className="company-feedback" aria-labelledby="funnel-error-title"><Typography component="h2" id="funnel-error-title" className="company-feedback-title">No pudimos cargar el embudo</Typography><Typography color="text.secondary">Revisá la conexión e intentá de nuevo.</Typography><Button onClick={() => void pipelineQuery.refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button></section> : <>
-      {stagesQuery.isError && <Alert className="funnel-catalog-message" severity="warning" action={<Button color="inherit" size="small" onClick={() => void stagesQuery.refetch()}>Reintentar</Button>}>No pudimos cargar las etapas comerciales. El embudo está disponible, pero no se pueden cambiar etapas por ahora.</Alert>}
-      {!stagesQuery.isError && !stagesQuery.isPending && catalogStages.length === 0 && <Alert className="funnel-catalog-message" severity="info">No hay etapas comerciales disponibles. El embudo está disponible, pero no se pueden cambiar etapas.</Alert>}
-      {totalOpportunities === 0 && <p className="funnel-empty-summary">No hay oportunidades en el embudo.</p>}
-      {stages.length === 0 ? <section className="company-feedback"><Typography component="h2" className="company-feedback-title">No hay etapas para mostrar</Typography><Typography color="text.secondary">Cuando haya etapas comerciales, van a aparecer en este embudo.</Typography></section> : <div className="funnel-board-scroll" role="region" aria-label="Etapas del embudo comercial" tabIndex={0}><div className="funnel-board" style={{ gridTemplateColumns: stages.map((stage) => collapsedStages.has(stage.idEtapa) ? 'minmax(160px, .58fr)' : 'minmax(270px, 1fr)').join(' ') }}>
-        {stages.map((stage, stageIndex) => {
-          const collapsed = collapsedStages.has(stage.idEtapa)
-          const stageContentId = `stage-content-${stage.idEtapa}`
-          return <section className={`funnel-stage ${stageToneClass(stageIndex)}${collapsed ? ' is-collapsed' : ''}`} key={stage.idEtapa} aria-labelledby={`stage-${stage.idEtapa}`}>
-            <header className="funnel-stage-heading">
-              <div className="funnel-stage-copy"><h2 id={`stage-${stage.idEtapa}`}>{displayValue(stage.nombre)}</h2><p className="funnel-stage-count">{countLabel(stage.oportunidades.length)}</p></div>
-              <IconButton className="funnel-stage-collapse" type="button" size="small" aria-expanded={!collapsed} aria-controls={stageContentId} aria-label={`${collapsed ? 'Expandir' : 'Contraer'} etapa ${stage.nombre}`} onClick={() => setCollapsedStages((current) => {
-                const next = new Set(current)
-                if (next.has(stage.idEtapa)) next.delete(stage.idEtapa)
-                else next.add(stage.idEtapa)
-                return next
-              })}>
-                {collapsed ? <ChevronRight fontSize="small" /> : <ExpandMore fontSize="small" />}
-              </IconButton>
-            </header>
-            <div id={stageContentId} className="funnel-stage-content" hidden={collapsed}>
-              {stage.oportunidades.length === 0 ? <p className="funnel-stage-empty">Sin oportunidades</p> : <div className="funnel-stage-opportunities">{stage.oportunidades.map((opportunity) => <OpportunityCard key={opportunity.id} opportunity={{ ...opportunity, idEtapa: stage.idEtapa, etapaNombre: stage.nombre, etapaOrden: stage.orden }} disabled={catalogUnavailable || stagesQuery.isPending || mutation.isPending} disabledReason={actionDisabledReason} onChangeStage={openDialog} />)}</div>}
-            </div>
-          </section>
-        })}
-      </div></div>}
+    <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Embudo comercial</Typography><Typography className="companies-page-description">{isSuperior ? 'Oportunidades de todo el equipo organizadas por etapa.' : 'Tus oportunidades organizadas por etapa. Las del resto del equipo están en el listado de oportunidades.'}</Typography></div></header>
+    {funnels.isPending ? <FunnelSkeleton /> : funnels.isError ? <section className="company-feedback" aria-labelledby="funnel-error-title"><Typography component="h2" id="funnel-error-title" className="company-feedback-title">No pudimos cargar los embudos</Typography><Typography color="text.secondary">Revisá la conexión e intentá de nuevo.</Typography><Button onClick={() => void funnels.refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button></section> : options.length === 0 ? <section className="company-feedback"><Typography component="h2" className="company-feedback-title">No hay embudos configurados</Typography><Typography color="text.secondary">Cuando se configure un embudo, sus oportunidades van a aparecer acá.</Typography></section> : <>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3, alignItems: 'start' }}>
+        <TextField select label="Embudo" value={funnelId} onChange={(event) => { setSelected(event.target.value); setCollapsedStages(new Set()) }} sx={{ minWidth: 240 }}>
+          {options.map((item) => <MenuItem key={item.id} value={String(item.id)}>{item.nombre}{item.activo ? '' : ' (inactivo)'}</MenuItem>)}
+        </TextField>
+        {isSuperior && <Box sx={{ minWidth: 240, flex: '1 1 240px', maxWidth: 360 }}><CompanyResponsibleSelect value={responsible} onChange={setResponsible} helperText="Sin selección: todos los responsables" /></Box>}
+      </Box>
+      {funnel.isPending ? <FunnelSkeleton /> : funnel.isError ? <section className="company-feedback" aria-labelledby="funnel-load-error-title"><Typography component="h2" id="funnel-load-error-title" className="company-feedback-title">No pudimos cargar el embudo</Typography><Typography color="text.secondary">{funnel.error.message}</Typography><Button onClick={() => void funnel.refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button></section> : <>
+        {!funnel.data.activo && <Alert className="funnel-catalog-message" severity="info">Este embudo está inactivo: se puede consultar, pero no admite oportunidades nuevas.</Alert>}
+        {total === 0 && <p className="funnel-empty-summary">No hay oportunidades en este embudo{owner || !isSuperior ? ' para tu selección' : ''}.</p>}
+        {stages.length === 0 ? <section className="company-feedback"><Typography component="h2" className="company-feedback-title">No hay etapas para mostrar</Typography><Typography color="text.secondary">Cuando el embudo tenga etapas activas, van a aparecer acá.</Typography></section> : <DndContext sensors={sensors} accessibility={{ announcements, screenReaderInstructions: { draggable: 'Para mover la oportunidad a otra etapa, presioná espacio, elegí la etapa con las flechas y presioná espacio otra vez para soltarla. Escape cancela.' } }} onDragStart={({ active }) => setDragging(active.data.current?.opportunity ?? null)} onDragCancel={() => setDragging(null)} onDragEnd={onDragEnd}><div className="funnel-board-scroll" role="region" aria-label="Etapas del embudo comercial" tabIndex={0}><div className="funnel-board" style={{ gridTemplateColumns: stages.map((stage) => collapsedStages.has(stage.id) ? 'minmax(120px, .5fr)' : 'minmax(200px, 1fr)').join(' ') }}>
+          {stages.map((stage, stageIndex) => <StageColumn key={stage.id} stage={stage} index={stageIndex} count={stage.oportunidades.length} collapsed={collapsedStages.has(stage.id)} onToggle={() => setCollapsedStages((current) => {
+            const next = new Set(current)
+            if (next.has(stage.id)) next.delete(stage.id)
+            else next.add(stage.id)
+            return next
+          })}>
+            {stage.oportunidades.length === 0 ? <p className="funnel-stage-empty">Sin oportunidades</p> : <div className="funnel-stage-opportunities">{stage.oportunidades.map((opportunity) => <OpportunityCard key={opportunity.id} opportunity={opportunity} stage={stage} />)}</div>}
+          </StageColumn>)}
+        </div></div><DragOverlay>{dragging && <article className="funnel-opportunity is-overlay"><CardContent opportunity={dragging} /></article>}</DragOverlay></DndContext>}
+      </>}
     </>}
-
-    <Dialog open={selectedOpportunity !== null} onClose={closeDialog} fullWidth maxWidth="sm" aria-labelledby="change-stage-title">
-      <DialogTitle id="change-stage-title">Cambiar etapa</DialogTitle>
-      <DialogContent className="funnel-dialog-content">
-        {selectedOpportunity && <Typography className="funnel-selected-title">{selectedOpportunity.titulo}</Typography>}
-        <FormControl fullWidth required disabled={stagesQuery.isPending || stagesQuery.isError || alternatives.length === 0}>
-          <InputLabel id="new-stage-label">Nueva etapa</InputLabel>
-          <Select labelId="new-stage-label" label="Nueva etapa" value={newStageId} onChange={(event) => setNewStageId(event.target.value)}>
-            {alternatives.map((stage) => <MenuItem value={String(stage.id)} key={stage.id}>{stage.nombre}</MenuItem>)}
-          </Select>
-        </FormControl>
-        {alternatives.length === 0 && !stagesQuery.isPending && !stagesQuery.isError && <Typography className="funnel-no-alternatives">No hay otras etapas disponibles para esta oportunidad.</Typography>}
-        <TextField label="Observación" value={observation} onChange={(event) => setObservation(event.target.value)} multiline minRows={3} fullWidth />
-        {mutation.isError && <Alert severity="error" role="alert">{mutation.error.message}</Alert>}
-      </DialogContent>
-      <DialogActions><Button onClick={closeDialog} disabled={mutation.isPending}>Cancelar</Button><Button onClick={saveStageChange} variant="contained" disabled={mutation.isPending || !selectedStage || stagesQuery.isError || !user}>{mutation.isPending ? 'Guardando…' : 'Guardar cambio'}</Button></DialogActions>
-    </Dialog>
+    {closing && <CloseOpportunityDialog item={closing.item} initialResult={closing.result} open onClose={() => setClosing(null)} onDone={() => { setClosing(null); setConfirmed(true) }} />}
     <Snackbar open={confirmed} autoHideDuration={4000} onClose={() => setConfirmed(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}><Alert onClose={() => setConfirmed(false)} severity="success" variant="filled">Etapa actualizada</Alert></Snackbar>
+    <Snackbar open={move.isError} autoHideDuration={6000} onClose={() => move.reset()} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}><Alert onClose={() => move.reset()} severity="error" variant="filled">{saveErrorMessage(move.error)}</Alert></Snackbar>
   </Box>
 }
