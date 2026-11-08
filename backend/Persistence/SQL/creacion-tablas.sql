@@ -12,7 +12,7 @@
 
 BEGIN;
 SET LOCAL search_path = public;
-SELECT set_config('fluency.target_database', 'FluencyLocalDB', true);
+SELECT set_config('fluency.target_database', 'postgres', true);
 
 -- ===== 1. Esquema (segunda-entrega-esquema.sql) =====
 DO $$
