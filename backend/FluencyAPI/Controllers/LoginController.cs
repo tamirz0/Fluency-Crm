@@ -1,47 +1,64 @@
+using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using FluencyAPI.Authentication;
+using Services.Acceso;
 using Services.DTO;
 using Services.Interface;
 
 namespace FluencyAPI.Controllers;
 
 [ApiController]
-[Route("[controller]")]
-public sealed class LoginController(ILoginService loginService) : ControllerBase
+[Route("auth")]
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+public sealed class LoginController(ILoginService login, ActorActual actor, TimeProvider clock, IAntiforgery antiforgery) : ControllerBase
 {
-    /// <summary>Registra un nuevo usuario, hasheando su contraseña.</summary>
-    [HttpPost("Register", Name = "Register")]
-    [ProducesResponseType(typeof(UsuarioResponse), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<UsuarioResponse>> Register(
-        [FromBody] RegisterRequest request,
-        CancellationToken cancellationToken)
-    {
-        var result = await loginService.RegisterAsync(request, cancellationToken);
+    /// <summary>Obtiene un token CSRF para la identidad actual.</summary>
+    [AllowAnonymous]
+    [HttpGet("csrf")]
+    [ProducesResponseType<CsrfResponse>(StatusCodes.Status200OK)]
+    public ActionResult<CsrfResponse> Csrf() => Ok(new CsrfResponse(antiforgery.GetAndStoreTokens(HttpContext).RequestToken!));
 
-        return result.Outcome switch
-        {
-            RegisterOutcome.Success => Created($"/Login/{result.Usuario!.Id}", result.Usuario),
-            RegisterOutcome.UsernameTaken
-                => Conflict($"Ya existe un usuario con username '{request.Username}'."),
-            _ => Problem()
-        };
+    /// <summary>Inicia una sesión no persistente con vencimiento absoluto de ocho horas.</summary>
+    [AllowAnonymous]
+    [EnableRateLimiting(AuthenticationSetup.LoginRatePolicy)]
+    [HttpPost("login")]
+    [ProducesResponseType<SesionResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
+    public async Task<ActionResult<SesionResponse>> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
+    {
+        var session = await login.LoginAsync(request, cancellationToken);
+        if (session is null) return Problem(statusCode: 401, title: "Usuario o contraseña incorrectos.");
+        var now = clock.GetUtcNow();
+        var expires = now.AddHours(8);
+        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, SessionValidation.Principal(session),
+            new AuthenticationProperties { IssuedUtc = now, ExpiresUtc = expires, IsPersistent = false, AllowRefresh = false });
+        return Ok(new SesionResponse(session.Usuario, expires));
     }
 
-    /// <summary>Autentica un usuario por username y contraseña.</summary>
-    [HttpPost("Login", Name = "Login")]
-    [ProducesResponseType(typeof(UsuarioResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<UsuarioResponse>> Login(
-        [FromBody] LoginRequest request,
-        CancellationToken cancellationToken)
+    /// <summary>Consulta la identidad validada y el vencimiento original de la sesión.</summary>
+    [HttpGet("me")]
+    [ProducesResponseType<SesionResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<SesionResponse>> Me()
     {
-        var result = await loginService.LoginAsync(request, cancellationToken);
+        var authentication = await HttpContext.AuthenticateAsync();
+        return Ok(new SesionResponse(actor.Usuario, authentication.Properties!.ExpiresUtc!.Value));
+    }
 
-        return result.Outcome switch
-        {
-            LoginOutcome.Success => Ok(result.Usuario),
-            LoginOutcome.InvalidCredentials => Unauthorized("Usuario o contraseña incorrectos."),
-            _ => Problem()
-        };
+    /// <summary>Cierra la sesión actual; requiere token CSRF de esa identidad.</summary>
+    [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Logout()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return NoContent();
     }
 }

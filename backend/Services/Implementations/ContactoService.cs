@@ -1,242 +1,118 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Models;
+using Services.Acceso;
 using Services.DTO;
 using Services.Interface;
 
 namespace Services.Implementations;
 
-public sealed class ContactoService(FluencyLocalDbContext db) : IContactoService
+public sealed class ContactoService(FluencyLocalDbContext db, ActorActual actor) : IContactoService
 {
-    public async Task<CreateContactoResult> CreateAsync(
-        CreateContactoRequest request,
-        CancellationToken cancellationToken)
+    private static ContactoOperationException Missing() => new(404, "NOT_FOUND", "No existe el contacto.");
+    private static ContactoOperationException Unavailable(string reference)
+        => new(400, "REFERENCE_UNAVAILABLE", $"{reference} no está disponible.");
+
+    private IQueryable<ContactoResponse> Query(IQueryable<Contacto>? source = null) => (source ?? db.Contactos).AsNoTracking().Where(c => c.Activo).Select(c => new ContactoResponse
     {
-        var errors = await ValidateReferencesAsync(
-            request.IdEstado, request.IdOrigen, request.IdEmpresa, cancellationToken);
-        if (errors.Count > 0)
+        Id = c.Id, Nombre = c.Nombre, Apellido = c.Apellido, Documento = c.Documento, Cargo = c.Cargo, Correo = c.Correo,
+        Telefono = c.Telefono, Observaciones = c.Observaciones,
+        IdEstado = c.IdEstado!.Value, EstadoDescripcion = c.IdEstadoNavigation!.Descripcion, EstadoActivo = c.IdEstadoNavigation.Activo,
+        IdOrigen = c.IdOrigen, OrigenDescripcion = c.IdOrigenNavigation == null ? null : c.IdOrigenNavigation.Descripcion,
+        OrigenActivo = c.IdOrigenNavigation == null ? null : c.IdOrigenNavigation.Activo,
+        IdEmpresa = c.IdEmpresa, EmpresaRazonSocial = c.IdEmpresaNavigation == null ? null : c.IdEmpresaNavigation.RazonSocial,
+        IdResponsable = c.IdResponsable, ResponsableNombre = c.IdResponsableNavigation.Nombre + " " + c.IdResponsableNavigation.Apellido,
+        ResponsableActivo = c.IdResponsableNavigation.Activo, FechaCreacion = c.FechaCreacion, Activo = c.Activo
+    });
+
+    public async Task<PageResponse<ContactoResponse>> ListAsync(string? q, int? idEstado, int? idOrigen, int? idResponsable, int? idEmpresa, int page, int pageSize, CancellationToken ct)
+    {
+        var source = db.Contactos.AsNoTracking();
+        if (!string.IsNullOrWhiteSpace(q))
         {
-            return new CreateContactoResult(CreateContactoOutcome.ValidationFailed, null, errors);
+            const string accents = "áàäâãåéèëêíìïîóòöôõúùüûñç";
+            const string plain =   "aaaaaaeeeeiiiiooooouuuunc";
+            var search = q.Trim().ToLowerInvariant();
+            for (var i = 0; i < accents.Length; i++) search = search.Replace(accents[i], plain[i]);
+            source = db.Contactos.FromSqlInterpolated($"""
+                SELECT c.* FROM contacto c LEFT JOIN empresa e ON e.id = c.id_empresa
+                WHERE strpos(translate(lower(c.nombre || ' ' || c.apellido), {accents}, {plain}), {search}) > 0
+                   OR strpos(translate(lower(c.apellido || ' ' || c.nombre), {accents}, {plain}), {search}) > 0
+                   OR strpos(translate(lower(c.documento), {accents}, {plain}), {search}) > 0
+                   OR strpos(translate(lower(c.correo), {accents}, {plain}), {search}) > 0
+                   OR strpos(translate(lower(c.telefono), {accents}, {plain}), {search}) > 0
+                   OR strpos(translate(lower(e.razon_social), {accents}, {plain}), {search}) > 0
+                """).AsNoTracking();
         }
-
-        var contacto = new Contacto
-        {
-            Nombre = request.Nombre,
-            Apellido = request.Apellido,
-            Correo = request.Correo,
-            Documento = request.Documento,
-            Cargo = request.Cargo,
-            Telefono = request.Telefono,
-            IdEstado = request.IdEstado,
-            IdOrigen = request.IdOrigen,
-            IdEmpresa = request.IdEmpresa,
-            Observaciones = request.Observaciones
-        };
-
-        db.Contactos.Add(contacto);
-        await db.SaveChangesAsync(cancellationToken);
-
-        return new CreateContactoResult(
-            CreateContactoOutcome.Success,
-            await GetByIdAsync(contacto.Id, cancellationToken),
-            []);
+        var query = Query(source);
+        if (idEstado is not null) query = query.Where(c => c.IdEstado == idEstado);
+        if (idOrigen is not null) query = query.Where(c => c.IdOrigen == idOrigen);
+        if (idResponsable is not null) query = query.Where(c => c.IdResponsable == idResponsable);
+        if (idEmpresa is not null) query = query.Where(c => c.IdEmpresa == idEmpresa);
+        var total = await query.CountAsync(ct);
+        var items = await query.OrderBy(c => c.Apellido).ThenBy(c => c.Nombre).ThenBy(c => c.Id)
+            .Skip((int)Math.Min((long)(page - 1) * pageSize, int.MaxValue)).Take(pageSize).ToListAsync(ct);
+        return new(items, page, pageSize, total);
     }
 
-    public async Task<ContactoResponse?> GetByIdAsync(int idContacto, CancellationToken cancellationToken)
+    public async Task<ContactoResponse> GetAsync(int id, CancellationToken ct)
+        => await Query().SingleOrDefaultAsync(c => c.Id == id, ct) ?? throw Missing();
+
+    public async Task<ContactoResponse> WriteAsync(int? id, ContactoRequest request, CancellationToken ct)
     {
-        return await db.Contactos
-            .AsNoTracking()
-            .Where(c => c.Id == idContacto)
-            .Select(c => new ContactoResponse(
-                c.Id,
-                c.Nombre,
-                c.Apellido,
-                c.Documento,
-                c.Cargo,
-                c.Correo,
-                c.Telefono,
-                c.IdEstado,
-                c.IdEstadoNavigation!.Descripcion,
-                c.IdOrigen,
-                c.IdOrigenNavigation!.Descripcion,
-                c.IdEmpresa,
-                c.IdEmpresaNavigation!.RazonSocial,
-                c.Observaciones))
-            .FirstOrDefaultAsync(cancellationToken);
+        if (id is null && !(request.HasField(nameof(request.Nombre)) && request.HasField(nameof(request.Apellido)) && request.HasField(nameof(request.Correo))))
+            throw new ContactoOperationException(400, "VALIDATION_FAILED", "Nombre, apellido y correo son obligatorios.");
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        if (!await db.Usuarios.AnyAsync(u => u.Id == actor.Id && u.Activo, ct))
+            throw new ContactoOperationException(401, "UNAUTHENTICATED", "La sesión ya no está disponible.");
+        var contact = id is null ? new Contacto() : await db.Contactos.SingleOrDefaultAsync(c => c.Id == id && c.Activo, ct) ?? throw Missing();
+        var state = request.HasField(nameof(request.IdEstado)) ? request.IdEstado : id is null
+            ? await db.EstadoClientes.Where(e => e.Activo && e.Descripcion.ToLower() == "potencial").Select(e => (int?)e.Id).SingleOrDefaultAsync(ct)
+            : contact.IdEstado;
+        if (state is null) throw new ContactoOperationException(400, "REFERENCE_UNAVAILABLE", "El estado Potencial no está disponible. Seleccione un estado activo.");
+        var responsible = request.HasField(nameof(request.IdResponsable)) ? request.IdResponsable!.Value : id is null ? actor.Id : contact.IdResponsable;
+        if ((id is null || state != contact.IdEstado) && !await db.EstadoClientes.AnyAsync(e => e.Id == state && e.Activo, ct))
+            throw Unavailable("El estado");
+        if ((id is null || responsible != contact.IdResponsable) && !await db.Usuarios.AnyAsync(u => u.Id == responsible && u.Activo, ct))
+            throw Unavailable("El responsable");
+        if (request.HasField(nameof(request.IdOrigen)) && request.IdOrigen is not null && (id is null || request.IdOrigen != contact.IdOrigen)
+            && !await db.OrigenComerciales.AnyAsync(o => o.Id == request.IdOrigen && o.Activo, ct))
+            throw Unavailable("El origen");
+        // Cambiar o quitar la empresa solo modifica este contacto: sus oportunidades y actividades conservan la suya.
+        if (request.HasField(nameof(request.IdEmpresa)) && request.IdEmpresa is not null && (id is null || request.IdEmpresa != contact.IdEmpresa)
+            && !await db.Empresas.AnyAsync(e => e.Id == request.IdEmpresa && e.Activo, ct))
+            throw Unavailable("La empresa");
+        contact.IdEstado = state; contact.IdResponsable = responsible;
+        if (request.HasField(nameof(request.Nombre))) contact.Nombre = request.Nombre!.Trim();
+        if (request.HasField(nameof(request.Apellido))) contact.Apellido = request.Apellido!.Trim();
+        if (request.HasField(nameof(request.Correo))) contact.Correo = request.Correo!.Trim();
+        if (request.HasField(nameof(request.Documento))) contact.Documento = Text(request.Documento);
+        if (request.HasField(nameof(request.Cargo))) contact.Cargo = Text(request.Cargo);
+        if (request.HasField(nameof(request.Telefono))) contact.Telefono = Text(request.Telefono);
+        if (request.HasField(nameof(request.Observaciones))) contact.Observaciones = Text(request.Observaciones);
+        if (request.HasField(nameof(request.IdOrigen))) contact.IdOrigen = request.IdOrigen;
+        if (request.HasField(nameof(request.IdEmpresa))) contact.IdEmpresa = request.IdEmpresa;
+        if (id is null) db.Contactos.Add(contact);
+        await db.SaveChangesAsync(ct);
+        var result = await GetAsync(contact.Id, ct);
+        await transaction.CommitAsync(ct);
+        return result;
     }
 
-    public async Task<IReadOnlyList<ContactoResponse>> GetAllAsync(CancellationToken cancellationToken)
+    public async Task DeleteAsync(int id, CancellationToken ct)
     {
-        return await db.Contactos
-            .AsNoTracking()
-            .OrderBy(c => c.Apellido)
-            .ThenBy(c => c.Nombre)
-            .Select(c => new ContactoResponse(
-                c.Id,
-                c.Nombre,
-                c.Apellido,
-                c.Documento,
-                c.Cargo,
-                c.Correo,
-                c.Telefono,
-                c.IdEstado,
-                c.IdEstadoNavigation!.Descripcion,
-                c.IdOrigen,
-                c.IdOrigenNavigation!.Descripcion,
-                c.IdEmpresa,
-                c.IdEmpresaNavigation!.RazonSocial,
-                c.Observaciones))
-            .ToListAsync(cancellationToken);
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        if (!await db.Usuarios.AnyAsync(u => u.Id == actor.Id && u.Activo, ct))
+            throw new ContactoOperationException(401, "UNAUTHENTICATED", "La sesión ya no está disponible.");
+        var contact = await db.Contactos.SingleOrDefaultAsync(c => c.Id == id && c.Activo, ct) ?? throw Missing();
+        // Cualquier oportunidad activa bloquea, incluso ganada o perdida; las actividades no.
+        var opportunities = await db.Oportunidades.CountAsync(o => o.IdContacto == id && o.Activo, ct);
+        if (opportunities > 0)
+            throw new ContactoOperationException(409, "BUSINESS_CONFLICT", $"No se puede dar de baja el contacto porque tiene {(opportunities == 1 ? "1 oportunidad activa" : $"{opportunities} oportunidades activas")}.");
+        contact.Activo = false;
+        await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
     }
 
-    public async Task<UpdateContactoResult> UpdateAsync(
-        int idContacto, UpdateContactoRequest request, CancellationToken cancellationToken)
-    {
-        var contacto = await db.Contactos.FirstOrDefaultAsync(c => c.Id == idContacto, cancellationToken);
-        if (contacto is null)
-        {
-            return new UpdateContactoResult(UpdateContactoOutcome.NotFound, null, []);
-        }
-
-        var errors = await ValidateReferencesAsync(
-            request.IdEstado, request.IdOrigen, request.IdEmpresa, cancellationToken);
-        if (errors.Count > 0)
-        {
-            return new UpdateContactoResult(UpdateContactoOutcome.ValidationFailed, null, errors);
-        }
-
-        var idEmpresaFinal = request.IdEmpresa ?? contacto.IdEmpresa;
-        if (!await PuedeCambiarEmpresaAsync(contacto.Id, contacto.IdEmpresa, idEmpresaFinal, cancellationToken))
-        {
-            return new UpdateContactoResult(UpdateContactoOutcome.ValidationFailed, null,
-                ["No se puede cambiar la empresa de un contacto que tiene oportunidades asociadas."]);
-        }
-
-        contacto.Nombre = request.Nombre ?? contacto.Nombre;
-        contacto.Apellido = request.Apellido ?? contacto.Apellido;
-        contacto.Correo = request.Correo ?? contacto.Correo;
-        contacto.Documento = request.Documento ?? contacto.Documento;
-        contacto.Cargo = request.Cargo ?? contacto.Cargo;
-        contacto.Telefono = request.Telefono ?? contacto.Telefono;
-        contacto.IdEstado = request.IdEstado ?? contacto.IdEstado;
-        contacto.IdOrigen = request.IdOrigen ?? contacto.IdOrigen;
-        contacto.IdEmpresa = request.IdEmpresa ?? contacto.IdEmpresa;
-        contacto.Observaciones = request.Observaciones ?? contacto.Observaciones;
-
-        await db.SaveChangesAsync(cancellationToken);
-
-        return new UpdateContactoResult(
-            UpdateContactoOutcome.Success, (await GetByIdAsync(contacto.Id, cancellationToken))!, []);
-    }
-
-    public async Task<UpdateContactoResult> PatchAsync(
-        int idContacto, PatchContactoRequest request, CancellationToken cancellationToken)
-    {
-        var contacto = await db.Contactos.FirstOrDefaultAsync(c => c.Id == idContacto, cancellationToken);
-        if (contacto is null)
-        {
-            return new UpdateContactoResult(UpdateContactoOutcome.NotFound, null, []);
-        }
-
-        var errors = await ValidateReferencesAsync(
-            request.IdEstado, request.IdOrigen, request.IdEmpresa, cancellationToken);
-        if (errors.Count > 0)
-        {
-            return new UpdateContactoResult(UpdateContactoOutcome.ValidationFailed, null, errors);
-        }
-
-        var idEmpresaFinal = request.HasField(nameof(request.IdEmpresa)) ? request.IdEmpresa : contacto.IdEmpresa;
-        if (!await PuedeCambiarEmpresaAsync(contacto.Id, contacto.IdEmpresa, idEmpresaFinal, cancellationToken))
-        {
-            return new UpdateContactoResult(UpdateContactoOutcome.ValidationFailed, null,
-                ["No se puede cambiar la empresa de un contacto que tiene oportunidades asociadas."]);
-        }
-
-        if (request.HasField(nameof(request.Nombre))) contacto.Nombre = request.Nombre!;
-        if (request.HasField(nameof(request.Apellido))) contacto.Apellido = request.Apellido!;
-        if (request.HasField(nameof(request.Correo))) contacto.Correo = request.Correo!;
-        if (request.HasField(nameof(request.Documento))) contacto.Documento = request.Documento;
-        if (request.HasField(nameof(request.Cargo))) contacto.Cargo = request.Cargo;
-        if (request.HasField(nameof(request.Telefono))) contacto.Telefono = request.Telefono;
-        if (request.HasField(nameof(request.IdEstado))) contacto.IdEstado = request.IdEstado;
-        if (request.HasField(nameof(request.IdOrigen))) contacto.IdOrigen = request.IdOrigen;
-        if (request.HasField(nameof(request.IdEmpresa))) contacto.IdEmpresa = request.IdEmpresa;
-        if (request.HasField(nameof(request.Observaciones))) contacto.Observaciones = request.Observaciones;
-
-        await db.SaveChangesAsync(cancellationToken);
-
-        return new UpdateContactoResult(
-            UpdateContactoOutcome.Success, (await GetByIdAsync(contacto.Id, cancellationToken))!, []);
-    }
-
-    public async Task<IReadOnlyList<HistorialEtapaResponse>?> GetHistorialEtapasAsync(
-        int idContacto, CancellationToken cancellationToken)
-    {
-        var existeContacto = await db.Contactos.AnyAsync(c => c.Id == idContacto, cancellationToken);
-        if (!existeContacto)
-        {
-            return null;
-        }
-
-        return await db.HistorialEtapas
-            .AsNoTracking()
-            .Where(h => h.IdOportunidadNavigation!.IdContacto == idContacto)
-            .OrderByDescending(h => h.Fecha)
-            .Select(h => new HistorialEtapaResponse(
-                h.Id,
-                h.IdOportunidad,
-                h.IdOportunidadNavigation!.Titulo,
-                h.IdEtapaAnterior,
-                h.IdEtapaAnteriorNavigation!.Nombre,
-                h.IdNuevaEtapa,
-                h.IdNuevaEtapaNavigation!.Nombre,
-                h.Fecha,
-                h.IdUsuario,
-                h.IdUsuarioNavigation!.Nombre,
-                h.IdUsuarioNavigation!.Apellido,
-                h.Observacion))
-            .ToListAsync(cancellationToken);
-    }
-
-    private async Task<IReadOnlyList<string>> ValidateReferencesAsync(
-        int? idEstado,
-        int? idOrigen,
-        int? idEmpresa,
-        CancellationToken cancellationToken)
-    {
-        var errors = new List<string>();
-
-        if (idEstado is int estado
-            && !await db.EstadoClientes.AnyAsync(e => e.Id == estado, cancellationToken))
-        {
-            errors.Add($"No existe el estado {estado}.");
-        }
-
-        if (idOrigen is int origen
-            && !await db.OrigenComerciales.AnyAsync(o => o.Id == origen, cancellationToken))
-        {
-            errors.Add($"No existe el origen comercial {origen}.");
-        }
-
-        if (idEmpresa is int empresa
-            && !await db.Empresas.AnyAsync(e => e.Id == empresa, cancellationToken))
-        {
-            errors.Add($"No existe la empresa {empresa}.");
-        }
-
-        return errors;
-    }
-
-    private async Task<bool> PuedeCambiarEmpresaAsync(
-        int idContacto,
-        int? idEmpresaOriginal,
-        int? idEmpresaFinal,
-        CancellationToken cancellationToken)
-    {
-        if (idEmpresaOriginal == idEmpresaFinal)
-        {
-            return true;
-        }
-
-        return !await db.Oportunidades.AnyAsync(o => o.IdContacto == idContacto, cancellationToken);
-    }
+    private static string? Text(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

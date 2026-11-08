@@ -1,95 +1,75 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Npgsql;
 using Services.DTO;
 using Services.Interface;
 
 namespace FluencyAPI.Controllers;
 
-[ApiController]
-[Route("[controller]")]
-public sealed class EmpresaController(IEmpresaService empresaService) : ControllerBase
+[ApiController, Route("empresas")]
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+[TypeFilter(typeof(EmpresaErrors))]
+[ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+[ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+[ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+public sealed class EmpresaController(IEmpresaService empresas) : ControllerBase
 {
-    /// <summary>Da de alta una nueva empresa.</summary>
-    [HttpPost("AltaEmpresa", Name = "AltaEmpresa")]
-    [ProducesResponseType(typeof(EmpresaResponse), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<EmpresaResponse>> AltaEmpresa(
-        [FromBody] CreateEmpresaRequest request,
-        CancellationToken cancellationToken)
-    {
-        var result = await empresaService.CreateAsync(request, cancellationToken);
+    /// <summary>Lista empresas compartidas, con filtros previos al conteo y orden razón social/ID.</summary>
+    [HttpGet]
+    [ProducesResponseType<PageResponse<EmpresaResponse>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<PageResponse<EmpresaResponse>>> List([FromQuery] string? q,
+        [FromQuery, Range(1, int.MaxValue)] int? idEstado, [FromQuery, Range(1, int.MaxValue)] int? idOrigen,
+        [FromQuery, Range(1, int.MaxValue)] int? idResponsable, CancellationToken ct,
+        [FromQuery, Range(1, int.MaxValue)] int page = 1, [FromQuery, Range(1, 100)] int pageSize = 25)
+        => Ok(await empresas.ListAsync(q, idEstado, idOrigen, idResponsable, page, pageSize, ct));
 
-        return result.Outcome switch
-        {
-            CreateEmpresaOutcome.Success => CreatedAtAction(
-                nameof(DatosEmpresa), new { idEmpresa = result.Empresa!.Id }, result.Empresa),
-            CreateEmpresaOutcome.ValidationFailed => BadRequest(new { errors = result.Errors }),
-            _ => Problem()
-        };
+    /// <summary>Consulta una empresa vigente, con referencias históricas legibles.</summary>
+    [HttpGet("{id:int}")]
+    [ProducesResponseType<EmpresaResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<EmpresaResponse>> Get(int id, CancellationToken ct) => Ok(await empresas.GetAsync(id, ct));
+
+    /// <summary>Crea una empresa compartida; defaults de responsable y estado desde el servidor.</summary>
+    [HttpPost]
+    [ProducesResponseType<EmpresaResponse>(StatusCodes.Status201Created)]
+    public async Task<ActionResult<EmpresaResponse>> Create([FromBody] EmpresaRequest request, CancellationToken ct)
+    {
+        var result = await empresas.WriteAsync(null, request, ct);
+        return CreatedAtAction(nameof(Get), new { id = result.Id }, result);
     }
 
-    /// <summary>Obtiene los datos de una empresa por id.</summary>
-    [HttpGet("DatosEmpresa/{idEmpresa:int}", Name = "DatosEmpresa")]
-    [ProducesResponseType(typeof(EmpresaResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<EmpresaResponse>> DatosEmpresa(
-        int idEmpresa,
-        CancellationToken cancellationToken)
+    /// <summary>Edita atómicamente campos enviados; omisión conserva y null limpia opcionales.</summary>
+    [HttpPatch("{id:int}")]
+    [ProducesResponseType<EmpresaResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<EmpresaResponse>> Patch(int id, [FromBody] EmpresaRequest request, CancellationToken ct)
+        => Ok(await empresas.WriteAsync(id, request, ct));
+
+    /// <summary>Baja definitiva (sin borrado físico ni restauración); bloqueada por contactos u oportunidades activos, con las causas en el 409.</summary>
+    [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {
-        var empresa = await empresaService.GetByIdAsync(idEmpresa, cancellationToken);
-        return empresa is null ? NotFound($"No existe la empresa {idEmpresa}.") : Ok(empresa);
+        await empresas.DeleteAsync(id, ct);
+        return NoContent();
     }
+}
 
-    /// <summary>Obtiene el listado de todas las empresas.</summary>
-    [HttpGet("ListadoEmpresas", Name = "ListadoEmpresas")]
-    [ProducesResponseType(typeof(IReadOnlyList<EmpresaResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyList<EmpresaResponse>>> ListadoEmpresas(
-        CancellationToken cancellationToken)
-        => Ok(await empresaService.GetAllAsync(cancellationToken));
-
-    /// <summary>Modifica solo los campos enviados de una empresa y permite borrar valores opcionales.</summary>
-    /// <remarks>
-    /// Un campo omitido conserva su valor. Un null explícito borra un campo opcional, pero no puede borrar
-    /// razonSocial. Un objeto vacío no cambia la empresa. Los campos desconocidos se rechazan.
-    /// El POST de esta misma ruta conserva su comportamiento anterior: null no modifica.
-    /// </remarks>
-    [HttpPatch("ModificarEmpresa/{idEmpresa:int}", Name = "PatchEmpresa")]
-    [ProducesResponseType(typeof(EmpresaResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<EmpresaResponse>> PatchEmpresa(
-        int idEmpresa,
-        [FromBody] PatchEmpresaRequest request,
-        CancellationToken cancellationToken)
+public sealed class EmpresaErrors : IExceptionFilter
+{
+    public void OnException(ExceptionContext context)
     {
-        var result = await empresaService.PatchAsync(idEmpresa, request, cancellationToken);
-
-        return result.Outcome switch
-        {
-            UpdateEmpresaOutcome.Success => Ok(result.Empresa),
-            UpdateEmpresaOutcome.NotFound => NotFound($"No existe la empresa {idEmpresa}."),
-            UpdateEmpresaOutcome.ValidationFailed => BadRequest(new { errors = result.Errors }),
-            _ => Problem()
-        };
-    }
-
-    /// <summary>Modifica los datos de una empresa existente.</summary>
-    [HttpPost("ModificarEmpresa/{idEmpresa:int}", Name = "ModificarEmpresa")]
-    [ProducesResponseType(typeof(EmpresaResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<EmpresaResponse>> ModificarEmpresa(
-        int idEmpresa,
-        [FromBody] UpdateEmpresaRequest request,
-        CancellationToken cancellationToken)
-    {
-        var result = await empresaService.UpdateAsync(idEmpresa, request, cancellationToken);
-
-        return result.Outcome switch
-        {
-            UpdateEmpresaOutcome.Success => Ok(result.Empresa),
-            UpdateEmpresaOutcome.NotFound => NotFound($"No existe la empresa {idEmpresa}."),
-            UpdateEmpresaOutcome.ValidationFailed => BadRequest(new { errors = result.Errors }),
-            _ => Problem()
-        };
+        var operation = context.Exception as EmpresaOperationException;
+        // Con transacciones de usuario EF envuelve el error de PostgreSQL (p. ej. 40001) en varios niveles: se toma el original.
+        var postgres = context.Exception.GetBaseException() as PostgresException;
+        if (postgres?.SqlState == PostgresErrorCodes.ForeignKeyViolation)
+            operation = new(400, "REFERENCE_UNAVAILABLE", "La referencia no está disponible.");
+        if (postgres?.SqlState is PostgresErrorCodes.SerializationFailure or PostgresErrorCodes.DeadlockDetected)
+            operation = new(409, "CONCURRENT_CHANGE", "Los datos cambiaron. Recargue e intente nuevamente.");
+        if (operation is null) return;
+        var problem = new ProblemDetails { Status = operation.Status, Title = operation.Message };
+        problem.Extensions["code"] = operation.Code;
+        context.Result = new ObjectResult(problem) { StatusCode = operation.Status };
+        context.ExceptionHandled = true;
     }
 }

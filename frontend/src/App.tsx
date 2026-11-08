@@ -1,58 +1,51 @@
-import { lazy, Suspense } from 'react'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { Typography, Box } from '@mui/material'
 import { AuthenticatedShell } from './app/AuthenticatedShell'
 import { ProtectedRoute } from './app/ProtectedRoute'
-import { HomePage } from './features/home/HomePage'
 import { LoginPage } from './features/login/LoginPage'
-
-const CompaniesPage = lazy(() => import('./features/companies/CompaniesPage').then(({ CompaniesPage }) => ({ default: CompaniesPage })))
-const CompanyDetailPage = lazy(() => import('./features/companies/CompanyDetailPage').then(({ CompanyDetailPage }) => ({ default: CompanyDetailPage })))
-const EditCompanyPage = lazy(() => import('./features/companies/CompanyFormPage').then(({ EditCompanyPage }) => ({ default: EditCompanyPage })))
-const NewCompanyPage = lazy(() => import('./features/companies/CompanyFormPage').then(({ NewCompanyPage }) => ({ default: NewCompanyPage })))
-const ContactsPage = lazy(() => import('./features/contacts/ContactsPage').then(({ ContactsPage }) => ({ default: ContactsPage })))
-const ContactDetailPage = lazy(() => import('./features/contacts/ContactDetailPage').then(({ ContactDetailPage }) => ({ default: ContactDetailPage })))
-const EditContactPage = lazy(() => import('./features/contacts/ContactFormPage').then(({ EditContactPage }) => ({ default: EditContactPage })))
-const NewContactPage = lazy(() => import('./features/contacts/ContactFormPage').then(({ NewContactPage }) => ({ default: NewContactPage })))
-const OpportunitiesPage = lazy(() => import('./features/opportunities/OpportunitiesPage').then(({ OpportunitiesPage }) => ({ default: OpportunitiesPage })))
-const OpportunityDetailPage = lazy(() => import('./features/opportunities/OpportunityDetailPage').then(({ OpportunityDetailPage }) => ({ default: OpportunityDetailPage })))
-const EditOpportunityPage = lazy(() => import('./features/opportunities/OpportunityFormPage').then(({ EditOpportunityPage }) => ({ default: EditOpportunityPage })))
-const NewOpportunityPage = lazy(() => import('./features/opportunities/OpportunityFormPage').then(({ NewOpportunityPage }) => ({ default: NewOpportunityPage })))
-const FunnelPage = lazy(() => import('./features/funnel/FunnelPage').then(({ FunnelPage }) => ({ default: FunnelPage })))
-
-function RouteLoadingFallback() {
-  const { pathname } = useLocation()
-  const section = pathname.split('/')[1]
-  const label = section === 'contactos' ? 'contactos' : section === 'oportunidades' || section === 'embudo' ? section : 'empresas'
-  return <div className="companies-page" role="status" aria-label={`Cargando ${label}`}>Cargando sección…</div>
+import { useAuth } from './auth/useAuth'
+import { UsersPage } from './features/settings/UsersPage'
+import { CatalogsPage } from './features/settings/CatalogsPage'
+import { ServicesPage } from './features/services/ServicesPage'
+import { FunnelsPage } from './features/settings/FunnelsPage'
+import { CompaniesPage } from './features/companies/CompaniesPage'
+import { CompanyDetailPage } from './features/companies/CompanyDetailPage'
+import { NewCompanyPage, EditCompanyPage } from './features/companies/CompanyFormPage'
+import { ContactsPage } from './features/contacts/ContactsPage'
+import { ContactDetailPage } from './features/contacts/ContactDetailPage'
+import { NewContactPage, EditContactPage } from './features/contacts/ContactFormPage'
+import { OpportunitiesPage } from './features/opportunities/OpportunitiesPage'
+import { FunnelPage } from './features/funnel/FunnelPage'
+import { EditOpportunityPage, NewOpportunityPage } from './features/opportunities/OpportunityFormPage'
+import { OpportunityDetailPage } from './features/opportunities/OpportunityDetailPage'
+function AccessHome() {
+  const { user } = useAuth()
+  return <Box sx={{ p: { xs: 3, md: 5 }, maxWidth: 1440, mx: 'auto' }}><Typography component="h1" className="companies-page-title">Hola, {user?.nombre}</Typography><Typography sx={{ mt: 2 }}>Bienvenido a Fluency CRM.</Typography></Box>
 }
-
 function App() {
-  return (
-    <Suspense fallback={<RouteLoadingFallback />}>
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route element={<ProtectedRoute />}>
-        <Route element={<AuthenticatedShell />}>
-          <Route path="/inicio" element={<HomePage />} />
-          <Route path="/empresas" element={<CompaniesPage />} />
-          <Route path="/empresas/nueva" element={<NewCompanyPage />} />
-          <Route path="/empresas/:idEmpresa/editar" element={<EditCompanyPage />} />
-          <Route path="/empresas/:idEmpresa" element={<CompanyDetailPage />} />
-          <Route path="/contactos" element={<ContactsPage />} />
-          <Route path="/contactos/nuevo" element={<NewContactPage />} />
-          <Route path="/contactos/:idContacto/editar" element={<EditContactPage />} />
-          <Route path="/contactos/:idContacto" element={<ContactDetailPage />} />
-          <Route path="/oportunidades" element={<OpportunitiesPage />} />
-          <Route path="/oportunidades/nueva" element={<NewOpportunityPage />} />
-          <Route path="/oportunidades/:idOportunidad/editar" element={<EditOpportunityPage />} />
-          <Route path="/oportunidades/:idOportunidad" element={<OpportunityDetailPage />} />
-          <Route path="/embudo" element={<FunnelPage />} />
-        </Route>
-      </Route>
-      <Route path="*" element={<Navigate to="/inicio" replace />} />
-    </Routes>
-    </Suspense>
-  )
+  return <Routes>
+    <Route path="/login" element={<LoginPage />} />
+    <Route element={<ProtectedRoute />}><Route element={<AuthenticatedShell />}>
+      <Route path="/inicio" element={<AccessHome />} />
+      <Route path="/empresas" element={<CompaniesPage />} />
+      <Route path="/empresas/nueva" element={<NewCompanyPage />} />
+      <Route path="/empresas/:idEmpresa" element={<CompanyDetailPage />} />
+      <Route path="/empresas/:idEmpresa/editar" element={<EditCompanyPage />} />
+      <Route path="/contactos" element={<ContactsPage />} />
+      <Route path="/contactos/nuevo" element={<NewContactPage />} />
+      <Route path="/contactos/:idContacto" element={<ContactDetailPage />} />
+      <Route path="/contactos/:idContacto/editar" element={<EditContactPage />} />
+      <Route path="/oportunidades" element={<OpportunitiesPage />} />
+      <Route path="/oportunidades/nueva" element={<NewOpportunityPage />} />
+      <Route path="/oportunidades/:idOportunidad" element={<OpportunityDetailPage />} />
+      <Route path="/oportunidades/:idOportunidad/editar" element={<EditOpportunityPage />} />
+      <Route path="/embudo" element={<FunnelPage />} />
+      <Route path="/configuracion/usuarios" element={<UsersPage />} />
+      <Route path="/configuracion/catalogos" element={<CatalogsPage />} />
+      <Route path="/configuracion/servicios" element={<ServicesPage />} />
+      <Route path="/configuracion/embudos" element={<FunnelsPage />} />
+    </Route></Route>
+    <Route path="*" element={<Navigate to="/inicio" replace />} />
+  </Routes>
 }
-
 export default App

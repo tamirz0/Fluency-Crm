@@ -19,13 +19,11 @@ public partial class Servicio
 
     public int? IdModalidad { get; set; }
 
-    public bool? Activo { get; set; }
+    public bool Activo { get; set; } = true;
+
+    public virtual ICollection<Embudo> Embudos { get; set; } = new List<Embudo>();
 
     public virtual Modalidad? IdModalidadNavigation { get; set; }
 
     public virtual NivelIngles? IdNivelNavigation { get; set; }
-
-    public virtual ICollection<OportunidadItem> OportunidadItems { get; set; } = new List<OportunidadItem>();
-
-    public virtual ICollection<Oportunidad> Oportunidades { get; set; } = new List<Oportunidad>();
 }

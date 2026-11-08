@@ -1,107 +1,75 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Npgsql;
 using Services.DTO;
 using Services.Interface;
 
 namespace FluencyAPI.Controllers;
 
-[ApiController]
-[Route("[controller]")]
-public sealed class ContactoController(IContactoService contactoService) : ControllerBase
+[ApiController, Route("contactos")]
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+[TypeFilter(typeof(ContactoErrors))]
+[ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+[ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+[ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+public sealed class ContactoController(IContactoService contactos) : ControllerBase
 {
-    /// <summary>Da de alta un nuevo contacto.</summary>
-    [HttpPost("AltaContacto", Name = "AltaContacto")]
-    [ProducesResponseType(typeof(ContactoResponse), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ContactoResponse>> AltaContacto(
-        [FromBody] CreateContactoRequest request,
-        CancellationToken cancellationToken)
-    {
-        var result = await contactoService.CreateAsync(request, cancellationToken);
+    /// <summary>Lista contactos compartidos, con filtros previos al conteo y orden apellido/nombre/ID.</summary>
+    [HttpGet]
+    [ProducesResponseType<PageResponse<ContactoResponse>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<PageResponse<ContactoResponse>>> List([FromQuery] string? q,
+        [FromQuery, Range(1, int.MaxValue)] int? idEstado, [FromQuery, Range(1, int.MaxValue)] int? idOrigen,
+        [FromQuery, Range(1, int.MaxValue)] int? idResponsable, [FromQuery, Range(1, int.MaxValue)] int? idEmpresa,
+        CancellationToken ct, [FromQuery, Range(1, int.MaxValue)] int page = 1, [FromQuery, Range(1, 100)] int pageSize = 25)
+        => Ok(await contactos.ListAsync(q, idEstado, idOrigen, idResponsable, idEmpresa, page, pageSize, ct));
 
-        return result.Outcome switch
-        {
-            CreateContactoOutcome.Success => CreatedAtAction(
-                nameof(DatosContacto), new { idContacto = result.Contacto!.Id }, result.Contacto),
-            CreateContactoOutcome.ValidationFailed => BadRequest(new { errors = result.Errors }),
-            _ => Problem()
-        };
+    /// <summary>Consulta un contacto vigente, con referencias históricas legibles.</summary>
+    [HttpGet("{id:int}")]
+    [ProducesResponseType<ContactoResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<ContactoResponse>> Get(int id, CancellationToken ct) => Ok(await contactos.GetAsync(id, ct));
+
+    /// <summary>Crea un contacto compartido; defaults de responsable y estado desde el servidor.</summary>
+    [HttpPost]
+    [ProducesResponseType<ContactoResponse>(StatusCodes.Status201Created)]
+    public async Task<ActionResult<ContactoResponse>> Create([FromBody] ContactoRequest request, CancellationToken ct)
+    {
+        var result = await contactos.WriteAsync(null, request, ct);
+        return CreatedAtAction(nameof(Get), new { id = result.Id }, result);
     }
 
-    /// <summary>Obtiene los datos de un contacto por id.</summary>
-    [HttpGet("DatosContacto/{idContacto:int}", Name = "DatosContacto")]
-    [ProducesResponseType(typeof(ContactoResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ContactoResponse>> DatosContacto(
-        int idContacto,
-        CancellationToken cancellationToken)
+    /// <summary>Edita atómicamente campos enviados; omisión conserva y null limpia opcionales. Cambiar la empresa solo afecta al contacto.</summary>
+    [HttpPatch("{id:int}")]
+    [ProducesResponseType<ContactoResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<ContactoResponse>> Patch(int id, [FromBody] ContactoRequest request, CancellationToken ct)
+        => Ok(await contactos.WriteAsync(id, request, ct));
+
+    /// <summary>Baja definitiva (sin borrado físico ni restauración); bloqueada por oportunidades activas, con la causa en el 409.</summary>
+    [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {
-        var contacto = await contactoService.GetByIdAsync(idContacto, cancellationToken);
-        return contacto is null ? NotFound($"No existe el contacto {idContacto}.") : Ok(contacto);
+        await contactos.DeleteAsync(id, ct);
+        return NoContent();
     }
+}
 
-    /// <summary>Obtiene el listado de todos los contactos.</summary>
-    [HttpGet("ListadoContactos", Name = "ListadoContactos")]
-    [ProducesResponseType(typeof(IReadOnlyList<ContactoResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyList<ContactoResponse>>> ListadoContactos(
-        CancellationToken cancellationToken)
-        => Ok(await contactoService.GetAllAsync(cancellationToken));
-
-    /// <summary>Modifica solo los campos enviados de un contacto y permite borrar valores opcionales.</summary>
-    /// <remarks>
-    /// Un campo omitido conserva su valor. Un null explícito borra un campo opcional, pero no puede borrar
-    /// nombre, apellido ni correo. Un objeto vacío no cambia el contacto. Los campos desconocidos se rechazan.
-    /// El POST de esta misma ruta conserva su comportamiento anterior: null no modifica.
-    /// </remarks>
-    [HttpPatch("ModificarContacto/{idContacto:int}", Name = "PatchContacto")]
-    [ProducesResponseType(typeof(ContactoResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ContactoResponse>> PatchContacto(
-        int idContacto,
-        [FromBody] PatchContactoRequest request,
-        CancellationToken cancellationToken)
+public sealed class ContactoErrors : IExceptionFilter
+{
+    public void OnException(ExceptionContext context)
     {
-        var result = await contactoService.PatchAsync(idContacto, request, cancellationToken);
-
-        return result.Outcome switch
-        {
-            UpdateContactoOutcome.Success => Ok(result.Contacto),
-            UpdateContactoOutcome.NotFound => NotFound($"No existe el contacto {idContacto}."),
-            UpdateContactoOutcome.ValidationFailed => BadRequest(new { errors = result.Errors }),
-            _ => Problem()
-        };
-    }
-
-    /// <summary>Modifica los datos de un contacto existente.</summary>
-    [HttpPost("ModificarContacto/{idContacto:int}", Name = "ModificarContacto")]
-    [ProducesResponseType(typeof(ContactoResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ContactoResponse>> ModificarContacto(
-        int idContacto,
-        [FromBody] UpdateContactoRequest request,
-        CancellationToken cancellationToken)
-    {
-        var result = await contactoService.UpdateAsync(idContacto, request, cancellationToken);
-
-        return result.Outcome switch
-        {
-            UpdateContactoOutcome.Success => Ok(result.Contacto),
-            UpdateContactoOutcome.NotFound => NotFound($"No existe el contacto {idContacto}."),
-            UpdateContactoOutcome.ValidationFailed => BadRequest(new { errors = result.Errors }),
-            _ => Problem()
-        };
-    }
-
-    /// <summary>Obtiene el historial de cambios de etapa de las oportunidades del contacto.</summary>
-    [HttpGet("HistorialEtapas/{idContacto:int}", Name = "HistorialEtapasContacto")]
-    [ProducesResponseType(typeof(IReadOnlyList<HistorialEtapaResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IReadOnlyList<HistorialEtapaResponse>>> HistorialEtapas(
-        int idContacto,
-        CancellationToken cancellationToken)
-    {
-        var historial = await contactoService.GetHistorialEtapasAsync(idContacto, cancellationToken);
-        return historial is null ? NotFound($"No existe el contacto {idContacto}.") : Ok(historial);
+        var operation = context.Exception as ContactoOperationException;
+        // Con transacciones de usuario EF envuelve el error de PostgreSQL (p. ej. 40001) en varios niveles: se toma el original.
+        var postgres = context.Exception.GetBaseException() as PostgresException;
+        if (postgres?.SqlState == PostgresErrorCodes.ForeignKeyViolation)
+            operation = new(400, "REFERENCE_UNAVAILABLE", "La referencia no está disponible.");
+        if (postgres?.SqlState is PostgresErrorCodes.SerializationFailure or PostgresErrorCodes.DeadlockDetected)
+            operation = new(409, "CONCURRENT_CHANGE", "Los datos cambiaron. Recargue e intente nuevamente.");
+        if (operation is null) return;
+        var problem = new ProblemDetails { Status = operation.Status, Title = operation.Message };
+        problem.Extensions["code"] = operation.Code;
+        context.Result = new ObjectResult(problem) { StatusCode = operation.Status };
+        context.ExceptionHandled = true;
     }
 }

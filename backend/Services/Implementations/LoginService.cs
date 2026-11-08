@@ -1,5 +1,8 @@
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Models;
+using Services.Acceso;
 using Services.DTO;
 using Services.Interface;
 
@@ -7,50 +10,35 @@ namespace Services.Implementations;
 
 public sealed class LoginService(FluencyLocalDbContext db) : ILoginService
 {
-    public async Task<RegisterResult> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
+    // Unknown usernames still perform a BCrypt verification to avoid the obvious fast rejection path.
+    private static readonly string DummyHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N"), 12);
+
+    public async Task<SesionUsuario?> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
     {
-        var usernameTaken = await db.Usuarios
-            .AnyAsync(u => u.Username == request.Username, cancellationToken);
-
-        if (usernameTaken)
-        {
-            return new RegisterResult(RegisterOutcome.UsernameTaken, null);
-        }
-
-        var usuario = new Usuario
-        {
-            Nombre = request.Nombre,
-            Apellido = request.Apellido,
-            Correo = request.Correo,
-            Username = request.Username,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
-        };
-
-        db.Usuarios.Add(usuario);
-        await db.SaveChangesAsync(cancellationToken);
-
-        return new RegisterResult(RegisterOutcome.Success, ToResponse(usuario));
+        var username = request.Username.Trim().ToLowerInvariant();
+        var user = await Users().SingleOrDefaultAsync(u => u.Username.Trim().ToLower() == username, cancellationToken);
+        bool valid;
+        try { valid = BCrypt.Net.BCrypt.Verify(request.Password, user?.PasswordHash ?? DummyHash); }
+        catch (BCrypt.Net.SaltParseException) { valid = false; }
+        return valid && user is not null ? ToSession(user) : null;
     }
 
-    public async Task<LoginResult> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
+    public async Task<SesionUsuario?> GetSessionAsync(int id, CancellationToken cancellationToken)
     {
-        var usuario = await db.Usuarios
-            .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Username == request.Username, cancellationToken);
-
-        if (usuario is null || !BCrypt.Net.BCrypt.Verify(request.Password, usuario.PasswordHash))
-        {
-            return new LoginResult(LoginOutcome.InvalidCredentials, null);
-        }
-
-        return new LoginResult(LoginOutcome.Success, ToResponse(usuario));
+        var user = await Users().SingleOrDefaultAsync(u => u.Id == id, cancellationToken);
+        return user is null ? null : ToSession(user);
     }
 
-    private static UsuarioResponse ToResponse(Usuario usuario) => new(
-        usuario.Id,
-        usuario.Nombre,
-        usuario.Apellido,
-        usuario.Correo,
-        usuario.Username,
-        usuario.Activo);
+    private IQueryable<Usuario> Users() => db.Usuarios.AsNoTracking()
+        .Include(user => user.UsuarioRoles).ThenInclude(join => join.IdRolNavigation)
+        .ThenInclude(role => role.PermisoRoles).ThenInclude(join => join.IdPermisoNavigation);
+
+    private static SesionUsuario? ToSession(Usuario user)
+    {
+        var capabilities = CapacidadesUsuario.Calcular(user);
+        if (!user.Activo || capabilities.Roles.Count == 0) return null;
+        var response = new UsuarioResponse(user.Id, user.Nombre, user.Apellido, user.Correo, user.Username,
+            user.Activo, capabilities.Roles.Order().ToArray(), capabilities.Permisos.Order().ToArray());
+        return new SesionUsuario(response, Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(user.PasswordHash))));
+    }
 }

@@ -35,6 +35,6 @@ export function saveErrorMessage(error: unknown): string {
   return 'No pudimos guardar los cambios. Revisá la información e intentá de nuevo.'
 }
 
-export function confirmationFor(noun: 'Empresa' | 'Contacto' | 'Oportunidad', action: 'creada' | 'creado' | 'actualizada' | 'actualizado'): string {
+export function confirmationFor(noun: 'Empresa' | 'Contacto' | 'Oportunidad', action: 'creada' | 'creado' | 'actualizada' | 'actualizado' | 'dada de baja' | 'dado de baja'): string {
   return `${noun} ${action}`
 }

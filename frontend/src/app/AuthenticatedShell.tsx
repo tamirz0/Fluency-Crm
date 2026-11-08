@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Box, Button, Divider, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography } from '@mui/material'
-import { Business, Contacts, Dashboard, Logout, Menu, Timeline, ViewKanban } from '@mui/icons-material'
+import { Business, Contacts, Dashboard, Logout, Menu, Timeline, ViewKanban, ManageAccounts, Settings } from '@mui/icons-material'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 
@@ -26,6 +26,7 @@ const navigationItemSx = {
 
 function NavigationContent({ onNavigate }: { onNavigate?: () => void }) {
   const { logout, user } = useAuth()
+  const [closing, setClosing] = useState(false)
   const fullName = `${user?.nombre ?? ''} ${user?.apellido ?? ''}`.trim()
   return <Box sx={{ display: 'flex', height: '100%', flexDirection: 'column' }}>
     <Box sx={{ px: 3, py: 3.25 }}><Typography sx={{ color: 'text.primary', fontSize: '1.35rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Fluency CRM</Typography></Box>
@@ -36,8 +37,12 @@ function NavigationContent({ onNavigate }: { onNavigate?: () => void }) {
       <ListItemButton component={NavLink} to="/contactos" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Contacts fontSize="small" /></ListItemIcon><ListItemText primary="Contactos" /></ListItemButton>
       <ListItemButton component={NavLink} to="/oportunidades" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Timeline fontSize="small" /></ListItemIcon><ListItemText primary="Oportunidades" /></ListItemButton>
       <ListItemButton component={NavLink} to="/embudo" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><ViewKanban fontSize="small" /></ListItemIcon><ListItemText primary="Embudo" /></ListItemButton>
+      {user?.permisos?.includes('AdministrarUsuarios') && <ListItemButton component={NavLink} to="/configuracion/usuarios" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><ManageAccounts fontSize="small" /></ListItemIcon><ListItemText primary="Usuarios" /></ListItemButton>}
+      {user?.roles?.includes('ADMINISTRADOR') && user.permisos?.includes('AdministrarConfiguracion') && <ListItemButton component={NavLink} to="/configuracion/catalogos" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Settings fontSize="small" /></ListItemIcon><ListItemText primary="Catálogos" /></ListItemButton>}
+      {user?.roles?.includes('ADMINISTRADOR') && user.permisos?.includes('AdministrarConfiguracion') && <ListItemButton component={NavLink} to="/configuracion/servicios" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Settings fontSize="small" /></ListItemIcon><ListItemText primary="Servicios" /></ListItemButton>}
+      {user?.roles?.includes('ADMINISTRADOR') && user.permisos?.includes('AdministrarConfiguracion') && <ListItemButton component={NavLink} to="/configuracion/embudos" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Settings fontSize="small" /></ListItemIcon><ListItemText primary="Embudos y etapas" /></ListItemButton>}
     </List>
-    <Box sx={{ mt: 'auto', p: 2.25 }}><Divider sx={{ mb: 2 }} /><Typography sx={{ mb: 1.25, color: 'text.secondary', fontSize: '.95rem' }}>{fullName}</Typography><Button color="inherit" fullWidth startIcon={<Logout />} onClick={logout} sx={{ justifyContent: 'flex-start', color: 'text.primary' }}>Cerrar sesión</Button></Box>
+    <Box sx={{ mt: 'auto', p: 2.25 }}><Divider sx={{ mb: 2 }} /><Typography sx={{ mb: 1.25, color: 'text.secondary', fontSize: '.95rem' }}>{fullName}</Typography><Button color="inherit" fullWidth startIcon={<Logout />} disabled={closing} onClick={async () => { if (closing) return; setClosing(true); try { await logout() } finally { setClosing(false) } }} sx={{ justifyContent: 'flex-start', color: 'text.primary' }}>Cerrar sesión</Button></Box>
   </Box>
 }
 export function AuthenticatedShell() {

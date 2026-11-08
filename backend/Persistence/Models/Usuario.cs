@@ -17,13 +17,11 @@ public partial class Usuario
 
     public string PasswordHash { get; set; } = null!;
 
-    public bool? Activo { get; set; }
+    public bool Activo { get; set; } = true;
 
-    public virtual ICollection<ActividadOportunidad> ActividadOportunidades { get; set; } = new List<ActividadOportunidad>();
+    public virtual ICollection<Actividad> Actividades { get; set; } = new List<Actividad>();
 
     public virtual ICollection<HistorialEtapa> HistorialEtapas { get; set; } = new List<HistorialEtapa>();
-
-    public virtual ICollection<LogOportunidadCambio> LogOportunidadCambios { get; set; } = new List<LogOportunidadCambio>();
 
     public virtual ICollection<Oportunidad> Oportunidades { get; set; } = new List<Oportunidad>();
 

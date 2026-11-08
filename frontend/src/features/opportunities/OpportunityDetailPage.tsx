@@ -1,61 +1,89 @@
-import { ArrowBack, Edit, Refresh } from '@mui/icons-material'
+import { ArrowBack, Refresh } from '@mui/icons-material'
 import { Alert, Box, Button, Chip, Link, Skeleton, Typography } from '@mui/material'
-import { useQuery } from '@tanstack/react-query'
-import type { ReactNode } from 'react'
-import { Link as RouterLink, useLocation, useParams } from 'react-router-dom'
-import { ApiRequestError, getOpportunity, opportunityQueryKeys, type OportunidadDetalle } from '../../api/client'
-import { CompanyStatus } from '../companies/CompanyStatus'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState, type ReactNode } from 'react'
+import { Link as RouterLink, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { ApiRequestError, deleteOpportunity, getOpportunity, opportunityQueryKeys, type Oportunidad } from '../../api/client'
 import { displayValue, formatCommercialDate, parsePositiveId } from '../shared/display'
+import { confirmationFor } from '../shared/formUtils'
+import { RemoveRecordButton } from '../shared/RemoveRecordButton'
+import { ProfileHeader, ProfileRows, ProfileStats } from '../shared/RecordProfile'
+import { clientLabel, money, stateLabels } from './opportunityData'
+import { CloseOpportunityDialog, type CloseResult } from './CloseOpportunityDialog'
+import { MoveStageDialog } from './MoveStageDialog'
+import { CommercialHistory } from '../activities/CommercialHistory'
+import { RegisterActivityButton } from '../activities/ActivityForm'
+import { ReassignDialog } from './ReassignDialog'
+import { ReopenOpportunityDialog } from './ReopenOpportunityDialog'
 import '../contacts/records.css'
 import '../companies/companies.css'
 
-function OpportunityField({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
-  const shownValue = typeof children === 'string' ? displayValue(children) : children ?? '-'
-  return <div className={className}><dt>{label}</dt><dd>{shownValue}</dd></div>
-}
+const dateTime = (value: string | null | undefined) => value ? new Date(value).toLocaleDateString('es-AR') : '-'
+const inactive = (name: string, active: boolean | null | undefined) => active === false ? `${name} (inactivo)` : name
 
-function OpportunitySkeleton() {
-  return <div className="company-detail-skeleton" aria-label="Cargando detalle de la oportunidad" role="status"><Skeleton width={150} height={28} /><Skeleton className="company-detail-title-skeleton" width="54%" height={54} />{[0, 1, 2].map((section) => <section className="company-detail-section" key={section} aria-hidden="true"><Skeleton width={180} height={28} /><div className="company-detail-skeleton-fields"><Skeleton /><Skeleton /><Skeleton /><Skeleton /></div></section>)}</div>
-}
-
-function OpportunityDetails({ opportunity }: { opportunity: OportunidadDetalle }) {
-  const responsible = [opportunity.usuarioNombre?.trim(), opportunity.usuarioApellido?.trim()].filter(Boolean).join(' ')
-  return <article className="company-sheet" aria-label={`Ficha de ${opportunity.titulo}`}>
-    <section className="company-detail-section" aria-labelledby="opportunity-relations-heading"><Typography component="h2" id="opportunity-relations-heading" className="company-section-heading">Relación comercial</Typography>
-      <dl className="company-detail-fields">
-        <OpportunityField label="Empresa">{opportunity.idEmpresa ? <Link component={RouterLink} to={`/empresas/${opportunity.idEmpresa}`} underline="hover">{displayValue(opportunity.empresaRazonSocial)}</Link> : opportunity.empresaRazonSocial?.trim()}</OpportunityField>
-        <OpportunityField label="Contacto">{opportunity.idContacto ? <Link component={RouterLink} to={`/contactos/${opportunity.idContacto}`} underline="hover">{[opportunity.contactoApellido?.trim(), opportunity.contactoNombre?.trim()].filter(Boolean).join(', ') || '-'}</Link> : [opportunity.contactoApellido?.trim(), opportunity.contactoNombre?.trim()].filter(Boolean).join(', ')}</OpportunityField>
-      </dl>
-    </section>
-    <section className="company-detail-section" aria-labelledby="opportunity-management-heading"><Typography component="h2" id="opportunity-management-heading" className="company-section-heading">Gestión</Typography>
-      <dl className="company-detail-fields">
-        <OpportunityField label="Responsable">{responsible}</OpportunityField><OpportunityField className="company-detail-commercial-field" label="Servicio">{opportunity.servicioNombre?.trim()}</OpportunityField>
-        <OpportunityField className="company-detail-commercial-field" label="Etapa"><Chip className="company-status company-status--prospect" label={displayValue(opportunity.etapaNombre)} size="small" /></OpportunityField><OpportunityField className="company-detail-commercial-field" label="Estado"><CompanyStatus value={opportunity.estadoDescripcion} /></OpportunityField>
-        <OpportunityField label="Origen">{opportunity.origenDescripcion?.trim()}</OpportunityField>
-      </dl>
-    </section>
-    <section className="company-detail-section" aria-labelledby="opportunity-dates-heading"><Typography component="h2" id="opportunity-dates-heading" className="company-section-heading">Fechas</Typography>
-      <dl className="company-detail-fields"><OpportunityField label="Cierre estimado">{formatCommercialDate(opportunity.fechaEstimadaCierre)}</OpportunityField><OpportunityField label="Cierre real">{formatCommercialDate(opportunity.fechaCierre)}</OpportunityField></dl>
-    </section>
-    <section className="company-detail-section" aria-labelledby="opportunity-notes-heading"><Typography component="h2" id="opportunity-notes-heading" className="company-section-heading">Observaciones</Typography><p className="company-observations">{displayValue(opportunity.observaciones)}</p></section>
+function OpportunityProfile({ opportunity, actions }: { opportunity: Oportunidad; actions: ReactNode }) {
+  return <article className="profile-sheet" aria-label={`Ficha de ${opportunity.tituloVisible}`}>
+    <ProfileHeader name={opportunity.tituloVisible} subtitle={opportunity.titulo ? clientLabel(opportunity) : undefined} status={<Chip className="company-status company-status--prospect" label={stateLabels[opportunity.estado] ?? opportunity.estado} size="small" />} actions={actions} />
+    <ProfileStats items={[
+      { label: 'Etapa', value: inactive(opportunity.etapaNombre, opportunity.etapaActiva) },
+      { label: 'Valor', value: money(opportunity.valor) },
+      { label: 'Responsable', value: inactive(opportunity.responsableNombre, opportunity.responsableActivo) },
+      { label: 'Cierre estimado', value: formatCommercialDate(opportunity.fechaEstimadaCierre) },
+    ]} />
+    <ProfileRows rows={[
+      { label: 'Empresa', value: opportunity.idEmpresa ? <Link component={RouterLink} to={`/empresas/${opportunity.idEmpresa}`} underline="hover">{displayValue(opportunity.empresaRazonSocial)}</Link> : undefined },
+      { label: 'Contacto', value: opportunity.idContacto ? <Link component={RouterLink} to={`/contactos/${opportunity.idContacto}`} underline="hover">{displayValue(opportunity.contactoNombre)}</Link> : undefined },
+      { label: 'Embudo', value: inactive(opportunity.embudoNombre, opportunity.embudoActivo) },
+      { label: 'Servicio', value: inactive(opportunity.servicioNombre, opportunity.servicioActivo) },
+      { label: 'Origen', value: opportunity.idOrigen ? inactive(opportunity.origenDescripcion ?? '', opportunity.origenActivo) : undefined },
+      { label: 'Creación', value: dateTime(opportunity.fechaCreacion) },
+      { label: 'Cierre real', value: dateTime(opportunity.fechaCierre) },
+      { label: 'Objetivo de aprendizaje', value: opportunity.objetivoAprendizaje?.trim() },
+      { label: 'Participantes', value: opportunity.cantidadParticipantes == null ? undefined : String(opportunity.cantidadParticipantes) },
+      { label: 'Disponibilidad horaria', value: opportunity.disponibilidadHoraria?.trim() },
+      { label: 'Observaciones', value: opportunity.observaciones?.trim() },
+    ]} />
   </article>
 }
 
 export function OpportunityDetailPage() {
   const { idOportunidad: routeId } = useParams()
   const location = useLocation()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const idOportunidad = parsePositiveId(routeId)
   const query = useQuery({ queryKey: opportunityQueryKeys.detail(idOportunidad ?? 0), queryFn: () => getOpportunity(idOportunidad as number), enabled: idOportunidad !== undefined })
-
-  if (idOportunidad === undefined || (query.isError && query.error instanceof ApiRequestError && query.error.status === 404)) return <Box className="companies-page company-result-page records-page"><Link component={RouterLink} to="/oportunidades" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a oportunidades</Link><section className="company-feedback"><Typography component="h1" className="company-feedback-title">No encontramos esa oportunidad</Typography><Typography color="text.secondary">El enlace puede estar vencido o la oportunidad ya no está disponible.</Typography></section></Box>
-  if (query.isPending) return <Box className="companies-page company-result-page records-page"><OpportunitySkeleton /></Box>
-  if (query.isError) return <Box className="companies-page company-result-page records-page"><Link component={RouterLink} to="/oportunidades" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a oportunidades</Link><section className="company-feedback"><Typography component="h1" className="company-feedback-title">No pudimos cargar los datos de la oportunidad</Typography><Typography color="text.secondary">Revisá la conexión e intentá de nuevo.</Typography><div className="company-feedback-actions"><Button onClick={() => void query.refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button><Button component={RouterLink} to="/oportunidades">Volver al listado</Button></div></section></Box>
-
   const opportunity = query.data
+  const [reassigning, setReassigning] = useState(false)
+  const [moving, setMoving] = useState(false)
+  const [reopening, setReopening] = useState(false)
+  const [activityRegistered, setActivityRegistered] = useState(false)
+  const [closing, setClosing] = useState<CloseResult | '' | null>(null)
+  const [reassigned, setReassigned] = useState(false)
+  const from = (location.state as { from?: { to?: unknown; label?: unknown } } | null)?.from
+  const back = typeof from?.to === 'string' && typeof from.label === 'string' ? { to: from.to, label: from.label } : opportunity?.idEmpresa ?{ to: `/empresas/${opportunity.idEmpresa}`, label: 'Volver a la empresa' } : opportunity?.idContacto ? { to: `/contactos/${opportunity.idContacto}`, label: 'Volver al contacto' } : { to: '/inicio', label: 'Volver al inicio' }
+  const backLink = <Link component={RouterLink} to={back.to} className="company-back-link" underline="hover"><ArrowBack fontSize="small" />{back.label}</Link>
+
+  if (idOportunidad === undefined || (query.isError && query.error instanceof ApiRequestError && query.error.status === 404))
+    return <Box className="companies-page company-result-page records-page"><Link component={RouterLink} to="/inicio" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver al inicio</Link><section className="company-feedback" aria-labelledby="opportunity-not-found-title"><Typography id="opportunity-not-found-title" component="h1" className="company-feedback-title">No encontramos esa oportunidad</Typography><Typography color="text.secondary">El enlace puede estar vencido o la oportunidad ya no estar disponible.</Typography></section></Box>
+  if (query.isPending) return <Box className="companies-page company-result-page records-page"><div className="company-detail-skeleton" aria-label="Cargando detalle de la oportunidad" role="status"><Skeleton width={150} height={28} /><Skeleton className="company-detail-title-skeleton" width="54%" height={54} /><Skeleton height={160} /></div></Box>
+  if (query.isError || !opportunity)
+    return <Box className="companies-page company-result-page records-page"><Link component={RouterLink} to="/inicio" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver al inicio</Link><section className="company-feedback" aria-labelledby="opportunity-error-title"><Typography id="opportunity-error-title" component="h1" className="company-feedback-title">No pudimos cargar los datos de la oportunidad</Typography><Typography color="text.secondary">Revisá la conexión e intentá de nuevo.</Typography><div className="company-feedback-actions"><Button onClick={() => void query.refetch()} variant="outlined" startIcon={<Refresh />}>Reintentar</Button></div></section></Box>
+
   return <Box className="companies-page company-result-page records-page">
-    <Link component={RouterLink} to="/oportunidades" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a oportunidades</Link>
+    {backLink}
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
-    <header className="company-detail-header"><div><Typography component="h1" className="companies-page-title">{opportunity.titulo}</Typography></div><div className="company-detail-header-actions"><Chip className="company-status company-status--prospect" label={displayValue(opportunity.etapaNombre)} size="small" /><Button component={RouterLink} to={`/oportunidades/${opportunity.id}/editar`} variant="contained" startIcon={<Edit />}>Editar oportunidad</Button></div></header>
-    <OpportunityDetails opportunity={opportunity} />
+    {activityRegistered && <Alert severity="success" className="record-form-confirmation">Actividad registrada.</Alert>}
+    {reassigned && <Alert severity="success" className="record-form-confirmation">Oportunidad reasignada. Podés consultarla, pero ya no editarla.</Alert>}
+    <OpportunityProfile opportunity={opportunity} actions={<>{opportunity.accionesPermitidas.editar && <Button component={RouterLink} to={`/oportunidades/${opportunity.id}/editar`} variant="outlined">Editar</Button>}{opportunity.accionesPermitidas.mover && <Button variant="outlined" onClick={() => setMoving(true)}>Cambiar etapa</Button>}{opportunity.accionesPermitidas.cerrar && <Button variant="outlined" onClick={() => setClosing('')}>Cerrar</Button>}{opportunity.accionesPermitidas.reabrir && <Button variant="outlined" onClick={() => setReopening(true)}>Reabrir</Button>}{opportunity.accionesPermitidas.gestionarActividades && <RegisterActivityButton context={{ label: opportunity.tituloVisible, idOportunidad: Number(opportunity.id), ...(opportunity.idEmpresa == null ? {} : { idEmpresa: Number(opportunity.idEmpresa) }), ...(opportunity.idContacto == null ? {} : { idContacto: Number(opportunity.idContacto) }) }} onRegistered={() => setActivityRegistered(true)} />}{opportunity.accionesPermitidas.darDeBaja && <RemoveRecordButton noun="oportunidad" name={opportunity.tituloVisible} remove={() => deleteOpportunity(Number(opportunity.id))} onRemoved={() => {
+      queryClient.removeQueries({ queryKey: opportunityQueryKeys.detail(Number(opportunity.id)) })
+      void queryClient.invalidateQueries({ queryKey: ['oportunidades'] })
+      navigate('/oportunidades', { state: { confirmation: confirmationFor('Oportunidad', 'dada de baja') } })
+    }} />}{opportunity.accionesPermitidas.reasignar && <Button variant="outlined" onClick={() => setReassigning(true)}>Reasignar</Button>}</>} />
+    <MoveStageDialog item={opportunity} open={moving} onClose={() => setMoving(false)} onDone={() => setMoving(false)} onCloseRequest={result => { setMoving(false); setClosing(result) }} />
+    {closing !== null && <CloseOpportunityDialog item={opportunity} initialResult={closing || undefined} open onClose={() => setClosing(null)} onDone={() => setClosing(null)} />}
+    <ReopenOpportunityDialog item={opportunity} open={reopening} onClose={() => setReopening(false)} onDone={() => setReopening(false)} />
+    <ReassignDialog item={opportunity} open={reassigning} onClose={() => setReassigning(false)} onDone={() => { setReassigning(false); setReassigned(true) }} />
+    <CommercialHistory kind="oportunidades" id={Number(opportunity.id)} />
   </Box>
 }

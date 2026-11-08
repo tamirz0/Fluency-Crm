@@ -1,138 +1,317 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { MenuItem, TextField } from '@mui/material'
+import { ArrowBack } from '@mui/icons-material'
+import { Alert, Autocomplete, Box, Button, Link, MenuItem, TextField, Typography } from '@mui/material'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
-import { useMutation, useQuery, useQueryClient, useQuery as useCatalogQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Controller, useForm, useWatch, type SubmitHandler } from 'react-hook-form'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link as RouterLink, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
-import { catalogQueryKeys, createOpportunity, getCommercialOrigins, getCommercialStages, getCompanies, getContacts, getCustomerStates, getOpportunity, getServices, opportunityQueryKeys, patchOpportunity, type OportunidadDetalle, type Servicio } from '../../api/client'
+import { catalogQueryKeys, contactoQueryKeys, createOpportunity, empresaQueryKeys, getCatalogOptions, getCompany, getContact, getOpportunity, getService, listContacts, listFunnels, listStages, opportunityQueryKeys, patchOpportunity, type CreateOportunidadRequest, type Oportunidad, type PatchOportunidadRequest } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
-import { buildDifferentialPatch, confirmationFor, normalizeId, normalizeText, saveErrorMessage } from '../shared/formUtils'
+import { CompanyResponsibleSelect } from '../companies/CompanyResponsibleSelect'
+import { ContactCompanySelect } from '../contacts/ContactCompanySelect'
+import { buildDifferentialPatch, confirmationFor, normalizeId, normalizeOptionalText, saveErrorMessage } from '../shared/formUtils'
 import { CatalogMessage, FormSection, RecordFormPage, RecordQueryState } from '../shared/RecordForm'
-import { contactFullName, commercialDateToIso, isoToCommercialDate, parsePositiveId } from '../shared/display'
+import { commercialDateToIso, contactFullName, isoToCommercialDate, parsePositiveId } from '../shared/display'
 import { ReadOnlyValue } from '../shared/ReadOnlyValue'
 import '../shared/recordForms.css'
 
+const maxValue = 9999999999.99
+const parseValue = (text: string) => Number(text.trim().replace(',', '.'))
+const valueField = z.string().optional().refine(value => !value?.trim() || (/^\d+([.,]\d{1,2})?$/.test(value.trim()) && parseValue(value) <= maxValue), 'Ingresá un importe no negativo, hasta 9999999999,99 y con hasta dos decimales.')
+const dateField = z.string().optional().superRefine((value, context) => { const result = commercialDateToIso(value ?? ''); if (result.error) context.addIssue({ code: 'custom', message: result.error === 'format' ? 'Usá el formato DD/MM/AAAA.' : 'Ingresá una fecha válida.' }) })
+const participantsField = z.string().optional().refine(value => !value?.trim() || /^[1-9]\d{0,8}$/.test(value.trim()), 'Ingresá un número entero mayor que cero.')
 const opportunitySchema = z.object({
-  titulo: z.string().trim().min(1, 'Ingresá el título.').max(150, 'Máximo 150 caracteres.'),
-  idEtapa: z.string().min(1, 'Seleccioná la etapa inicial.'),
-  idEmpresa: z.string().optional(), idContacto: z.string().optional(), idServicio: z.string().optional(), fechaEstimadaCierre: z.string().optional().superRefine((value, context) => { const result = commercialDateToIso(value ?? ''); if (result.error) context.addIssue({ code: 'custom', message: result.error === 'format' ? 'Usá el formato DD/MM/AAAA.' : 'Ingresá una fecha válida.' }) }), idEstado: z.string().optional(), idOrigen: z.string().optional(), observaciones: z.string().optional(),
+  titulo: z.string().trim().max(100, 'Máximo 100 caracteres.').optional(),
+  idEmbudo: z.string().min(1, 'Seleccioná el embudo.'),
+  idEtapa: z.string().optional(), idEmpresa: z.string().optional(), idContacto: z.string().optional(), idResponsable: z.string().optional(), idOrigen: z.string().optional(),
+  valor: valueField, fechaEstimadaCierre: dateField,
+  objetivoAprendizaje: z.string().optional(), disponibilidadHoraria: z.string().optional(), observaciones: z.string().optional(),
+  cantidadParticipantes: participantsField,
 }).superRefine((values, context) => { if (!values.idEmpresa && !values.idContacto) context.addIssue({ code: 'custom', path: ['root'], message: 'Seleccioná una empresa o un contacto.' }) })
 type OpportunityFormValues = z.input<typeof opportunitySchema>
 const invalidDateDraft = '99/99/9999'
+const money = (value: number | string) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(Number(value))
 
-function initialOpportunityValues(opportunity: OportunidadDetalle | undefined): OpportunityFormValues {
-  return { titulo: opportunity?.titulo ?? '', idEtapa: String(opportunity?.idEtapa ?? ''), idEmpresa: opportunity?.idEmpresa == null ? '' : String(opportunity.idEmpresa), idContacto: opportunity?.idContacto == null ? '' : String(opportunity.idContacto), idServicio: opportunity?.idServicio == null ? '' : String(opportunity.idServicio), fechaEstimadaCierre: isoToCommercialDate(opportunity?.fechaEstimadaCierre), idEstado: opportunity?.idEstado == null ? '' : String(opportunity.idEstado), idOrigen: opportunity?.idOrigen == null ? '' : String(opportunity.idOrigen), observaciones: opportunity?.observaciones ?? '' }
+type CompanyOption = { id: number; razonSocial: string }
+type ContactOption = { id: number; label: string; idEmpresa: number | null; empresa: string }
+type Context = { company?: CompanyOption; contact?: ContactOption; idEmbudo: string }
+
+/** Busca contactos en el servidor, acotados a la empresa elegida cuando la hay. */
+export function OpportunityContactSelect({ value, onChange, idEmpresa, current }: { value: string; onChange: (contact: ContactOption | null) => void; idEmpresa?: string; current?: ContactOption }) {
+  const [search, setSearch] = useState('')
+  const contacts = useQuery({ queryKey: [...contactoQueryKeys.all, 'opciones', idEmpresa ?? '', search], queryFn: () => listContacts({ q: search.trim() || undefined, idEmpresa: normalizeId(idEmpresa) ?? undefined, pageSize: 25 }) })
+  const options: ContactOption[] = (contacts.data?.items ?? []).map(c => ({ id: Number(c.id), label: contactFullName(c), idEmpresa: c.idEmpresa == null ? null : Number(c.idEmpresa), empresa: c.empresaRazonSocial ?? '' }))
+  if (current && String(current.id) === value && !options.some(o => o.id === current.id)) options.unshift(current)
+  const total = Number(contacts.data?.totalCount ?? 0)
+  return <Box>
+    <Autocomplete options={options} value={options.find(o => String(o.id) === value) ?? null} loading={contacts.isPending} filterOptions={x => x}
+      getOptionLabel={o => o.label} isOptionEqualToValue={(a, b) => a.id === b.id} onChange={(_, o) => onChange(o)}
+      onInputChange={(_, input, reason) => { if (reason === 'input' || reason === 'clear') setSearch(input) }}
+      noOptionsText="Sin contactos disponibles" loadingText="Cargando contactos…" clearText="Quitar contacto"
+      renderInput={params => <TextField {...params} label="Contacto" />} />
+    {total > 25 && <p className="record-form-note">Se muestran 25 de {total} contactos. Escribí para acotar la búsqueda.</p>}
+    {contacts.isError && <Alert severity="warning" action={<Button onClick={() => void contacts.refetch()}>Reintentar</Button>}>No pudimos cargar los contactos.</Alert>}
+  </Box>
 }
 
-function OpportunityCatalogSelect({ label, value, onChange, options, error, disabled, required = false, emptyLabel = '-', className, describedBy, showErrorText = true }: { label: string; value: string; onChange: (value: string) => void; options: { id: number | string; label: string }[]; error?: string; disabled?: boolean; required?: boolean; emptyLabel?: string; className?: string; describedBy?: string; showErrorText?: boolean }) {
-  const displayOptions = value && !options.some((option) => String(option.id) === value) ? [{ id: value, label: 'Cargando…' }, ...options] : options
-  return <TextField select fullWidth className={className} label={label} value={value} onChange={(event) => onChange(event.target.value)} disabled={disabled} required={required} error={Boolean(error)} helperText={showErrorText ? error : undefined} slotProps={describedBy ? { htmlInput: { 'aria-describedby': describedBy } } : undefined}><MenuItem value="">{emptyLabel}</MenuItem>{displayOptions.map((option) => <MenuItem key={option.id} value={String(option.id)}>{option.label}</MenuItem>)}</TextField>
-}
-
-function OpportunityEditor({ opportunity, mode }: { opportunity?: OportunidadDetalle; mode: 'create' | 'edit' }) {
+function OpportunityEditor({ context }: { context: Context }) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const baseline = initialOpportunityValues(opportunity)
-  const { register, handleSubmit, reset, setError, setValue, control, formState: { errors } } = useForm<OpportunityFormValues>({ defaultValues: baseline, mode: 'onBlur', resolver: zodResolver(opportunitySchema) })
-  const companyQuery = useQuery({ queryKey: ['empresas'], queryFn: getCompanies })
-  const contactQuery = useQuery({ queryKey: ['contactos'], queryFn: getContacts })
-  const stageQuery = useQuery({ queryKey: catalogQueryKeys.commercialStages, queryFn: getCommercialStages })
-  const stateQuery = useQuery({ queryKey: catalogQueryKeys.customerStates, queryFn: getCustomerStates })
-  const originQuery = useQuery({ queryKey: catalogQueryKeys.commercialOrigins, queryFn: getCommercialOrigins })
-  const serviceQuery = useCatalogQuery({ queryKey: catalogQueryKeys.services, queryFn: getServices })
-  const [contactClearedMessage, setContactClearedMessage] = useState('')
+  const saving = useRef(false)
+  const isSuperior = Boolean(user?.roles?.includes('ADMINISTRADOR') || user?.roles?.includes('RESPONSABLE_COMERCIAL'))
+  const ownName = user ? `${user.nombre} ${user.apellido}`.trim() : ''
+  const { register, handleSubmit, setError, setValue, control, formState: { errors } } = useForm<OpportunityFormValues>({
+    defaultValues: { titulo: '', idEmbudo: context.idEmbudo, idEtapa: '', idEmpresa: context.company ? String(context.company.id) : '', idContacto: context.contact ? String(context.contact.id) : '', idResponsable: user ? String(user.id) : '', idOrigen: '', valor: '', fechaEstimadaCierre: '', objetivoAprendizaje: '', cantidadParticipantes: '', disponibilidadHoraria: '', observaciones: '' },
+    mode: 'onBlur', resolver: zodResolver(opportunitySchema),
+  })
+  const [company, setCompany] = useState(context.company)
+  const [contact, setContact] = useState(context.contact)
+  const [notice, setNotice] = useState('')
   const [datePickerError, setDatePickerError] = useState<string>()
   const selectedCompany = useWatch({ control, name: 'idEmpresa' }) ?? ''
   const selectedContact = useWatch({ control, name: 'idContacto' }) ?? ''
-  const currentValues = useWatch({ control })
+  const selectedFunnel = useWatch({ control, name: 'idEmbudo' }) ?? ''
+  const funnels = useQuery({ queryKey: ['embudos', 'opciones'], queryFn: () => listFunnels({ pageSize: 100 }) })
+  const origins = useQuery({ queryKey: catalogQueryKeys.commercialOrigins, queryFn: () => getCatalogOptions('origenes-comerciales') })
+  const funnel = funnels.data?.items.find(item => String(item.id) === selectedFunnel)
+  // Con un único embudo disponible no hay nada que elegir.
+  const onlyFunnel = funnels.data?.items.length === 1 ? String(funnels.data.items[0].id) : ''
+  useEffect(() => { if (onlyFunnel && !selectedFunnel) setValue('idEmbudo', onlyFunnel) }, [onlyFunnel, selectedFunnel, setValue])
+  const funnelId = normalizeId(selectedFunnel)
+  const stages = useQuery({ queryKey: ['embudos', funnelId, 'etapas', 'true'], queryFn: () => listStages(funnelId as number), enabled: funnelId !== null })
+  const service = useQuery({ queryKey: [...catalogQueryKeys.services, funnel?.servicio.id], queryFn: () => getService(funnel!.servicio.id), enabled: funnel !== undefined })
+  const openStages = useMemo(() => (stages.data ?? []).filter(stage => stage.estado === 'ABIERTA' && stage.activo).sort((a, b) => Number(a.orden) - Number(b.orden)), [stages.data])
+  const noOpenStage = funnelId !== null && stages.isSuccess && openStages.length === 0
   const relationshipError = errors.root?.message as string | undefined
-  const availableContacts = useMemo(() => (contactQuery.data ?? []).filter((contact) => !selectedCompany || String(contact.idEmpresa) === String(selectedCompany)), [contactQuery.data, selectedCompany])
-  const services = useMemo(() => {
-    const active = serviceQuery.data ?? []
-    if (mode === 'edit' && opportunity?.idServicio != null && !active.some((service) => String(service.id) === String(opportunity.idServicio))) return [...active, { id: opportunity.idServicio, nombre: `${opportunity.servicioNombre ?? 'Servicio'} (No disponible)`, descripcion: null, precioReferencia: 0 } as Servicio]
-    return active
-  }, [mode, opportunity, serviceQuery.data])
-  const relationshipCatalogsBlocked = mode === 'create' && companyQuery.isError && contactQuery.isError
-  const requiredCatalogsReady = mode === 'edit' || (!stageQuery.isError && !relationshipCatalogsBlocked)
-  const handleCompanyChange = (value: string) => {
-    setValue('idEmpresa', value)
-    const contact = (contactQuery.data ?? []).find((item) => String(item.id) === String(selectedContact))
-    if (value && contact && String(contact.idEmpresa) !== String(value)) { setValue('idContacto', ''); setContactClearedMessage('El contacto se limpió porque no pertenece a la empresa seleccionada.') }
-    else setContactClearedMessage('')
-  }
+
   const mutation = useMutation({ mutationFn: (values: OpportunityFormValues) => {
-    if (mode === 'create') {
-      const payload: Record<string, unknown> = { titulo: normalizeText(values.titulo), idUsuario: user?.id, idEtapa: normalizeId(values.idEtapa) }
-      const optional: Record<string, string | number | null | undefined> = { idEmpresa: normalizeId(values.idEmpresa), idContacto: normalizeId(values.idContacto), idServicio: normalizeId(values.idServicio), fechaEstimadaCierre: commercialDateToIso(values.fechaEstimadaCierre ?? '').value, idEstado: normalizeId(values.idEstado), idOrigen: normalizeId(values.idOrigen), observaciones: values.observaciones }
-      Object.entries(optional).forEach(([key, value]) => { if (key.startsWith('id')) { if (value !== null) payload[key] = value } else if (normalizeText(value as string)) payload[key] = normalizeText(value as string) })
-      return createOpportunity(payload as never)
-    }
-    const patchValues = { ...values, fechaEstimadaCierre: commercialDateToIso(values.fechaEstimadaCierre ?? '').value ?? '' }
-    const patchBaseline = { ...baseline, fechaEstimadaCierre: commercialDateToIso(baseline.fechaEstimadaCierre ?? '').value ?? '' }
-    const patch = buildDifferentialPatch(patchBaseline, patchValues, ['titulo', 'idEmpresa', 'idContacto', 'idServicio', 'fechaEstimadaCierre', 'idOrigen', 'idEstado', 'observaciones'], ['idEmpresa', 'idContacto', 'idServicio', 'idOrigen', 'idEstado'])
-    return patchOpportunity(Number(opportunity?.id), patch as never)
+    const payload: CreateOportunidadRequest = { idEmbudo: Number(values.idEmbudo) }
+    const title = normalizeOptionalText(values.titulo)
+    if (title) payload.titulo = title
+    const ids = { idEmpresa: normalizeId(values.idEmpresa), idContacto: normalizeId(values.idContacto), idEtapa: normalizeId(values.idEtapa), idOrigen: normalizeId(values.idOrigen), cantidadParticipantes: normalizeId(values.cantidadParticipantes) }
+    Object.entries(ids).forEach(([key, id]) => { if (id !== null) Object.assign(payload, { [key]: id }) })
+    // Solo un superior elige a otra persona; el servidor asigna al actor cuando se omite.
+    const responsible = normalizeId(values.idResponsable)
+    if (isSuperior && responsible !== null && responsible !== Number(user?.id)) payload.idResponsable = responsible
+    if (values.valor?.trim()) payload.valor = parseValue(values.valor)
+    const date = commercialDateToIso(values.fechaEstimadaCierre ?? '').value
+    if (date) payload.fechaEstimadaCierre = date
+    for (const key of ['objetivoAprendizaje', 'disponibilidadHoraria', 'observaciones'] as const) { const text = normalizeOptionalText(values[key]); if (text) payload[key] = text }
+    return createOpportunity(payload)
   }, onSuccess: (saved) => {
     queryClient.setQueryData(opportunityQueryKeys.detail(Number(saved.id)), saved)
-    void queryClient.invalidateQueries({ queryKey: opportunityQueryKeys.pipeline })
-    navigate(`/oportunidades/${saved.id}`, { state: { confirmation: confirmationFor('Oportunidad', mode === 'create' ? 'creada' : 'actualizada') } })
-  }, onError: (error) => setError('root.serverError', { message: saveErrorMessage(error) }) })
-  useEffect(() => { reset(initialOpportunityValues(opportunity)) }, [opportunity, reset])
-  const submit: SubmitHandler<OpportunityFormValues> = (values) => { if (!mutation.isPending) mutation.mutate(values) }
-  const differential = mode === 'edit' ? buildDifferentialPatch({ ...baseline, fechaEstimadaCierre: commercialDateToIso(baseline.fechaEstimadaCierre ?? '').value ?? '' }, { ...currentValues, fechaEstimadaCierre: commercialDateToIso(currentValues.fechaEstimadaCierre ?? '').value ?? '' }, ['titulo', 'idEmpresa', 'idContacto', 'idServicio', 'fechaEstimadaCierre', 'idOrigen', 'idEstado', 'observaciones'], ['idEmpresa', 'idContacto', 'idServicio', 'idOrigen', 'idEstado']) : undefined
-  const canSubmit = (mode === 'create' || Boolean(differential && Object.keys(differential).length > 0)) && requiredCatalogsReady && !datePickerError
-  return <RecordFormPage backLabel={mode === 'create' ? 'Volver a oportunidades' : 'Volver a la oportunidad'} backTo={mode === 'create' ? '/oportunidades' : `/oportunidades/${opportunity?.id ?? ''}`} title={mode === 'create' ? 'Nueva oportunidad' : 'Editar oportunidad'} description={mode === 'create' ? 'Registrá una oportunidad y definí su punto de partida en el embudo.' : 'Actualizá la información de la oportunidad; la etapa se gestiona desde el embudo.'} onSubmit={() => { if (canSubmit) void handleSubmit(submit)() }} submitLabel={mode === 'create' ? 'Crear oportunidad' : 'Guardar cambios'} submitting={mutation.isPending} disabled={!canSubmit} error={errors.root?.serverError?.message}>
+    void queryClient.invalidateQueries({ queryKey: ['oportunidades'] })
+    navigate(`/oportunidades/${saved.id}`, { state: { confirmation: confirmationFor('Oportunidad', 'creada') } })
+  }, onError: (error) => { saving.current = false; setError('root.serverError', { message: saveErrorMessage(error) }) } })
+  const submit: SubmitHandler<OpportunityFormValues> = (values) => { if (saving.current || mutation.isPending) return; saving.current = true; mutation.mutate(values) }
+  const canSubmit = !noOpenStage && !stages.isError && !funnels.isError && !datePickerError
+
+  const changeCompany = (value: string) => {
+    setValue('idEmpresa', value); setCompany(undefined)
+    if (value && contact && contact.idEmpresa !== null && String(contact.idEmpresa) !== value) { setValue('idContacto', ''); setContact(undefined); setNotice('El contacto se quitó porque no pertenece a la empresa seleccionada.') } else setNotice('')
+  }
+  const changeContact = (option: ContactOption | null) => {
+    setContact(option ?? undefined); setValue('idContacto', option ? String(option.id) : ''); setNotice('')
+    if (option?.idEmpresa != null && !selectedCompany) { setValue('idEmpresa', String(option.idEmpresa)); setCompany({ id: option.idEmpresa, razonSocial: option.empresa }) }
+  }
+  const backTo = context.company ? `/empresas/${context.company.id}` : context.contact ? `/contactos/${context.contact.id}` : '/inicio'
+
+  return <RecordFormPage backLabel={context.company ? 'Volver a la empresa' : context.contact ? 'Volver al contacto' : 'Volver al inicio'} backTo={backTo} title="Nueva oportunidad" description="Registrá una negociación. La etapa inicial, el valor y el responsable se completan por defecto." onSubmit={() => { if (canSubmit) void handleSubmit(submit)() }} submitLabel="Crear oportunidad" submitting={mutation.isPending} disabled={!canSubmit} error={errors.root?.serverError?.message}>
     <FormSection title="Datos principales" description="El título permite encontrar rápidamente la oportunidad.">
-      <TextField {...register('titulo')} label="Título" required fullWidth error={Boolean(errors.titulo)} helperText={errors.titulo?.message} />
-      <ReadOnlyValue label="Responsable" value={mode === 'edit' ? [opportunity?.usuarioNombre, opportunity?.usuarioApellido].filter(Boolean).join(' ').trim() : user ? `${user.nombre} ${user.apellido}`.trim() : ''} description={mode === 'edit' ? 'El responsable existente no se puede cambiar desde aquí.' : 'Se asignará al usuario autenticado.'} />
+      <TextField {...register('titulo')} label="Título" fullWidth error={Boolean(errors.titulo)} helperText={errors.titulo?.message ?? 'Opcional. Si lo dejás vacío se muestra el nombre de la empresa y/o el contacto.'} />
+      {isSuperior
+        ? <Controller name="idResponsable" control={control} render={({ field }) => <CompanyResponsibleSelect value={field.value ?? ''} onChange={field.onChange} current={user ? { id: user.id, nombre: ownName, activo: true } : undefined} helperText="Por defecto, vos." />} />
+        : <ReadOnlyValue label="Responsable" value={ownName} description="Se asignará a tu usuario." />}
     </FormSection>
     <FormSection title="Relación comercial" description="Elegí una empresa, un contacto o ambos.">
-      <Controller name="idEmpresa" control={control} render={({ field, fieldState }) => <OpportunityCatalogSelect label="Empresa" value={field.value ?? ''} onChange={handleCompanyChange} options={(companyQuery.data ?? []).map((company) => ({ id: company.id, label: company.razonSocial }))} error={fieldState.error?.message ?? relationshipError} describedBy={relationshipError ? 'opportunity-relationship-error' : undefined} showErrorText={!relationshipError} />} />
-      <Controller name="idContacto" control={control} render={({ field, fieldState }) => <OpportunityCatalogSelect label="Contacto" value={field.value ?? ''} onChange={(value) => { field.onChange(value); setContactClearedMessage('') }} options={availableContacts.map((contact) => ({ id: contact.id, label: contactFullName(contact) }))} error={fieldState.error?.message ?? relationshipError} describedBy={relationshipError ? 'opportunity-relationship-error' : undefined} showErrorText={!relationshipError} />} />
+      <Box><ContactCompanySelect value={selectedCompany} onChange={changeCompany} current={company} /></Box>
+      <OpportunityContactSelect value={selectedContact} onChange={changeContact} idEmpresa={selectedCompany} current={contact} />
       {relationshipError && <p id="opportunity-relationship-error" className="record-form-error" role="alert">{relationshipError}</p>}
-      {contactClearedMessage && <p className="record-form-note record-form-note--warning">{contactClearedMessage}</p>}
-      {relationshipCatalogsBlocked ? <CatalogMessage error={companyQuery.error ?? contactQuery.error} blocking onRetry={() => { void companyQuery.refetch(); void contactQuery.refetch() }} /> : <>{companyQuery.isError && <CatalogMessage error={companyQuery.error} onRetry={() => void companyQuery.refetch()} />}{contactQuery.isError && <CatalogMessage error={contactQuery.error} onRetry={() => void contactQuery.refetch()} />}</>}
+      {notice && <p className="record-form-note record-form-note--warning">{notice}</p>}
     </FormSection>
-    <FormSection title="Seguimiento" description="Definí la etapa y los datos que ayudan a priorizar esta oportunidad.">
-      {mode === 'create' ? <Controller name="idEtapa" control={control} render={({ field, fieldState }) => <OpportunityCatalogSelect className="record-form-emphasis" label="Etapa inicial" value={field.value ?? ''} onChange={field.onChange} options={(stageQuery.data ?? []).map((stage) => ({ id: stage.id, label: stage.nombre }))} error={fieldState.error?.message} required emptyLabel="Seleccioná una etapa" />} /> : <ReadOnlyValue className="readonly-value--commercial" label="Etapa actual" value={opportunity?.etapaNombre ?? ''} description="La etapa se cambia desde el Embudo." />}
-      {stageQuery.isError && <CatalogMessage error={stageQuery.error} blocking={mode === 'create'} onRetry={() => void stageQuery.refetch()} />}
-      <Controller name="idServicio" control={control} render={({ field, fieldState }) => <OpportunityCatalogSelect className="record-form-emphasis" label="Servicio" value={field.value ?? ''} onChange={field.onChange} options={services.map((service) => ({ id: service.id, label: service.nombre }))} error={fieldState.error?.message} />} />
+    <FormSection title="Seguimiento" description="El servicio y el estado se derivan del embudo y la etapa; no hace falta elegirlos.">
+      <TextField select fullWidth required label="Embudo" value={selectedFunnel} error={Boolean(errors.idEmbudo)} helperText={errors.idEmbudo?.message}
+        onChange={event => { setValue('idEmbudo', event.target.value, { shouldValidate: true }); setValue('idEtapa', '') }}>
+        <MenuItem value="">Seleccioná un embudo</MenuItem>
+        {(funnels.data?.items ?? []).map(item => <MenuItem key={item.id} value={String(item.id)}>{item.nombre}</MenuItem>)}
+      </TextField>
+      {funnels.isError && <CatalogMessage error={funnels.error} blocking onRetry={() => void funnels.refetch()} />}
+      {funnel && <ReadOnlyValue className="readonly-value--commercial" label="Servicio" value={(funnel.servicio.nombre ?? funnel.servicio.descripcion ?? '') + (funnel.servicio.activo ? '' : ' (inactivo)')} description="Se deriva del embudo." />}
+      <Controller name="idEtapa" control={control} render={({ field }) => <TextField select fullWidth label="Etapa inicial" value={field.value ?? ''} onChange={field.onChange} disabled={funnelId === null || openStages.length === 0} slotProps={{ inputLabel: { shrink: true }, select: { displayEmpty: true } }}>
+        <MenuItem value="">{openStages[0] ? `${openStages[0].nombre} (por defecto)` : 'Primero elegí un embudo'}</MenuItem>
+        {openStages.slice(1).map(stage => <MenuItem key={stage.id} value={String(stage.id)}>{stage.nombre}</MenuItem>)}
+      </TextField>} />
+      {noOpenStage && <Alert severity="error" role="alert">Este embudo no tiene una etapa abierta activa. Pedile a un administrador que la configure antes de crear oportunidades.</Alert>}
+      {stages.isError && <CatalogMessage error={stages.error} blocking onRetry={() => void stages.refetch()} />}
+      <TextField {...register('valor')} label="Valor" fullWidth slotProps={{ htmlInput: { inputMode: 'decimal' } }} error={Boolean(errors.valor)}
+        helperText={errors.valor?.message ?? (service.data ? `Si lo dejás vacío se usa el precio de referencia del servicio (${money(service.data.precioReferencia)}). Podés ingresar 0.` : 'Si lo dejás vacío se usa el precio de referencia del servicio.')} />
       <Controller name="fechaEstimadaCierre" control={control} render={({ field, fieldState }) => {
         const isoValue = commercialDateToIso(field.value ?? '').value
-        const pickerValue = isoValue ? dayjs(isoValue) : null
-        return <DatePicker
-          label="Fecha estimada de cierre"
-          format="DD/MM/YYYY"
-          value={pickerValue}
-          onChange={(value) => {
+        return <DatePicker label="Fecha estimada de cierre" format="DD/MM/YYYY" value={isoValue ? dayjs(isoValue) : null}
+          onChange={value => {
             if (value === null) { field.onChange(''); setDatePickerError(undefined) }
             else if (value.isValid()) { field.onChange(value.format('DD/MM/YYYY')); setDatePickerError(undefined) }
             else { field.onChange(invalidDateDraft); setDatePickerError('Ingresá una fecha válida.') }
           }}
-          onError={(reason) => {
-            if (reason) setDatePickerError('Ingresá una fecha válida.')
-            else if (field.value !== invalidDateDraft) setDatePickerError(undefined)
-          }}
-          slotProps={{ textField: { className: 'record-form-emphasis', fullWidth: true, onBlur: field.onBlur, error: Boolean(fieldState.error || datePickerError), helperText: fieldState.error?.message ?? datePickerError } }}
-        />
+          onError={reason => { if (reason) setDatePickerError('Ingresá una fecha válida.'); else if (field.value !== invalidDateDraft) setDatePickerError(undefined) }}
+          slotProps={{ textField: { fullWidth: true, onBlur: field.onBlur, error: Boolean(fieldState.error || datePickerError), helperText: fieldState.error?.message ?? datePickerError } }} />
       }} />
-      <Controller name="idEstado" control={control} render={({ field, fieldState }) => <OpportunityCatalogSelect className="record-form-emphasis" label="Estado" value={field.value ?? ''} onChange={field.onChange} options={(stateQuery.data ?? []).map((state) => ({ id: state.id, label: state.descripcion }))} error={fieldState.error?.message} />} />
-      <Controller name="idOrigen" control={control} render={({ field, fieldState }) => <OpportunityCatalogSelect label="Origen" value={field.value ?? ''} onChange={field.onChange} options={(originQuery.data ?? []).map((origin) => ({ id: origin.id, label: origin.descripcion }))} error={fieldState.error?.message} />} />
-      {serviceQuery.isSuccess && serviceQuery.data.length === 0 && <p className="record-form-note">No hay servicios disponibles. El campo sigue siendo opcional.</p>}{serviceQuery.isError && <CatalogMessage error={serviceQuery.error} onRetry={() => void serviceQuery.refetch()} />}{stateQuery.isError && <CatalogMessage error={stateQuery.error} onRetry={() => void stateQuery.refetch()} />}{originQuery.isError && <CatalogMessage error={originQuery.error} onRetry={() => void originQuery.refetch()} />}
+      <Controller name="idOrigen" control={control} render={({ field }) => <TextField select fullWidth label="Origen" value={field.value ?? ''} onChange={field.onChange}>
+        <MenuItem value="">-</MenuItem>
+        {(origins.data ?? []).map(origin => <MenuItem key={origin.id} value={String(origin.id)}>{origin.descripcion}</MenuItem>)}
+      </TextField>} />
+      {origins.isError && <CatalogMessage error={origins.error} onRetry={() => void origins.refetch()} />}
+    </FormSection>
+    <FormSection title="Datos académicos" description="Opcionales: ayudan a preparar la propuesta.">
+      <TextField {...register('objetivoAprendizaje')} className="record-form-wide" label="Objetivo de aprendizaje" fullWidth multiline minRows={2} />
+      <TextField {...register('cantidadParticipantes')} label="Cantidad de participantes" fullWidth slotProps={{ htmlInput: { inputMode: 'numeric' } }} error={Boolean(errors.cantidadParticipantes)} helperText={errors.cantidadParticipantes?.message ?? 'No modifica el valor de la oportunidad.'} />
+      <TextField {...register('disponibilidadHoraria')} label="Disponibilidad horaria" fullWidth />
     </FormSection>
     <FormSection title="Observaciones" description="Dejá contexto útil para la próxima conversación."><TextField {...register('observaciones')} className="record-form-wide" label="Observaciones" fullWidth multiline minRows={4} /></FormSection>
   </RecordFormPage>
 }
 
-export function NewOpportunityPage() { return <OpportunityEditor mode="create" /> }
+export function NewOpportunityPage() {
+  const [params] = useSearchParams()
+  const idContacto = parsePositiveId(params.get('idContacto') ?? undefined)
+  const explicitCompany = parsePositiveId(params.get('idEmpresa') ?? undefined)
+  const contactQuery = useQuery({ queryKey: contactoQueryKeys.detail(idContacto ?? 0), queryFn: () => getContact(idContacto as number), enabled: idContacto !== undefined })
+  const idEmpresa = explicitCompany ?? (contactQuery.data?.idEmpresa == null ? undefined : Number(contactQuery.data.idEmpresa))
+  const companyQuery = useQuery({ queryKey: empresaQueryKeys.detail(idEmpresa ?? 0), queryFn: () => getCompany(idEmpresa as number), enabled: idEmpresa !== undefined })
+  const contactBlocked = idContacto !== undefined && !contactQuery.isSuccess
+  const companyBlocked = idEmpresa !== undefined && !companyQuery.isSuccess
+  if (contactBlocked) return <RecordQueryState noun="contacto" backLabel="Volver a contactos" backTo="/contactos" loading={contactQuery.isPending} error={contactQuery.error} onRetry={() => void contactQuery.refetch()} />
+  if (companyBlocked) return <RecordQueryState noun="empresa" backLabel="Volver a empresas" backTo="/empresas" loading={companyQuery.isPending} error={companyQuery.error} onRetry={() => void companyQuery.refetch()} />
+  const company = companyQuery.data
+  const contact = contactQuery.data
+  return <OpportunityEditor context={{
+    idEmbudo: params.get('idEmbudo') ?? '',
+    company: company ? { id: Number(company.id), razonSocial: company.razonSocial } : undefined,
+    contact: contact ? { id: Number(contact.id), label: contactFullName(contact), idEmpresa: contact.idEmpresa == null ? null : Number(contact.idEmpresa), empresa: contact.empresaRazonSocial ?? '' } : undefined,
+  }} />
+}
+
+const editSchema = z.object({
+  titulo: z.string().trim().max(100, 'Máximo 100 caracteres.').optional(),
+  idEmpresa: z.string().optional(), idContacto: z.string().optional(), idOrigen: z.string().optional(),
+  valor: valueField.refine(value => Boolean(value?.trim()), 'Ingresá el valor (podés ingresar 0).'),
+  fechaEstimadaCierre: dateField,
+  objetivoAprendizaje: z.string().optional(), disponibilidadHoraria: z.string().optional(), observaciones: z.string().optional(),
+  cantidadParticipantes: participantsField,
+}).superRefine((values, context) => { if (!values.idEmpresa && !values.idContacto) context.addIssue({ code: 'custom', path: ['root'], message: 'Seleccioná una empresa o un contacto.' }) })
+type EditValues = z.input<typeof editSchema>
+
+function initialValues(item: Oportunidad): EditValues {
+  return {
+    titulo: item.titulo ?? '', idEmpresa: item.idEmpresa == null ? '' : String(item.idEmpresa), idContacto: item.idContacto == null ? '' : String(item.idContacto),
+    idOrigen: item.idOrigen == null ? '' : String(item.idOrigen), valor: String(item.valor).replace('.', ','), fechaEstimadaCierre: isoToCommercialDate(item.fechaEstimadaCierre),
+    objetivoAprendizaje: item.objetivoAprendizaje ?? '', cantidadParticipantes: item.cantidadParticipantes == null ? '' : String(item.cantidadParticipantes),
+    disponibilidadHoraria: item.disponibilidadHoraria ?? '', observaciones: item.observaciones ?? '',
+  }
+}
+
+/** Edición de datos de una abierta: solo viaja lo que cambió, así las referencias históricas no se revalidan sin motivo. */
+function OpportunityEditEditor({ item }: { item: Oportunidad }) {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const saving = useRef(false)
+  const initial = useMemo(() => initialValues(item), [item])
+  const { register, handleSubmit, setError, setValue, control, formState: { errors } } = useForm<EditValues>({ defaultValues: initial, mode: 'onBlur', resolver: zodResolver(editSchema) })
+  const [company, setCompany] = useState<CompanyOption | undefined>(item.idEmpresa == null ? undefined : { id: Number(item.idEmpresa), razonSocial: item.empresaRazonSocial ?? '' })
+  const [contact, setContact] = useState<ContactOption | undefined>(item.idContacto == null ? undefined : { id: Number(item.idContacto), label: item.contactoNombre ?? '', idEmpresa: null, empresa: '' })
+  const [notice, setNotice] = useState('')
+  const [datePickerError, setDatePickerError] = useState<string>()
+  const selectedCompany = useWatch({ control, name: 'idEmpresa' }) ?? ''
+  const selectedContact = useWatch({ control, name: 'idContacto' }) ?? ''
+  const origins = useQuery({ queryKey: catalogQueryKeys.commercialOrigins, queryFn: () => getCatalogOptions('origenes-comerciales') })
+  const relationshipError = errors.root?.message as string | undefined
+  const back = `/oportunidades/${item.id}`
+
+  const mutation = useMutation({ mutationFn: (values: EditValues) => {
+    const payload: PatchOportunidadRequest = { ...buildDifferentialPatch(initial, values, ['titulo', 'objetivoAprendizaje', 'disponibilidadHoraria', 'observaciones', 'idEmpresa', 'idContacto', 'idOrigen', 'cantidadParticipantes'], ['idEmpresa', 'idContacto', 'idOrigen', 'cantidadParticipantes']) }
+    const value = parseValue(values.valor ?? '')
+    if (value !== parseValue(initial.valor ?? '')) payload.valor = value
+    const date = commercialDateToIso(values.fechaEstimadaCierre ?? '').value ?? null
+    if (date !== (commercialDateToIso(initial.fechaEstimadaCierre ?? '').value ?? null)) payload.fechaEstimadaCierre = date
+    if (Object.keys(payload).length === 0) return Promise.resolve(item)
+    return patchOpportunity(Number(item.id), payload)
+  }, onSuccess: (saved) => {
+    queryClient.setQueryData(opportunityQueryKeys.detail(Number(saved.id)), saved)
+    void queryClient.invalidateQueries({ queryKey: ['oportunidades'] })
+    navigate(back, { state: { confirmation: confirmationFor('Oportunidad', 'actualizada') } })
+  }, onError: (error) => { saving.current = false; setError('root.serverError', { message: saveErrorMessage(error) }) } })
+  const submit: SubmitHandler<EditValues> = (values) => { if (saving.current || mutation.isPending) return; saving.current = true; mutation.mutate(values) }
+
+  const changeCompany = (value: string) => {
+    setValue('idEmpresa', value); setCompany(undefined)
+    if (value && contact && contact.idEmpresa !== null && String(contact.idEmpresa) !== value) { setValue('idContacto', ''); setContact(undefined); setNotice('El contacto se quitó porque no pertenece a la empresa seleccionada.') } else setNotice('')
+  }
+  const changeContact = (option: ContactOption | null) => {
+    setContact(option ?? undefined); setValue('idContacto', option ? String(option.id) : ''); setNotice('')
+    if (option?.idEmpresa != null && !selectedCompany) { setValue('idEmpresa', String(option.idEmpresa)); setCompany({ id: option.idEmpresa, razonSocial: option.empresa }) }
+  }
+  const inactive = (name: string, active: boolean) => name + (active ? '' : ' (inactivo)')
+
+  return <RecordFormPage backLabel="Volver a la oportunidad" backTo={back} title="Editar oportunidad" description="Modificá los datos de la negociación. El responsable, la etapa y el cierre se gestionan con sus propias acciones." onSubmit={() => { if (!datePickerError) void handleSubmit(submit)() }} submitLabel="Guardar cambios" submitting={mutation.isPending} disabled={Boolean(datePickerError)} error={errors.root?.serverError?.message}>
+    <FormSection title="Datos principales" description="El título permite encontrar rápidamente la oportunidad.">
+      <TextField {...register('titulo')} label="Título" fullWidth error={Boolean(errors.titulo)} helperText={errors.titulo?.message ?? 'Opcional. Si lo dejás vacío se muestra el nombre de la empresa y/o el contacto.'} />
+      <ReadOnlyValue label="Responsable" value={inactive(item.responsableNombre, item.responsableActivo)} description="Se cambia con la acción de reasignar." />
+    </FormSection>
+    <FormSection title="Relación comercial" description="Cambiá la empresa o el contacto solo si hace falta; las referencias actuales se conservan.">
+      <Box><ContactCompanySelect value={selectedCompany} onChange={changeCompany} current={company} /></Box>
+      <OpportunityContactSelect value={selectedContact} onChange={changeContact} idEmpresa={selectedCompany} current={contact} />
+      {relationshipError && <p id="opportunity-relationship-error" className="record-form-error" role="alert">{relationshipError}</p>}
+      {notice && <p className="record-form-note record-form-note--warning">{notice}</p>}
+    </FormSection>
+    <FormSection title="Seguimiento" description="El embudo y la etapa se muestran como referencia; el servicio y el estado se derivan de ellos.">
+      <ReadOnlyValue className="readonly-value--commercial" label="Embudo" value={inactive(item.embudoNombre, item.embudoActivo)} description="No se edita." />
+      <ReadOnlyValue className="readonly-value--commercial" label="Etapa" value={inactive(item.etapaNombre, item.etapaActiva)} description="Se cambia moviendo la oportunidad." />
+      <TextField {...register('valor')} label="Valor" required fullWidth slotProps={{ htmlInput: { inputMode: 'decimal' } }} error={Boolean(errors.valor)} helperText={errors.valor?.message ?? 'No puede quedar vacío. Podés ingresar 0.'} />
+      <Controller name="fechaEstimadaCierre" control={control} render={({ field, fieldState }) => {
+        const isoValue = commercialDateToIso(field.value ?? '').value
+        return <DatePicker label="Fecha estimada de cierre" format="DD/MM/YYYY" value={isoValue ? dayjs(isoValue) : null}
+          onChange={value => {
+            if (value === null) { field.onChange(''); setDatePickerError(undefined) }
+            else if (value.isValid()) { field.onChange(value.format('DD/MM/YYYY')); setDatePickerError(undefined) }
+            else { field.onChange(invalidDateDraft); setDatePickerError('Ingresá una fecha válida.') }
+          }}
+          onError={reason => { if (reason) setDatePickerError('Ingresá una fecha válida.'); else if (field.value !== invalidDateDraft) setDatePickerError(undefined) }}
+          slotProps={{ textField: { fullWidth: true, onBlur: field.onBlur, error: Boolean(fieldState.error || datePickerError), helperText: fieldState.error?.message ?? datePickerError } }} />
+      }} />
+      <Controller name="idOrigen" control={control} render={({ field }) => <TextField select fullWidth label="Origen" value={field.value ?? ''} onChange={field.onChange}>
+        <MenuItem value="">-</MenuItem>
+        {item.idOrigen != null && !(origins.data ?? []).some(origin => origin.id === item.idOrigen) && <MenuItem value={String(item.idOrigen)}>{inactive(item.origenDescripcion ?? '', item.origenActivo !== false)}</MenuItem>}
+        {(origins.data ?? []).map(origin => <MenuItem key={origin.id} value={String(origin.id)}>{origin.descripcion}</MenuItem>)}
+      </TextField>} />
+      {origins.isError && <CatalogMessage error={origins.error} onRetry={() => void origins.refetch()} />}
+    </FormSection>
+    <FormSection title="Datos académicos" description="Opcionales: ayudan a preparar la propuesta.">
+      <TextField {...register('objetivoAprendizaje')} className="record-form-wide" label="Objetivo de aprendizaje" fullWidth multiline minRows={2} />
+      <TextField {...register('cantidadParticipantes')} label="Cantidad de participantes" fullWidth slotProps={{ htmlInput: { inputMode: 'numeric' } }} error={Boolean(errors.cantidadParticipantes)} helperText={errors.cantidadParticipantes?.message ?? 'No modifica el valor de la oportunidad.'} />
+      <TextField {...register('disponibilidadHoraria')} label="Disponibilidad horaria" fullWidth />
+    </FormSection>
+    <FormSection title="Observaciones" description="Dejá contexto útil para la próxima conversación."><TextField {...register('observaciones')} className="record-form-wide" label="Observaciones" fullWidth multiline minRows={4} /></FormSection>
+  </RecordFormPage>
+}
 
 export function EditOpportunityPage() {
   const { idOportunidad } = useParams()
   const id = parsePositiveId(idOportunidad)
   const query = useQuery({ queryKey: opportunityQueryKeys.detail(id ?? 0), queryFn: () => getOpportunity(id as number), enabled: id !== undefined })
-  if (id === undefined || query.isPending || query.isError || !query.data) return <RecordQueryState noun="oportunidad" backLabel="Volver a oportunidades" backTo="/oportunidades" loading={query.isPending} invalid={id === undefined} error={query.error} onRetry={() => void query.refetch()} />
-  return <OpportunityEditor mode="edit" opportunity={query.data} />
+  if (id === undefined || query.isPending || query.isError || !query.data)
+    return <RecordQueryState noun="oportunidad" backLabel="Volver a oportunidades" backTo="/oportunidades" loading={query.isPending && id !== undefined} invalid={id === undefined} error={query.error} onRetry={() => void query.refetch()} />
+  // Ocultar el formulario no es autorización: el servidor vuelve a comprobar propiedad y estado al guardar.
+  if (!query.data.accionesPermitidas.editar)
+    return <Box className="companies-page company-result-page">
+      <Link component={RouterLink} to={`/oportunidades/${id}`} className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a la oportunidad</Link>
+      <section className="company-feedback" aria-labelledby="opportunity-not-editable-title">
+        <Typography id="opportunity-not-editable-title" component="h1" className="company-feedback-title">No podés editar esta oportunidad</Typography>
+        <Typography color="text.secondary">Solo el responsable o un superior puede editar una oportunidad abierta. Una cerrada se edita después de reabrirla.</Typography>
+      </section>
+    </Box>
+  return <OpportunityEditEditor item={query.data} />
 }

@@ -7,12 +7,13 @@
     "api:types": "openapi-typescript http://localhost:5169/openapi/v1.json -o src/api/schema.d.ts",
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "oxlint",
+    "lint": "oxlint src vite.config.ts",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@fontsource-variable/source-sans-3": "^5.3.0",

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Persistence.Models;
@@ -6,6 +6,8 @@ namespace Persistence.Models;
 public partial class OrigenComercial
 {
     public int Id { get; set; }
+
+    public bool Activo { get; set; } = true;
 
     public string Descripcion { get; set; } = null!;
 
