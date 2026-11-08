@@ -34,7 +34,7 @@ export function LoginPage() {
   const usernameField = register('username')
   const passwordField = register('password')
   return <main className="login-page">
-    <section className="login-brand" aria-label="Fluency CRM"><p className="brand-name">Fluency CRM</p><div className="brand-copy"><h1>Las buenas oportunidades empiezan con una conversación.</h1><p>Reuní los vínculos comerciales de tu equipo para dar el siguiente paso con claridad.</p><div className="conversation-path" aria-hidden="true"><span /><span /><span /><span /><span /></div></div></section>
+    <section className="login-brand" aria-label="Fluency CRM"><p className="brand-name">Fluency CRM</p><div className="brand-copy"><h1>Las buenas oportunidades LALALALA con una conversación.</h1><p>Reuní los vínculos comerciales de tu equipo para dar el siguiente paso con claridad.</p><div className="conversation-path" aria-hidden="true"><span /><span /><span /><span /><span /></div></div></section>
     <section className="login-content" aria-labelledby="login-heading"><div className="login-form-wrap"><h2 id="login-heading">Ingresá a tu espacio comercial</h2><p>Usá tus credenciales para continuar.</p>{apiError && !isLoading && <div className="form-error" role="alert">{apiError}</div>}
       {/* The ref guards two submit events delivered in the same render before React updates isSubmitting. */}
       {/* oxlint-disable-next-line react/refs */}
