@@ -34,9 +34,9 @@ Con esto quedan cerradas las deudas B8 y las registradas en CP04 (Vite, Vitest/`
 
 - Revisión estática del 08/11/2026 sobre `backend` (sin `bin`/`obj`): `Persistence` no contiene cadenas de conexión ni `OnConfiguring`; la contraseña del administrador inicial se lee de `BootstrapAdmin__Password`; las coincidencias restantes son valores ficticios de las pruebas (`Ficticia123!`, `fictitious`, un `DummyCredential`).
 
-## Deuda previa observada (no introducida por la segunda entrega)
+## Deuda previa observada (resuelta el 08/11/2026)
 
-`backend/Persistence/SQL/creacion-tablas.sql` es el script de la primera entrega, todavía enlazado desde `README.md`. Inserta un usuario de demostración con contraseña `123456` en texto plano. Gitleaks no lo detecta. No se usa para la segunda entrega (esquema en `segunda-entrega-esquema.sql`, sin usuarios automáticos) y no se modificó. Conviene retirarlo o marcarlo como obsoleto en el README antes de publicar: decisión pendiente del usuario.
+`backend/Persistence/SQL/creacion-tablas.sql`, el script de la primera entrega enlazado desde `README.md`, insertaba un usuario de demostración con contraseña `123456` en texto plano (Gitleaks no lo detectaba). Por pedido del usuario se reescribió con el esquema actual y un único usuario `admin` cuyo hash BCrypt (costo 12) aportó el usuario; la contraseña en claro no está en el repositorio. Ver el encabezado del archivo para su uso.
 
 ## Cierre
 
