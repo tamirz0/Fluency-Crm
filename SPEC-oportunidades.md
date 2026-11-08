@@ -48,6 +48,7 @@ Funnel: seleccionar embudo para no mezclar procesos; conservar columnas activas 
 ## Transiciones y asociaciones
 
 - Los comandos ganar/perder son también cambios de etapa. Desde el selector de etapa, elegir final abre el formulario de cierre y llama al comando correspondiente; `/mover` rechaza finales para no saltar sus datos obligatorios.
+- Al ganar, la empresa y el contacto de la oportunidad que estén en estado Potencial pasan a Cliente en la misma transacción; otros estados se respetan, y si Cliente no está activo no se cambia nada. Perder y reabrir no modifican estados de cliente.
 - Mismo destino abierto actual: no-op, devolver estado actual sin entrada nueva. Repetir un cierre sobre cerrada devuelve `409`; no crea otro historial ni modifica datos.
 - Cambiar resultado de cerrada o corregir título, importe, cliente o responsable exige primero reapertura. La baja directa y actividades posteriores al cierre son excepciones expresas.
 - Reabrir verifica rol superior, oportunidad activa cerrada, embudo activo, destino abierto activo y justificación no vacía. Capturar cierre anterior, agregar texto legible con resultado/fecha/valor/motivo y justificación, limpiar fecha/motivo actuales y mantener valor. Todo atómico.

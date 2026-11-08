@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 31/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T15/CP05 completas, verificadas por pruebas y validadas manualmente por el usuario; integradas localmente en `segunda-entrega` mediante fast-forward a `809a23a`; sin publicar. T16–T18 implementadas/verificadas en `segunda-entrega-cp06-servicios`; CP06 cerrada con validación del usuario e integrada localmente en `segunda-entrega` / `c0c6a26` el 22/10/2026, sin publicar. T19–T21/CP07 implementadas, verificadas y validadas por el usuario; integradas localmente en `segunda-entrega` el 31/10/2026, sin publicar. T22–T24 implementadas y verificadas técnicamente en `segunda-entrega-cp08-empresas`, con revisión independiente; CP08 pendiente de validación autenticada del usuario e integración. T25–T49 pendientes.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
+Plan del 08/10/2026, actualizado el 31/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T15/CP05 completas, verificadas por pruebas y validadas manualmente por el usuario; integradas localmente en `segunda-entrega` mediante fast-forward a `809a23a`; sin publicar. T16–T18 implementadas/verificadas en `segunda-entrega-cp06-servicios`; CP06 cerrada con validación del usuario e integrada localmente en `segunda-entrega` / `c0c6a26` el 22/10/2026, sin publicar. T19–T21/CP07 implementadas, verificadas y validadas por el usuario; integradas localmente en `segunda-entrega` el 31/10/2026, sin publicar. T22–T24 implementadas y verificadas técnicamente en `segunda-entrega-cp08-empresas`, con revisión independiente; CP08 pendiente de validación autenticada del usuario e integración. T25–T46 implementadas y verificadas; T30 y el recorrido de perfiles de T48 validados por el usuario el 08/11/2026. Pendientes: T47 (escaneo de secretos), cierre de T48 y T49.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -37,7 +37,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T27 — Completar bajas definitivas de clientes](#t27)
 - [x] [T28 — Adaptar el modelo e historial de oportunidades](#t28)
 - [x] [T29 — Crear oportunidades con defaults e historial atómico](#t29)
-- [ ] [T30 — Simplificar el alta de oportunidad en UI](#t30)
+- [x] [T30 — Simplificar el alta de oportunidad en UI](#t30)
 - [x] [T30a — Hacer opcional el título de la oportunidad](#t30a)
 - [x] ~~[T30b — Renovar la apariencia de la interfaz](#t30b)~~ (revertida a pedido del usuario)
 - [x] ~~[T30c — Landing pública con acceso al login](#t30c)~~ (revertida a pedido del usuario)
@@ -794,11 +794,11 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Verificación:** F + UI(src/features/forms.test.tsx) + D; recorrido local alta mínima y rechazo comprensible de embudo sin abierta.
 
-**Evidencia técnica (05/11/2026):** [verificacion-t30.md](verificaciones/verificacion-t30.md). `forms.test.tsx` 27/27 y frontend completo 115/115; build correcto y lint solo con la advertencia previa; `schema.d.ts` regenerado desde la API local. **Pendiente:** recorrido local con API real (alta mínima y embudo sin etapa abierta) por el operador; hasta entonces T30 no se marca terminada. Sin merge ni push.
+**Evidencia técnica (05/11/2026):** [verificacion-t30.md](verificaciones/verificacion-t30.md). `forms.test.tsx` 27/27 y frontend completo 115/115; build correcto y lint solo con la advertencia previa; `schema.d.ts` regenerado desde la API local. **Validación (08/11/2026):** el usuario aprobó el recorrido local con API real. Sin merge ni push.
 
 ### CP10 — Alta de oportunidades
 
-- [ ] Crear oportunidad desde cliente con defaults y comprobar historial inicial; no basta el formulario con mocks.
+- [x] Crear oportunidad desde cliente con defaults y comprobar historial inicial; no basta el formulario con mocks.
 - [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
 
 <a id="t30a"></a>
@@ -1248,6 +1248,8 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 - [ ] Registrar evidencia y deuda por caso; ningún fundamental sin verificar se marca completo. Defectos descubiertos generan tareas pequeñas y nueva verificación afectada, no excepciones tácitas.
 
 **Verificación:** B + F + suite backend completa + suite frontend completa + D; ensayo manual local con datos ficticios y evidencia por rol. Sin repetir S si no hubo cambios desde T47.
+
+**Avance (08/11/2026):** el usuario aprobó el recorrido con perfiles separados, probado con varias cuentas de vendedor. Como resultado se añadió la regla Potencial → Cliente al ganar (SPEC-oportunidades; `CierreTests` y `ReaperturaTests` 5/5). **Pendiente:** suites completas, builds/lint, persistencia tras reinicio y registro de evidencia por caso; T48 no se marca terminada.
 
 **Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
 
