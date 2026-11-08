@@ -1,6 +1,10 @@
 # Verificación de seguridad de la segunda entrega (T47)
 
-Fecha: 05/11/2026. Rama `segunda-entrega-oportunidades-modelo`. Comparación contra la línea de base de [T01](../../tasks/verificaciones/verificacion-t01.md) y [CP04](../../tasks/verificaciones/verificacion-cp04.md). Salidas redactadas: no se registran valores sensibles. **Estado: parcial; falta el escaneo de secretos con Gitleaks (ver abajo).**
+Fecha: 05/11/2026; completada el 08/11/2026. Rama `segunda-entrega-oportunidades-modelo`. Comparación contra la línea de base de [T01](../../tasks/verificaciones/verificacion-t01.md) y [CP04](../../tasks/verificaciones/verificacion-cp04.md). Salidas redactadas: no se registran valores sensibles. **Estado: completa; sin hallazgos nuevos.**
+
+## Repetición del 08/11/2026
+
+Tras las auditorías del 05/11 cambió una dependencia: `@dnd-kit/core` `^6.3.1` (commit `b7047b6`, 06/11). Por eso se repitieron los controles de dependencias: `npm audit --audit-level=high` en la raíz y en `frontend` y `dotnet list package --vulnerable --include-transitive` en los cuatro proyectos, todos **sin vulnerabilidades** (exit 0). No hubo otros cambios de manifiestos desde el 05/11.
 
 ## Dependencias npm
 
@@ -19,11 +23,21 @@ Con esto quedan cerradas las deudas B8 y las registradas en CP04 (Vite, Vitest/`
 
 ## Secretos
 
-- **Gitleaks: no ejecutado.** Se descargó el release oficial `v8.30.1` (windows x64) a un directorio nuevo del espacio temporal y se verificó su SHA-256 contra `checksums.txt` del mismo release (coincide), pero la ejecución del binario descargado fue **denegada por el control de permisos de la sesión**. No se evadió. Hasta correrlo (archivos de trabajo, índice e historial, con `--redact`), el control de secretos **no está aprobado**: un control no ejecutado no es un control limpio.
+- **Gitleaks 8.30.1, ejecutado el 08/11/2026 con autorización del usuario.** El ZIP del release oficial coincide con el SHA-256 de T01 (`D29144DE…AFC4E`) y se extrajo en un directorio temporal de la sesión. Comandos de T01, con `--redact=100`:
+  - Historial (`--all --no-textconv --no-ext-diff`): 179 commits, ~8,15 MB, **sin hallazgos** (exit 0).
+  - Índice (`--pre-commit --staged`): vacío al momento del escaneo, **sin hallazgos** (exit 0). No sustituye la revisión previa a cada commit.
+  - Árbol de trabajo (versionados + nuevos no ignorados, copiados fuera de `node_modules`): 337 archivos, ~2,51 MB, **sin hallazgos** (exit 0). Una primera copia omitió archivos con nombres no ASCII (git escapa esos nombres); se repitió con `core.quotepath=off` y 0 omitidos.
+  - Frente a T01 desapareció el único hallazgo previo (configuración local de `appsettings.json`, ya retirada por el usuario). Sin supresiones ni reglas propias.
+  - Un escáner limpio no acredita ausencia de secretos: no se validó la vigencia de credenciales ni se reescribió el historial.
 - Revisión estática del diff acumulado desde `9d58626` (excluidos lockfile y `schema.d.ts`, generados) con patrones de contraseñas, claves, tokens, cadenas de conexión y bloques de clave privada: solo dos coincidencias, ambas la contraseña ficticia de cuentas creadas dentro de las pruebas de API (`Ficticia123!`, ya usada por las pruebas previas). Es una comprobación de apoyo, no un reemplazo del escáner.
 - No hay credencial de respaldo en el código (se retiró en T02) ni excepciones nuevas a controles: no se añadieron supresiones de lint, `@ts-ignore` ni exclusiones; `appsettings` no se modificó en esta etapa.
 
-## Pendiente para cerrar T47
+- Revisión estática del 08/11/2026 sobre `backend` (sin `bin`/`obj`): `Persistence` no contiene cadenas de conexión ni `OnConfiguring`; la contraseña del administrador inicial se lee de `BootstrapAdmin__Password`; las coincidencias restantes son valores ficticios de las pruebas (`Ficticia123!`, `fictitious`, un `DummyCredential`).
 
-1. Ejecutar Gitleaks 8.30.1 (comando de T01) sobre archivos de trabajo, índice e historial y comparar contra la línea de base (único hallazgo previo: configuración local de `appsettings.json` ya retirada por el usuario). Puede hacerlo el usuario, o autorizar su ejecución en una sesión.
-2. Confirmar que no aparecen secretos nuevos y registrar el resultado aquí. Si el escáner detectara algo, abrir una tarea acotada y repetir solo los controles afectados.
+## Deuda previa observada (no introducida por la segunda entrega)
+
+`backend/Persistence/SQL/creacion-tablas.sql` es el script de la primera entrega, todavía enlazado desde `README.md`. Inserta un usuario de demostración con contraseña `123456` en texto plano. Gitleaks no lo detecta. No se usa para la segunda entrega (esquema en `segunda-entrega-esquema.sql`, sin usuarios automáticos) y no se modificó. Conviene retirarlo o marcarlo como obsoleto en el README antes de publicar: decisión pendiente del usuario.
+
+## Cierre
+
+T47 cumple sus tres criterios: auditorías npm/.NET y escaneo de secretos sin hallazgos nuevos, sin fallbacks de credenciales y sin excepciones nuevas a controles.

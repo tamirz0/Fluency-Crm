@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 31/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T15/CP05 completas, verificadas por pruebas y validadas manualmente por el usuario; integradas localmente en `segunda-entrega` mediante fast-forward a `809a23a`; sin publicar. T16–T18 implementadas/verificadas en `segunda-entrega-cp06-servicios`; CP06 cerrada con validación del usuario e integrada localmente en `segunda-entrega` / `c0c6a26` el 22/10/2026, sin publicar. T19–T21/CP07 implementadas, verificadas y validadas por el usuario; integradas localmente en `segunda-entrega` el 31/10/2026, sin publicar. T22–T24 implementadas y verificadas técnicamente en `segunda-entrega-cp08-empresas`, con revisión independiente; CP08 pendiente de validación autenticada del usuario e integración. T25–T46 implementadas y verificadas; T30 y el recorrido de perfiles de T48 validados por el usuario el 08/11/2026. Pendientes: T47 (escaneo de secretos), cierre de T48 y T49.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
+Plan del 08/10/2026, actualizado el 31/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T15/CP05 completas, verificadas por pruebas y validadas manualmente por el usuario; integradas localmente en `segunda-entrega` mediante fast-forward a `809a23a`; sin publicar. T16–T18 implementadas/verificadas en `segunda-entrega-cp06-servicios`; CP06 cerrada con validación del usuario e integrada localmente en `segunda-entrega` / `c0c6a26` el 22/10/2026, sin publicar. T19–T21/CP07 implementadas, verificadas y validadas por el usuario; integradas localmente en `segunda-entrega` el 31/10/2026, sin publicar. T22–T24 implementadas y verificadas técnicamente en `segunda-entrega-cp08-empresas`, con revisión independiente; CP08 pendiente de validación autenticada del usuario e integración. T25–T46 implementadas y verificadas; T30 y el recorrido de perfiles de T48 validados por el usuario el 08/11/2026. T47 cerrada el 08/11/2026 (Gitleaks y auditorías sin hallazgos). Pendientes: cierre de T48 y T49.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -57,7 +57,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T44 — Proyectar el historial comercial combinado](#t44)
 - [x] [T45 — Mostrar historial comercial en las tres fichas](#t45)
 - [x] [T46 — Comprobar retiro del legado y coherencia de contratos](#t46)
-- [ ] [T47 — Cerrar la verificación de seguridad acordada](#t47)
+- [x] [T47 — Cerrar la verificación de seguridad acordada](#t47)
 - [ ] [T48 — Ensayar la entrega completa en local](#t48)
 - [ ] [T49 — Preparar la publicación académica sin ejecutarla](#t49)
 
@@ -1223,13 +1223,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Ejecutar auditorías npm/.NET y escaneo de secretos con redacción sobre dependencias, nuevos y cambios; comparar identidad/severidad contra T01.
-- [ ] Ningún hallazgo nuevo alto/crítico ni secreto nuevo queda sin resolver; los previos se registran sin empeorar, sin audit fix indiscriminado.
-- [ ] Comprobar que no quedan fallback de credenciales ni excepciones nuevas a controles; si se requiere corregir código, crear tarea acotada y repetir solo checks afectados antes de cerrar.
+- [x] Ejecutar auditorías npm/.NET y escaneo de secretos con redacción sobre dependencias, nuevos y cambios; comparar identidad/severidad contra T01.
+- [x] Ningún hallazgo nuevo alto/crítico ni secreto nuevo queda sin resolver; los previos se registran sin empeorar, sin audit fix indiscriminado.
+- [x] Comprobar que no quedan fallback de credenciales ni excepciones nuevas a controles; si se requiere corregir código, crear tarea acotada y repetir solo checks afectados antes de cerrar.
 
 **Verificación:** S + D; capturar resultados/fechas/severidades sin valores sensibles. Fallo de red/scanner no equivale a informe limpio.
 
-**Evidencia técnica parcial (05/11/2026):** [verificacion-seguridad.md](../docs/segunda-entrega/verificacion-seguridad.md). npm raíz y frontend sin vulnerabilidades tras actualizar dirigidamente zod, vite, vitest, @vitest/mocker, undici y source-map-js (deuda B8/CP04 cerrada); .NET sin vulnerabilidades. **Pendiente:** el escaneo de secretos con Gitleaks no se ejecutó (la ejecución del binario descargado fue denegada); por eso T47 no se marca terminada.
+**Evidencia técnica parcial (05/11/2026):** [verificacion-seguridad.md](../docs/segunda-entrega/verificacion-seguridad.md). npm raíz y frontend sin vulnerabilidades tras actualizar dirigidamente zod, vite, vitest, @vitest/mocker, undici y source-map-js (deuda B8/CP04 cerrada); .NET sin vulnerabilidades. **Cierre (08/11/2026):** con autorización del usuario se ejecutó Gitleaks 8.30.1 (historial 179 commits, índice y árbol de trabajo de 337 archivos): sin hallazgos. Auditorías npm (raíz y frontend) y .NET repetidas por la nueva dependencia `@dnd-kit/core`: 0 vulnerabilidades. Deuda previa observada, sin tocar: `creacion-tablas.sql` de la primera entrega, con un usuario de demostración. Detalle en el informe enlazado.
 
 <a id="t48"></a>
 
