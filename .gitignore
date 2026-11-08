@@ -8,3 +8,6 @@ obj/
 
 # Node (supabase CLI devDependency)
 node_modules/
+
+# imágenes y otras cosas de referencia
+Referencias/
