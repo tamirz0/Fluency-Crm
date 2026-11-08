@@ -54,6 +54,16 @@ if (builder.Environment.IsDevelopment()
 
 builder.Services.AddHttpContracts();
 builder.Services.AddSession(builder.Environment);
+
+// CORS solo para los orígenes listados en Cors:AllowedOrigins (en Azure: Cors__AllowedOrigins__0, __1, ...). Sin lista no se
+// autoriza ningún origen. Credenciales habilitadas porque la sesión viaja en cookie; nunca combinar con orígenes comodín.
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
+{
+    if (allowedOrigins.Length > 0)
+        policy.WithOrigins(allowedOrigins).AllowCredentials()
+            .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE").WithHeaders("Content-Type", "X-CSRF-TOKEN");
+}));
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 

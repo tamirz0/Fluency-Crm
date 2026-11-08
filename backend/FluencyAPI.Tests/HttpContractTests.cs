@@ -177,6 +177,39 @@ public sealed class HttpContractTests
     }
 }
 
+public sealed class CorsTests
+{
+    private static HttpRequestMessage Preflight(string origin, string method = "POST")
+    {
+        var request = new HttpRequestMessage(HttpMethod.Options, "/auth/login");
+        request.Headers.Add("Origin", origin);
+        request.Headers.Add("Access-Control-Request-Method", method);
+        request.Headers.Add("Access-Control-Request-Headers", "content-type,x-csrf-token");
+        return request;
+    }
+
+    [Fact]
+    public async Task OnlyTheDeployedFrontendOriginIsAllowedWithCredentials()
+    {
+        await using var factory = new ContractApiFactory(includeProbe: false);
+        using var client = factory.CreateClient();
+
+        using var allowed = await client.SendAsync(Preflight("https://fluency-crm-sable.vercel.app"));
+        Assert.Equal(HttpStatusCode.NoContent, allowed.StatusCode);
+        Assert.Equal("https://fluency-crm-sable.vercel.app", Assert.Single(allowed.Headers.GetValues("Access-Control-Allow-Origin")));
+        Assert.Equal("true", Assert.Single(allowed.Headers.GetValues("Access-Control-Allow-Credentials")));
+        Assert.Contains("x-csrf-token", string.Join(",", allowed.Headers.GetValues("Access-Control-Allow-Headers")), StringComparison.OrdinalIgnoreCase);
+
+        // Otros orígenes (incluso otro subdominio de vercel.app o http) no reciben autorización.
+        foreach (var origin in new[] { "https://otro.vercel.app", "http://fluency-crm-sable.vercel.app", "https://evil.example" })
+        {
+            using var denied = await client.SendAsync(Preflight(origin));
+            Assert.False(denied.Headers.Contains("Access-Control-Allow-Origin"), origin);
+            Assert.False(denied.Headers.Contains("Access-Control-Allow-Credentials"), origin);
+        }
+    }
+}
+
 internal sealed class ContractApiFactory(bool includeProbe = true) : WebApplicationFactory<Program>
 {
     protected override IHost CreateHost(IHostBuilder builder)
