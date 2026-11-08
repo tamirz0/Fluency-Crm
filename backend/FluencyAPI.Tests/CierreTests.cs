@@ -161,4 +161,42 @@ public sealed class CierreTests
         Assert.Equal(JsonValueKind.Null, unchanged.GetProperty("fechaCierre").ValueKind);
         Assert.Equal(1L, await HistoryAsync(factory, open));
     }
+
+    [Fact]
+    public async Task WinningPromotesPotentialCompanyAndContactToClienteButLosingOrOtherStatesDoNot()
+    {
+        await using var factory = new AuthApiFactory(); await factory.InitializeAsync();
+        using var admin = factory.Client(); await UsuariosTests.SignIn(admin, factory);
+        var seed = await AltaOportunidadTests.SeedAsync(factory, admin);
+        int reason;
+        await using (var db = await factory.OpenAsync())
+        {
+            await CommercialSchemaFixture.ExecuteAsync(db, "INSERT INTO motivo_perdida(descripcion,activo) VALUES ('Precio',true)");
+            reason = await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM motivo_perdida WHERE descripcion='Precio'");
+        }
+        async Task<string> State(string table, int id)
+        {
+            await using var db = await factory.OpenAsync();
+            return await CommercialSchemaFixture.ScalarAsync<string>(db, $"SELECT e.descripcion FROM {table} t JOIN estado_cliente e ON e.id=t.id_estado WHERE t.id={id}");
+        }
+
+        // Perder no cambia el estado de nadie.
+        var lost = await CreateAsync(admin, new { titulo = "Perdida", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idContacto = seed.ContactA });
+        Assert.Equal(HttpStatusCode.OK, (await Post(admin, lost, "perder", $$"""{"fechaCierre":"2026-12-01","idMotivoPerdida":{{reason}}}""")).StatusCode);
+        Assert.Equal("Potencial", await State("empresa", seed.CompanyA));
+        Assert.Equal("Potencial", await State("contacto", seed.ContactA));
+
+        // Ganar pasa empresa y contacto de Potencial a Cliente.
+        var won = await CreateAsync(admin, new { titulo = "Ganada", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idContacto = seed.ContactA });
+        Assert.Equal(HttpStatusCode.OK, (await Post(admin, won, "ganar", """{"fechaCierre":"2026-12-02","valor":1}""")).StatusCode);
+        Assert.Equal("Cliente", await State("empresa", seed.CompanyA));
+        Assert.Equal("Cliente", await State("contacto", seed.ContactA));
+
+        // Un estado distinto de Potencial se respeta.
+        await using (var db = await factory.OpenAsync())
+            await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE empresa SET id_estado=(SELECT id FROM estado_cliente WHERE descripcion='No contactar') WHERE id={seed.CompanyB}");
+        var other = await CreateAsync(admin, new { titulo = "Otra", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyB });
+        Assert.Equal(HttpStatusCode.OK, (await Post(admin, other, "ganar", """{"fechaCierre":"2026-12-03","valor":1}""")).StatusCode);
+        Assert.Equal("No contactar", await State("empresa", seed.CompanyB));
+    }
 }

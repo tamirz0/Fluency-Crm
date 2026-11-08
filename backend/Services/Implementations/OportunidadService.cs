@@ -323,9 +323,25 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
         if (reason is { } lostBecause) item.IdMotivoPerdida = lostBecause;
         db.HistorialEtapas.Add(new HistorialEtapa { IdOportunidad = id, IdEtapaAnterior = previous, IdNuevaEtapa = finalStage, IdUsuario = actor.Id, Observacion = Text(note) });
         await db.SaveChangesAsync(ct);
+        if (result == "GANADA") await PromoverAClienteAsync(item, ct);
         var response = await GetAsync(id, ct);
         await transaction.CommitAsync(ct);
         return response;
+    }
+
+    /// <summary>
+    /// Al ganar, la empresa y el contacto de la oportunidad que seguían como Potencial pasan a Cliente. Cualquier otro estado se respeta y,
+    /// si Cliente no está activo, no se cambia nada (el cierre no depende de la configuración del catálogo). Reabrir no revierte el cambio.
+    /// </summary>
+    private async Task PromoverAClienteAsync(Oportunidad item, CancellationToken ct)
+    {
+        var potencial = await db.EstadoClientes.Where(e => e.Descripcion.ToLower() == "potencial").Select(e => (int?)e.Id).SingleOrDefaultAsync(ct);
+        var cliente = await db.EstadoClientes.Where(e => e.Activo && e.Descripcion.ToLower() == "cliente").Select(e => (int?)e.Id).SingleOrDefaultAsync(ct);
+        if (potencial is null || cliente is null) return;
+        if (item.IdEmpresa is { } companyId)
+            await db.Empresas.Where(e => e.Id == companyId && e.IdEstado == potencial).ExecuteUpdateAsync(s => s.SetProperty(e => e.IdEstado, cliente), ct);
+        if (item.IdContacto is { } contactId)
+            await db.Contactos.Where(c => c.Id == contactId && c.IdEstado == potencial).ExecuteUpdateAsync(s => s.SetProperty(c => c.IdEstado, cliente), ct);
     }
 
     /// <summary>
