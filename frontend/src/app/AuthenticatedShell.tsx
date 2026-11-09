@@ -56,7 +56,7 @@ function NavigationContent({ onNavigate }: { onNavigate?: () => void }) {
     <Box sx={{ px: 3, py: 3.25 }}><Typography sx={{ color: 'text.primary', fontSize: '1.35rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Fluency CRM</Typography></Box>
     <Divider />
     <List sx={{ px: 1.5, py: 2 }} aria-label="Navegación principal">
-      {canCommercial && <NavItem to="/inicio" end label="Inicio" icon={<Dashboard fontSize="small" />} onNavigate={onNavigate} />}
+      <NavItem to="/inicio" end label="Inicio" icon={<Dashboard fontSize="small" />} onNavigate={onNavigate} />
       {groups.map(group => <Fragment key={group.title}>
         <Box component="li" role="presentation" aria-label={group.title} sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1, mt: 2, mb: 1, listStyle: 'none' }}>
           <Divider sx={{ flex: 1 }} />

@@ -1,4 +1,5 @@
 using System.Data;
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Models;
 using Services.Acceso;
@@ -12,6 +13,32 @@ public sealed class ProfesorService(FluencyLocalDbContext db, ActorActual actor)
     {
         if (!actor.Usuario.Roles.Contains(RolesYPermisos.Profesor))
             throw new AcademiaOperationException(403, "FORBIDDEN", "Solo un profesor define sus niveles de inglés.");
+    }
+
+    private static readonly Expression<Func<Clase, ClaseResponse>> LessonProjection = c => new ClaseResponse
+    {
+        Id = c.Id, Titulo = c.Titulo, Fecha = c.Fecha, HoraInicio = c.HoraInicio, HoraFin = c.HoraFin, EsExamen = c.EsExamen, TemasExamen = c.TemasExamen,
+        Curso = new OpcionResponse(c.IdCursoNavigation.Id, c.IdCursoNavigation.Nombre),
+        Profesor = new OpcionResponse(c.IdCursoNavigation.IdProfesorNavigation.Id, c.IdCursoNavigation.IdProfesorNavigation.Nombre + " " + c.IdCursoNavigation.IdProfesorNavigation.Apellido),
+    };
+
+    /// <summary>Resumen del profesor autenticado: sus cursos y alumnos, las clases de hoy y de la semana, y los próximos exámenes.</summary>
+    public async Task<ResumenProfesorResponse> ResumenAsync(CancellationToken ct)
+    {
+        RequireTeacher();
+        var me = actor.Id;
+        // Fecha de negocio de Argentina (UTC-3 fijo), igual que el resto de la aplicación.
+        var today = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(-3));
+        var mine = db.Clases.AsNoTracking().Where(c => c.IdCursoNavigation.Activo && c.IdCursoNavigation.IdProfesor == me);
+        return new()
+        {
+            CantidadNiveles = await db.ProfesorNiveles.CountAsync(p => p.IdUsuario == me, ct),
+            CantidadCursos = await db.Cursos.CountAsync(c => c.Activo && c.IdProfesor == me, ct),
+            CantidadAlumnos = await db.Alumnos.CountAsync(a => a.Activo && a.IdContactoNavigation.Activo && a.IdCursoNavigation != null && a.IdCursoNavigation.Activo && a.IdCursoNavigation.IdProfesor == me, ct),
+            ClasesHoy = await mine.Where(c => c.Fecha == today).OrderBy(c => c.HoraInicio).ThenBy(c => c.Id).Select(LessonProjection).ToListAsync(ct),
+            ProximasClases = await mine.Where(c => c.Fecha > today && c.Fecha <= today.AddDays(7)).OrderBy(c => c.Fecha).ThenBy(c => c.HoraInicio).ThenBy(c => c.Id).Select(LessonProjection).ToListAsync(ct),
+            ProximosExamenes = await mine.Where(c => c.EsExamen && c.Fecha >= today && c.Fecha <= today.AddDays(30)).OrderBy(c => c.Fecha).ThenBy(c => c.HoraInicio).ThenBy(c => c.Id).Take(5).Select(LessonProjection).ToListAsync(ct),
+        };
     }
 
     private async Task<NivelesProfesorResponse> ReadAsync(int teacherId, CancellationToken ct)

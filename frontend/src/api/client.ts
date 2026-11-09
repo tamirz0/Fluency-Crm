@@ -428,3 +428,5 @@ export function setTeacherLevelsOf(id: number, idNiveles: number[]) {
 export function updateLesson(id: number, body: UpdateClaseRequest) {
   return getResponseData(() => api.PUT('/clases/{id}', { params: { path: { id } }, body }))
 }
+export type ResumenProfesor = components['schemas']['ResumenProfesorResponse']
+export function getTeacherSummary() { return getResponseData(() => api.GET('/profesores/yo/resumen')) }

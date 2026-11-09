@@ -31,6 +31,7 @@ beforeEach(() => {
     if (path === '/usuarios/9') return json(teacherUser)
     if (path === '/roles') return json([{ codigo: 'PROFESOR', etiqueta: 'Profesor' }, { codigo: 'VENDEDOR', etiqueta: 'Vendedor' }])
     if (path.startsWith('/catalogos/niveles-ingles')) return json([{ id: 1, descripcion: 'A1', activo: true }, { id: 2, descripcion: 'B1', activo: true }, { id: 3, descripcion: 'C1', activo: true }])
+    if (path === '/profesores/yo/resumen') return json({ cantidadNiveles: 1, cantidadCursos: 0, cantidadAlumnos: 0, clasesHoy: [], proximasClases: [], proximosExamenes: [] })
     if (path === '/profesores') return json(teachers)
     if (path === '/clases') return json([{ id: 5, titulo: 'Unidad 4', fecha: '2026-11-20', horaInicio: '10:00:00', horaFin: '11:00:00', esExamen: false, temasExamen: null, curso: { id: 3, descripcion: 'B1 mañana' }, profesor: { id: 9, descripcion: 'Paula Docente' } }])
     return json({ detail: 'No autorizado' }, 403)
@@ -57,7 +58,7 @@ it('el administrador ve cada profesor con sus niveles, cursos y clases, y consul
 it('un profesor no ve la pestaña ni accede a Profesores', async () => {
   me = teacher
   mount('/profesores')
-  expect(await screen.findByRole('heading', { name: 'Clases' })).toBeTruthy()
+  expect(await screen.findByRole('heading', { name: 'Hola, Ada' })).toBeTruthy()
   expect(within(screen.getByRole('navigation', { name: 'Secciones de Fluency CRM' })).queryByRole('link', { name: 'Profesores' })).toBeNull()
 })
 

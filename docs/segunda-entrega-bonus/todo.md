@@ -23,6 +23,7 @@ Plan del 09/11/2026: [plan.md](plan.md). **Plan aprobado; B01–B17 implementada
 - [x] [B17 — Talleres: pantallas](#b17)
 - [x] [B18 — Cierre y verificación integral](#b18)
 - [x] [B19 — Ajustes tras la revisión del usuario](#b19)
+- [x] [B20 — Inicio del Profesor](#b20)
 
 ## Detalle
 
@@ -363,6 +364,19 @@ Plan del 09/11/2026: [plan.md](plan.md). **Plan aprobado; B01–B17 implementada
 - [x] Un curso no puede tener dos clases que se pisen en el horario (409, también al editar; horarios contiguos sí); cursos distintos del mismo nivel pueden coincidir.
 
 **Evidencia (09/11/2026):** backend `EdicionClasesPerfilTests`, `ClasesTests`, `ProfesorAccesoTests`, `AuthTests`, `UsuariosTests`, `HttpContractTests` 39/39 (5 min 13 s); frontend 187/187, build y lint sin advertencias nuevas; `schema.d.ts` regenerado. No se repitió la suite backend completa. Sin merge ni publicación.
+
+<a id="b20"></a>
+
+### B20 — Inicio del Profesor
+
+**Resultado:** el Profesor tiene pantalla de inicio propia en lugar de ser redirigido a Clases (09/11/2026).
+
+**Aceptación:**
+
+- [x] `GET /profesores/yo/resumen` (solo rol Profesor; fecha de negocio de Argentina): cantidad de niveles, cursos y alumnos propios, clases de hoy, clases de los próximos 7 días y hasta cinco exámenes de los próximos 30. Nada de otros profesores.
+- [x] `/inicio` para quien no tiene acceso comercial muestra «Hola, nombre», las dos cifras, tres listas con enlace a cada clase, aviso si no marcó niveles y reintento ante error (un error no se muestra como cero). «Inicio» aparece en su menú.
+
+**Evidencia (09/11/2026):** `ProfesorResumenTests`, `ProfesoresTests` y `HttpContractTests` 21/21; frontend 190/190, build y lint sin advertencias nuevas; `schema.d.ts` regenerado. Sin merge ni publicación.
 
 ## Registro de cambios
 

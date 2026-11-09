@@ -3,7 +3,8 @@ import { AuthenticatedShell } from './app/AuthenticatedShell'
 import { ProtectedRoute } from './app/ProtectedRoute'
 import { RequireAcademy, RequireAdmin, RequireCommercial } from './app/RequirePermission'
 import { useAuth } from './auth/useAuth'
-import { ACADEMY_HOME, canUseCommercial } from './app/navigation'
+import { canUseCommercial } from './app/navigation'
+import { TeacherHomePage } from './features/home/TeacherHomePage'
 import { StudentsPage } from './features/students/StudentsPage'
 import { StudentDetailPage } from './features/students/StudentDetailPage'
 import { CoursesPage } from './features/courses/CoursesPage'
@@ -31,10 +32,10 @@ import { OpportunitiesPage } from './features/opportunities/OpportunitiesPage'
 import { FunnelPage } from './features/funnel/FunnelPage'
 import { EditOpportunityPage, NewOpportunityPage } from './features/opportunities/OpportunityFormPage'
 import { OpportunityDetailPage } from './features/opportunities/OpportunityDetailPage'
-// El Profesor no tiene resumen comercial: su inicio es la parte académica.
+// El Profesor no tiene resumen comercial: tiene su propio inicio.
 function HomeEntry() {
   const { user } = useAuth()
-  return canUseCommercial(user) ? <HomePage /> : <Navigate to={ACADEMY_HOME} replace />
+  return canUseCommercial(user) ? <HomePage /> : <TeacherHomePage />
 }
 function App() {
   return <Routes>

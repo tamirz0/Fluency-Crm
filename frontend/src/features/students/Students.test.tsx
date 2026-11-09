@@ -29,6 +29,7 @@ beforeEach(() => {
     const url = new URL(request.url)
     urls.push(`${request.method} ${url.pathname}${url.search}`)
     if (url.pathname.endsWith('/csrf')) return json({ requestToken: 'csrf-test' })
+    if (url.pathname.endsWith('/profesores/yo/resumen')) return json({ cantidadNiveles: 1, cantidadCursos: 0, cantidadAlumnos: 0, clasesHoy: [], proximasClases: [], proximosExamenes: [] })
     if (url.pathname.endsWith('/auth/me')) return json({ usuario: me, expiresAt: '2026-12-22T07:00:00Z' })
     if (url.pathname.endsWith('/profesores/yo/niveles')) {
       if (request.method === 'PUT') { putBody = await request.json(); levels = (putBody as { idNiveles: number[] }).idNiveles }
@@ -51,9 +52,9 @@ function mount(path: string) {
   render(<AppProviders queryClient={createQueryClient()}><BrowserRouter><AuthProvider><App /></AuthProvider></BrowserRouter></AppProviders>)
 }
 
-it('el profesor entra a Clases, ve su menú académico, no la parte comercial, y lista a sus alumnos', async () => {
+it('el profesor entra a su inicio, ve su menú académico, no la parte comercial, y lista a sus alumnos', async () => {
   mount('/inicio')
-  expect(await screen.findByRole('heading', { name: 'Clases' })).toBeTruthy()
+  expect(await screen.findByRole('heading', { name: 'Hola, Paula' })).toBeTruthy()
   const nav = screen.getByRole('navigation', { name: 'Secciones de Fluency CRM' })
   for (const visible of ['Alumnos', 'Cursos', 'Clases']) expect(within(nav).getByRole('link', { name: visible })).toBeTruthy()
   for (const hidden of ['Empresas', 'Contactos', 'Oportunidades', 'Embudo', 'Usuarios']) expect(within(nav).queryByRole('link', { name: hidden })).toBeNull()
@@ -74,7 +75,7 @@ it('abre la ficha del alumno sin historial comercial', async () => {
 
 it('la parte comercial redirige al profesor y su perfil guarda los niveles marcados', async () => {
   mount('/empresas')
-  expect(await screen.findByRole('heading', { name: 'Clases' })).toBeTruthy()
+  expect(await screen.findByRole('heading', { name: 'Hola, Paula' })).toBeTruthy()
   expect(urls.some(u => u.includes('/empresas'))).toBe(false)
   await userEvent.click(screen.getAllByRole('link', { name: /Mi perfil/ })[0])
   const a2 = await screen.findByRole('checkbox', { name: 'A2' })
@@ -126,5 +127,5 @@ it('el menú separa por tipo, con el inicio arriba y sin tipos vacíos', async (
 it('un profesor solo ve el tipo Academia', async () => {
   mount('/alumnos')
   const nav = await screen.findByRole('navigation', { name: 'Secciones de Fluency CRM' })
-  expect(Array.from(nav.querySelectorAll('li[role="presentation"], a')).map(item => item.getAttribute('aria-label') ?? item.textContent).filter(label => !label?.startsWith('Mi perfil'))).toEqual(['Academia', 'Alumnos', 'Cursos', 'Clases', 'Talleres'])
+  expect(Array.from(nav.querySelectorAll('li[role="presentation"], a')).map(item => item.getAttribute('aria-label') ?? item.textContent).filter(label => !label?.startsWith('Mi perfil'))).toEqual(['Inicio', 'Academia', 'Alumnos', 'Cursos', 'Clases', 'Talleres'])
 })

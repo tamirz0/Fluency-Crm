@@ -6246,6 +6246,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/profesores/yo/resumen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Inicio del profesor autenticado: cursos, alumnos, clases de hoy y de la semana, y próximos exámenes. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ResumenProfesorResponse"];
+                        "application/json": components["schemas"]["ResumenProfesorResponse"];
+                        "text/json": components["schemas"]["ResumenProfesorResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/profesores/{id}/niveles": {
         parameters: {
             query?: never;
@@ -9263,6 +9345,23 @@ export interface components {
         ReasignarOportunidadRequest: {
             /** Format: int32 */
             idResponsable?: number | string;
+        };
+        /** @description Inicio del profesor: lo suyo, calculado en servidor con la fecha de negocio de Argentina. */
+        ResumenProfesorResponse: {
+            /** Format: int32 */
+            cantidadNiveles: number | string;
+            /** Format: int32 */
+            cantidadCursos: number | string;
+            /**
+             * Format: int32
+             * @description Alumnos distintos en sus cursos.
+             */
+            cantidadAlumnos: number | string;
+            clasesHoy: components["schemas"]["ClaseResponse"][];
+            /** @description Clases de los próximos 7 días, sin las de hoy. */
+            proximasClases: components["schemas"]["ClaseResponse"][];
+            /** @description Hasta cinco exámenes de los próximos 30 días (incluye hoy). */
+            proximosExamenes: components["schemas"]["ClaseResponse"][];
         };
         /** @description Rol preconfigurado; no admite edición. */
         RolResponse: {

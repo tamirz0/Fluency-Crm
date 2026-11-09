@@ -237,3 +237,17 @@ public sealed record InscribirTallerRequest
     [Range(1, int.MaxValue)]
     public required int IdContacto { get; init; }
 }
+
+/// <summary>Inicio del profesor: lo suyo, calculado en servidor con la fecha de negocio de Argentina.</summary>
+public sealed record ResumenProfesorResponse
+{
+    public required int CantidadNiveles { get; init; }
+    public required int CantidadCursos { get; init; }
+    /// <summary>Alumnos distintos en sus cursos.</summary>
+    public required int CantidadAlumnos { get; init; }
+    public required IReadOnlyList<ClaseResponse> ClasesHoy { get; init; }
+    /// <summary>Clases de los próximos 7 días, sin las de hoy.</summary>
+    public required IReadOnlyList<ClaseResponse> ProximasClases { get; init; }
+    /// <summary>Hasta cinco exámenes de los próximos 30 días (incluye hoy).</summary>
+    public required IReadOnlyList<ClaseResponse> ProximosExamenes { get; init; }
+}

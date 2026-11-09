@@ -22,6 +22,11 @@ public sealed class ProfesoresController(ProfesorService profesores) : Controlle
     public async Task<ActionResult<IReadOnlyList<ProfesorResponse>>> List(CancellationToken ct, [FromQuery] bool incluirInactivos = false)
         => Ok(await profesores.ListAsync(incluirInactivos, ct));
 
+    /// <summary>Inicio del profesor autenticado: cursos, alumnos, clases de hoy y de la semana, y próximos exámenes.</summary>
+    [HttpGet("yo/resumen")]
+    [ProducesResponseType<ResumenProfesorResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<ResumenProfesorResponse>> Summary(CancellationToken ct) => Ok(await profesores.ResumenAsync(ct));
+
     /// <summary>Define los niveles de inglés de un profesor. Solo el Administrador.</summary>
     [HttpPut("{id:int}/niveles"), Authorize(Policy = RolesYPermisos.AdministrarProfesores)]
     [ProducesResponseType<NivelesProfesorResponse>(StatusCodes.Status200OK)]
