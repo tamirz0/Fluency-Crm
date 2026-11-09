@@ -49,6 +49,40 @@ public sealed class AlumnoService(FluencyLocalDbContext db, ActorActual actor)
         return new(items, page, pageSize, total);
     }
 
+    /// <summary>Asistencia sin restricción de alcance: el llamador ya comprobó que el actor puede ver al alumno o al contacto.</summary>
+    internal async Task<AsistenciaAlumnoResponse?> AsistenciaPorContactoAsync(Expression<Func<Alumno, bool>> student, CancellationToken ct)
+    {
+        var found = await db.Alumnos.AsNoTracking().Where(a => a.Activo).Where(student)
+            .Select(a => new { a.Id, a.IdCurso, Nivel = new OpcionResponse(a.IdNivelNavigation.Id, a.IdNivelNavigation.Descripcion),
+                Curso = a.IdCursoNavigation == null ? null : new OpcionResponse(a.IdCursoNavigation.Id, a.IdCursoNavigation.Nombre) }).SingleOrDefaultAsync(ct);
+        if (found is null) return null;
+        // Fecha de negocio de Argentina (UTC-3 fijo, igual que el inicio).
+        var today = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(-3));
+        var id = found.Id;
+        var items = found.IdCurso is not { } course ? [] : await db.Clases.AsNoTracking().Where(c => c.IdCurso == course && c.Fecha <= today)
+            .OrderByDescending(c => c.Fecha).ThenByDescending(c => c.HoraInicio).ThenByDescending(c => c.Id)
+            .Select(c => new AsistenciaClaseResponse
+            {
+                IdClase = c.Id, Titulo = c.Titulo, Fecha = c.Fecha, HoraInicio = c.HoraInicio, EsExamen = c.EsExamen,
+                Presente = c.Asistencias.Where(r => r.IdAlumno == id).Select(r => r.Presente).FirstOrDefault(),
+                Nota = c.Asistencias.Where(r => r.IdAlumno == id).Select(r => r.Nota).FirstOrDefault(),
+            }).ToListAsync(ct);
+        return new() { IdAlumno = found.Id, Nivel = found.Nivel, Curso = found.Curso, Presentes = items.Count(i => i.Presente == true), Clases = items.Count, Items = items };
+    }
+
+    public async Task<AsistenciaAlumnoResponse> AsistenciaAsync(int id, CancellationToken ct)
+    {
+        if (!await Visible().AnyAsync(a => a.Id == id, ct)) throw new AcademiaOperationException(404, "NOT_FOUND", "No existe el alumno.");
+        return await AsistenciaPorContactoAsync(a => a.Id == id, ct) ?? throw new AcademiaOperationException(404, "NOT_FOUND", "No existe el alumno.");
+    }
+
+    /// <summary>Para la ficha comercial de un contacto: cualquier rol con acceso al contacto ve su asistencia si es alumno.</summary>
+    public async Task<ContactoAcademicoResponse> AcademicoDeContactoAsync(int idContacto, CancellationToken ct)
+    {
+        if (!await db.Contactos.AnyAsync(c => c.Id == idContacto && c.Activo, ct)) throw new AcademiaOperationException(404, "NOT_FOUND", "No existe el contacto.");
+        return new() { Alumno = await AsistenciaPorContactoAsync(a => a.IdContacto == idContacto, ct) };
+    }
+
     public async Task<AlumnoResponse> GetAsync(int id, CancellationToken ct)
         => await Visible().Where(a => a.Id == id).Select(Projection).SingleOrDefaultAsync(ct)
             ?? throw new AcademiaOperationException(404, "NOT_FOUND", "No existe el alumno.");

@@ -151,3 +151,76 @@ public sealed record GuardarNotasRequest
     [Required, MinLength(1), MaxLength(200)]
     public required NotaItem[] Items { get; init; }
 }
+
+public sealed record AsistenciaClaseResponse
+{
+    public required int IdClase { get; init; }
+    public required string Titulo { get; init; }
+    public required DateOnly Fecha { get; init; }
+    public required TimeOnly HoraInicio { get; init; }
+    public required bool EsExamen { get; init; }
+    /// <summary>null = sin registrar.</summary>
+    public bool? Presente { get; init; }
+    public decimal? Nota { get; init; }
+}
+
+/// <summary>Asistencia del alumno: presentes sobre las clases de su curso con fecha hasta hoy.</summary>
+public sealed record AsistenciaAlumnoResponse
+{
+    public required int IdAlumno { get; init; }
+    public required OpcionResponse Nivel { get; init; }
+    public OpcionResponse? Curso { get; init; }
+    public required int Presentes { get; init; }
+    public required int Clases { get; init; }
+    public required IReadOnlyList<AsistenciaClaseResponse> Items { get; init; }
+}
+
+/// <summary>Lo académico de un contacto para su ficha comercial: nulo si el contacto no es alumno.</summary>
+public sealed record ContactoAcademicoResponse
+{
+    public AsistenciaAlumnoResponse? Alumno { get; init; }
+}
+
+public sealed record TallerResponse
+{
+    public required int Id { get; init; }
+    public required string Titulo { get; init; }
+    public required DateOnly Fecha { get; init; }
+    public required TimeOnly HoraInicio { get; init; }
+    public required TimeOnly HoraFin { get; init; }
+    public required OpcionResponse Servicio { get; init; }
+    public required int CantidadInscriptos { get; init; }
+}
+
+public sealed record PersonaTallerResponse
+{
+    public required int IdContacto { get; init; }
+    public required string Nombre { get; init; }
+    public required string Apellido { get; init; }
+    public string? Documento { get; init; }
+    /// <summary>true si además cursa un nivel de inglés (tiene registro de alumno).</summary>
+    public required bool EsAlumno { get; init; }
+}
+
+public sealed record TallerDetalleResponse
+{
+    public required TallerResponse Taller { get; init; }
+    public required IReadOnlyList<PersonaTallerResponse> Inscriptos { get; init; }
+}
+
+public sealed record CreateTallerRequest
+{
+    [Required, StringLength(150, MinimumLength = 1)]
+    public required string Titulo { get; init; }
+    [Range(1, int.MaxValue)]
+    public required int IdServicio { get; init; }
+    public required DateOnly Fecha { get; init; }
+    public required TimeOnly HoraInicio { get; init; }
+    public required TimeOnly HoraFin { get; init; }
+}
+
+public sealed record InscribirTallerRequest
+{
+    [Range(1, int.MaxValue)]
+    public required int IdContacto { get; init; }
+}

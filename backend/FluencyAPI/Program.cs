@@ -85,6 +85,7 @@ builder.Services.AddScoped<ProfesorService>();
 builder.Services.AddScoped<AlumnoService>();
 builder.Services.AddScoped<CursoService>();
 builder.Services.AddScoped<ClaseService>();
+builder.Services.AddScoped<TallerService>();
 builder.Services.AddScoped<IEstadoClienteService, EstadoClienteService>();
 builder.Services.AddScoped<IOrigenComercialService, OrigenComercialService>();
 builder.Services.AddScoped<IEtapaComercialService, EtapaComercialService>();

@@ -40,7 +40,7 @@ public sealed class ProfesorAccesoTests
         var reads = new[]
         {
             "/empresas", $"/empresas/{seed.CompanyA}", $"/empresas/{seed.CompanyA}/historial-comercial",
-            "/contactos", $"/contactos/{seed.ContactA}", $"/contactos/{seed.ContactA}/historial-comercial",
+            "/contactos", $"/contactos/{seed.ContactA}", $"/contactos/{seed.ContactA}/historial-comercial", $"/contactos/{seed.ContactA}/academico",
             "/oportunidades", "/oportunidades/1", "/oportunidades/1/historial-etapas", "/oportunidades/1/historial-comercial",
             $"/embudos/{seed.Funnel}/funnel", "/actividades", "/actividades/1",
             "/servicios", "/servicios/1", "/embudos", $"/embudos/{seed.Funnel}", $"/embudos/{seed.Funnel}/etapas", $"/etapas/{seed.FirstOpen}",

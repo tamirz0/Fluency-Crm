@@ -25,6 +25,11 @@ public sealed class AlumnosController(AlumnoService alumnos) : ControllerBase
         [FromQuery, Range(1, int.MaxValue)] int page = 1, [FromQuery, Range(1, 100)] int pageSize = 25)
         => Ok(await alumnos.ListAsync(q, idNivel, idCurso, sinCurso, page, pageSize, ct));
 
+    /// <summary>Asistencia del alumno: presentes sobre las clases de su curso hasta hoy, y el detalle por clase.</summary>
+    [HttpGet("{id:int}/asistencia")]
+    [ProducesResponseType<AsistenciaAlumnoResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<AsistenciaAlumnoResponse>> Attendance(int id, CancellationToken ct) => Ok(await alumnos.AsistenciaAsync(id, ct));
+
     [HttpGet("{id:int}")]
     [ProducesResponseType<AlumnoResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult<AlumnoResponse>> Get(int id, CancellationToken ct) => Ok(await alumnos.GetAsync(id, ct));

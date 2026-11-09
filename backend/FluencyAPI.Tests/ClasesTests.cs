@@ -82,8 +82,10 @@ public sealed class ClasesTests
         Assert.Equal("Unidades 1 a 3", body.GetProperty("clase").GetProperty("temasExamen").GetString());
         Assert.Equal([6m, 8.5m], body.GetProperty("alumnos").EnumerateArray().Select(a => a.GetProperty("nota").GetDecimal()).ToArray());
         var cleared = await t1.PutAsJsonAsync($"/clases/{examId}/notas", new { items = new[] { new { idAlumno = one.Students[1], nota = (decimal?)null } } });
-        Assert.Equal(JsonValueKind.Null, (await Json(cleared)).GetProperty("alumnos")[0].GetProperty("nota").ValueKind);
+        Assert.Equal(HttpStatusCode.OK, cleared.StatusCode);
+        var clearedBody = await Json(cleared);
+        Assert.Equal(JsonValueKind.Null, clearedBody.GetProperty("alumnos")[0].GetProperty("nota").ValueKind);
         // Alumnos por apellido: Dos (Beto) y Uno (Ana). La nota sin asistencia deja la asistencia sin registrar.
-        Assert.Equal(JsonValueKind.Null, (await Json(cleared)).GetProperty("alumnos")[1].GetProperty("presente").ValueKind);
+        Assert.Equal(JsonValueKind.Null, clearedBody.GetProperty("alumnos")[1].GetProperty("presente").ValueKind);
     }
 }
