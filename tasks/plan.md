@@ -2,6 +2,8 @@
 
 Fecha: 08/10/2026. Estado: **plan aprobado explícitamente; planificación cerrada; implementación no iniciada**. El usuario aprobó primero la especificación y después este plan, solicitando cerrar esta etapa. El seguimiento único de ejecución está en [todo.md](todo.md); este documento explica orden, integración y verificación, sin duplicar checkboxes. No volver a solicitar aprobación del mismo plan al retomar su ejecución.
 
+**Extensión pre-entrega (08/11/2026):** [T48,5 — Ultimo refinamiento](todo.md#t48-5) incorpora un [plan express](plan-express-pre-entrega.md) con ocho horas totales del equipo hasta el miércoles 11/11. Se ejecuta después de T48/CP16 y antes del cierre de T49, con verificación posterior, extras y recortes explícitos. Se conserva evidencia histórica y se contempla la publicación existente informada por el usuario. Esta documentación no reabre el plan anterior ni autoriza merge/publicación.
+
 ## 1. Resultado y fuentes
 
 Entregar recorridos completos del CRM académico: administrador inicial, acceso por cookies, tres roles fijos, configuración comercial, clientes compartidos, oportunidades con permisos por responsable, funnel personal y actividades/historial. Probar lo fundamental localmente y preparar una publicación posterior para profesores. No hay porcentaje de cobertura, agenda, contabilidad, IA, sesiones persistentes ni nuevo sistema de permisos editables.
