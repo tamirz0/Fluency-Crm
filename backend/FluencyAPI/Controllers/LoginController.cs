@@ -14,7 +14,7 @@ namespace FluencyAPI.Controllers;
 [ApiController]
 [Route("auth")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-public sealed class LoginController(ILoginService login, ActorActual actor, TimeProvider clock, IAntiforgery antiforgery) : ControllerBase
+public sealed class LoginController(ILoginService login, ActorActual actor, TimeProvider clock, IAntiforgery antiforgery, Services.Implementations.UsuarioService users) : ControllerBase
 {
     /// <summary>Obtiene un token CSRF para la identidad actual.</summary>
     [AllowAnonymous]
@@ -49,6 +49,20 @@ public sealed class LoginController(ILoginService login, ActorActual actor, Time
     {
         var authentication = await HttpContext.AuthenticateAsync();
         return Ok(new SesionResponse(actor.Usuario, authentication.Properties!.ExpiresUtc!.Value));
+    }
+
+    /// <summary>Edita los datos de la propia cuenta (nombre, apellido, correo y usuario); cualquier usuario autenticado, sobre sí mismo.</summary>
+    [HttpPatch("me")]
+    [TypeFilter(typeof(UsuarioErrors))]
+    [ProducesResponseType<SesionResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<SesionResponse>> UpdateMe([FromBody] PatchPerfilRequest request, CancellationToken cancellationToken)
+    {
+        var updated = await users.UpdateOwnProfileAsync(request, cancellationToken);
+        var authentication = await HttpContext.AuthenticateAsync();
+        return Ok(new SesionResponse(updated, authentication.Properties!.ExpiresUtc!.Value));
     }
 
     /// <summary>Cierra la sesión actual; requiere token CSRF de esa identidad.</summary>

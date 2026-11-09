@@ -21,5 +21,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="../Persistence/SQL/segunda-entrega-*.sql" Link="SQL/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../Persistence/SQL/creacion-tablas.sql" Link="SQL/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../Persistence/SQL/agregar-bonus-academia.sql" Link="SQL/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

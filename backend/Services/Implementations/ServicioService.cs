@@ -12,7 +12,7 @@ public sealed class ServicioService(FluencyLocalDbContext db, ActorActual actor)
     private IQueryable<ServicioResponse> Query() => db.Servicios.AsNoTracking().Select(s => new ServicioResponse
     {
         Id = s.Id, Nombre = s.Nombre, Descripcion = s.Descripcion, PrecioReferencia = s.PrecioReferencia,
-        DuracionHoras = s.DuracionHoras, Activo = s.Activo,
+        DuracionHoras = s.DuracionHoras, Activo = s.Activo, EsTaller = s.EsTaller,
         Nivel = s.IdNivelNavigation == null ? null : new CatalogoResponse { Id = s.IdNivelNavigation.Id, Descripcion = s.IdNivelNavigation.Descripcion, Activo = s.IdNivelNavigation.Activo },
         Modalidad = s.IdModalidadNavigation == null ? null : new CatalogoResponse { Id = s.IdModalidadNavigation.Id, Descripcion = s.IdModalidadNavigation.Descripcion, Activo = s.IdModalidadNavigation.Activo }
     });
@@ -64,6 +64,7 @@ public sealed class ServicioService(FluencyLocalDbContext db, ActorActual actor)
             if (request.HasField(nameof(request.DuracionHoras))) service.DuracionHoras = request.DuracionHoras;
             if (request.HasField(nameof(request.IdNivel))) service.IdNivel = request.IdNivel;
             if (request.HasField(nameof(request.IdModalidad))) service.IdModalidad = request.IdModalidad;
+            if (request.HasField(nameof(request.EsTaller))) service.EsTaller = request.EsTaller!.Value;
         }
         if (activo is not null) service.Activo = activo.Value;
         if (id is null) db.Servicios.Add(service);

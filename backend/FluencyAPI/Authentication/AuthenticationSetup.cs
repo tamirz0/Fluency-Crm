@@ -39,6 +39,10 @@ internal static class AuthenticationSetup
                          RolesYPermisos.GestionarOportunidad, RolesYPermisos.GestionarActividad })
                 options.AddPolicy(permission, policy => policy.RequireAuthenticatedUser()
                     .RequireClaim(SessionValidation.PermissionClaim, permission));
+            options.AddPolicy(RolesYPermisos.GestionarAcademia, policy => policy.RequireAuthenticatedUser()
+                .RequireClaim(SessionValidation.PermissionClaim, RolesYPermisos.GestionarAcademia));
+            options.AddPolicy(RolesYPermisos.AdministrarProfesores, policy => policy.RequireAuthenticatedUser()
+                .RequireRole(RolesYPermisos.Administrador).RequireClaim(SessionValidation.PermissionClaim, RolesYPermisos.GestionarAcademia));
             options.AddPolicy(RolesYPermisos.AdministrarUsuarios, policy => policy.RequireAuthenticatedUser()
                 .RequireRole(RolesYPermisos.Administrador).RequireClaim(SessionValidation.PermissionClaim, RolesYPermisos.AdministrarUsuarios));
             options.AddPolicy(RolesYPermisos.AdministrarConfiguracion, policy => policy.RequireAuthenticatedUser()

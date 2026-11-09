@@ -33,7 +33,7 @@ function mount(path = '/inicio') {
 it('ignora y retira identidad local; valida campos obligatorios', async () => {
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(user))
   mount()
-  await screen.findByRole('heading', { name: 'Ingresá a tu espacio comercial' })
+  await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })
   expect(sessionStorage.getItem(SESSION_KEY)).toBeNull()
   await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
   expect(await screen.findByText('Ingresá tu usuario.')).toBeTruthy()
@@ -41,7 +41,7 @@ it('ignora y retira identidad local; valida campos obligatorios', async () => {
 })
 it('login sin persistir credenciales y sin doble envío', async () => {
   mount('/login')
-  await screen.findByRole('heading', { name: 'Ingresá a tu espacio comercial' })
+  await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })
   await userEvent.type(screen.getByLabelText('Usuario'), ' maria ')
   await userEvent.type(screen.getByLabelText('Contraseña'), 'secreto')
   const form = screen.getByRole('button', { name: 'Ingresar' }).closest('form')!
@@ -56,7 +56,7 @@ it('recarga restaura desde /me; logout llama API y limpia caché', async () => {
   await screen.findByRole('heading', { name: 'Hola, María' })
   client.setQueryData(['privado'], 'dato')
   await userEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
-  await screen.findByRole('heading', { name: 'Ingresá a tu espacio comercial' })
+  await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })
   expect(authenticated).toBe(false)
   expect(client.getQueryData(['privado'])).toBeUndefined()
 })
@@ -67,7 +67,7 @@ it('401 al recuperar foco limpia identidad y caché', async () => {
   client.setQueryData(['privado'], 'dato')
   authenticated = false
   fireEvent(window, new Event('focus'))
-  await screen.findByRole('heading', { name: 'Ingresá a tu espacio comercial' })
+  await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })
   expect(client.getQueryData(['privado'])).toBeUndefined()
 })
 it('403 explica rechazo conservando sesión; 401 de otro request la elimina', async () => {
@@ -80,11 +80,11 @@ it('403 explica rechazo conservando sesión; 401 de otro request la elimina', as
   expect(screen.getByRole('heading', { name: 'Hola, María' })).toBeTruthy()
   vi.mocked(fetch).mockResolvedValueOnce(json({}, 401))
   await expect(api.GET('/auth/me')).rejects.toMatchObject({ status: 401 })
-  await screen.findByRole('heading', { name: 'Ingresá a tu espacio comercial' })
+  await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })
 })
 it('credenciales inválidas conserva username y vacía password; red permite reintentar', async () => {
   mount('/login')
-  await screen.findByRole('heading', { name: 'Ingresá a tu espacio comercial' })
+  await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })
   await userEvent.type(screen.getByLabelText('Usuario'), 'maria')
   await userEvent.type(screen.getByLabelText('Contraseña'), 'incorrecta')
   vi.mocked(fetch).mockImplementation(async (r) => (r as Request).url.endsWith('/csrf') ? json({ requestToken: 't' }) : json({}, 401))
@@ -100,7 +100,7 @@ it('credenciales inválidas conserva username y vacía password; red permite rei
 
 it('foco durante login no descarta la identidad que devuelve el servidor', async () => {
   mount('/login')
-  await screen.findByRole('heading', { name: 'Ingresá a tu espacio comercial' })
+  await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })
   await userEvent.type(screen.getByLabelText('Usuario'), 'maria')
   await userEvent.type(screen.getByLabelText('Contraseña'), 'secreto')
   const normal = vi.mocked(fetch).getMockImplementation()!
@@ -125,7 +125,7 @@ it('logout 204 limpia identidad y caché aunque falle renovar CSRF', async () =>
     return normal(r, init)
   })
   await userEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
-  await screen.findByRole('heading', { name: 'Ingresá a tu espacio comercial' })
+  await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })
   expect(client.getQueryData(['privado'])).toBeUndefined()
 })
 
@@ -174,4 +174,17 @@ it.each([['/oportunidades', 'Oportunidades', 'Oportunidades'], ['/embudo', 'Embu
   mount(path)
   await screen.findByRole('heading', { name: heading })
   expect(screen.getByRole('link', { name: link }).getAttribute('aria-current')).toBe('page')
+})
+it('al volver a la ventana el aviso de revalidación flota y no empuja el contenido', async () => {
+  authenticated = true
+  mount()
+  await screen.findByRole('heading', { name: 'Hola, María' })
+  const normal = vi.mocked(fetch).getMockImplementation()!
+  let finish: (response: Response) => void = () => {}
+  vi.mocked(fetch).mockImplementation(async (r, init) => (r as Request).url.endsWith('/auth/me') ? new Promise<Response>(resolve => { finish = resolve }) : normal(r, init))
+  fireEvent(window, new Event('focus'))
+  const notice = await screen.findByText('Comprobando sesión…')
+  expect(getComputedStyle(notice).position).toBe('fixed')
+  finish(json(session))
+  await waitFor(() => expect(screen.queryByText('Comprobando sesión…')).toBeNull())
 })

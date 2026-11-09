@@ -18,8 +18,8 @@ public sealed class InicioService(FluencyLocalDbContext db)
     public async Task<InicioResumenResponse> ResumenAsync(CancellationToken ct)
     {
         var (from, to) = CurrentMonth(DateTime.UtcNow);
-        var clientStateIds = db.EstadoClientes.Where(e => e.Descripcion.ToLower() == "cliente").Select(e => e.Id);
-        var students = await db.Contactos.CountAsync(c => c.Activo && c.IdEstado != null && clientStateIds.Contains(c.IdEstado.Value), ct);
+        // Alumno = contacto cuya oportunidad ganada era un servicio con nivel (bonus de academia).
+        var students = await db.Alumnos.CountAsync(a => a.Activo && a.IdContactoNavigation.Activo, ct);
         var open = await db.Oportunidades.CountAsync(o => o.Activo && o.IdEtapaNavigation.IdEstadoNavigation.Codigo == "ABIERTA", ct);
         // FechaCierre guarda la fecha de negocio como medianoche UTC: rango [primer día, primer día del mes siguiente).
         var closed = await db.Oportunidades.CountAsync(o => o.Activo && o.FechaCierre >= from && o.FechaCierre < to

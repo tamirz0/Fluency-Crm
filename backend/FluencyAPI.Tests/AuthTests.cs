@@ -44,7 +44,7 @@ public sealed class AuthTests
         var session = (await login.Content.ReadFromJsonAsync<SesionResponse>())!;
         Assert.Equal(factory.AdminId, session.Usuario.Id);
         Assert.Contains("ADMINISTRADOR", session.Usuario.Roles);
-        Assert.Equal(7, session.Usuario.Permisos.Count);
+        Assert.Equal(8, session.Usuario.Permisos.Count);
         var cookie = SessionCookie(login);
         Assert.True(cookie.Contains("httponly", StringComparison.OrdinalIgnoreCase));
         Assert.True(cookie.Contains("samesite=lax", StringComparison.OrdinalIgnoreCase));
