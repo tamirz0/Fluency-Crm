@@ -71,7 +71,7 @@ export function ActivityDialog({ context, activity, open, onClose, onDone }: { c
       <Typography className="funnel-selected-title">{context.label}</Typography>
       <TextField select fullWidth required label="Tipo de actividad" value={type} onChange={event => setType(event.target.value)} error={Boolean(typeError)} helperText={typeError} disabled={types.isPending || types.isError}>
         {activity && !(types.data ?? []).some(option => Number(option.id) === Number(activity.idTipo)) && <MenuItem value={String(activity.idTipo)}>{activity.tipoNombre}{activity.tipoActivo ? '' : ' (inactivo)'}</MenuItem>}
-        {(types.data ?? []).map(option => <MenuItem key={option.id} value={String(option.id)}>{option.descripcion}</MenuItem>)}
+        {(types.data ?? []).map(option => <MenuItem key={option.id} value={String(option.id)}>{option.nombre ?? option.descripcion}</MenuItem>)}
       </TextField>
       {types.isError && <Alert severity="warning" action={<Button color="inherit" size="small" onClick={() => void types.refetch()}>Reintentar</Button>}>No pudimos cargar los tipos de actividad.</Alert>}
       <TextField label="Cuándo ocurrió" type="datetime-local" required fullWidth value={occurred} onChange={event => setOccurred(event.target.value)} error={Boolean(dateError)}

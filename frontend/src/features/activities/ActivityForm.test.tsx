@@ -21,7 +21,7 @@ beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn(async (input: Request) => {
     const url = new URL(input.url)
     if (url.pathname.endsWith('/csrf')) return json({ requestToken: 'csrf-test' })
-    if (url.pathname.endsWith('/catalogos/tipos-actividad/opciones')) return json([{ id: 3, descripcion: 'Llamada', activo: true }, { id: 4, descripcion: 'Reunión', activo: true }])
+    if (url.pathname.endsWith('/catalogos/tipos-actividad/opciones')) return json([{ id: 3, nombre: 'Llamada', descripcion: null, activo: true }, { id: 4, nombre: 'Reunión', descripcion: null, activo: true }])
     if (input.method === 'POST' || input.method === 'PATCH') { posts.push({ url: url.pathname, body: await input.clone().json() }); return outcome() }
     if (input.method === 'DELETE') { deletes.push(url.pathname); return removal() }
     return json([])

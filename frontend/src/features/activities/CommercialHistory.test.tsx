@@ -27,7 +27,7 @@ beforeEach(() => {
     requests.push({ method: input.method, url, body })
     if (url.pathname.endsWith('/csrf')) return json({ requestToken: 'csrf-test' })
     if (url.pathname.endsWith('/historial-comercial')) return history()
-    if (url.pathname.endsWith('/catalogos/tipos-actividad/opciones')) return json([{ id: 3, descripcion: 'Llamada', activo: true }])
+    if (url.pathname.endsWith('/catalogos/tipos-actividad/opciones')) return json([{ id: 3, nombre: 'Llamada', descripcion: null, activo: true }])
     if (url.pathname === '/api/actividades/31' && input.method === 'GET') return json(fullActivity)
     if (url.pathname === '/api/actividades/31' && input.method === 'PATCH') return json({ ...fullActivity, ...(body as object) })
     if (url.pathname === '/api/actividades/31' && input.method === 'DELETE') return new Response(null, { status: 204 })
