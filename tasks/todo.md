@@ -1299,15 +1299,16 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Verificación:** D + revisión de guía contra artefactos realmente implementados y SPEC §7. Si faltan datos de hosting, el procedimiento queda pendiente, no se afirma listo para desplegar.
 
-**Evidencia (09/11/2026):** guía [publicacion-azure.md](../docs/segunda-entrega/publicacion-azure.md) escrita contra `frontend/vercel.json`, `.github/workflows/deploy-backend.yml`, `Program.cs`, `AuthenticationSetup.cs`, `appsettings.json` y las guías locales; `git diff aeb41af..HEAD -- backend/Persistence` vacío (sin cambios de esquema). No se probó Azure, Vercel ni Supabase. Pendientes explícitos en su §10: PITR/RPO de 15 min frente a backups diarios, SO/instancias/claves de Data Protection en Azure, esquema y administrador en la base publicada, origen de despliegue de Vercel, cuenta del evaluador y merge a `master` (dispara el despliegue del backend). No se marca CP17 hasta que el usuario revise la guía.
+**Evidencia (09/11/2026):** guía [publicacion-azure.md](../docs/segunda-entrega/publicacion-azure.md) escrita contra `frontend/vercel.json`, `.github/workflows/deploy-backend.yml`, `Program.cs`, `AuthenticationSetup.cs`, `appsettings.json` y las guías locales; `git diff aeb41af..HEAD -- backend/Persistence` vacío (sin cambios de esquema). No se probó Azure, Vercel ni Supabase. Pendientes explícitos en su §10: PITR/RPO de 15 min frente a backups diarios, SO/instancias/claves de Data Protection en Azure, esquema y administrador en la base publicada, origen de despliegue de Vercel, cuenta del evaluador y merge a `master` (dispara el despliegue del backend). 09/11/2026: el usuario decide cerrar T49 sin merge a `master`; informa que el despliegue de back y front ya se probó y funciona (dato del usuario, sin evidencia en el repositorio ni verificación del agente) y que se continuará con un plan nuevo desde cero. Los pendientes de la guía §10 quedan abiertos para ese plan.
 
 ### CP17 — Preparación de publicación
 
-- [ ] Guía revisada, pendientes operativos explícitos; publicación y cualquier cambio de base/hosting requieren decisión posterior. Main sigue fuera de alcance.
-- [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+- [x] Guía revisada, pendientes operativos explícitos; publicación y cualquier cambio de base/hosting requieren decisión posterior. Main sigue fuera de alcance.
+- [x] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
 
 ## Registro de cambios del plan
 
 - 08/10/2026: plan inicial posterior a la aprobación de SPEC. Solo documentación; no ejecución, instalación de herramientas, inspección de Docker ni cambios en Azure.
 - 08/10/2026: aprobación explícita del plan y cierre de planificación. Metodología de agentes registrada en plan §6.1. Ninguna tarea de implementación ni checkpoint se marca completo por esta aprobación.
 - 08/11/2026: incorporada T48,5 — Ultimo refinamiento antes de T49, con plan express y ocho horas totales del equipo confirmadas. T48/CP16 mantienen evidencia histórica; cierre nuevo con verificación posterior y recortes explícitos. Solo documentación, sin implementación, servicios, suites, integración ni publicación.
+- 09/11/2026: T48,5 cerrada con OK del usuario; T49 y CP17 cerradas como guía preparada (sin merge a `master`, sin publicación por el agente). Cualquier trabajo posterior se planifica en un plan nuevo.
