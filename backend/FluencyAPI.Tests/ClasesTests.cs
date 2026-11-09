@@ -76,6 +76,9 @@ public sealed class ClasesTests
         Assert.Equal(HttpStatusCode.Conflict, (await t1.PutAsJsonAsync($"/clases/{lessonId}/notas", new { items = new[] { new { idAlumno = one.Students[0], nota = 8 } } })).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await t1.PutAsJsonAsync($"/clases/{examId}/notas", new { items = new[] { new { idAlumno = one.Students[0], nota = 11 } } })).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await t1.PutAsJsonAsync($"/clases/{examId}/notas", new { items = new[] { new { idAlumno = one.Students[0], nota = 7.555 } } })).StatusCode);
+        // Valores justo fuera de rango (el redondeo de Range(int) los dejaba pasar a la base).
+        Assert.Equal(HttpStatusCode.BadRequest, (await t1.PutAsJsonAsync($"/clases/{examId}/notas", new { items = new[] { new { idAlumno = one.Students[0], nota = 10.25 } } })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await t1.PutAsJsonAsync($"/clases/{examId}/notas", new { items = new[] { new { idAlumno = one.Students[0], nota = -0.25 } } })).StatusCode);
         var graded = await t1.PutAsJsonAsync($"/clases/{examId}/notas", new { items = new[] { new { idAlumno = one.Students[0], nota = 8.5 }, new { idAlumno = one.Students[1], nota = 6.0 } } });
         Assert.Equal(HttpStatusCode.OK, graded.StatusCode);
         var body = await Json(graded);

@@ -112,8 +112,8 @@ public sealed class ClaseService(FluencyLocalDbContext db, ActorActual actor)
     /// <summary>Carga notas (0 a 10, hasta dos decimales) en un examen; null borra la nota.</summary>
     public async Task<ClaseDetalleResponse> SaveGradesAsync(int id, GuardarNotasRequest request, CancellationToken ct)
     {
-        if (request.Items.Any(i => i.Nota is { } n && decimal.Round(n, 2) != n))
-            throw new AcademiaOperationException(400, "VALIDATION_FAILED", "La nota admite hasta dos decimales.");
+        if (request.Items.Any(i => i.Nota is { } n && (n < 0 || n > 10 || decimal.Round(n, 2) != n)))
+            throw new AcademiaOperationException(400, "VALIDATION_FAILED", "La nota va de 0 a 10, con hasta dos decimales.");
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
         var lesson = await LoadForWriteAsync(id, ct);
         if (!lesson.EsExamen) throw new AcademiaOperationException(409, "BUSINESS_CONFLICT", "Solo un examen admite notas.");

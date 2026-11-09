@@ -59,6 +59,15 @@ El CRM funciona pero se ve genérico para una academia de inglés. Este bonus lo
 
 Nuevo permiso `GestionarAcademia` para Administrador y Profesor; rol `PROFESOR`. Un Administrador puede además ver todo lo académico. Frontend: guarda de ruta por permiso y menú condicional; **la API es la autoridad** y cada servicio revalida actor y propiedad.
 
+### Ajustes de implementación (09/11/2026)
+
+- El rol y el permiso viven en un segundo script aditivo e idempotente, `segunda-entrega-bonus-roles.sql` (el de roles base se rechaza si la identidad ya tiene datos). `levantar-bonus-academia.ps1` aplica ambos en desarrollo, con las guardas de destino de los otros scripts.
+- `clase_alumno.presente` admite NULL = sin registrar (una nota cargada no implica asistencia).
+- `GET /profesores` (solo Administrador) cubre la API de B15. Las fichas comerciales leen lo académico con `GET /contactos/{id}/academico` (política comercial), porque Responsable y Vendedor no tienen el permiso académico.
+- Al agregar la política `ConsultarComercial` a todos los controladores comerciales (B04), la pestaña de Catálogos, Servicios y demás quedó cerrada al Profesor también en el servidor; sus opciones de nivel salen de `GET /profesores/yo/niveles` y las de taller de `GET /talleres/servicios`.
+- **Decisiones tras la revisión independiente de permisos (09/11/2026):** sin fugas comerciales ni IDOR. Se corrigió el rango de la nota (el `Range` entero redondeaba) y se serializó el cambio de niveles. Se aceptan expresamente, por coherencia con el pedido: (a) los talleres los gestionan Administrador y Profesor y sus candidatos muestran nombre y documento de alumnos y de clientes con el taller ganado, sin filtrar por nivel; (b) el Profesor ve la asistencia de cualquier alumno de sus niveles, aunque esté en el curso de otro profesor del mismo nivel; (c) una petición de alta con ids de alumno ajenos distingue 400 y 409, sin exponer datos personales.
+- El inicio del Profesor es `/clases`. La guarda del frontend oculta lo comercial a quien tiene solo `GestionarAcademia`.
+
 ### Esquema
 
 Archivo incremental **`backend/Persistence/SQL/segunda-entrega-bonus.sql`**: aditivo, con guarda de base destino como los scripts actuales, sin tocar los base. El fixture `CommercialSchemaFixture.cs` lo aplica. Contenido: `servicio.es_taller`; tablas `profesor_nivel`, `alumno` (UNIQUE `id_contacto`), `curso`, `clase` (hora fin > inicio), `clase_alumno` (nota 0–10), `taller`, `taller_inscripcion`; FKs `RESTRICT`; rol `PROFESOR` y permiso `GestionarAcademia`. Aplicarlo a la base de desarrollo exige comprobar destino y estado; **a Supabase/Azure lo aplica el usuario con backup** (pendientes de [publicación §10](../segunda-entrega/publicacion-azure.md)).

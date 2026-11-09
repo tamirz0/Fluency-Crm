@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Models;
 using Services.Acceso;
@@ -54,6 +55,8 @@ public sealed class ProfesorService(FluencyLocalDbContext db, ActorActual actor)
     {
         RequireTeacher();
         var ids = request.IdNiveles.Distinct().ToArray();
+        // Serializable: no puede cruzarse con el alta de un curso del mismo nivel que se está quitando.
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
         var valid = await db.NivelesIngles.Where(n => n.Activo && ids.Contains(n.Id)).Select(n => n.Id).ToListAsync(ct);
         if (valid.Count != ids.Length)
             throw new AcademiaOperationException(400, "REFERENCE_UNAVAILABLE", "Algún nivel de inglés no está disponible.");
@@ -63,6 +66,7 @@ public sealed class ProfesorService(FluencyLocalDbContext db, ActorActual actor)
         db.ProfesorNiveles.RemoveRange(current.Where(p => !ids.Contains(p.IdNivel)));
         db.ProfesorNiveles.AddRange(ids.Where(id => current.All(p => p.IdNivel != id)).Select(id => new ProfesorNivel { IdUsuario = actor.Id, IdNivel = id }));
         await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
         return await ReadAsync(ct);
     }
 }

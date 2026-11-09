@@ -142,7 +142,7 @@ public sealed record NotaItem
     [Range(1, int.MaxValue)]
     public required int IdAlumno { get; init; }
     /// <summary>De 0 a 10 con hasta dos decimales; null borra la nota.</summary>
-    [Range(0, 10)]
+    [Range(typeof(decimal), "0", "10")]
     public decimal? Nota { get; init; }
 }
 
