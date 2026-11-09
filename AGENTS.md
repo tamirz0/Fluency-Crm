@@ -17,6 +17,7 @@ Revisar `git status --short` antes de editar y preservar cambios ajenos. Leer so
 | Necesidad | Fuente y alcance |
 |---|---|
 | Iniciar o retomar una tarea | [tasks/todo.md](tasks/todo.md): estado, dependencia, aceptación y revisión de esa tarea. Contrastar con Git y autorizaciones de la conversación; no deducir permisos de una marca de completado. |
+| Bonus academia (landing, alumnos, cursos, clases, talleres, Profesor) | [docs/segunda-entrega-bonus/plan.md](docs/segunda-entrega-bonus/plan.md) y [todo.md](docs/segunda-entrega-bonus/todo.md): plan aprobado el 09/11/2026, con reglas de verificación más laxas. Prevalece sobre las exclusiones académicas de diseño, plan express y T49. |
 | Cambiar o verificar código | [CONSTRAINTS.md](CONSTRAINTS.md), §§1–5: reglas, comandos y controles aplicables. Historia posterior solo si hace falta comparar deuda o evidencia. |
 | Implementar comportamiento | [CAPABILITIES.md](CAPABILITIES.md) para localizar la SPEC pertinente; [diseño](docs/segunda-entrega/diseño-segunda-entrega.md): reglas, excepciones y ejemplos del módulo, además del E-R. [Especificación técnica](docs/segunda-entrega/especificacion-tecnica.md) para contratos comunes. |
 | Resolver dudas de requisitos | [Decisiones confirmadas](docs/segunda-entrega/decisiones-confirmadas.md) y [contexto §1](docs/segunda-entrega/contexto-segunda-entrega.md): mapa de fuentes académicas en Enunciado/. El diseño aprobado no acredita implementación; sus simplificaciones no son requisitos textuales de la cátedra. |
