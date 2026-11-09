@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AuthenticatedShell } from './app/AuthenticatedShell'
 import { ProtectedRoute } from './app/ProtectedRoute'
+import { LandingPage } from './features/landing/LandingPage'
 import { LoginPage } from './features/login/LoginPage'
 import { HomePage } from './features/home/HomePage'
 import { ProfilePage } from './features/profile/ProfilePage'
@@ -20,6 +21,7 @@ import { EditOpportunityPage, NewOpportunityPage } from './features/opportunitie
 import { OpportunityDetailPage } from './features/opportunities/OpportunityDetailPage'
 function App() {
   return <Routes>
+    <Route path="/" element={<LandingPage />} />
     <Route path="/login" element={<LoginPage />} />
     <Route element={<ProtectedRoute />}><Route element={<AuthenticatedShell />}>
       <Route path="/inicio" element={<HomePage />} />
@@ -42,7 +44,7 @@ function App() {
       <Route path="/configuracion/servicios" element={<ServicesPage />} />
       <Route path="/configuracion/embudos" element={<FunnelsPage />} />
     </Route></Route>
-    <Route path="*" element={<Navigate to="/inicio" replace />} />
+    <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
 }
 export default App

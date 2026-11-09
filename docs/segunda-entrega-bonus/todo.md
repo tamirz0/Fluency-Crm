@@ -4,8 +4,8 @@ Plan del 09/11/2026: [plan.md](plan.md). **Plan aprobado; ninguna tarea iniciada
 
 ## Índice
 
-- [ ] [B01 — Landing: ruta, barra y hero](#b01)
-- [ ] [B02 — Landing: secciones y responsive](#b02)
+- [x] [B01 — Landing: ruta, barra y hero](#b01)
+- [x] [B02 — Landing: secciones y responsive](#b02)
 - [ ] [B03 — Esquema SQL incremental](#b03)
 - [ ] [B04 — Modelos EF, rol Profesor y barrido de permisos](#b04)
 - [ ] [B05 — Niveles del Profesor](#b05)
@@ -35,13 +35,13 @@ Plan del 09/11/2026: [plan.md](plan.md). **Plan aprobado; ninguna tarea iniciada
 
 **Aceptación:**
 
-- [ ] `/` pública; con sesión activa redirige a `/inicio`; `*` → `/`; `/login` sin cambios.
-- [ ] **Contacto** abre `mailto:` con `VITE_CONTACT_EMAIL` (valor ficticio marcado si falta); **Ingresar** lleva a `/login`.
-- [ ] Contenedor propio (`maxWidth` + `mx: auto`), sin heredar el layout del shell; tema oscuro actual; sin dependencias nuevas.
+- [x] `/` pública; con sesión activa redirige a `/inicio`; `*` → `/`; `/login` sin cambios.
+- [x] **Contacto** abre `mailto:` con `VITE_CONTACT_EMAIL` (valor ficticio marcado si falta); **Ingresar** lleva a `/login`.
+- [x] Contenedor propio (`maxWidth` + `mx: auto`), sin heredar el layout del shell; tema oscuro actual; sin dependencias nuevas.
 
 **Verificación:** F + `npm run test:run -- landing` (render, enlaces, redirección) + D.
 
-**Evidencia:** —
+**Evidencia:** 09/11/2026: ruta `/`, barra con Contacto (mailto, `VITE_CONTACT_EMAIL`) e Ingresar, redirección con sesión y `*` a `/`. `npm run test:run -- src/features/landing src/App.test.tsx` 17/17; build y lint sin advertencias nuevas.
 
 <a id="b02"></a>
 
@@ -53,13 +53,13 @@ Plan del 09/11/2026: [plan.md](plan.md). **Plan aprobado; ninguna tarea iniciada
 
 **Aceptación:**
 
-- [ ] Solo módulos y capacidades reales (sin cobros, IA, integraciones, testimonios ni cifras inventadas).
-- [ ] Anclas de la barra funcionan; accesible (encabezados, foco visible, contraste); sin scroll horizontal.
-- [ ] Capturas a 360, 768 y 1280 px sin descentrados (comparar con `Referencias/mal-centrado/`). Revisión visual del usuario pendiente, no bloqueante.
+- [x] Solo módulos y capacidades reales (sin cobros, IA, integraciones, testimonios ni cifras inventadas).
+- [x] Anclas de la barra funcionan; accesible (encabezados, foco visible, contraste); sin scroll horizontal.
+- [x] Capturas a 360, 768 y 1280 px sin descentrados (comparar con `Referencias/mal-centrado/`). Revisión visual del usuario pendiente, no bloqueante.
 
 **Verificación:** F + test de humo + capturas con el servidor de desarrollo + D.
 
-**Evidencia:** —
+**Evidencia:** 09/11/2026: todas las secciones con contenido real del PDF. Capturas con Edge headless a 1280 px y a 360 px (iframe) sin descentrado ni scroll horizontal; el aviso 502 de la captura es de la sesión sin API en la vista previa. **Pendiente:** revisión visual del usuario (no bloqueante).
 
 <a id="b03"></a>
 
