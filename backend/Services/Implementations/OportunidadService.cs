@@ -323,10 +323,28 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
         if (reason is { } lostBecause) item.IdMotivoPerdida = lostBecause;
         db.HistorialEtapas.Add(new HistorialEtapa { IdOportunidad = id, IdEtapaAnterior = previous, IdNuevaEtapa = finalStage, IdUsuario = actor.Id, Observacion = Text(note) });
         await db.SaveChangesAsync(ct);
-        if (result == "GANADA") await PromoverAClienteAsync(item, ct);
+        if (result == "GANADA")
+        {
+            await PromoverAClienteAsync(item, ct);
+            await CrearAlumnoAsync(item, current.IdEmbudo, ct);
+        }
         var response = await GetAsync(id, ct);
         await transaction.CommitAsync(ct);
         return response;
+    }
+
+    /// <summary>
+    /// Al ganar un servicio con nivel (no taller), el contacto de la oportunidad pasa a ser alumno de ese nivel, sin curso. Una empresa
+    /// sin contacto no genera alumno; si el contacto ya es alumno no se duplica ni se modifica. Reabrir no lo revierte.
+    /// </summary>
+    private async Task CrearAlumnoAsync(Oportunidad item, int idEmbudo, CancellationToken ct)
+    {
+        if (item.IdContacto is not { } contactId) return;
+        var service = await db.Embudos.Where(e => e.Id == idEmbudo).Select(e => new { e.IdServicioNavigation.IdNivel, e.IdServicioNavigation.EsTaller }).SingleAsync(ct);
+        if (service.IdNivel is not { } level || service.EsTaller) return;
+        if (await db.Alumnos.AnyAsync(a => a.IdContacto == contactId, ct)) return;
+        db.Alumnos.Add(new Alumno { IdContacto = contactId, IdNivel = level });
+        await db.SaveChangesAsync(ct);
     }
 
     /// <summary>

@@ -9,6 +9,7 @@ using Services.Interface;
 
 namespace FluencyAPI.Controllers;
 
+[Authorize(Policy = RolesYPermisos.ConsultarComercial)]
 [ApiController, Route("oportunidades")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 [TypeFilter(typeof(OportunidadErrors))]

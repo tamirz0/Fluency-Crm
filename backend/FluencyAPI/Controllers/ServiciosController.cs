@@ -10,6 +10,7 @@ using Services.Interface;
 
 namespace FluencyAPI.Controllers;
 
+[Authorize(Policy = RolesYPermisos.ConsultarComercial)]
 [ApiController, Route("servicios")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 [TypeFilter(typeof(ServicioErrors))]

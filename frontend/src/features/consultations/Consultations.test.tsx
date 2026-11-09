@@ -88,7 +88,7 @@ describe('consultas comerciales', () => {
     expect(screen.getByText('Fecha de creación', { selector: 'dt' })).toBeTruthy()
     expect(screen.getByText(/Primera línea\s+Segunda línea/)).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Volver a contactos' })).toBeTruthy()
-    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(fetch).toHaveBeenCalledTimes(3)
   })
 
   it('no consulta un id inválido y representa el 404 como contacto inexistente', async () => {
@@ -224,7 +224,7 @@ describe('consultas comerciales', () => {
 
   it('protege las nuevas rutas y no consulta contactos con un id inválido', async () => {
     renderApp('/oportunidades')
-    expect(await screen.findByRole('heading', { name: 'Ingresá a tu espacio comercial' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })).toBeTruthy()
     expect(fetch).not.toHaveBeenCalled()
     renderAuthenticated('/contactos/no-es-id')
     expect(await screen.findByRole('heading', { name: 'No encontramos ese contacto' })).toBeTruthy()

@@ -1,6 +1,6 @@
 # Tareas verificables: segunda entrega
 
-Plan del 08/10/2026, actualizado el 31/10/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T15/CP05 completas, verificadas por pruebas y validadas manualmente por el usuario; integradas localmente en `segunda-entrega` mediante fast-forward a `809a23a`; sin publicar. T16–T18 implementadas/verificadas en `segunda-entrega-cp06-servicios`; CP06 cerrada con validación del usuario e integrada localmente en `segunda-entrega` / `c0c6a26` el 22/10/2026, sin publicar. T19–T21/CP07 implementadas, verificadas y validadas por el usuario; integradas localmente en `segunda-entrega` el 31/10/2026, sin publicar. T22–T24 implementadas y verificadas técnicamente en `segunda-entrega-cp08-empresas`, con revisión independiente; CP08 pendiente de validación autenticada del usuario e integración. T25–T46 implementadas y verificadas; T30 y el recorrido de perfiles de T48 validados por el usuario el 08/11/2026. T47 cerrada el 08/11/2026 (Gitleaks y auditorías sin hallazgos). T48 y CP16 cerradas el 08/11/2026. Pendiente: T49.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
+Plan del 08/10/2026, actualizado el 08/11/2026. **Planificación aprobada y cerrada; T01–T09 y CP01–CP03 integradas localmente en `segunda-entrega`. T09/CP03 integrada en `3ac9310`; los cambios documentales recientes se conservan en `2930e95`. T10–T12 y CP04 completos/verificados e integrados localmente en `segunda-entrega` / `20c5383`, con demo del usuario sin fallos; sin publicar. T13–T15/CP05 completas, verificadas por pruebas y validadas manualmente por el usuario; integradas localmente en `segunda-entrega` mediante fast-forward a `809a23a`; sin publicar. T16–T18 implementadas/verificadas en `segunda-entrega-cp06-servicios`; CP06 cerrada con validación del usuario e integrada localmente en `segunda-entrega` / `c0c6a26` el 22/10/2026, sin publicar. T19–T21/CP07 implementadas, verificadas y validadas por el usuario; integradas localmente en `segunda-entrega` el 31/10/2026, sin publicar. T22–T24 implementadas y verificadas técnicamente en `segunda-entrega-cp08-empresas`, con revisión independiente; CP08 pendiente de validación autenticada del usuario e integración. T25–T46 implementadas y verificadas; T30 y el recorrido de perfiles de T48 validados por el usuario el 08/11/2026. T47 cerrada el 08/11/2026 (Gitleaks y auditorías sin hallazgos). T48 y CP16 cerradas el 08/11/2026. Pendientes: T48,5 — Ultimo refinamiento y T49.** Evidencia y límites en [CP04](verificaciones/verificacion-cp04.md). Bootstrap explícito; se conserva la deuda previa. No pedir nuevamente aprobación del plan.
 
 Los códigos B/F/API/UI/D/S se definen en el plan. Nombres de archivos nuevos y clases de tests son ubicaciones propuestas; concretarlos al implementar. Dependencias son tareas terminadas y verificadas, no solo commits escritos. Estimación M: una sesión, unos 3–5 archivos; S: 1–2. Si el inventario real excede el tamaño, dividir conservando trazabilidad antes de editar; las rutas generadas y wiring también cuentan.
 
@@ -59,6 +59,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T46 — Comprobar retiro del legado y coherencia de contratos](#t46)
 - [x] [T47 — Cerrar la verificación de seguridad acordada](#t47)
 - [x] [T48 — Ensayar la entrega completa en local](#t48)
+- [ ] [T48,5 — Ultimo refinamiento](#t48-5)
 - [ ] [T49 — Preparar la publicación académica sin ejecutarla](#t49)
 
 ## Detalle
@@ -1256,32 +1257,59 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 - [x] Recorridos fundamentales, compilación, pruebas y seguridad documentados. No declarar entrega integral si un control fundamental sigue pendiente.
 - [x] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
 
+<a id="t48-5"></a>
+
+### T48,5 — Ultimo refinamiento
+
+**Resultado:** Cerrar mejoras pre-entrega dentro de ocho horas totales del equipo; demo estable el 12/11/2026 y trabajo terminado el miércoles 11/11. Alcance, métricas, reparto, agenda, extras y recortes en el [plan express pre-entrega](plan-express-pre-entrega.md). Documentarlo no acredita implementación ni verificaciones nuevas.
+
+**Dependencias:** T48/CP16 como línea de base histórica; revalidar Git y evidencia pertinente al comenzar. **Presupuesto:** 8 horas-persona entre Mateo y Lautaro, incluido cierre y contingencia. **Revisión prevista:** propia por bloque y checkpoint entre implementadores para cambios habituales; independiente si aparece acceso/sesión/transacción sensible conforme a plan §6.1.
+
+**Archivos probables:** inicio/cliente HTTP frontend; consulta/endpoint/DTO backend si hacen falta; tipos generados y pruebas afectadas; seguimiento y registro del plan express. Sin módulo académico ni dependencias nuevas.
+
+**Aceptación:**
+
+- [x] Verificar promoción Potencial → Cliente al ganar e inferencia del resultado al arrastrar, sin rehacerlas. Corregir defectos fundamentales antes de extras.
+- [x] Corregir el combo «Tipo de actividad» vacío al registrar una actividad desde una oportunidad (E0b del plan express): mostrar el nombre de cada tipo; fixtures con la forma real del API.
+- [x] Entregar dashboard retenido conforme al plan express (objetivo: Alumnos, Abiertas, Cerradas del mes) o documentar reducción a dos tarjetas/inicio actual por tiempo y evidencia. Sin cifras aproximadas ni prestaciones ficticias.
+- [x] Evaluar extras en orden (simplificar resultado desde arrastre; perfil de consulta), registrando completados/verificados y descartados. Cursos, clases, Profesor, asistencia y notas quedan fuera.
+- [x] Cerrar controles y recorrido integral posteriores al cambio, revisión, horas, evidencia y recortes. No reutilizar T48 como prueba del código nuevo ni aprobar fundamentales sin verificar.
+
+**Verificación:** B + F + pruebas focalizadas por bloque; suites pertinentes completas y recorrido del App real al cierre, más D, según plan express §7 y constraints. API/base solo en destino local identificado; seguridad según cambios que invaliden T47. Merge/publicación requieren OK específico.
+
+**Estado (09/11/2026, cierre):** cerrada con el OK del usuario tras su recorrido manual en la app real (sin detalle de pasos registrado). Alcance retenido: combo de actividades (E0b), dashboard de tres tarjetas (E1), resultado fijo al arrastrar (E2), perfil de consulta (E3), orden contacto–empresa en la tarjeta del embudo. Fuera: cursos, clases, Profesor, asistencia, notas y aviso de cambios sin guardar. Merge y publicación siguen sin autorizar. **Estado previo:** implementados combo de actividades (E0b), dashboard (E1: endpoint `GET /inicio/resumen` + tarjetas), resultado fijo al arrastrar (E2) y perfil de consulta (E3), con pruebas focalizadas y suite frontend en verde (155). Backend 174 pruebas en verde (suite completa 09/11 más `HttpContractTests` reejecutada tras agregar la ruta). Pendientes: recorrido manual en la app real y cierre E4; detalle en el [registro del plan express](plan-express-pre-entrega.md#8-registro-de-ejecución). **Estado previo (08/11/2026):** plan documentado; implementación/verificación nuevas pendientes. T48/CP16 conservan cierre histórico. T49 prepara la versión resultante sin ejecutarla ni asumir que la publicación informada por el usuario no existe.
+
 <a id="t49"></a>
 
 ### T49 — Preparar la publicación académica sin ejecutarla
 
 **Resultado:** Preparar la publicación académica sin ejecutarla, conforme a la SPEC del módulo y al alcance descrito abajo.
 
-**Dependencias:** T48. **Tamaño previsto:** M; 3 ubicaciones principales previstas.
+**Actualización pre-entrega (08/11/2026):** el usuario informa publicación existente y merge a master; contrastar topología/artefactos actuales antes de seguir instrucciones históricas. Preparar solo lo necesario para la versión resultante de [T48,5](#t48-5), según [plan express §7](plan-express-pre-entrega.md#7-cierre-t49-y-demo). No reinstalar esquema ni desplegar por inferencia. La cuenta del profesor indicada abajo es para el docente evaluador, no el nuevo rol Profesor postergado.
+
+**Dependencias:** T48 y T48,5 cerrada con alcance retenido verificado/recortes explícitos. **Tamaño previsto:** M; 3 ubicaciones principales previstas.
 
 **Archivos probables:** `docs/segunda-entrega/publicacion-azure.md (nuevo)`; `docs/segunda-entrega/entorno-local.md`; `tasks/todo.md`.
 
 **Aceptación:**
 
-- [ ] Documentar configuración requerida, esquema nuevo, bootstrap, HTTPS, claves Data Protection, URL del frontend/API, copias/rollback y cuenta de acceso del profesor sin credenciales en Git.
-- [ ] Resolver con datos disponibles la topología propuesta: misma URL vía configuración existente o React servido por ASP.NET Core; si se conservan orígenes distintos, explicitar CORS/credenciales y limitación de cookies entre sitios.
-- [ ] Identificar qué depende aún del dueño de Azure, base destino y autorización; preparar validación equivalente local. No desplegar, probar Azure, borrar bases ni integrar a main como parte de esta tarea.
+- [x] Documentar configuración requerida, esquema nuevo, bootstrap, HTTPS, claves Data Protection, URL del frontend/API, copias/rollback y cuenta de acceso del profesor sin credenciales en Git.
+- [x] Resolver con datos disponibles la topología propuesta: misma URL vía configuración existente o React servido por ASP.NET Core; si se conservan orígenes distintos, explicitar CORS/credenciales y limitación de cookies entre sitios.
+- [x] Identificar qué depende aún del dueño de Azure, base destino y autorización; preparar validación equivalente local. No desplegar, probar Azure, borrar bases ni integrar a main como parte de esta tarea.
 
 **Verificación:** D + revisión de guía contra artefactos realmente implementados y SPEC §7. Si faltan datos de hosting, el procedimiento queda pendiente, no se afirma listo para desplegar.
 
-**Evidencia:** pendiente — al ejecutar registrar comandos exactos, resultados, duración y limitaciones; no marcar finalizada con comprobaciones pendientes.
+**Evidencia (09/11/2026):** guía [publicacion-azure.md](../docs/segunda-entrega/publicacion-azure.md) escrita contra `frontend/vercel.json`, `.github/workflows/deploy-backend.yml`, `Program.cs`, `AuthenticationSetup.cs`, `appsettings.json` y las guías locales; `git diff aeb41af..HEAD -- backend/Persistence` vacío (sin cambios de esquema). No se probó Azure, Vercel ni Supabase. Pendientes explícitos en su §10: PITR/RPO de 15 min frente a backups diarios, SO/instancias/claves de Data Protection en Azure, esquema y administrador en la base publicada, origen de despliegue de Vercel, cuenta del evaluador y merge a `master` (dispara el despliegue del backend). 09/11/2026: el usuario decide cerrar T49 sin merge a `master`; informa que el despliegue de back y front ya se probó y funciona (dato del usuario, sin evidencia en el repositorio ni verificación del agente) y que se continuará con un plan nuevo desde cero. Los pendientes de la guía §10 quedan abiertos para ese plan.
 
 ### CP17 — Preparación de publicación
 
-- [ ] Guía revisada, pendientes operativos explícitos; publicación y cualquier cambio de base/hosting requieren decisión posterior. Main sigue fuera de alcance.
-- [ ] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
+- [x] Guía revisada, pendientes operativos explícitos; publicación y cualquier cambio de base/hosting requieren decisión posterior. Main sigue fuera de alcance.
+- [x] Registrar resultados, fallos nuevos/previos y pendientes sin rebajar constraints; comprobar que los recorridos ya habilitados siguen funcionando.
 
 ## Registro de cambios del plan
 
 - 08/10/2026: plan inicial posterior a la aprobación de SPEC. Solo documentación; no ejecución, instalación de herramientas, inspección de Docker ni cambios en Azure.
 - 08/10/2026: aprobación explícita del plan y cierre de planificación. Metodología de agentes registrada en plan §6.1. Ninguna tarea de implementación ni checkpoint se marca completo por esta aprobación.
+- 08/11/2026: incorporada T48,5 — Ultimo refinamiento antes de T49, con plan express y ocho horas totales del equipo confirmadas. T48/CP16 mantienen evidencia histórica; cierre nuevo con verificación posterior y recortes explícitos. Solo documentación, sin implementación, servicios, suites, integración ni publicación.
+- 09/11/2026: T48,5 cerrada con OK del usuario; T49 y CP17 cerradas como guía preparada (sin merge a `master`, sin publicación por el agente). Cualquier trabajo posterior se planifica en un plan nuevo.
+- 09/11/2026: plan nuevo [segunda-entrega-bonus](../docs/segunda-entrega-bonus/plan.md) (landing, alumnos, cursos, clases, talleres y rol Profesor; tareas B01–B18 en su [todo](../docs/segunda-entrega-bonus/todo.md)). Reemplaza por decisión del usuario las exclusiones académicas anteriores. Solo documentación; sin implementación, merge ni publicación.

@@ -87,7 +87,7 @@ describe('funnel por rol', () => {
     expect(screen.getByText('Sin oportunidades · Perdida')).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Renovación anual' }).getAttribute('href')).toBe('/oportunidades/91')
     // Empresa y contacto son texto: no llevan a otro perfil por error.
-    expect(screen.getByText('Acme Idiomas – Lucía Pérez', { selector: '.funnel-opportunity-client' })).toBeTruthy()
+    expect(screen.getByText('Lucía Pérez – Acme Idiomas', { selector: '.funnel-opportunity-client' })).toBeTruthy()
     expect(document.querySelector('a[href^="/empresas/"], a[href^="/contactos/"]')).toBeNull()
 
     expect(screen.queryByRole('button', { name: 'Cambiar etapa' })).toBeNull()
@@ -102,7 +102,7 @@ describe('funnel por rol', () => {
     vi.mocked(fetch).mockImplementation(async (input, init) => new URL((input as Request).url).pathname.endsWith('/oportunidades/91') ? jsonResponse(card) : funnelApi(input, init))
     renderFunnel(seller)
     await screen.findByRole('heading', { name: 'Propuesta' })
-    await userEvent.setup().click(screen.getByText('Acme Idiomas – Lucía Pérez'))
+    await userEvent.setup().click(screen.getByText('Lucía Pérez – Acme Idiomas'))
     // La ficha ofrece volver al embudo (y no a la empresa), aunque la oportunidad tenga empresa.
     const back = await screen.findByRole('link', { name: 'Volver al embudo' })
     expect(window.location.pathname).toBe('/oportunidades/91')
@@ -188,7 +188,8 @@ describe('funnel por rol', () => {
     await screen.findByRole('heading', { name: 'Propuesta' })
     await dropOn({ id: 6, nombre: 'Perdida', estado: 'PERDIDA' })
     const closing = within(await screen.findByRole('dialog', { name: 'Cerrar oportunidad' }))
-    expect(closing.getByRole('combobox', { name: /Resultado/ }).textContent).toBe('Perdida')
+    expect(closing.getByText('Perdida')).toBeTruthy()
+    expect(closing.queryByRole('combobox', { name: /Resultado/ })).toBeNull()
     expect(closing.getByRole('combobox', { name: /Motivo de pérdida/ })).toBeTruthy()
     expect(posts).toHaveLength(0)
   })

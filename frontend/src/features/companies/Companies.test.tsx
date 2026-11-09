@@ -43,7 +43,7 @@ beforeEach(() => {
 describe('empresas CP08 con sesión real', () => {
   it('protege listado y ficha sin sesión; no confía en sessionStorage', async () => {
     authenticated = false; sessionStorage.setItem('fluency.auth.user.v1', JSON.stringify(user)); renderApp('/empresas/4')
-    expect(await screen.findByRole('heading', { name: 'Ingresá a tu espacio comercial' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })).toBeTruthy()
     expect(requestCalls('GET')).toHaveLength(0)
   })
   it('conserva tabla, segunda columna Estado, enlaces, responsable y navegación por teclado', async () => {

@@ -317,6 +317,8 @@ export function setCatalogOptionActive(catalogo: ConfigurableCatalog, id: Catalo
     ? getResponseData(() => api.POST('/catalogos/{catalogo}/{id}/reactivar', { params: { path } }))
     : getResponseData(() => api.POST('/catalogos/{catalogo}/{id}/desactivar', { params: { path } }))
 }
+export type InicioResumen = components['schemas']['InicioResumenResponse']
+export function getHomeSummary() { return getResponseData(() => api.GET('/inicio/resumen')) }
 export function getOpportunityStates() { return getResponseData(() => api.GET('/estados-oportunidad')) }
 
 export function listServices(query: CatalogQuery = {}) {
@@ -357,3 +359,74 @@ export function setStageActive(id: number, active: boolean) {
     : getResponseData(() => api.POST('/etapas/{id}/desactivar', { params: { path: { id } } }))
 }
 export function reorderStages(id: number, body: components['schemas']['OrdenEtapasRequest']) { return getResponseData(() => api.PUT('/embudos/{id}/orden-etapas', { params: { path: { id } }, body })) }
+
+// --- Academia (bonus): profesores, alumnos, cursos, clases y talleres ---
+export type NivelesProfesor = components['schemas']['NivelesProfesorResponse']
+export function getTeacherLevels() { return getResponseData(() => api.GET('/profesores/yo/niveles')) }
+export function setTeacherLevels(idNiveles: number[]) { return getResponseData(() => api.PUT('/profesores/yo/niveles', { body: { idNiveles } })) }
+export type Alumno = components['schemas']['AlumnoResponse']
+export const studentQueryKeys = { all: ['alumnos'] as const, detail: (id: number) => ['alumnos', 'detalle', id] as const }
+export function listStudents(query: { q?: string; idNivel?: number; idCurso?: number; sinCurso?: boolean; page?: number; pageSize?: number } = {}) {
+  return getResponseData(() => api.GET('/alumnos', { params: { query } }))
+}
+export function getStudent(id: number) { return getResponseData(() => api.GET('/alumnos/{id}', { params: { path: { id } } })) }
+
+export type Curso = components['schemas']['CursoResponse']
+export type CursoDetalle = components['schemas']['CursoDetalleResponse']
+export type CreateCursoRequest = components['schemas']['CreateCursoRequest']
+export type Profesor = components['schemas']['ProfesorResponse']
+export type Clase = components['schemas']['ClaseResponse']
+export type ClaseDetalle = components['schemas']['ClaseDetalleResponse']
+export type CreateClaseRequest = components['schemas']['CreateClaseRequest']
+export const courseQueryKeys = { all: ['cursos'] as const, detail: (id: number) => ['cursos', 'detalle', id] as const }
+export const lessonQueryKeys = { all: ['clases'] as const, detail: (id: number) => ['clases', 'detalle', id] as const }
+export const teacherQueryKeys = { all: ['profesores'] as const }
+export function listTeachers() { return getResponseData(() => api.GET('/profesores')) }
+export function listCourses(query: { idProfesor?: number; idNivel?: number; page?: number; pageSize?: number } = {}) {
+  return getResponseData(() => api.GET('/cursos', { params: { query } }))
+}
+export function getCourse(id: number) { return getResponseData(() => api.GET('/cursos/{id}', { params: { path: { id } } })) }
+export function createCourse(body: CreateCursoRequest) { return getResponseData(() => api.POST('/cursos', { body })) }
+export function addStudentsToCourse(id: number, idAlumnos: number[]) {
+  return getResponseData(() => api.POST('/cursos/{id}/alumnos', { params: { path: { id } }, body: { idAlumnos } }))
+}
+export function listLessons(query: { desde: string; hasta: string; idCurso?: number; idProfesor?: number }) {
+  return getResponseData(() => api.GET('/clases', { params: { query } }))
+}
+export function getLesson(id: number) { return getResponseData(() => api.GET('/clases/{id}', { params: { path: { id } } })) }
+export function createLesson(body: CreateClaseRequest) { return getResponseData(() => api.POST('/clases', { body })) }
+export function saveAttendance(id: number, items: { idAlumno: number; presente: boolean }[]) {
+  return getResponseData(() => api.PUT('/clases/{id}/asistencia', { params: { path: { id } }, body: { items } }))
+}
+export function saveGrades(id: number, items: { idAlumno: number; nota: number | null }[]) {
+  return getResponseData(() => api.PUT('/clases/{id}/notas', { params: { path: { id } }, body: { items } }))
+}
+export type Asistencia = components['schemas']['AsistenciaAlumnoResponse']
+export function getStudentAttendance(id: number) { return getResponseData(() => api.GET('/alumnos/{id}/asistencia', { params: { path: { id } } })) }
+export function getContactAcademic(id: number) { return getResponseData(() => api.GET('/contactos/{id}/academico', { params: { path: { id } } })) }
+
+export type Taller = components['schemas']['TallerResponse']
+export type TallerDetalle = components['schemas']['TallerDetalleResponse']
+export type CreateTallerRequest = components['schemas']['CreateTallerRequest']
+export const workshopQueryKeys = { all: ['talleres'] as const, detail: (id: number) => ['talleres', 'detalle', id] as const }
+export function listWorkshops(query: { desde: string; hasta: string }) { return getResponseData(() => api.GET('/talleres', { params: { query } })) }
+export function listWorkshopServices() { return getResponseData(() => api.GET('/talleres/servicios')) }
+export function getWorkshop(id: number) { return getResponseData(() => api.GET('/talleres/{id}', { params: { path: { id } } })) }
+export function createWorkshop(body: CreateTallerRequest) { return getResponseData(() => api.POST('/talleres', { body })) }
+export function getWorkshopCandidates(id: number) { return getResponseData(() => api.GET('/talleres/{id}/candidatos', { params: { path: { id } } })) }
+export function enrollInWorkshop(id: number, idContacto: number) {
+  return getResponseData(() => api.POST('/talleres/{id}/inscripciones', { params: { path: { id } }, body: { idContacto } }))
+}
+
+export type PatchPerfilRequest = components['schemas']['PatchPerfilRequest']
+export type UpdateClaseRequest = components['schemas']['UpdateClaseRequest']
+export function patchMyProfile(body: PatchPerfilRequest) { return getResponseData(() => api.PATCH('/auth/me', { body })) }
+export function getUserById(id: number) { return getResponseData(() => api.GET('/usuarios/{id}', { params: { path: { id } } })) }
+export function setTeacherLevelsOf(id: number, idNiveles: number[]) {
+  return getResponseData(() => api.PUT('/profesores/{id}/niveles', { params: { path: { id } }, body: { idNiveles } }))
+}
+export function updateLesson(id: number, body: UpdateClaseRequest) {
+  return getResponseData(() => api.PUT('/clases/{id}', { params: { path: { id } }, body }))
+}
+export type ResumenProfesor = components['schemas']['ResumenProfesorResponse']
+export function getTeacherSummary() { return getResponseData(() => api.GET('/profesores/yo/resumen')) }

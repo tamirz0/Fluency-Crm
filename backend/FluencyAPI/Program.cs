@@ -72,6 +72,7 @@ builder.Services.AddDbContext<FluencyLocalDbContext>(options =>
 
 builder.Services.AddScoped<IOportunidadService, OportunidadService>();
 builder.Services.AddScoped<IActividadService, ActividadService>();
+builder.Services.AddScoped<InicioService>();
 builder.Services.AddScoped<HistorialComercialService>();
 builder.Services.AddScoped<IContactoService, ContactoService>();
 builder.Services.AddScoped<IEmpresaService, EmpresaService>();
@@ -80,6 +81,11 @@ builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<CatalogoService>();
 builder.Services.AddScoped<IServicioService, ServicioService>();
 builder.Services.AddScoped<EmbudoService>();
+builder.Services.AddScoped<ProfesorService>();
+builder.Services.AddScoped<AlumnoService>();
+builder.Services.AddScoped<CursoService>();
+builder.Services.AddScoped<ClaseService>();
+builder.Services.AddScoped<TallerService>();
 builder.Services.AddScoped<IEstadoClienteService, EstadoClienteService>();
 builder.Services.AddScoped<IOrigenComercialService, OrigenComercialService>();
 builder.Services.AddScoped<IEtapaComercialService, EtapaComercialService>();

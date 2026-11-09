@@ -12,7 +12,7 @@ public sealed class SchemaTests
         await using var fixture = new CommercialSchemaFixture();
         await fixture.InitializeAsync();
         await using var db = await fixture.OpenAsync();
-        Assert.Equal(21L, await ScalarAsync<long>(db,
+        Assert.Equal(28L, await ScalarAsync<long>(db,
             "SELECT count(*) FROM information_schema.tables WHERE table_schema=current_schema()"));
         Assert.Equal(new[] { "ABIERTA", "GANADA", "PERDIDA" },
             await ScalarAsync<string[]>(db, "SELECT array_agg(codigo ORDER BY codigo) FROM estado_oportunidad"));
@@ -35,7 +35,7 @@ public sealed class SchemaTests
             SELECT data_type FROM information_schema.columns WHERE table_schema=current_schema()
             AND table_name='oportunidad' AND column_name='fecha_estimada_cierre'
             """));
-        Assert.Equal(7L, await ScalarAsync<long>(db, """
+        Assert.Equal(11L, await ScalarAsync<long>(db, """
             SELECT count(*) FROM information_schema.columns WHERE table_schema=current_schema()
             AND data_type='timestamp with time zone'
             """));
@@ -85,7 +85,7 @@ public sealed class SchemaTests
         await fixture.InitializeAsync();
         await using var db = await fixture.OpenAsync();
         await SeedContextAsync(db);
-        foreach (var script in new[] { "esquema", "catalogos" })
+        foreach (var script in new[] { "esquema", "catalogos", "bonus" })
         {
             await using var transaction = await db.BeginTransactionAsync();
             await SetTargetAsync(db, transaction);
@@ -239,7 +239,7 @@ public sealed class SchemaTests
         try
         {
             await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.CleanupAsync());
-            Assert.Equal(21L, await ScalarAsync<long>(db,
+            Assert.Equal(28L, await ScalarAsync<long>(db,
                 "SELECT count(*) FROM information_schema.tables WHERE table_schema=current_schema() AND table_type='BASE TABLE'"));
             Assert.Equal(0L, await ScalarAsync<long>(db, "SELECT count(*) FROM unexpected_guard"));
         }
