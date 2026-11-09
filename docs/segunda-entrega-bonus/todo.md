@@ -1,6 +1,6 @@
 # Tareas del bonus: Fluency para academias de inglés
 
-Plan del 09/11/2026: [plan.md](plan.md). **Plan aprobado; B01–B17 implementadas y verificadas por pruebas; B18 cerrada salvo el recorrido manual y la revisión visual (pendientes del usuario).** Una persona en serie. Tamaño M ≈ 1–1,5 h; si una tarea pasa de unos cinco archivos, subdividir (`Bxx.a`, `Bxx.b`) conservando su aceptación. Marcar solo con evidencia real (una línea por tarea). Comandos de verificación y reglas de tests en [plan §6](plan.md#6-verificación). Recorte, si falta tiempo: primero B16–B17, luego B15, luego la vista Lista de B12.
+Plan del 09/11/2026: [plan.md](plan.md). **Plan aprobado; B01–B21 implementadas, verificadas por pruebas y validadas por el usuario en local; solo quedan pendientes operativos (SQL en producción, merge y publicación).** Una persona en serie. Tamaño M ≈ 1–1,5 h; si una tarea pasa de unos cinco archivos, subdividir (`Bxx.a`, `Bxx.b`) conservando su aceptación. Marcar solo con evidencia real (una línea por tarea). Comandos de verificación y reglas de tests en [plan §6](plan.md#6-verificación). Recorte, si falta tiempo: primero B16–B17, luego B15, luego la vista Lista de B12.
 
 ## Índice
 
@@ -341,13 +341,13 @@ Plan del 09/11/2026: [plan.md](plan.md). **Plan aprobado; B01–B17 implementada
 **Aceptación:**
 
 - [x] Suite backend completa y suite frontend completa sin fallos nuevos; build y lint correctos; `schema.d.ts` regenerado sin cambios manuales.
-- [ ] Recorrido manual local con Administrador, Profesor y Vendedor: ganar una oportunidad → alumno → curso → clase → asistencia/examen → ficha «x/y»; Vendedor sin acceso académico; Profesor sin acceso comercial.
+- [x] Recorrido manual local con Administrador, Profesor y Vendedor: ganar una oportunidad → alumno → curso → clase → asistencia/examen → ficha «x/y»; Vendedor sin acceso académico; Profesor sin acceso comercial.
 - [x] Revisión independiente centrada en permisos del Profesor, sin hallazgos altos sin resolver.
 - [x] Guía para aplicar `segunda-entrega-bonus.sql` en producción (backup, orden, verificación), **sin ejecutarla**; recortes y deuda registrados; correo de Contacto definido o pendiente anotado.
 
 **Verificación:** B + F + suites completas + D; sin repetir seguridad si no cambiaron dependencias. Merge y publicación requieren OK específico del usuario.
 
-**Evidencia (09/11/2026):** frontend 179/179, build y lint (solo la advertencia previa de `providers.tsx`). Backend completo: 187/188 en 12 min 6 s; el único fallo (`AuthTests` contaba 7 permisos del administrador, ahora 8 con `GestionarAcademia`) se corrigió y se repitieron `AuthTests`, `ClasesTests`, `ProfesoresTests` y `CursosTests` (16/16). Revisión independiente (solo lectura): sin fugas comerciales ni IDOR; corregidos el rango de la nota y la carrera al quitar niveles; el resto, aceptado y registrado en [plan](plan.md). Guía de esquema y recorrido en [aplicar-esquema.md](aplicar-esquema.md). **Pendiente:** el recorrido manual con tres perfiles en el navegador (requiere aplicar el SQL a la base de desarrollo con `levantar-bonus-academia.ps1`, decisión del usuario) y la revisión visual de landing y calendarios; correo de Contacto (`VITE_CONTACT_EMAIL`) aún sin definir. Sin merge ni publicación.
+**Evidencia (09/11/2026):** frontend 179/179, build y lint (solo la advertencia previa de `providers.tsx`). Backend completo: 187/188 en 12 min 6 s; el único fallo (`AuthTests` contaba 7 permisos del administrador, ahora 8 con `GestionarAcademia`) se corrigió y se repitieron `AuthTests`, `ClasesTests`, `ProfesoresTests` y `CursosTests` (16/16). Revisión independiente (solo lectura): sin fugas comerciales ni IDOR; corregidos el rango de la nota y la carrera al quitar niveles; el resto, aceptado y registrado en [plan](plan.md). Guía de esquema y recorrido en [aplicar-esquema.md](aplicar-esquema.md). **Validación del usuario (09/11/2026):** levantó el entorno local con el esquema del bonus, recorrió la aplicación y confirmó los cambios, incluido el recorrido manual con los tres perfiles; la landing y los calendarios fueron revisados por él. El correo de Contacto (`VITE_CONTACT_EMAIL`) queda con el valor ficticio por decisión suya. **Pendientes operativos, del usuario:** aplicar `agregar-bonus-academia.sql` en producción con copia de seguridad, y el OK de merge y publicación. Sin merge ni publicación.
 
 <a id="b19"></a>
 
