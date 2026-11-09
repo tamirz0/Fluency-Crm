@@ -21,7 +21,9 @@ cd Fluency-Crm
 
 ### 2. Preparar PostgreSQL
 
-Inicia el servicio de PostgreSQL y crea una base de datos llamada `FluencyLocalDB`. Luego ejecuta una vez el script [`backend/Persistence/SQL/creacion-tablas.sql`](backend/Persistence/SQL/creacion-tablas.sql) sobre esa base usando pgAdmin o `psql`. El script crea las tablas e inserta los datos iniciales.
+Inicia el servicio de PostgreSQL y crea una base de datos llamada `FluencyLocalDB`. Luego ejecuta una vez el script [`backend/Persistence/SQL/creacion-tablas.sql`](backend/Persistence/SQL/creacion-tablas.sql) sobre esa base usando pgAdmin o `psql`. El script crea las tablas (incluidas las de academia: alumnos, cursos, clases y talleres), los roles y el administrador inicial.
+
+Si ya tenías la base instalada antes del bonus de academia, no la recrees: ejecuta una vez [`backend/Persistence/SQL/agregar-bonus-academia.sql`](backend/Persistence/SQL/agregar-bonus-academia.sql), que agrega solo lo nuevo (se puede pegar completo en la consola SQL y repetir sin riesgo).
 
 ### 3. Agregar las credenciales del backend
 

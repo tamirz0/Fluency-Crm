@@ -24,6 +24,7 @@ Plan del 09/11/2026: [plan.md](plan.md). **Plan aprobado; B01–B17 implementada
 - [x] [B18 — Cierre y verificación integral](#b18)
 - [x] [B19 — Ajustes tras la revisión del usuario](#b19)
 - [x] [B20 — Inicio del Profesor](#b20)
+- [x] [B21 — Scripts SQL de instalación y actualización](#b21)
 
 ## Detalle
 
@@ -377,6 +378,16 @@ Plan del 09/11/2026: [plan.md](plan.md). **Plan aprobado; B01–B17 implementada
 - [x] `/inicio` para quien no tiene acceso comercial muestra «Hola, nombre», las dos cifras, tres listas con enlace a cada clase, aviso si no marcó niveles y reintento ante error (un error no se muestra como cero). «Inicio» aparece en su menú.
 
 **Evidencia (09/11/2026):** `ProfesorResumenTests`, `ProfesoresTests` y `HttpContractTests` 21/21; frontend 190/190, build y lint sin advertencias nuevas; `schema.d.ts` regenerado. Sin merge ni publicación.
+
+<a id="b21"></a>
+
+### B21 — Scripts SQL de instalación y actualización
+
+- [x] `creacion-tablas.sql` (base nueva) incluye el bonus: esquema, rol Profesor y luego el administrador.
+- [x] `agregar-bonus-academia.sql` (base ya instalada): una transacción, repetible, sin ediciones previas, con consulta de verificación final. Pensado para pegar en la consola SQL de producción o de un compañero.
+- [x] `ScriptsSqlTests` compara `creacion-tablas.sql` con los scripts fuente (en orden) y aplica dos veces el script de actualización sobre una base sin bonus, comprobando el estado y las reglas.
+
+**Evidencia (09/11/2026):** suite backend completa 191/191 (12 min 47 s) antes de este cambio; después `ScriptsSqlTests`, `SchemaTests` y `BonusSchemaTests` 26/26. Los scripts no se ejecutaron contra ninguna base real.
 
 ## Registro de cambios
 

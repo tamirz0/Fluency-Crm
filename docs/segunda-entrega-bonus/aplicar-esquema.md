@@ -2,6 +2,8 @@
 
 Fecha: 09/11/2026. **Preparado, no ejecutado en ninguna base real por el agente.** Los scripts son aditivos: no borran ni modifican datos existentes y se rechazan si ya fueron aplicados.
 
+**Atajo para pegar en la consola SQL (producción, compañeros):** [`agregar-bonus-academia.sql`](../../backend/Persistence/SQL/agregar-bonus-academia.sql) hace todo lo de las dos filas siguientes en una sola transacción, sin editar nada y repetible; termina con una consulta de verificación. Para una base nueva alcanza con [`creacion-tablas.sql`](../../backend/Persistence/SQL/creacion-tablas.sql), que ya incluye el bonus. Una prueba comprueba que ambos sigan al esquema vigente.
+
 | Orden | Archivo | Qué hace |
 |---|---|---|
 | 1 | `backend/Persistence/SQL/segunda-entrega-bonus.sql` | `servicio.es_taller` y las tablas `profesor_nivel`, `curso`, `alumno`, `clase`, `clase_alumno`, `taller` y `taller_inscripcion`. |
@@ -23,8 +25,8 @@ El script verifica estado y puerto del contenedor, la base `fluency_segunda_entr
 
 1. **Copia de seguridad** o punto de restauración previo (pendiente de [publicación §10](../segunda-entrega/publicacion-azure.md): PITR/RPO).
 2. Verificar que la base destino es la publicada y que el esquema base está instalado (`SELECT to_regclass('alumno')` debe devolver `NULL`).
-3. Ejecutar los dos scripts, en ese orden, en una transacción: `BEGIN; SET LOCAL search_path = public; SELECT set_config('fluency.target_database', current_database(), true);` y luego el contenido de cada archivo, y `COMMIT;`.
-4. Comprobar: `SELECT nombre FROM rol` incluye `PROFESOR`; `SELECT count(*) FROM information_schema.tables WHERE table_name IN ('alumno','curso','clase','clase_alumno','taller','taller_inscripcion','profesor_nivel')` devuelve 7.
+3. Pegar y ejecutar completo `agregar-bonus-academia.sql` (ya trae `BEGIN`/`COMMIT` y no necesita editarse). Alternativa con las guardas de destino: los dos scripts de la tabla, en ese orden, en una transacción con `SET LOCAL search_path = public;` y `set_config('fluency.target_database', current_database(), true)`.
+4. Comprobar (el script devuelve estos conteos al final): `SELECT nombre FROM rol` incluye `PROFESOR`; `SELECT count(*) FROM information_schema.tables WHERE table_name IN ('alumno','curso','clase','clase_alumno','taller','taller_inscripcion','profesor_nivel')` devuelve 7.
 5. **Después** del esquema, desplegar el backend y el frontend nuevos. El orden inverso deja la API sin tablas.
 6. Crear al menos una cuenta con rol Profesor desde Usuarios y pedirle que marque sus niveles en Mi perfil.
 

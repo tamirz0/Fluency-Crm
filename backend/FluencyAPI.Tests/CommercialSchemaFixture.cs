@@ -14,6 +14,9 @@ internal sealed class CommercialSchemaFixture : IAsyncDisposable
         "permiso", "rol", "usuario", "probe"
     ];
 
+    internal static readonly string[] BonusTables =
+        ["taller_inscripcion", "taller", "clase_alumno", "clase", "alumno", "curso", "profesor_nivel"];
+
     private readonly TestDatabaseSettings settings = TestDatabaseSettings.Load();
     private uint? databaseOid;
     private uint? schemaOid;
@@ -24,7 +27,10 @@ internal sealed class CommercialSchemaFixture : IAsyncDisposable
     internal static string Script(string name) => File.ReadAllText(
         Path.Combine(AppContext.BaseDirectory, "SQL", $"segunda-entrega-{name}.sql"));
 
-    internal async Task InitializeAsync(bool commercial = true)
+    /// <summary>Script de instalación o de actualización que no sigue el prefijo segunda-entrega-.</summary>
+    internal static string ScriptFile(string fileName) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "SQL", fileName));
+
+    internal async Task InitializeAsync(bool commercial = true, bool bonus = true)
     {
         if (schemaOid is not null) throw new InvalidOperationException("Fixture ya preparado.");
         await using var connection = await OpenAsync(requireSchema: false);
@@ -35,11 +41,11 @@ internal sealed class CommercialSchemaFixture : IAsyncDisposable
             await SetTargetAsync(connection, transaction);
             await ExecuteAsync(connection, Script("esquema"), transaction);
             await ExecuteAsync(connection, Script("catalogos"), transaction);
-            await ExecuteAsync(connection, Script("bonus"), transaction);
+            if (bonus) await ExecuteAsync(connection, Script("bonus"), transaction);
         }
         await ExecuteAsync(connection, "CREATE TABLE probe (id uuid PRIMARY KEY)", transaction);
         var owned = await ReadResourcesAsync(connection, transaction);
-        var expected = commercial ? TablesInDropOrder : ["probe"];
+        var expected = commercial ? (bonus ? TablesInDropOrder : TablesInDropOrder.Except(BonusTables).ToArray()) : ["probe"];
         if (!owned.Tables.Keys.Order().SequenceEqual(expected.Order()))
             throw new InvalidOperationException("El SQL no creó el manifiesto comercial esperado.");
         await transaction.CommitAsync();
