@@ -19,6 +19,7 @@ beforeEach(() => {
     const path = new URL(request.url).pathname
     if (path.endsWith('/csrf')) return json({ requestToken: 'csrf-test' })
     if (path.endsWith('/login')) { authenticated = true; return json(session) }
+    if (path.endsWith('/inicio/resumen')) return json({ alumnos: 0, oportunidadesAbiertas: 0, cerradasEsteMes: 0 })
     if (path.endsWith('/logout')) { authenticated = false; return new Response(null, { status: 204 }) }
     return authenticated ? json(session) : json({ detail: 'Sesión vencida' }, 401)
   }))

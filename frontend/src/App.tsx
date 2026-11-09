@@ -1,9 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { Typography, Box } from '@mui/material'
 import { AuthenticatedShell } from './app/AuthenticatedShell'
 import { ProtectedRoute } from './app/ProtectedRoute'
 import { LoginPage } from './features/login/LoginPage'
-import { useAuth } from './auth/useAuth'
+import { HomePage } from './features/home/HomePage'
+import { ProfilePage } from './features/profile/ProfilePage'
 import { UsersPage } from './features/settings/UsersPage'
 import { CatalogsPage } from './features/settings/CatalogsPage'
 import { ServicesPage } from './features/services/ServicesPage'
@@ -18,15 +18,12 @@ import { OpportunitiesPage } from './features/opportunities/OpportunitiesPage'
 import { FunnelPage } from './features/funnel/FunnelPage'
 import { EditOpportunityPage, NewOpportunityPage } from './features/opportunities/OpportunityFormPage'
 import { OpportunityDetailPage } from './features/opportunities/OpportunityDetailPage'
-function AccessHome() {
-  const { user } = useAuth()
-  return <Box sx={{ p: { xs: 3, md: 5 }, maxWidth: 1440, mx: 'auto' }}><Typography component="h1" className="companies-page-title">Hola, {user?.nombre}</Typography><Typography sx={{ mt: 2 }}>Bienvenido a Fluency CRM.</Typography></Box>
-}
 function App() {
   return <Routes>
     <Route path="/login" element={<LoginPage />} />
     <Route element={<ProtectedRoute />}><Route element={<AuthenticatedShell />}>
-      <Route path="/inicio" element={<AccessHome />} />
+      <Route path="/inicio" element={<HomePage />} />
+      <Route path="/perfil" element={<ProfilePage />} />
       <Route path="/empresas" element={<CompaniesPage />} />
       <Route path="/empresas/nueva" element={<NewCompanyPage />} />
       <Route path="/empresas/:idEmpresa" element={<CompanyDetailPage />} />

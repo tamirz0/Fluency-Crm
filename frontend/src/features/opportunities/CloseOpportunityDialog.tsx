@@ -13,7 +13,8 @@ const today = () => { const now = new Date(); return `${now.getFullYear()}-${Str
 
 /**
  * Cierra una abierta como ganada (fecha y valor final, cero válido) o perdida (fecha y motivo activo). Es el único camino a las
- * etapas finales: el movimiento entre etapas no las admite. El servidor vuelve a validar permiso, estado y datos.
+ * etapas finales: el movimiento entre etapas no las admite. Si el resultado ya viene decidido (arrastre o etapa final elegida) se muestra fijo; el cierre
+ * genérico lo pide. El servidor vuelve a validar permiso, estado y datos.
  */
 export function CloseOpportunityDialog({ item, initialResult, open, onClose, onDone }: {
   item: Oportunidad; initialResult?: CloseResult; open: boolean; onClose: () => void; onDone: (saved: Oportunidad) => void
@@ -52,10 +53,12 @@ export function CloseOpportunityDialog({ item, initialResult, open, onClose, onD
     <DialogTitle id="close-opportunity-title">Cerrar oportunidad</DialogTitle>
     <DialogContent className="funnel-dialog-content">
       <Typography className="funnel-selected-title">{item.tituloVisible}</Typography>
-      <TextField select fullWidth required label="Resultado" value={result} onChange={event => setResult(event.target.value as CloseResult)} disabled={mutation.isPending}>
-        <MenuItem value="GANADA">Ganada</MenuItem>
-        <MenuItem value="PERDIDA">Perdida</MenuItem>
-      </TextField>
+      {initialResult
+        ? <Typography>Resultado: <strong>{initialResult === 'GANADA' ? 'Ganada' : 'Perdida'}</strong></Typography>
+        : <TextField select fullWidth required label="Resultado" value={result} onChange={event => setResult(event.target.value as CloseResult)} disabled={mutation.isPending}>
+          <MenuItem value="GANADA">Ganada</MenuItem>
+          <MenuItem value="PERDIDA">Perdida</MenuItem>
+        </TextField>}
       <TextField label="Fecha de cierre" type="date" required fullWidth value={date} onChange={event => setDate(event.target.value)} error={Boolean(dateError)} helperText={dateError}
         slotProps={{ inputLabel: { shrink: true } }} />
       {result === 'GANADA' && <TextField label="Valor final" required fullWidth value={value} onChange={event => setValue(event.target.value)} error={Boolean(valueError)}

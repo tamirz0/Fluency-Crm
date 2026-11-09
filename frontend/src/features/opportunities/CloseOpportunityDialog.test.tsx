@@ -47,6 +47,8 @@ const setDate = (value: string) => fireEvent.change(screen.getByLabelText(/Fecha
 describe('cierre de oportunidades', () => {
   it('gana con fecha y valor final, acepta cero y envía solo los datos del cierre', async () => {
     const { onDone } = await renderDialog('GANADA')
+    expect(screen.queryByRole('combobox', { name: /Resultado/ })).toBeNull()
+    expect(screen.getByText('Ganada')).toBeTruthy()
     const actor = userEvent.setup()
     expect((screen.getByLabelText(/Valor final/) as HTMLInputElement).value).toBe('150')
     setDate('2026-12-01')

@@ -72,6 +72,7 @@ builder.Services.AddDbContext<FluencyLocalDbContext>(options =>
 
 builder.Services.AddScoped<IOportunidadService, OportunidadService>();
 builder.Services.AddScoped<IActividadService, ActividadService>();
+builder.Services.AddScoped<InicioService>();
 builder.Services.AddScoped<HistorialComercialService>();
 builder.Services.AddScoped<IContactoService, ContactoService>();
 builder.Services.AddScoped<IEmpresaService, EmpresaService>();

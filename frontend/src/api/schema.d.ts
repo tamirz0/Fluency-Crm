@@ -3401,6 +3401,55 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/inicio/resumen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cifras globales del inicio (alumnos, oportunidades abiertas y cerradas este mes); lectura compartida por los roles autenticados. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["InicioResumenResponse"];
+                        "application/json": components["schemas"]["InicioResumenResponse"];
+                        "text/json": components["schemas"]["InicioResumenResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/csrf": {
         parameters: {
             query?: never;
@@ -6513,6 +6562,18 @@ export interface components {
             idUsuario: number | string;
             usuarioNombre: string;
             observacion: null | string;
+        };
+        /**
+         * @description Cifras globales del inicio. Alumnos: contactos vigentes en estado Cliente. Abiertas: oportunidades vigentes en etapa ABIERTA.
+         *     Cerradas este mes: vigentes hoy GANADA o PERDIDA con fecha de cierre en el mes calendario actual de Buenos Aires.
+         */
+        InicioResumenResponse: {
+            /** Format: int32 */
+            alumnos: number | string;
+            /** Format: int32 */
+            oportunidadesAbiertas: number | string;
+            /** Format: int32 */
+            cerradasEsteMes: number | string;
         };
         /** @description Credenciales de acceso; no admite campos de identidad o permisos elegidos por el cliente. */
         LoginRequest: {

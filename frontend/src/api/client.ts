@@ -317,6 +317,8 @@ export function setCatalogOptionActive(catalogo: ConfigurableCatalog, id: Catalo
     ? getResponseData(() => api.POST('/catalogos/{catalogo}/{id}/reactivar', { params: { path } }))
     : getResponseData(() => api.POST('/catalogos/{catalogo}/{id}/desactivar', { params: { path } }))
 }
+export type InicioResumen = components['schemas']['InicioResumenResponse']
+export function getHomeSummary() { return getResponseData(() => api.GET('/inicio/resumen')) }
 export function getOpportunityStates() { return getResponseData(() => api.GET('/estados-oportunidad')) }
 
 export function listServices(query: CatalogQuery = {}) {
