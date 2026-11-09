@@ -4,7 +4,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
 import { Link as RouterLink, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Edit } from '@mui/icons-material'
-import { ApiRequestError, contactoQueryKeys, deleteContact, getContact, type Contacto } from '../../api/client'
+import { ApiRequestError, contactoQueryKeys, deleteContact, getContact, getContactAcademic, type Contacto } from '../../api/client'
+import { AttendanceSummary } from '../students/AttendanceSummary'
 import { CompanyStatus } from '../companies/CompanyStatus'
 import { contactFullName, displayValue, parsePositiveId } from '../shared/display'
 import { useAuth } from '../../auth/useAuth'
@@ -55,6 +56,7 @@ export function ContactDetailPage() {
   const idContacto = parsePositiveId(routeId)
   const query = useQuery({ queryKey: contactoQueryKeys.detail(idContacto ?? 0), queryFn: () => getContact(idContacto as number), enabled: idContacto !== undefined })
 
+  const academic = useQuery({ queryKey: [...contactoQueryKeys.detail(idContacto ?? 0), 'academico'], queryFn: () => getContactAcademic(idContacto as number), enabled: idContacto !== undefined, retry: false })
   if (idContacto === undefined || (query.isError && query.error instanceof ApiRequestError && query.error.status === 404)) return <Box className="companies-page company-result-page records-page"><Link component={RouterLink} to="/contactos" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a contactos</Link><section className="company-feedback"><Typography component="h1" className="company-feedback-title">No encontramos ese contacto</Typography><Typography color="text.secondary">El enlace puede estar vencido o el contacto ya no está disponible.</Typography></section></Box>
   if (query.isPending) return <Box className="companies-page company-result-page records-page"><ContactSkeleton /></Box>
   if (query.isError) return <Box className="companies-page company-result-page records-page"><Link component={RouterLink} to="/contactos" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a contactos</Link><section className="company-feedback"><Typography component="h1" className="company-feedback-title">No pudimos cargar los datos del contacto</Typography><Typography color="text.secondary">Revisá la conexión e intentá de nuevo.</Typography><div className="company-feedback-actions"><Button onClick={() => void query.refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button><Button component={RouterLink} to="/contactos">Volver al listado</Button></div></section></Box>
@@ -69,6 +71,7 @@ export function ContactDetailPage() {
         navigate('/contactos', { state: { confirmation: confirmationFor('Contacto', 'dado de baja') } })
         void queryClient.invalidateQueries({ queryKey: contactoQueryKeys.all, refetchType: 'inactive' })
       }} /></>} />
+    {academic.data?.alumno && <AttendanceSummary data={academic.data.alumno} />}
     <CommercialHistory kind="contactos" id={Number(contact.id)} />
   </Box>
 }

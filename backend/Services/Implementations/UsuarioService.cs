@@ -8,7 +8,7 @@ namespace Services.Implementations;
 
 public sealed class UsuarioService(FluencyLocalDbContext db, ActorActual actor)
 {
-    private static readonly string[] KnownRoles = [RolesYPermisos.Administrador, RolesYPermisos.ResponsableComercial, RolesYPermisos.Vendedor];
+    private static readonly string[] KnownRoles = [RolesYPermisos.Administrador, RolesYPermisos.ResponsableComercial, RolesYPermisos.Vendedor, RolesYPermisos.Profesor];
     private static readonly System.Linq.Expressions.Expression<Func<Usuario, UsuarioResponse>> Response = u => new UsuarioResponse(
         u.Id, u.Nombre, u.Apellido, u.Correo, u.Username, u.Activo,
         u.UsuarioRoles.Select(j => j.IdRolNavigation.Nombre).OrderBy(n => n).ToArray(),

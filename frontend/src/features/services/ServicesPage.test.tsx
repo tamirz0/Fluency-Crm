@@ -92,3 +92,16 @@ it('deniega la pantalla y oculta el enlace a operadores', async () => {
   expect(screen.queryByRole('link', { name: 'Servicios' })).toBeNull()
   expect(vi.mocked(fetch).mock.calls.some(([r]) => new URL((r as Request).url).pathname === '/api/servicios')).toBe(false)
 })
+it('envia la casilla Es taller y la muestra en el listado', async () => {
+  mount(); await userEvent.click(await screen.findByRole('button', { name: 'Nuevo servicio' }))
+  const d = within(screen.getByRole('dialog'))
+  await userEvent.type(d.getByLabelText('Nombre', { exact: false }), 'Taller de conversación')
+  await userEvent.type(d.getByLabelText('Precio de referencia', { exact: false }), '20')
+  const box = d.getByRole('checkbox', { name: /Es un taller/ }) as HTMLInputElement
+  expect(box.checked).toBe(false)
+  await userEvent.click(box)
+  await userEvent.click(d.getByRole('button', { name: 'Guardar' }))
+  expect(await screen.findByText(/Taller de conversación/)).toBeTruthy()
+  const calls = vi.mocked(fetch).mock.calls.filter(([r]) => (r as Request).method === 'POST' && new URL((r as Request).url).pathname === '/api/servicios')
+  expect(await (calls[0][0] as Request).clone().json()).toMatchObject({ esTaller: true })
+})

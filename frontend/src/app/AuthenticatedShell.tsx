@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Box, Button, Divider, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography } from '@mui/material'
-import { Business, Contacts, Dashboard, Logout, Menu, Timeline, ViewKanban, ManageAccounts, Settings } from '@mui/icons-material'
+import { Business, CalendarMonth, Contacts, Dashboard, MenuBook, School, Groups, Event, Logout, Menu, Timeline, ViewKanban, ManageAccounts, Settings } from '@mui/icons-material'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
+import { canUseAcademy, canUseCommercial } from './navigation'
 
 const drawerWidth = 260
 const navigationItemSx = {
@@ -28,15 +29,25 @@ function NavigationContent({ onNavigate }: { onNavigate?: () => void }) {
   const { logout, user } = useAuth()
   const [closing, setClosing] = useState(false)
   const fullName = `${user?.nombre ?? ''} ${user?.apellido ?? ''}`.trim()
+  const canCommercial = canUseCommercial(user)
+  const canAcademy = canUseAcademy(user)
+  const isAdmin = !!user?.roles?.includes('ADMINISTRADOR')
   return <Box sx={{ display: 'flex', height: '100%', flexDirection: 'column' }}>
     <Box sx={{ px: 3, py: 3.25 }}><Typography sx={{ color: 'text.primary', fontSize: '1.35rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Fluency CRM</Typography></Box>
     <Divider />
     <List sx={{ px: 1.5, py: 2 }} aria-label="Navegación principal">
+      {canCommercial && <>
       <ListItemButton component={NavLink} to="/inicio" end onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Dashboard fontSize="small" /></ListItemIcon><ListItemText primary="Inicio" /></ListItemButton>
       <ListItemButton component={NavLink} to="/empresas" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Business fontSize="small" /></ListItemIcon><ListItemText primary="Empresas" /></ListItemButton>
       <ListItemButton component={NavLink} to="/contactos" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Contacts fontSize="small" /></ListItemIcon><ListItemText primary="Contactos" /></ListItemButton>
       <ListItemButton component={NavLink} to="/oportunidades" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Timeline fontSize="small" /></ListItemIcon><ListItemText primary="Oportunidades" /></ListItemButton>
       <ListItemButton component={NavLink} to="/embudo" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><ViewKanban fontSize="small" /></ListItemIcon><ListItemText primary="Embudo" /></ListItemButton>
+      </>}
+      {canAcademy && <ListItemButton component={NavLink} to="/alumnos" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><School fontSize="small" /></ListItemIcon><ListItemText primary="Alumnos" /></ListItemButton>}
+      {canAcademy && <ListItemButton component={NavLink} to="/cursos" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><MenuBook fontSize="small" /></ListItemIcon><ListItemText primary="Cursos" /></ListItemButton>}
+      {canAcademy && <ListItemButton component={NavLink} to="/clases" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><CalendarMonth fontSize="small" /></ListItemIcon><ListItemText primary="Clases" /></ListItemButton>}
+      {canAcademy && <ListItemButton component={NavLink} to="/talleres" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Event fontSize="small" /></ListItemIcon><ListItemText primary="Talleres" /></ListItemButton>}
+      {canAcademy && isAdmin && <ListItemButton component={NavLink} to="/profesores" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Groups fontSize="small" /></ListItemIcon><ListItemText primary="Profesores" /></ListItemButton>}
       {user?.permisos?.includes('AdministrarUsuarios') && <ListItemButton component={NavLink} to="/configuracion/usuarios" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><ManageAccounts fontSize="small" /></ListItemIcon><ListItemText primary="Usuarios" /></ListItemButton>}
       {user?.roles?.includes('ADMINISTRADOR') && user.permisos?.includes('AdministrarConfiguracion') && <ListItemButton component={NavLink} to="/configuracion/catalogos" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Settings fontSize="small" /></ListItemIcon><ListItemText primary="Catálogos" /></ListItemButton>}
       {user?.roles?.includes('ADMINISTRADOR') && user.permisos?.includes('AdministrarConfiguracion') && <ListItemButton component={NavLink} to="/configuracion/servicios" onClick={onNavigate} sx={navigationItemSx}><ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><Settings fontSize="small" /></ListItemIcon><ListItemText primary="Servicios" /></ListItemButton>}

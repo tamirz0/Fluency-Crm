@@ -13,6 +13,8 @@ public sealed class CapacidadesUsuario
     private bool EsSuperior => Roles.Contains(RolesYPermisos.Administrador)
         || Roles.Contains(RolesYPermisos.ResponsableComercial);
 
+    public bool EsProfesor => Roles.Contains(RolesYPermisos.Profesor) && Permisos.Contains(RolesYPermisos.GestionarAcademia);
+    public bool PuedeGestionarAcademia => Permisos.Contains(RolesYPermisos.GestionarAcademia);
     public bool PuedeLeerComercial => Permisos.Contains(RolesYPermisos.ConsultarComercial);
     public bool PuedeGestionarPropias => Permisos.Contains(RolesYPermisos.GestionarOportunidad);
     public bool PuedeGestionarTodas => PuedeGestionarPropias && EsSuperior;
@@ -34,6 +36,6 @@ public sealed class CapacidadesUsuario
 
     public static CapacidadesUsuario Calcular(Usuario usuario) => new(usuario.Activo
         ? usuario.UsuarioRoles.Select(join => join.IdRolNavigation).Where(role => role is not null
-            && role.Nombre is RolesYPermisos.Administrador or RolesYPermisos.ResponsableComercial or RolesYPermisos.Vendedor)
+            && role.Nombre is RolesYPermisos.Administrador or RolesYPermisos.ResponsableComercial or RolesYPermisos.Vendedor or RolesYPermisos.Profesor)
         : []);
 }

@@ -40,6 +40,8 @@ public sealed class InicioTests
         await using (var db = await factory.OpenAsync())
         {
             await CommercialSchemaFixture.ExecuteAsync(db, "INSERT INTO motivo_perdida(descripcion,activo) VALUES ('Precio',true)");
+            // Alumno = contacto cuya oportunidad ganada era un servicio con nivel.
+            await CommercialSchemaFixture.ExecuteAsync(db, "UPDATE servicio SET id_nivel=(SELECT min(id) FROM nivel_ingles) WHERE nombre='Servicio ficticio'");
             reason = await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM motivo_perdida WHERE descripcion='Precio'");
         }
 
@@ -76,7 +78,7 @@ public sealed class InicioTests
             await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE oportunidad SET activo=false WHERE id={removed}");
 
         // Abiertas: 2 + la reabierta. Cerradas del mes: primer y último día; no el mes anterior, el siguiente, la reabierta ni la eliminada.
-        // Alumnos: solo el contacto promovido al ganar; la empresa Cliente y el contacto dado de baja no cuentan.
+        // Alumnos: solo el contacto que ganó un servicio con nivel; la empresa Cliente y el contacto dado de baja no cuentan.
         Assert.Equal((1, 3, 2), await Summary(seller));
         Assert.Equal((1, 3, 2), await Summary(admin));
 

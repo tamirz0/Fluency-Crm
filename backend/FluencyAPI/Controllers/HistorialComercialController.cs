@@ -1,3 +1,5 @@
+using Services.Acceso;
+using Microsoft.AspNetCore.Authorization;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Services.DTO;
@@ -6,6 +8,7 @@ using Services.Implementations;
 namespace FluencyAPI.Controllers;
 
 /// <summary>Historial comercial combinado (actividades y transiciones de etapa): una proyección de lectura compartida por todos los usuarios activos.</summary>
+[Authorize(Policy = RolesYPermisos.ConsultarComercial)]
 [ApiController]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 [TypeFilter(typeof(OportunidadErrors))]

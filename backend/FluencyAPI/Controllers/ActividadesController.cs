@@ -1,3 +1,5 @@
+using Services.Acceso;
+using Microsoft.AspNetCore.Authorization;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Services.DTO;
@@ -5,6 +7,7 @@ using Services.Interface;
 
 namespace FluencyAPI.Controllers;
 
+[Authorize(Policy = RolesYPermisos.ConsultarComercial)]
 [ApiController, Route("actividades")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 [TypeFilter(typeof(OportunidadErrors))]

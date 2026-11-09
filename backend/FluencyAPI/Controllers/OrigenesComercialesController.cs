@@ -1,9 +1,12 @@
+using Services.Acceso;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.DTO;
 using Services.Interface;
 
 namespace FluencyAPI.Controllers;
 
+[Authorize(Policy = RolesYPermisos.ConsultarComercial)]
 [ApiController]
 [Route("[controller]")]
 public sealed class OrigenesComercialesController(IOrigenComercialService service) : ControllerBase

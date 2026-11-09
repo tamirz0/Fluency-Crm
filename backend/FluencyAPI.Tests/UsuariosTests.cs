@@ -27,7 +27,7 @@ public sealed class UsuariosTests
     {
         await using var factory = new AuthApiFactory(); await factory.InitializeAsync();
         using var admin = factory.Client(); await SignIn(admin, factory);
-        var roles = await admin.GetFromJsonAsync<JsonElement>("/roles"); Assert.Equal(3, roles.GetArrayLength());
+        var roles = await admin.GetFromJsonAsync<JsonElement>("/roles"); Assert.Equal(4, roles.GetArrayLength());
         using var created = await admin.PostAsJsonAsync("/usuarios", Account());
         Assert.Equal(HttpStatusCode.Created, created.StatusCode); Assert.NotNull(created.Headers.Location);
         var user = (await created.Content.ReadFromJsonAsync<UsuarioResponse>())!;

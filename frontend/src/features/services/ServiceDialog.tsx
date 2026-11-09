@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, MenuItem, TextField, Typography } from '@mui/material'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -13,18 +13,18 @@ const schema = z.object({
   descripcion: z.string(),
   precioReferencia: z.string().trim().refine(v => /^\d+([.,]\d{1,2})?$/.test(v) && Number(v.replace(',', '.')) <= 9999999999.99, 'Ingresá un precio no negativo, hasta 9999999999.99 y con hasta dos decimales.'),
   duracionHoras: z.string().trim().refine(v => v === '' || /^-?\d+$/.test(v) && Number(v) >= -2147483648 && Number(v) <= 2147483647, 'Ingresá una cantidad de horas entera válida.'),
-  idNivel: z.string(), idModalidad: z.string(),
+  idNivel: z.string(), idModalidad: z.string(), esTaller: z.boolean(),
 })
 type Values = z.infer<typeof schema>
 function payload(v: Values): ServicioRequest {
-  return { nombre: v.nombre.trim(), descripcion: v.descripcion.trim() || null, precioReferencia: Number(v.precioReferencia.replace(',', '.')), duracionHoras: v.duracionHoras === '' ? null : Number(v.duracionHoras), idNivel: v.idNivel === '' ? null : Number(v.idNivel), idModalidad: v.idModalidad === '' ? null : Number(v.idModalidad) }
+  return { nombre: v.nombre.trim(), descripcion: v.descripcion.trim() || null, precioReferencia: Number(v.precioReferencia.replace(',', '.')), duracionHoras: v.duracionHoras === '' ? null : Number(v.duracionHoras), idNivel: v.idNivel === '' ? null : Number(v.idNivel), idModalidad: v.idModalidad === '' ? null : Number(v.idModalidad), esTaller: v.esTaller }
 }
 export function ServiceDialog({ mode, item, onClose, onSaved }: { mode: ServiceAction; item?: Servicio; onClose: () => void; onSaved: () => void }) {
   const { isLoading } = useAuth()
   const client = useQueryClient()
   const pending = useRef(false)
   const [error, setError] = useState('')
-  const defaults = { nombre: item?.nombre ?? '', descripcion: item?.descripcion ?? '', precioReferencia: item ? String(item.precioReferencia) : '', duracionHoras: item?.duracionHoras == null ? '' : String(item.duracionHoras), idNivel: item?.nivel ? String(item.nivel.id) : '', idModalidad: item?.modalidad ? String(item.modalidad.id) : '' }
+  const defaults = { nombre: item?.nombre ?? '', descripcion: item?.descripcion ?? '', precioReferencia: item ? String(item.precioReferencia) : '', duracionHoras: item?.duracionHoras == null ? '' : String(item.duracionHoras), idNivel: item?.nivel ? String(item.nivel.id) : '', idModalidad: item?.modalidad ? String(item.modalidad.id) : '', esTaller: item?.esTaller ?? false }
   const { register, control, handleSubmit, formState: { errors, isSubmitting, isDirty } } = useForm({ resolver: zodResolver(schema), defaultValues: defaults })
   const levels = useQuery({ queryKey: ['catalogos', 'niveles-ingles', 'opciones'], queryFn: () => getCatalogOptions('niveles-ingles'), enabled: mode !== 'active' })
   const modalities = useQuery({ queryKey: ['catalogos', 'modalidades', 'opciones'], queryFn: () => getCatalogOptions('modalidades'), enabled: mode !== 'active' })
@@ -64,6 +64,7 @@ export function ServiceDialog({ mode, item, onClose, onSaved }: { mode: ServiceA
               {query.data?.map(x => <MenuItem key={x.id} value={String(x.id)}>{x.descripcion}</MenuItem>)}
             </TextField>} />
           </Box>)}
+          <Controller name="esTaller" control={control} render={({ field: input }) => <FormControlLabel label="Es un taller (fecha única; al ganarlo no se crea un alumno)" control={<Checkbox checked={input.value} onChange={event => input.onChange(event.target.checked)} disabled={isSubmitting || isLoading} />} />} />
         </>}
       </DialogContent>
       <DialogActions><Button disabled={isSubmitting} onClick={onClose}>Cancelar</Button><Button disabled={isSubmitting || isLoading || mode === 'edit' && !isDirty} type="submit" variant="contained">{isSubmitting ? 'Guardando…' : mode === 'active' ? 'Confirmar' : 'Guardar'}</Button></DialogActions>

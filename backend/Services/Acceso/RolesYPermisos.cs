@@ -5,6 +5,7 @@ public static class RolesYPermisos
     public const string Administrador = "ADMINISTRADOR";
     public const string ResponsableComercial = "RESPONSABLE_COMERCIAL";
     public const string Vendedor = "VENDEDOR";
+    public const string Profesor = "PROFESOR";
 
     public const string ConsultarComercial = "ConsultarComercial";
     public const string GestionarClientes = "GestionarClientes";
@@ -13,4 +14,7 @@ public static class RolesYPermisos
     public const string ReabrirOportunidad = "ReabrirOportunidad";
     public const string AdministrarUsuarios = "AdministrarUsuarios";
     public const string AdministrarConfiguracion = "AdministrarConfiguracion";
+    public const string GestionarAcademia = "GestionarAcademia";
+    // Solo política (no es un permiso persistido): Administrador con GestionarAcademia.
+    public const string AdministrarProfesores = "AdministrarProfesores";
 }

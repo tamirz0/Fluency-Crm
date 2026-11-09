@@ -1,3 +1,5 @@
+using Services.Acceso;
+using Microsoft.AspNetCore.Authorization;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -7,6 +9,7 @@ using Services.Interface;
 
 namespace FluencyAPI.Controllers;
 
+[Authorize(Policy = RolesYPermisos.ConsultarComercial)]
 [ApiController, Route("empresas")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 [TypeFilter(typeof(EmpresaErrors))]

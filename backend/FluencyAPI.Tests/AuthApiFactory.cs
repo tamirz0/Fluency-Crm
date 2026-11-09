@@ -25,6 +25,7 @@ internal sealed class AuthApiFactory : WebApplicationFactory<Program>
         await using var transaction = await connection.BeginTransactionAsync();
         await CommercialSchemaFixture.SetTargetAsync(connection, transaction);
         await CommercialSchemaFixture.ExecuteAsync(connection, CommercialSchemaFixture.Script("roles"), transaction);
+        await CommercialSchemaFixture.ExecuteAsync(connection, CommercialSchemaFixture.Script("bonus-roles"), transaction);
         // Low work factor for fictitious fixture accounts only; product bootstrap remains cost 12.
         var hash = BCrypt.Net.BCrypt.HashPassword(Password, 4);
         foreach (var role in new[] { RolesYPermisos.Administrador, RolesYPermisos.Vendedor })

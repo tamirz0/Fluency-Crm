@@ -88,7 +88,7 @@ describe('consultas comerciales', () => {
     expect(screen.getByText('Fecha de creación', { selector: 'dt' })).toBeTruthy()
     expect(screen.getByText(/Primera línea\s+Segunda línea/)).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Volver a contactos' })).toBeTruthy()
-    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(fetch).toHaveBeenCalledTimes(3)
   })
 
   it('no consulta un id inválido y representa el 404 como contacto inexistente', async () => {
