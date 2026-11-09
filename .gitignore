@@ -11,3 +11,6 @@ node_modules/
 
 # imágenes y otras cosas de referencia
 Referencias/
+
+# Datos sensibles
+PublishProfiles/

@@ -55,7 +55,7 @@ public sealed class InicioTests
         string Win(DateOnly date) => $$"""{"fechaCierre":"{{date:yyyy-MM-dd}}","valor":1}""";
         string Lose(DateOnly date) => $$"""{"fechaCierre":"{{date:yyyy-MM-dd}}","idMotivoPerdida":{{reason}}}""";
         async Task<int> NewAsync(string title, int? contact = null) => await CreateAsync(seller, contact is null
-            ? new { titulo = title, idEmbudo = seed.Funnel, idEmpresa = seed.CompanyB } : new { titulo = title, idEmbudo = seed.Funnel, idEmpresa = seed.CompanyB, idContacto = contact });
+            ? new { titulo = title, idEmbudo = seed.Funnel, idEmpresa = seed.CompanyB } : new { titulo = title, idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idContacto = contact });
 
         await NewAsync("Abierta 1");
         await NewAsync("Abierta 2");
