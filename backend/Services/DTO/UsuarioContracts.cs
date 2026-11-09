@@ -45,6 +45,21 @@ public sealed record PatchUsuarioRequest : PatchRequest
         if (HasField(nameof(Roles)) && (Roles is null || Roles.Length == 0)) yield return new ValidationResult("Debe asignar al menos un rol.", [nameof(Roles)]);
     }
 }
+/// <summary>Datos que cada usuario puede editar de su propia cuenta; omisión conserva. Roles, estado y contraseña siguen siendo administrativos.</summary>
+public sealed record PatchPerfilRequest : PatchRequest
+{
+    private string? nombre, apellido, correo, username;
+    [MaxLength(100)] public string? Nombre { get => nombre; init { nombre = value; ProvidedFields.Add(nameof(Nombre)); } }
+    [MaxLength(100)] public string? Apellido { get => apellido; init { apellido = value; ProvidedFields.Add(nameof(Apellido)); } }
+    [MaxLength(150), EmailAddress] public string? Correo { get => correo; init { correo = value; ProvidedFields.Add(nameof(Correo)); } }
+    [MaxLength(50)] public string? Username { get => username; init { username = value; ProvidedFields.Add(nameof(Username)); } }
+    public override IEnumerable<ValidationResult> Validate(ValidationContext context)
+    {
+        foreach (var error in base.Validate(context)) yield return error;
+        foreach (var (field, value) in new[] { (nameof(Nombre), Nombre), (nameof(Apellido), Apellido), (nameof(Correo), Correo), (nameof(Username), Username) })
+            if (HasField(field) && string.IsNullOrWhiteSpace(value)) yield return new ValidationResult("El campo es obligatorio.", [field]);
+    }
+}
 /// <summary>Reemplaza la contraseña sin modificar el perfil.</summary>
 public sealed record UsuarioPasswordRequest : IValidatableObject
 {

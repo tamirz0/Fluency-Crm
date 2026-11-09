@@ -5,6 +5,7 @@ import dayjs from 'dayjs'
 import { useState } from 'react'
 import { Link as RouterLink, useParams } from 'react-router-dom'
 import { ApiRequestError, getLesson, lessonQueryKeys, saveAttendance, saveGrades, type ClaseDetalle } from '../../api/client'
+import { ClassDialog } from './ClassDialog'
 import { parsePositiveId } from '../shared/display'
 import '../companies/companies.css'
 import '../contacts/records.css'
@@ -64,6 +65,7 @@ function Sheet({ lesson }: { lesson: ClaseDetalle }) {
 export function ClassDetailPage() {
   const { idClase: routeId } = useParams()
   const id = parsePositiveId(routeId)
+  const [editing, setEditing] = useState(false)
   const query = useQuery({ queryKey: lessonQueryKeys.detail(id ?? 0), queryFn: () => getLesson(id as number), enabled: id !== undefined })
   const back = <Link component={RouterLink} to="/clases" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a clases</Link>
   if (id === undefined || (query.isError && query.error instanceof ApiRequestError && query.error.status === 404))
@@ -73,9 +75,13 @@ export function ClassDetailPage() {
   const { clase } = query.data
   return <Box className="companies-page company-result-page records-page">
     {back}
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
     <Typography component="h1" className="companies-page-title">{clase.titulo}{clase.esExamen && <Chip color="warning" label="Examen" sx={{ ml: 2, verticalAlign: 'middle' }} />}</Typography>
+    <Button variant="outlined" onClick={() => setEditing(true)}>Editar clase</Button>
+    </Box>
     <Typography className="companies-page-description">{dayjs(clase.fecha).locale('es').format('dddd D [de] MMMM [de] YYYY')} · {clase.horaInicio.slice(0, 5)} a {clase.horaFin.slice(0, 5)} · <Link component={RouterLink} to={`/cursos/${clase.curso.id}`} underline="hover">{clase.curso.descripcion}</Link> · {clase.profesor.descripcion}</Typography>
     {clase.esExamen && <Typography sx={{ mt: 1 }}><strong>Temas:</strong> {clase.temasExamen?.trim() || 'Sin temas cargados.'}</Typography>}
     <Box sx={{ mt: 3 }}><Sheet lesson={query.data} /></Box>
+    {editing && <ClassDialog lesson={clase} onClose={() => setEditing(false)} onSaved={() => setEditing(false)} />}
   </Box>
 }

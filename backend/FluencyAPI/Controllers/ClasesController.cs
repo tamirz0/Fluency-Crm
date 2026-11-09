@@ -37,6 +37,12 @@ public sealed class ClasesController(ClaseService clases) : ControllerBase
         return CreatedAtAction(nameof(Get), new { id = result.Clase.Id }, result);
     }
 
+    /// <summary>Edita los datos de la clase (título, fecha, horario y si es examen con sus temas).</summary>
+    [HttpPut("{id:int}")]
+    [ProducesResponseType<ClaseDetalleResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<ClaseDetalleResponse>> Update(int id, [FromBody] UpdateClaseRequest request, CancellationToken ct)
+        => Ok(await clases.UpdateAsync(id, request, ct));
+
     /// <summary>Marca presente o ausente a alumnos del curso de la clase (upsert).</summary>
     [HttpPut("{id:int}/asistencia")]
     [ProducesResponseType<ClaseDetalleResponse>(StatusCodes.Status200OK)]

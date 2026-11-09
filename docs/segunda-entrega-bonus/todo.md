@@ -22,6 +22,7 @@ Plan del 09/11/2026: [plan.md](plan.md). **Plan aprobado; B01–B17 implementada
 - [x] [B16 — Talleres: API](#b16)
 - [x] [B17 — Talleres: pantallas](#b17)
 - [x] [B18 — Cierre y verificación integral](#b18)
+- [x] [B19 — Ajustes tras la revisión del usuario](#b19)
 
 ## Detalle
 
@@ -345,6 +346,23 @@ Plan del 09/11/2026: [plan.md](plan.md). **Plan aprobado; B01–B17 implementada
 **Verificación:** B + F + suites completas + D; sin repetir seguridad si no cambiaron dependencias. Merge y publicación requieren OK específico del usuario.
 
 **Evidencia (09/11/2026):** frontend 179/179, build y lint (solo la advertencia previa de `providers.tsx`). Backend completo: 187/188 en 12 min 6 s; el único fallo (`AuthTests` contaba 7 permisos del administrador, ahora 8 con `GestionarAcademia`) se corrigió y se repitieron `AuthTests`, `ClasesTests`, `ProfesoresTests` y `CursosTests` (16/16). Revisión independiente (solo lectura): sin fugas comerciales ni IDOR; corregidos el rango de la nota y la carrera al quitar niveles; el resto, aceptado y registrado en [plan](plan.md). Guía de esquema y recorrido en [aplicar-esquema.md](aplicar-esquema.md). **Pendiente:** el recorrido manual con tres perfiles en el navegador (requiere aplicar el SQL a la base de desarrollo con `levantar-bonus-academia.ps1`, decisión del usuario) y la revisión visual de landing y calendarios; correo de Contacto (`VITE_CONTACT_EMAIL`) aún sin definir. Sin merge ni publicación.
+
+<a id="b19"></a>
+
+### B19 — Ajustes tras la revisión del usuario
+
+**Resultado:** pedidos del usuario al probar la versión (09/11/2026).
+
+**Aceptación:**
+
+- [x] Mi perfil: cualquier usuario, también el administrador, edita nombre, apellido, correo y usuario (`PATCH /auth/me`, identidad de la sesión); roles, estado y contraseña siguen siendo administrativos.
+- [x] Menú lateral separado por tipo con «línea · Tipo · línea»: Inicio arriba; Comercial (Empresas, Contactos, Oportunidades, Embudo); Academia (Alumnos, Cursos, Clases, Talleres, Profesores); Gestión (Usuarios, Catálogos, Servicios, Embudos y etapas). Un tipo sin entradas visibles no se muestra.
+- [x] Pestaña Profesores: el administrador edita los datos del profesor (mismo diálogo que Usuarios) y sus niveles (`PUT /profesores/{id}/niveles`, sin quitar niveles con cursos).
+- [x] Ficha del alumno sin curso: «Asignar curso» para el profesor (sus cursos) y el administrador (todos los del nivel).
+- [x] Clases: al elegir el curso el título se sugiere como «Curso · Clase N» (editable); al entrar en una clase se editan título, fecha, horario y examen (`PUT /clases/{id}`; el curso no cambia y un examen con notas no deja de serlo).
+- [x] Un curso no puede tener dos clases que se pisen en el horario (409, también al editar; horarios contiguos sí); cursos distintos del mismo nivel pueden coincidir.
+
+**Evidencia (09/11/2026):** backend `EdicionClasesPerfilTests`, `ClasesTests`, `ProfesorAccesoTests`, `AuthTests`, `UsuariosTests`, `HttpContractTests` 39/39 (5 min 13 s); frontend 187/187, build y lint sin advertencias nuevas; `schema.d.ts` regenerado. No se repitió la suite backend completa. Sin merge ni publicación.
 
 ## Registro de cambios
 

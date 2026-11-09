@@ -417,3 +417,14 @@ export function getWorkshopCandidates(id: number) { return getResponseData(() =>
 export function enrollInWorkshop(id: number, idContacto: number) {
   return getResponseData(() => api.POST('/talleres/{id}/inscripciones', { params: { path: { id } }, body: { idContacto } }))
 }
+
+export type PatchPerfilRequest = components['schemas']['PatchPerfilRequest']
+export type UpdateClaseRequest = components['schemas']['UpdateClaseRequest']
+export function patchMyProfile(body: PatchPerfilRequest) { return getResponseData(() => api.PATCH('/auth/me', { body })) }
+export function getUserById(id: number) { return getResponseData(() => api.GET('/usuarios/{id}', { params: { path: { id } } })) }
+export function setTeacherLevelsOf(id: number, idNiveles: number[]) {
+  return getResponseData(() => api.PUT('/profesores/{id}/niveles', { params: { path: { id } }, body: { idNiveles } }))
+}
+export function updateLesson(id: number, body: UpdateClaseRequest) {
+  return getResponseData(() => api.PUT('/clases/{id}', { params: { path: { id } }, body }))
+}

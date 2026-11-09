@@ -34,6 +34,7 @@ beforeEach(() => {
     if (request.method !== 'GET') {
       const body = await request.clone().json(); posted.push({ url: `${request.method} ${path}`, body })
       if (path === '/clases') return json({ clase: lesson({ id: 6 }), alumnos: [] }, 201)
+      if (path === '/clases/5' && request.method === 'PUT') { detail = { ...detail, clase: lesson(body as object) }; return json(detail) }
       return json(detail)
     }
     if (path === '/clases') return json(lessons)
@@ -121,4 +122,34 @@ it('en un examen carga las notas por alumno y rechaza valores fuera de rango', a
   await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
   await waitFor(() => expect(posted).toHaveLength(1))
   expect(posted[0]).toEqual({ url: 'PUT /clases/5/notas', body: { items: [{ idAlumno: 1, nota: 8.5 }] } })
+})
+
+it('al elegir el curso sugiere el título «Curso · Clase N» y respeta el que el usuario escribió', async () => {
+  mount('/clases')
+  await userEvent.click(await screen.findByRole('button', { name: /^Agregar una clase el 15 de/ }))
+  const dialog = within(await screen.findByRole('dialog'))
+  await userEvent.click(dialog.getByLabelText('Curso', { exact: false }))
+  await userEvent.click(await screen.findByRole('option', { name: 'B1 mañana · B1' }))
+  expect((dialog.getByLabelText('Título', { exact: false }) as HTMLInputElement).value).toBe('B1 mañana · Clase 2')
+  await userEvent.clear(dialog.getByLabelText('Título', { exact: false })); await userEvent.type(dialog.getByLabelText('Título', { exact: false }), 'Mi título')
+  await userEvent.click(dialog.getByLabelText('Curso', { exact: false }))
+  await userEvent.click(await screen.findByRole('option', { name: 'B1 mañana · B1' }))
+  expect((dialog.getByLabelText('Título', { exact: false }) as HTMLInputElement).value).toBe('Mi título')
+})
+
+it('al entrar en una clase se pueden editar sus datos, con el curso fijo, y se ve el cambio', async () => {
+  mount('/clases/5')
+  await userEvent.click(await screen.findByRole('button', { name: 'Editar clase' }))
+  const dialog = within(await screen.findByRole('dialog'))
+  expect(dialog.getByText('B1 mañana')).toBeTruthy()
+  expect(dialog.queryByLabelText('Curso', { exact: false })).toBeNull()
+  const title = dialog.getByLabelText('Título', { exact: false })
+  expect((title as HTMLInputElement).value).toBe('Unidad 4')
+  await userEvent.clear(title); await userEvent.type(title, 'Unidad 4 (repaso)')
+  await userEvent.clear(dialog.getByLabelText('Hora de fin', { exact: false })); await userEvent.type(dialog.getByLabelText('Hora de fin', { exact: false }), '12:00')
+  await userEvent.click(dialog.getByRole('button', { name: 'Guardar cambios' }))
+  await waitFor(() => expect(posted).toHaveLength(1))
+  expect(posted[0].url).toBe('PUT /clases/5')
+  expect(posted[0].body).toMatchObject({ titulo: 'Unidad 4 (repaso)', horaInicio: '10:00:00', horaFin: '12:00:00', esExamen: false })
+  expect(await screen.findByRole('heading', { name: 'Unidad 4 (repaso)' })).toBeTruthy()
 })

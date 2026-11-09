@@ -9,7 +9,7 @@ import App from '../../App'
 
 const teacher = { id: 9, nombre: 'Paula', apellido: 'Docente', correo: 'paula@example.com', username: 'paula', activo: true, roles: ['PROFESOR'], permisos: ['GestionarAcademia'] }
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
-const student = { id: 4, idContacto: 11, nombre: 'Ana', apellido: 'Pérez', documento: '30111222', correo: 'ana@example.com', telefono: null, nivel: { id: 2, descripcion: 'A2' }, curso: null, fechaAlta: '2026-11-09T12:00:00Z' }
+const student: { id: number; idContacto: number; nombre: string; apellido: string; documento: string; correo: string; telefono: null; nivel: { id: number; descripcion: string }; curso: { id: number; descripcion: string } | null; fechaAlta: string } = { id: 4, idContacto: 11, nombre: 'Ana', apellido: 'Pérez', documento: '30111222', correo: 'ana@example.com', telefono: null, nivel: { id: 2, descripcion: 'A2' }, curso: null, fechaAlta: '2026-11-09T12:00:00Z' }
 const seller = { id: 3, nombre: 'Vera', apellido: 'Ventas', correo: 'vera@example.com', username: 'vera', activo: true, roles: ['VENDEDOR'], permisos: ['ConsultarComercial'] }
 const contact = { id: 11, nombre: 'Ana', apellido: 'Pérez', documento: '30111222', cargo: null, correo: 'ana@example.com', telefono: null, idEstado: 1, estadoDescripcion: 'Cliente', estadoActivo: true, idOrigen: null, origenDescripcion: null, origenActivo: null, idEmpresa: null, empresaRazonSocial: null, observaciones: null, idResponsable: 3, responsableNombre: 'Vera Ventas', responsableActivo: true, fechaCreacion: '2026-10-31T12:00:00Z', activo: true }
 const attendance = { idAlumno: 4, nivel: { id: 2, descripcion: 'A2' }, curso: { id: 3, descripcion: 'A2 mañana' }, presentes: 13, clases: 33, items: [
@@ -21,9 +21,10 @@ let me: typeof teacher = teacher
 let urls: string[] = []
 let levels = [1]
 let putBody: unknown
+let assigned: unknown
 
 beforeEach(() => {
-  urls = []; levels = [1]; putBody = undefined; me = teacher
+  urls = []; levels = [1]; putBody = undefined; assigned = undefined; me = teacher; student.curso = null
   vi.stubGlobal('fetch', vi.fn(async (request: Request) => {
     const url = new URL(request.url)
     urls.push(`${request.method} ${url.pathname}${url.search}`)
@@ -33,6 +34,8 @@ beforeEach(() => {
       if (request.method === 'PUT') { putBody = await request.json(); levels = (putBody as { idNiveles: number[] }).idNiveles }
       return json({ disponibles: [{ id: 1, descripcion: 'A1' }, { id: 2, descripcion: 'A2' }], seleccionados: levels })
     }
+    if (request.method === 'POST' && url.pathname.endsWith('/cursos/3/alumnos')) { assigned = await request.json(); student.curso = { id: 3, descripcion: 'A2 mañana' }; return json({ curso: {}, alumnos: [] }) }
+    if (url.pathname.endsWith('/cursos')) return json({ items: [{ id: 3, nombre: 'A2 mañana', nivel: { id: 2, descripcion: 'A2' }, profesor: { id: 9, descripcion: 'Paula Docente' }, cantidadAlumnos: 1, cantidadClases: 0 }], page: 1, pageSize: 100, totalCount: 1 })
     if (url.pathname.endsWith('/alumnos/4/asistencia')) return json(attendance)
     if (url.pathname.endsWith('/contactos/11/academico')) return json({ alumno: attendance })
     if (url.pathname.endsWith('/contactos/11/historial-comercial')) return json({ items: [], page: 1, pageSize: 25, totalCount: 0 })
@@ -99,4 +102,29 @@ it('un vendedor ve la asistencia del alumno en la ficha del contacto, sin entrar
   mount('/contactos/11')
   expect(await screen.findByText('13/33')).toBeTruthy()
   expect(within(screen.getByRole('navigation', { name: 'Secciones de Fluency CRM' })).queryByRole('link', { name: 'Alumnos' })).toBeNull()
+})
+
+it('desde la ficha del alumno sin curso se le asigna uno de su nivel', async () => {
+  mount('/alumnos/4')
+  await userEvent.click(await screen.findByRole('button', { name: 'Asignar curso' }))
+  const dialog = within(await screen.findByRole('dialog'))
+  await userEvent.click(dialog.getByLabelText('Curso', { exact: false }))
+  await userEvent.click(await screen.findByRole('option', { name: 'A2 mañana · Paula Docente' }))
+  await userEvent.click(dialog.getByRole('button', { name: 'Asignar' }))
+  await waitFor(() => expect(assigned).toEqual({ idAlumnos: [4] }))
+  await waitFor(() => expect(screen.queryByRole('button', { name: 'Asignar curso' })).toBeNull())
+})
+
+it('el menú separa por tipo, con el inicio arriba y sin tipos vacíos', async () => {
+  me = { ...teacher, roles: ['ADMINISTRADOR'], permisos: ['GestionarAcademia', 'ConsultarComercial', 'AdministrarUsuarios', 'AdministrarConfiguracion'] } as typeof teacher
+  mount('/alumnos')
+  const nav = await screen.findByRole('navigation', { name: 'Secciones de Fluency CRM' })
+  const labels = Array.from(nav.querySelectorAll('li[role="presentation"], a')).map(item => item.getAttribute('aria-label') ?? item.textContent).filter(label => !label?.startsWith('Mi perfil'))
+  expect(labels).toEqual(['Inicio', 'Comercial', 'Empresas', 'Contactos', 'Oportunidades', 'Embudo', 'Academia', 'Alumnos', 'Cursos', 'Clases', 'Talleres', 'Profesores', 'Gestión', 'Usuarios', 'Catálogos', 'Servicios', 'Embudos y etapas'])
+})
+
+it('un profesor solo ve el tipo Academia', async () => {
+  mount('/alumnos')
+  const nav = await screen.findByRole('navigation', { name: 'Secciones de Fluency CRM' })
+  expect(Array.from(nav.querySelectorAll('li[role="presentation"], a')).map(item => item.getAttribute('aria-label') ?? item.textContent).filter(label => !label?.startsWith('Mi perfil'))).toEqual(['Academia', 'Alumnos', 'Cursos', 'Clases', 'Talleres'])
 })

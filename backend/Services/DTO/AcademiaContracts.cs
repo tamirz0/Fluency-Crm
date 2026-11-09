@@ -124,6 +124,19 @@ public sealed record CreateClaseRequest
     public string? TemasExamen { get; init; }
 }
 
+/// <summary>Edición completa de los datos de una clase; el curso no cambia (arrastraría su asistencia).</summary>
+public sealed record UpdateClaseRequest
+{
+    [Required, StringLength(150, MinimumLength = 1)]
+    public required string Titulo { get; init; }
+    public required DateOnly Fecha { get; init; }
+    public required TimeOnly HoraInicio { get; init; }
+    public required TimeOnly HoraFin { get; init; }
+    public bool EsExamen { get; init; }
+    [MaxLength(2000)]
+    public string? TemasExamen { get; init; }
+}
+
 public sealed record AsistenciaItem
 {
     [Range(1, int.MaxValue)]

@@ -1,10 +1,11 @@
 import { ExpandMore, Refresh } from '@mui/icons-material'
-import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Chip, Link, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
-import { useQuery } from '@tanstack/react-query'
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Checkbox, Chip, FormControlLabel, FormGroup, Link, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
-import { lessonQueryKeys, listLessons, listTeachers, teacherQueryKeys, type Profesor } from '../../api/client'
+import { getCatalogOptions, getRoles, getUserById, lessonQueryKeys, listLessons, listTeachers, setTeacherLevelsOf, teacherQueryKeys, usuarioQueryKeys, type Profesor } from '../../api/client'
+import { UserDialog } from '../settings/UserDialog'
 import '../companies/companies.css'
 import '../contacts/records.css'
 
@@ -19,6 +20,39 @@ function TeacherLessons({ teacher }: { teacher: Profesor }) {
     <TableHead><TableRow><TableCell>Fecha</TableCell><TableCell>Horario</TableCell><TableCell>Clase</TableCell><TableCell>Curso</TableCell></TableRow></TableHead>
     <TableBody>{data.map(lesson => <TableRow key={lesson.id}><TableCell>{dayjs(lesson.fecha).format('DD/MM/YYYY')}</TableCell><TableCell>{lesson.horaInicio.slice(0, 5)} a {lesson.horaFin.slice(0, 5)}</TableCell>
       <TableCell><Link component={RouterLink} to={`/clases/${lesson.id}`} underline="hover">{lesson.titulo}</Link>{lesson.esExamen && <Chip size="small" color="warning" label="Examen" sx={{ ml: 1 }} />}</TableCell><TableCell>{lesson.curso.descripcion}</TableCell></TableRow>)}</TableBody></Table></TableContainer>
+}
+
+/** Edición administrativa de un profesor: sus datos de cuenta (mismo diálogo que Usuarios) y los niveles con los que trabaja. */
+function TeacherAdmin({ teacher }: { teacher: Profesor }) {
+  const client = useQueryClient()
+  const id = Number(teacher.id)
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState<number[] | null>(null)
+  const user = useQuery({ queryKey: [...usuarioQueryKeys.all, 'detalle', id], queryFn: () => getUserById(id), enabled: editing })
+  const roles = useQuery({ queryKey: ['roles'], queryFn: getRoles, enabled: editing })
+  const levels = useQuery({ queryKey: ['catalogos', 'niveles-ingles', 'opciones'], queryFn: () => getCatalogOptions('niveles-ingles') })
+  const selected = draft ?? teacher.niveles.map(level => Number(level.id))
+  const save = useMutation({
+    mutationFn: () => setTeacherLevelsOf(id, selected),
+    onSuccess: async () => { setDraft(null); await client.invalidateQueries({ queryKey: teacherQueryKeys.all }) },
+  })
+  const toggle = (levelId: number) => setDraft(selected.includes(levelId) ? selected.filter(x => x !== levelId) : [...selected, levelId])
+  return <Box sx={{ mb: 3, display: 'grid', gap: 2 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+      <Button variant="outlined" onClick={() => setEditing(true)}>Editar datos</Button>
+      {editing && user.isError && <Alert severity="error">{user.error.message}</Alert>}
+    </Box>
+    <Box>
+      <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 700 }}>Niveles de inglés</Typography>
+      {levels.isError ? <Alert severity="error">No pudimos cargar los niveles. {levels.error.message}</Alert> : <FormGroup row role="group" aria-label={`Niveles de ${teacher.nombre} ${teacher.apellido}`}>
+        {levels.data?.map(level => <FormControlLabel key={level.id} label={level.descripcion} control={<Checkbox checked={selected.includes(Number(level.id))} onChange={() => toggle(Number(level.id))} />} />)}
+      </FormGroup>}
+      {save.isError && <Alert severity="error" sx={{ mt: 1 }}>{save.error.message}</Alert>}
+      <Button sx={{ mt: 1 }} variant="contained" disabled={draft === null || save.isPending} onClick={() => save.mutate()}>{save.isPending ? 'Guardando…' : 'Guardar niveles'}</Button>
+    </Box>
+    {editing && user.data && roles.data && <UserDialog mode="edit" user={user.data} roles={roles.data} onClose={() => setEditing(false)}
+      onSaved={() => { setEditing(false); void client.invalidateQueries({ queryKey: teacherQueryKeys.all }); void client.invalidateQueries({ queryKey: usuarioQueryKeys.all }) }} />}
+  </Box>
 }
 
 /** Pestaña del administrador: cada profesor con sus niveles de inglés, cursos y clases asignadas. */
@@ -38,7 +72,7 @@ export function TeachersPage() {
             <Typography sx={{ ml: { md: 'auto' }, mr: 2 }} color="text.secondary">{teacher.cantidadCursos} {teacher.cantidadCursos === 1 ? 'curso' : 'cursos'} · {teacher.cantidadClases} {teacher.cantidadClases === 1 ? 'clase' : 'clases'}</Typography>
           </Box>
         </AccordionSummary>
-        <AccordionDetails>{open === String(teacher.id) && <TeacherLessons teacher={teacher} />}</AccordionDetails>
+        <AccordionDetails>{open === String(teacher.id) && <><TeacherAdmin teacher={teacher} /><Typography component="h3" variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Clases asignadas</Typography><TeacherLessons teacher={teacher} /></>}</AccordionDetails>
       </Accordion>))}
   </Box>
 }

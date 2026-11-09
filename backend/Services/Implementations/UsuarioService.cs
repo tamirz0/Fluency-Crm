@@ -86,6 +86,21 @@ public sealed class UsuarioService(FluencyLocalDbContext db, ActorActual actor)
         var result = await GetAsync(user.Id, ct);
         await transaction.CommitAsync(ct); return result;
     }
+    /// <summary>Edita los datos de la cuenta del actor (nombre, apellido, correo y usuario). La identidad sale de la sesión, nunca del cliente.</summary>
+    public async Task<UsuarioResponse> UpdateOwnProfileAsync(PatchPerfilRequest patch, CancellationToken ct)
+    {
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        var user = await db.Usuarios.SingleOrDefaultAsync(u => u.Id == actor.Id && u.Activo, ct)
+            ?? throw new UsuarioOperationException(401, "UNAUTHENTICATED", "La sesión ya no está disponible.");
+        if (patch.HasField(nameof(patch.Nombre))) user.Nombre = patch.Nombre!.Trim();
+        if (patch.HasField(nameof(patch.Apellido))) user.Apellido = patch.Apellido!.Trim();
+        if (patch.HasField(nameof(patch.Correo))) user.Correo = patch.Correo!.Trim();
+        if (patch.HasField(nameof(patch.Username))) user.Username = patch.Username!.Trim();
+        await db.SaveChangesAsync(ct);
+        var result = await GetAsync(user.Id, ct);
+        await transaction.CommitAsync(ct);
+        return result;
+    }
     public async Task<UsuarioResponse> UpdateAsync(int id, PatchUsuarioRequest? patch, bool? active, string? password, CancellationToken ct)
     {
         var hash = password is null ? null : BCrypt.Net.BCrypt.HashPassword(password, 12);

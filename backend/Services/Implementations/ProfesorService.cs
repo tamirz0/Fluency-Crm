@@ -14,11 +14,11 @@ public sealed class ProfesorService(FluencyLocalDbContext db, ActorActual actor)
             throw new AcademiaOperationException(403, "FORBIDDEN", "Solo un profesor define sus niveles de inglés.");
     }
 
-    private async Task<NivelesProfesorResponse> ReadAsync(CancellationToken ct)
+    private async Task<NivelesProfesorResponse> ReadAsync(int teacherId, CancellationToken ct)
     {
         var levels = await db.NivelesIngles.AsNoTracking().Where(n => n.Activo).OrderBy(n => n.Id)
             .Select(n => new OpcionResponse(n.Id, n.Descripcion)).ToListAsync(ct);
-        var selected = await db.ProfesorNiveles.AsNoTracking().Where(p => p.IdUsuario == actor.Id).OrderBy(p => p.IdNivel)
+        var selected = await db.ProfesorNiveles.AsNoTracking().Where(p => p.IdUsuario == teacherId).OrderBy(p => p.IdNivel)
             .Select(p => p.IdNivel).ToListAsync(ct);
         return new(levels, selected);
     }
@@ -47,26 +47,39 @@ public sealed class ProfesorService(FluencyLocalDbContext db, ActorActual actor)
     public async Task<NivelesProfesorResponse> GetLevelsAsync(CancellationToken ct)
     {
         RequireTeacher();
-        return await ReadAsync(ct);
+        return await ReadAsync(actor.Id, ct);
     }
 
     /// <summary>Reemplaza los niveles del profesor autenticado. No permite quitar un nivel con cursos activos.</summary>
     public async Task<NivelesProfesorResponse> SetLevelsAsync(NivelesProfesorRequest request, CancellationToken ct)
     {
         RequireTeacher();
+        return await SetLevelsCoreAsync(actor.Id, request, ct);
+    }
+
+    /// <summary>El administrador define los niveles de cualquier profesor (la ruta solo la abre la política de administración de profesores).</summary>
+    public async Task<NivelesProfesorResponse> SetLevelsOfAsync(int teacherId, NivelesProfesorRequest request, CancellationToken ct)
+    {
+        if (!await db.Usuarios.AnyAsync(u => u.Id == teacherId && u.UsuarioRoles.Any(j => j.IdRolNavigation.Nombre == RolesYPermisos.Profesor), ct))
+            throw new AcademiaOperationException(404, "NOT_FOUND", "No existe el profesor.");
+        return await SetLevelsCoreAsync(teacherId, request, ct);
+    }
+
+    private async Task<NivelesProfesorResponse> SetLevelsCoreAsync(int teacherId, NivelesProfesorRequest request, CancellationToken ct)
+    {
         var ids = request.IdNiveles.Distinct().ToArray();
         // Serializable: no puede cruzarse con el alta de un curso del mismo nivel que se está quitando.
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
         var valid = await db.NivelesIngles.Where(n => n.Activo && ids.Contains(n.Id)).Select(n => n.Id).ToListAsync(ct);
         if (valid.Count != ids.Length)
             throw new AcademiaOperationException(400, "REFERENCE_UNAVAILABLE", "Algún nivel de inglés no está disponible.");
-        if (await db.Cursos.AnyAsync(c => c.IdProfesor == actor.Id && c.Activo && !ids.Contains(c.IdNivel), ct))
-            throw new AcademiaOperationException(409, "BUSINESS_CONFLICT", "No puede quitar un nivel en el que tiene cursos.");
-        var current = await db.ProfesorNiveles.Where(p => p.IdUsuario == actor.Id).ToListAsync(ct);
+        if (await db.Cursos.AnyAsync(c => c.IdProfesor == teacherId && c.Activo && !ids.Contains(c.IdNivel), ct))
+            throw new AcademiaOperationException(409, "BUSINESS_CONFLICT", "No se puede quitar un nivel en el que el profesor tiene cursos.");
+        var current = await db.ProfesorNiveles.Where(p => p.IdUsuario == teacherId).ToListAsync(ct);
         db.ProfesorNiveles.RemoveRange(current.Where(p => !ids.Contains(p.IdNivel)));
-        db.ProfesorNiveles.AddRange(ids.Where(id => current.All(p => p.IdNivel != id)).Select(id => new ProfesorNivel { IdUsuario = actor.Id, IdNivel = id }));
+        db.ProfesorNiveles.AddRange(ids.Where(id => current.All(p => p.IdNivel != id)).Select(id => new ProfesorNivel { IdUsuario = teacherId, IdNivel = id }));
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
-        return await ReadAsync(ct);
+        return await ReadAsync(teacherId, ct);
     }
 }
