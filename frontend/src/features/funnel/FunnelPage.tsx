@@ -41,9 +41,9 @@ function CardContent({ opportunity }: { opportunity: Oportunidad }) {
     <div className="funnel-opportunity-main">
       <h3><RouterLink to={`/oportunidades/${opportunity.id}`} state={detailState}>{opportunity.tituloVisible}</RouterLink></h3>
       {(opportunity.idEmpresa || opportunity.idContacto) && <p className="funnel-opportunity-client">
-        {opportunity.idEmpresa && displayValue(opportunity.empresaRazonSocial)}
-        {opportunity.idEmpresa && opportunity.idContacto && ' – '}
         {opportunity.idContacto && displayValue(opportunity.contactoNombre)}
+        {opportunity.idEmpresa && opportunity.idContacto && ' – '}
+        {opportunity.idEmpresa && displayValue(opportunity.empresaRazonSocial)}
       </p>}
       <p className="funnel-opportunity-value">{money(opportunity.valor)}</p>
     </div>
