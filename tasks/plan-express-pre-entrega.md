@@ -2,7 +2,7 @@
 
 ## 1. Objetivo y presupuesto
 
-Tarea [T48,5 — Ultimo refinamiento](todo.md#t48-5). Fecha: 08/11/2026. Estado: **plan documentado; implementación y verificaciones nuevas pendientes**.
+Tarea [T48,5 — Ultimo refinamiento](todo.md#t48-5). Fecha: 08/11/2026. Estado (09/11/2026): **E0b, E1, E2 y E3 implementados con pruebas focalizadas; prueba de API, recorrido manual integral y E0/E4 pendientes (sin PostgreSQL local disponible)**.
 
 Llegar al jueves **12/11/2026** con una demo estable. Terminar funcionalidades el martes **10/11** y dedicar el miércoles **11/11** al cierre. Presupuesto confirmado: **8 horas-persona totales entre Mateo y Lautaro hasta el miércoles**, no ocho por persona ni por día. Trabajar simultáneamente no duplica ese presupuesto. Según el usuario, Profesor, cursos y asistencia aportan valor pero no son requisitos explícitos de la cátedra.
 
@@ -33,6 +33,7 @@ La [evidencia T48](../docs/segunda-entrega/verificacion-final-local.md) registra
 | Circuito comercial | Obligatorio verificar | Defectos fundamentales desplazan mejoras. |
 | Potencial → Cliente al ganar | Verificar lo existente | No rehacerlo; comprobar actualización visible de ficha y métricas. |
 | Inferir resultado por arrastre | Verificar lo existente | Ya funciona. Simplificar selector redundante es extra 1. |
+| Combo «Tipo de actividad» vacío al registrar actividad (defecto reportado 09/11) | Obligatorio corregir | Defecto del circuito comercial. Causa: `/catalogos/tipos-actividad/opciones` devuelve `nombre` con `descripcion: null` y el combo solo leía `descripcion`; el test lo enmascaraba con un fixture irreal. |
 | Dashboard | Mejora principal, recortable | Tres tarjetas según §4; reducir a dos/inicio actual según §6. |
 | Tres clases de hoy y ver más | Fuera | Depende de módulo inexistente; sin datos ficticios. |
 | Perfil | Extra de consulta | Extra 2; edición propia postergada por contrato/validaciones nuevos. |
@@ -69,6 +70,7 @@ Un responsable implementa, verifica y revisa su diff por bloque. Estimaciones en
 | Bloque | Resultado / aceptación | Ubicaciones orientativas | Esfuerzo / riesgo |
 |---|---|---|---|
 | E0 — Base | Revalidar Git, destino local y estados. Ganar promueve y arrastrar infiere; comprobar actualización visible, registrar defectos. | OportunidadService, CierreTests, FunnelPage, CloseOpportunityDialog; guía local | 0,5 h / bajo salvo defecto |
+| E0b — Combo de actividades | El combo «Tipo de actividad» muestra el nombre de cada tipo (activo) al registrar/editar desde empresa, contacto u oportunidad; fixtures de pruebas con la forma real del API. | ActivityForm.tsx, ActivityForm.test.tsx, CommercialHistory.test.tsx | 0,25 h / bajo |
 | E1 — Inicio | Conteos, tarjetas, enlaces honestos, carga/error/reintento y refresco según §4. | App.tsx, cliente HTTP; consulta/endpoint/DTO si hacen falta; tipos generados y pruebas | 3–4 h / medio |
 | E2 — Arrastre (extra 1) | Resultado fijo/oculto desde arrastre; conservar selección en cierre genérico, cancelar sin escribir y datos obligatorios. | FunnelPage, CloseOpportunityDialog y pruebas | 0,5–1 h / bajo |
 | E3 — Perfil consulta (extra 2) | Datos no sensibles de sesión actual; sin edición ni ID aportado por cliente. | Navegación, ruta/página, useAuth; sin endpoints administrativos para usuarios comunes | 0,5–1 h / bajo |
@@ -120,9 +122,10 @@ Completar al ejecutar; checklist único de cierre en [todo.md](todo.md#t48-5). S
 | Bloque | Responsable | Estado / horas | Commit, evidencia y pendientes |
 |---|---|---|---|
 | E0 | Por asignar | Pendiente / 0 | Sin verificación nueva |
-| E1 | Por asignar | Pendiente / 0 | Sin implementación |
-| E2 | Por asignar | Extra no iniciado / 0 | Descartable |
-| E3 | Por asignar | Extra no iniciado / 0 | Descartar antes que E2 |
-| E4 y preparación T49 | Por asignar | Pendiente / 0 | Sin cierre nuevo ni publicación |
+| E0b | Lautaro (con Claude) | Corregido y verificado en pruebas 09/11 / 0,25 | Combo lee `nombre ?? descripcion`; fixtures de ActivityForm y CommercialHistory con la forma real del API (`nombre`, `descripcion: null`). `ActivityForm.test` 6/6. Falta comprobarlo a mano en el App real. |
+| E1 | Lautaro (con Claude) | Implementado 09/11; API sin ejecutar | Contrato: `GET /inicio/resumen` → `{ alumnos, oportunidadesAbiertas, cerradasEsteMes }` (`InicioController`, `InicioService`, `InicioContracts.cs`); Cliente resuelto por descripción, sin IDs fijos; mes de Buenos Aires UTC-3 con rango `[primer día, primer día siguiente)` sobre `FechaCierre`. UI en `features/home/HomePage.tsx`: carga/error/reintento (error nunca muestra 0), enlaces generales «Ver contactos»/«Ver oportunidades» (las listas no leen filtros de URL), reconsulta en cada visita (`refetchOnMount: 'always'`). `schema.d.ts` regenerado (+61 líneas, solo el endpoint). Frontend: `HomePage.test` 3/3. **Pendiente:** `InicioTests.cs` compila pero no se ejecutó (Docker/PostgreSQL local apagados el 09/11). Mientras no corra, el conteo mensual no está verificado: aplica el recorte 2 del §6 si no se ejecuta antes del corte del martes. |
+| E2 | Lautaro (con Claude) | Implementado 09/11 | `CloseOpportunityDialog`: con resultado ya decidido (arrastre o etapa final elegida) se muestra fijo, sin selector; el cierre genérico («Cerrar» en la ficha) conserva el selector. Pruebas de diálogo y embudo actualizadas (16/16 en opportunities+funnel). |
+| E3 | Lautaro (con Claude) | Implementado 09/11 | `/perfil` (`features/profile/ProfilePage.tsx`): nombre, usuario, correo y roles de la sesión del servidor, sin edición; acceso desde el nombre en la barra lateral. `ProfilePage.test` 1/1. |
+| E4 y preparación T49 | Por asignar | Parcial 09/11 | Frontend: `npm run lint` (solo el warning previo de `providers.tsx`), `npm run build` y `npm run test:run` (20 archivos, 155 tests) en verde. Backend: `dotnet build backend/FluencyAPI.slnx --no-restore -m:1` sin errores; `dotnet test` **no ejecutado**. Pendiente: suite backend completa, E0 (promoción al ganar e inferencia por arrastre), recorrido manual y preparación T49. Sin merge ni publicación. |
 
 Traspaso: rama/HEAD y cambios ajenos, horas consumidas/restantes, alcance retenido, controles con fecha/resultado y versión, fallos y siguiente acción. Registrar extras descartados y tarjetas retiradas con motivo. «Descartado para esta entrega» no significa implementado. T48,5 solo cierra con alcance retenido verificado y pendientes/recortes explícitos.

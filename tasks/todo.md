@@ -1270,13 +1270,14 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 **Aceptación:**
 
 - [ ] Verificar promoción Potencial → Cliente al ganar e inferencia del resultado al arrastrar, sin rehacerlas. Corregir defectos fundamentales antes de extras.
+- [x] Corregir el combo «Tipo de actividad» vacío al registrar una actividad desde una oportunidad (E0b del plan express): mostrar el nombre de cada tipo; fixtures con la forma real del API.
 - [ ] Entregar dashboard retenido conforme al plan express (objetivo: Alumnos, Abiertas, Cerradas del mes) o documentar reducción a dos tarjetas/inicio actual por tiempo y evidencia. Sin cifras aproximadas ni prestaciones ficticias.
 - [ ] Evaluar extras en orden (simplificar resultado desde arrastre; perfil de consulta), registrando completados/verificados y descartados. Cursos, clases, Profesor, asistencia y notas quedan fuera.
 - [ ] Cerrar controles y recorrido integral posteriores al cambio, revisión, horas, evidencia y recortes. No reutilizar T48 como prueba del código nuevo ni aprobar fundamentales sin verificar.
 
 **Verificación:** B + F + pruebas focalizadas por bloque; suites pertinentes completas y recorrido del App real al cierre, más D, según plan express §7 y constraints. API/base solo en destino local identificado; seguridad según cambios que invaliden T47. Merge/publicación requieren OK específico.
 
-**Estado (08/11/2026):** plan documentado; implementación/verificación nuevas pendientes. T48/CP16 conservan cierre histórico. T49 prepara la versión resultante sin ejecutarla ni asumir que la publicación informada por el usuario no existe.
+**Estado (09/11/2026):** implementados combo de actividades (E0b), dashboard (E1: endpoint `GET /inicio/resumen` + tarjetas), resultado fijo al arrastrar (E2) y perfil de consulta (E3), con pruebas focalizadas y suite frontend en verde (155). Pendientes: ejecutar `InicioTests` y la suite backend (sin PostgreSQL local el 09/11), E0, recorrido manual y cierre E4; detalle en el [registro del plan express](plan-express-pre-entrega.md#8-registro-de-ejecución). **Estado previo (08/11/2026):** plan documentado; implementación/verificación nuevas pendientes. T48/CP16 conservan cierre histórico. T49 prepara la versión resultante sin ejecutarla ni asumir que la publicación informada por el usuario no existe.
 
 <a id="t49"></a>
 
