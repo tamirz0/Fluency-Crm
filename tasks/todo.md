@@ -61,6 +61,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T48 — Ensayar la entrega completa en local](#t48)
 - [ ] [T48,5 — Ultimo refinamiento](#t48-5)
 - [ ] [T49 — Preparar la publicación académica sin ejecutarla](#t49)
+- [ ] [T49.1 — Rediseño visual y experiencia de Fluency](#t49-1)
 
 ## Detalle
 
@@ -1300,6 +1301,22 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 **Verificación:** D + revisión de guía contra artefactos realmente implementados y SPEC §7. Si faltan datos de hosting, el procedimiento queda pendiente, no se afirma listo para desplegar.
 
 **Evidencia (09/11/2026):** guía [publicacion-azure.md](../docs/segunda-entrega/publicacion-azure.md) escrita contra `frontend/vercel.json`, `.github/workflows/deploy-backend.yml`, `Program.cs`, `AuthenticationSetup.cs`, `appsettings.json` y las guías locales; `git diff aeb41af..HEAD -- backend/Persistence` vacío (sin cambios de esquema). No se probó Azure, Vercel ni Supabase. Pendientes explícitos en su §10: PITR/RPO de 15 min frente a backups diarios, SO/instancias/claves de Data Protection en Azure, esquema y administrador en la base publicada, origen de despliegue de Vercel, cuenta del evaluador y merge a `master` (dispara el despliegue del backend). 09/11/2026: el usuario decide cerrar T49 sin merge a `master`; informa que el despliegue de back y front ya se probó y funciona (dato del usuario, sin evidencia en el repositorio ni verificación del agente) y que se continuará con un plan nuevo desde cero. Los pendientes de la guía §10 quedan abiertos para ese plan.
+
+<a id="t49-1"></a>
+
+### T49.1 — Rediseño visual y experiencia de Fluency
+
+**Resultado:** Rediseñar la landing, el acceso y el CRM en oscuro para escritorio, según los prototipos y decisiones del usuario. Incluir navegación plegable, cuenta arriba a la derecha y animaciones cuidadas; conservar funcionalidades, datos, permisos y flujos existentes.
+
+**Dependencias:** T49 y B22 como antecedentes históricos; al iniciar contrastar la rama y el estado local de B22 sin ejecutar migraciones por inferencia. Plan y seguimiento por bloques en [plan-rediseno-ui-ux.md](plan-rediseno-ui-ux.md). No reabrir el plan funcional aprobado.
+
+**Aceptación:**
+
+- [ ] Aplicar la dirección acordada, incluidas las vistas comercial y de Profesor, a todas las pantallas identificadas en el plan; menús Comercial, Academia y Gestión plegables; perfil y salida solo arriba a la derecha.
+- [ ] Conservar interacciones existentes, en particular arrastre de oportunidades con ratón y teclado, diálogos de cierre, colores de etapa, permisos, formularios y navegación. Añadir las mejoras pequeñas útiles previstas sin inventar datos o funcionalidades.
+- [ ] Verificar por bloque y al cierre la apariencia en escritorio, centrado, accesibilidad y regresiones conforme al plan; documentar controles, revisión y pendientes reales.
+
+**Verificación:** pruebas frontend focalizadas por bloque; suite completa, build, lint, recorrido visual local en escritorio y revisión del diff al cierre. Backend y base solo si un cambio autorizado los requiere. Integración y publicación requieren OK específico.
 
 ### CP17 — Preparación de publicación
 
