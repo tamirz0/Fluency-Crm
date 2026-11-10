@@ -1,12 +1,12 @@
 # Especificación: configuración comercial
 
-ID: `configuracion-comercial`; depende de `acceso`. [Mapa](CAPABILITIES.md) y especificación aprobados por el usuario el 08/10/2026; catálogos CP05 validados por el usuario e integrados localmente. Servicios T16–T18 implementados/verificados en `segunda-entrega-cp06-servicios`, con mapeos de embudos/etapas; funcionamiento validado por el usuario el 22/10/2026; implementación cerrada e integrada localmente en `segunda-entrega` / `c0c6a26`, sin publicar. Gestión de embudos/etapas T19–T21 implementada y verificada técnicamente en `segunda-entrega-cp07-configuracion` / `6b6cca3`; [evidencia CP07](tasks/verificaciones/verificacion-cp07.md). CP07 lista para validación autenticada del usuario; sin integrar ni publicar. Evidencia [CP05](tasks/verificaciones/verificacion-cp05.md) y [CP06](tasks/verificaciones/verificacion-cp06.md). Incluye [convenciones comunes](docs/segunda-entrega/especificacion-tecnica.md). Fuente funcional: diseño §4–5 y §8.
+ID: `configuracion-comercial`; depende de `acceso`. [Mapa](CAPABILITIES.md) y especificación aprobados por el usuario el 08/10/2026; catálogos CP05 validados por el usuario e integrados localmente. Servicios T16–T18 implementados/verificados en `segunda-entrega-cp06-servicios`, con mapeos de embudos/etapas; funcionamiento validado por el usuario el 22/10/2026; implementación cerrada e integrada localmente en `segunda-entrega` / `c0c6a26`, sin publicar. Gestión de embudos/etapas T19–T21 implementada y verificada técnicamente en `segunda-entrega-cp07-configuracion` / `6b6cca3`; [evidencia CP07](tasks/verificaciones/verificacion-cp07.md). CP07 lista para validación autenticada del usuario; sin integrar ni publicar. Evidencia [CP05](tasks/verificaciones/verificacion-cp05.md) y [CP06](tasks/verificaciones/verificacion-cp06.md). **Cambio del 09/11/2026:** tipos de servicio (Clases, Talleres y los que agregue el administrador), modalidades por defecto, embudos base «Clases de Inglés» y «Talleres» y etapas iniciales por defecto; la admisión de servicios por embudo reemplaza al servicio único. Incluye [convenciones comunes](docs/segunda-entrega/especificacion-tecnica.md). Fuente funcional: diseño §4–5 y §8.
 
 ## Objetivo, estructura y límites
 
 Administrar servicios, embudos, etapas y catálogos para que el circuito sea configurable, conservando referencias. UI en `features/settings` y `features/services`; controladores/servicios específicos en proyectos actuales. Solo administrador escribe configuración. Responsable comercial/vendedor consultan las opciones necesarias para gestionar negocio; supervisar el funnel no autoriza configurar sus etapas.
 
-Catálogos: estados de cliente, orígenes comerciales, niveles de inglés, modalidades, motivos de pérdida y tipos de actividad. Estados de oportunidad ABIERTA/GANADA/PERDIDA son fijos y de solo lectura. Usuarios/roles pertenecen a acceso.
+Catálogos: estados de cliente, orígenes comerciales, niveles de inglés, modalidades, tipos de servicio, motivos de pérdida y tipos de actividad. Estados de oportunidad ABIERTA/GANADA/PERDIDA son fijos y de solo lectura. Usuarios/roles pertenecen a acceso.
 
 ## Datos y contratos
 
@@ -14,8 +14,8 @@ Todos los DTO incluyen ID, campos del recurso y `activo` cuando corresponde; ref
 
 | Recurso API | Campos de alta / campos editables | Particularidades |
 |---|---|---|
-| `/servicios` | `nombre`, `descripcion?`, `precioReferencia`, `duracionHoras?`, `idNivel?`, `idModalidad?` | Precio requerido, cero válido. Nivel/modalidad opcionales; conservar referencias previas inactivas. |
-| `/embudos` | `nombre`, `descripcion?`, `idServicio` | Alta genera exactamente dos finales. Cambio de servicio solo si nunca fue utilizado por oportunidades. |
+| `/servicios` | `nombre`, `descripcion?`, `precioReferencia`, `duracionHoras?`, `idTipoServicio`, `idModalidad`, `idNivel?` | Precio requerido, cero válido. Tipo y modalidad obligatorios. Nivel obligatorio en el tipo Clases y opcional en el resto (la UI lo ofrece con la casilla «Asociado a un nivel de inglés»). Un servicio ya utilizado (oportunidades, talleres o selección de embudo) conserva su tipo. Filtro `idTipoServicio`; `GET /servicios/tipos` informa la regla de nivel de cada tipo. Conservar referencias previas inactivas. |
+| `/embudos` | `nombre`, `descripcion?`, `tipos` = `[{ idTipoServicio, idServicios? }]` | Admisión de servicios: tipos admitidos y, por tipo, todos sus servicios (también los futuros) o una selección puntual. Alta genera cuatro etapas abiertas (Consulta recibida, Necesidad relevada, Nivel de inglés evaluado, Presupuesto enviado; órdenes 1–4) más Ganada y Perdida (5 y 6). La admisión se reemplaza completa y no puede dejar sin admisión a un servicio con oportunidades en el embudo. `GET /embudos?idServicio=` lista los embudos activos que admiten ese servicio. |
 | `/embudos/{id}/etapas` | `nombre`, `descripcion?`, `orden` | Alta solo crea etapa ABIERTA; embudo de ruta, estado establecido por servidor. |
 | `/etapas/{id}` | PATCH `nombre`, `descripcion?`, `orden`; `idEmbudo` solo en abierta nunca utilizada | No permite cambiar estado. Si fue usada por oportunidad o historial, no cambia de embudo. |
 | `/catalogos/{catalogo}` | `descripcion` o `nombre` según E-R | Nombres permitidos por lista cerrada; no construir nombres SQL desde la ruta. |
@@ -27,10 +27,10 @@ La creación de etapa abierta exige orden; conflictos activos dan `409`. Reorden
 
 ## Reglas persistentes
 
-- Crear embudo, ganada y perdida en una misma transacción; inicialmente finales en orden 1 y 2, nombres Ganada/Perdida. No inventar etapa abierta. La UI permite ordenarlas después; el alta de oportunidad busca la primera abierta, no el menor orden absoluto.
+- Crear embudo, sus cuatro etapas iniciales y las finales Ganada/Perdida en una misma transacción (órdenes 1–6). Las etapas iniciales son abiertas comunes: se editan, reordenan o desactivan (no hay borrado físico). El alta de oportunidad busca la primera abierta activa, no el menor orden absoluto.
 - Las finales pueden cambiar textos y orden, nunca estado/embudo ni desactivarse. No existe endpoint público para crear otras finales.
-- Consultar uso histórico incluye oportunidades dadas de baja e historial, no solo oportunidades abiertas. Embudo usado conserva servicio; etapa usada conserva embudo y estado.
-- Desactivar servicio solo impide elegirlo en nuevos embudos; los embudos existentes activos siguen operativos, incluso para altas/reaperturas.
+- Consultar uso histórico incluye oportunidades dadas de baja e historial, no solo oportunidades abiertas. Un embudo con oportunidades no puede dejar de admitir sus servicios; etapa usada conserva embudo y estado.
+- Desactivar servicio solo impide elegirlo en nuevas oportunidades y selecciones de embudo; los embudos existentes activos siguen operativos, incluso para reaperturas.
 - Desactivar embudo/etapa abierta se bloquea por oportunidades **abiertas y activas**. Las cerradas vigentes y abiertas dadas de baja no bloquean. No modificar etapas al desactivar su embudo.
 - Reactivar abierta toma `max(orden activo del embudo)+1`. No reservar orden anterior, renumerar otras ni exigir consecutividad.
 - Configuraciones referenciadas permanecen legibles al desactivarse. No restaurar datos comerciales al reactivar configuración.
@@ -38,12 +38,12 @@ La creación de etapa abierta exige orden; conflictos activos dan `409`. Reorden
 
 ## Inicialización
 
-Estados de cliente iniciales: Potencial, Cliente, Inactivo y No contactar. Tipos de actividad: llamada, correo electrónico, mensaje, reunión presencial, reunión virtual, demostración, envío de propuesta, nota interna y otro tipo configurable. Conservar niveles/modalidades útiles existentes y definir semillas sin datos personales reales. No crear automáticamente servicios/embudos de demostración para simular que están configurados; fixtures de tests separados del producto.
+Estados de cliente iniciales: Potencial, Cliente, Inactivo y No contactar. Tipos de actividad: llamada, correo electrónico, mensaje, reunión presencial, reunión virtual, demostración, envío de propuesta, nota interna y otro tipo configurable. Modalidades iniciales: Grupal Presencial, Grupal Online, Grupal Híbrido, Particular Online y Particular Presencial. Tipos de servicio iniciales: Clases y Talleres (con código estable). Embudos base «Clases de Inglés» (tipo Clases) y «Talleres» (tipo Talleres) con las seis etapas por defecto, en `segunda-entrega-embudos-base.sql` (incluido en `creacion-tablas.sql`; el administrador puede editarlos). No se crean servicios de demostración; fixtures de tests separados del producto.
 
 ## UI y aceptación
 
 Pantallas de administración con listados, editor y acciones desactivar/reactivar; etiquetas claras para referencias inactivas. Finales no ofrecen baja ni selector de estado. Embudo sin abiertas se guarda y explica por qué todavía no permite altas de oportunidades; no agrega un asistente obligatorio.
 
-Casos fundamentales: (1) crear embudo produce dos finales y ninguna abierta; (2) prohibir segunda final y su baja; (3) rechazar órdenes activos repetidos y admitir repetidos inactivos; (4) reactivación al final; (5) bloqueos por abiertas/activas y no por cerradas o dadas de baja; (6) servicio inactivo no detiene su embudo activo; (7) usuarios no administradores reciben `403` en mutaciones aunque conozcan la ruta.
+Casos fundamentales: (1) crear embudo produce las cuatro etapas iniciales y las dos finales; (2) prohibir segunda final y su baja; (3) rechazar órdenes activos repetidos y admitir repetidos inactivos; (4) reactivación al final; (5) bloqueos por abiertas/activas y no por cerradas o dadas de baja; (6) servicio inactivo no detiene su embudo activo; (7) usuarios no administradores reciben `403` en mutaciones aunque conozcan la ruta.
 
 Pruebas PostgreSQL para índices, reordenación atómica y carreras de baja/alta; Vitest para permisos y mensajes del editor. Sin snapshots grandes ni barrido exhaustivo de combinaciones de catálogos. Comandos, estilo y límites: documento común. No hay preguntas funcionales abiertas para este módulo.

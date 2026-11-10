@@ -1,15 +1,26 @@
 # Aplicar el esquema del bonus de academia
 
-Fecha: 09/11/2026. **Preparado, no ejecutado en ninguna base real por el agente.** Los scripts son aditivos: no borran ni modifican datos existentes y se rechazan si ya fueron aplicados.
+Fecha: 09/11/2026. **Preparado, no ejecutado en ninguna base real por el agente.** Actualizado el 09/11/2026 con los tipos de servicio y los embudos base (ver el apartado siguiente). Los scripts son aditivos: no borran ni modifican datos existentes y se rechazan si ya fueron aplicados.
 
 **Atajo para pegar en la consola SQL (producción, compañeros):** [`agregar-bonus-academia.sql`](../../backend/Persistence/SQL/agregar-bonus-academia.sql) hace todo lo de las dos filas siguientes en una sola transacción, sin editar nada y repetible; termina con una consulta de verificación. Para una base nueva alcanza con [`creacion-tablas.sql`](../../backend/Persistence/SQL/creacion-tablas.sql), que ya incluye el bonus. Una prueba comprueba que ambos sigan al esquema vigente.
 
 | Orden | Archivo | Qué hace |
 |---|---|---|
-| 1 | `backend/Persistence/SQL/segunda-entrega-bonus.sql` | `servicio.es_taller` y las tablas `profesor_nivel`, `curso`, `alumno`, `clase`, `clase_alumno`, `taller` y `taller_inscripcion`. |
+| 1 | `backend/Persistence/SQL/segunda-entrega-bonus.sql` | Las tablas `profesor_nivel`, `curso`, `alumno`, `clase`, `clase_alumno`, `taller` y `taller_inscripcion`. |
 | 2 | `backend/Persistence/SQL/segunda-entrega-bonus-roles.sql` | Rol `PROFESOR` y permiso `GestionarAcademia` (Profesor y Administrador). Idempotente; exige que el rol `ADMINISTRADOR` ya exista. |
 
 Ambos corren en **una transacción** con el mismo protocolo que el esquema base: `search_path` único y `fluency.target_database` igual a la base actual (si no, fallan sin cambiar nada).
+
+## Tipos de servicio, modalidades y embudos base (bases ya instaladas)
+
+[`agregar-tipos-servicio-embudos.sql`](../../backend/Persistence/SQL/agregar-tipos-servicio-embudos.sql) lleva una base instalada al modelo con **tipo de servicio** y **admisión de servicios por embudo**, en una transacción y de forma repetible. Ejecutarlo **después** de `agregar-bonus-academia.sql` (si la base no tenía el bonus) y **antes** de desplegar el backend nuevo:
+
+- `servicio.es_taller` se reemplaza por `id_tipo_servicio`: talleres → Talleres; con nivel → Clases; el resto → «Otros» (solo si existen).
+- Cada embudo conserva su servicio actual como selección puntual de su tipo (`embudo_servicio` / `embudo_tipo_servicio`) y `embudo.id_servicio` se elimina; `oportunidad.id_servicio` se copia del embudo de su etapa.
+- Se agregan las modalidades por defecto que falten (no se tocan las existentes) y, **solo si la base no tiene embudos**, los embudos «Clases de Inglés» y «Talleres» con sus seis etapas.
+- Una base nueva no lo necesita: `creacion-tablas.sql` ya incluye todo (sección «Embudos base»). Una prueba ejecuta la migración sobre una base con la forma anterior.
+
+Preparado, no ejecutado en ninguna base real: aplicarlo en producción requiere copia previa y el OK del operador.
 
 ## Desarrollo local
 
@@ -34,8 +45,8 @@ El merge a `master` dispara el despliegue del backend: no mergear hasta tener el
 
 ## Recorrido manual sugerido (local)
 
-1. Administrador: Servicios → crear un servicio con nivel (p. ej. B1) y otro marcado «Es un taller». Crear los embudos y las etapas finales de cada uno.
-2. Vendedor: crear un contacto, abrir una oportunidad del servicio con nivel y ganarla → el contacto pasa a Cliente y aparece en Alumnos.
+1. Administrador: Servicios → crear un servicio de tipo Clases (con nivel, p. ej. B1) y otro de tipo Talleres. Los embudos «Clases de Inglés» y «Talleres» ya existen con sus etapas; un servicio nuevo de cada tipo entra solo.
+2. Vendedor: crear un contacto, abrir una oportunidad del servicio de Clases y ganarla → el contacto pasa a Cliente y aparece en Alumnos.
 3. Administrador: Usuarios → nueva cuenta con rol Profesor. Ingresar como Profesor: Mi perfil → marcar B1; Cursos → Nuevo curso → sumar al alumno; Clases → elegir un día → crear una clase y un examen; abrir cada una y marcar presente/ausente y notas.
 4. Vendedor: abrir la ficha del contacto-alumno → ver «x/y» de asistencia. Comprobar que no ve Alumnos, Cursos, Clases ni Talleres.
 5. Profesor: confirmar que no ve Empresas, Contactos, Oportunidades, Embudo, Usuarios ni Servicios y que esas URL lo devuelven a sus clases.

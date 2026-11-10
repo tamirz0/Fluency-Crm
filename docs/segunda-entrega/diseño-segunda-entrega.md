@@ -41,10 +41,10 @@ La especialización en academia se expresa en servicios, niveles de inglés, mod
 
 | Tema | Decisión final |
 |---|---|
-| Servicio por embudo | Cada embudo corresponde a un único servicio. Un servicio puede tener varios embudos. |
-| Relación de oportunidad | La oportunidad referencia su etapa actual. Desde ella se obtienen embudo, servicio y estado. |
+| Servicios por embudo | Cada embudo admite los servicios de uno o más tipos (todos o una selección puntual). Un servicio puede entrar a varios embudos (cambio del 09/11/2026). |
+| Relación de oportunidad | La oportunidad referencia su servicio y su etapa actual. Desde la etapa se obtienen embudo y estado. |
 | Etapas finales | Cada embudo tiene exactamente una ganada y una perdida, creadas automáticamente. |
-| Etapas abiertas | Son configurables. No se exige un recorrido completo al crear el embudo. |
+| Etapas abiertas | Son configurables. Todo embudo nace con cuatro etapas iniciales (Consulta recibida, Necesidad relevada, Nivel de inglés evaluado, Presupuesto enviado) que se pueden editar, reordenar o desactivar. |
 | Estado | `ABIERTA`, `GANADA` y `PERDIDA` son códigos fijos, únicos y no personalizables. |
 | Alta rápida | Responsable por defecto: creador. Etapa por defecto: primera abierta y activa del embudo. |
 | Importe | Un único campo `valor`, total de la negociación. Si se omite al crear, se copia el precio de referencia del servicio. |
@@ -159,6 +159,13 @@ erDiagram
         boolean activo
     }
 
+    TIPO_SERVICIO {
+        int id PK
+        varchar descripcion
+        varchar codigo UK
+        boolean activo
+    }
+
     SERVICIO {
         int id PK
         varchar nombre
@@ -167,6 +174,7 @@ erDiagram
         int duracion_horas
         int id_nivel FK
         int id_modalidad FK
+        int id_tipo_servicio FK
         boolean activo
     }
 
@@ -174,8 +182,17 @@ erDiagram
         int id PK
         varchar nombre
         text descripcion
-        int id_servicio FK
         boolean activo
+    }
+
+    EMBUDO_TIPO_SERVICIO {
+        int id_embudo PK, FK
+        int id_tipo_servicio PK, FK
+    }
+
+    EMBUDO_SERVICIO {
+        int id_embudo PK, FK
+        int id_servicio PK, FK
     }
 
     ESTADO_OPORTUNIDAD {
@@ -265,7 +282,11 @@ erDiagram
 
     NIVEL_INGLES o|--o{ SERVICIO : nivel
     MODALIDAD o|--o{ SERVICIO : modalidad
-    SERVICIO ||--o{ EMBUDO : ofrecido_mediante
+    TIPO_SERVICIO ||--o{ SERVICIO : clasifica
+    EMBUDO ||--o{ EMBUDO_TIPO_SERVICIO : admite_tipo
+    TIPO_SERVICIO ||--o{ EMBUDO_TIPO_SERVICIO : admitido_en
+    EMBUDO ||--o{ EMBUDO_SERVICIO : selecciona
+    SERVICIO ||--o{ EMBUDO_SERVICIO : seleccionado_en
     EMBUDO ||--|{ ETAPA_COMERCIAL : contiene
     ESTADO_OPORTUNIDAD ||--o{ ETAPA_COMERCIAL : clasifica
 
@@ -344,11 +365,11 @@ Una actividad que recibe **su propia baja** deja de aparecer en la interfaz habi
 
 ## 5. Configuración de servicios, embudos y etapas
 
-### 5.1. Un servicio por embudo
+### 5.1. Servicios que admite cada embudo
 
-Cada embudo tiene exactamente un servicio. Un servicio puede utilizarse en varios embudos, por ejemplo para organizar procesos comerciales diferentes.
+*Cambio del 09/11/2026 (reemplaza «un servicio por embudo»).* Los servicios tienen un **tipo** (Clases, Talleres y los que agregue el administrador). Cada embudo admite uno o más tipos y, por tipo, todos sus servicios (también los que se creen después) o una selección puntual. Las oportunidades de un servicio se crean en un embudo que lo admite; los embudos base «Clases de Inglés» y «Talleres» admiten los tipos Clases y Talleres. Los servicios de tipo Clases exigen nivel de inglés; los demás lo tienen opcional. Todo servicio tiene modalidad.
 
-Una vez utilizado por oportunidades, el embudo conserva su servicio. Cambiar esa relación reinterpretaría las negociaciones anteriores. Si se necesita otro proceso asociado a otro servicio, se crea otro embudo.
+La oportunidad guarda su servicio y deriva el embudo de su etapa. Un embudo con oportunidades no puede dejar de admitir sus servicios, y un servicio utilizado conserva su tipo: cambiarlos reinterpretaría las negociaciones anteriores. Todo embudo nace con las etapas Consulta recibida, Necesidad relevada, Nivel de inglés evaluado y Presupuesto enviado, más Ganada y Perdida.
 
 Se puede actualizar el precio de referencia del servicio sin modificar el `valor` de oportunidades existentes.
 
