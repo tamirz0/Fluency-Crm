@@ -61,7 +61,7 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T48 — Ensayar la entrega completa en local](#t48)
 - [ ] [T48,5 — Ultimo refinamiento](#t48-5)
 - [ ] [T49 — Preparar la publicación académica sin ejecutarla](#t49)
-- [ ] [T49.1 — Rediseño visual y experiencia de Fluency](#t49-1)
+- [x] [T49.1 — Rediseño visual y experiencia de Fluency](#t49-1)
 
 ## Detalle
 
@@ -1312,13 +1312,13 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Aceptación:**
 
-- [ ] Aplicar la dirección acordada, incluidas las vistas comercial y de Profesor, a todas las pantallas identificadas en el plan; menús Comercial, Academia y Gestión plegables; perfil y salida solo arriba a la derecha.
-- [ ] Conservar interacciones existentes, en particular arrastre de oportunidades con ratón y teclado, diálogos de cierre, colores de etapa, permisos, formularios y navegación. Añadir las mejoras pequeñas útiles previstas sin inventar datos o funcionalidades.
-- [ ] Verificar por bloque y al cierre la apariencia en escritorio, centrado, accesibilidad y regresiones conforme al plan; documentar controles, revisión y pendientes reales.
+- [x] Aplicar la dirección acordada, incluidas las vistas comercial y de Profesor, a todas las pantallas identificadas en el plan; menús Comercial, Academia y Gestión plegables; perfil y salida solo arriba a la derecha.
+- [x] Conservar interacciones existentes, en particular arrastre de oportunidades con ratón y teclado, diálogos de cierre, colores de etapa, permisos, formularios y navegación. Añadir las mejoras pequeñas útiles previstas sin inventar datos o funcionalidades.
+- [x] Verificar por bloque y al cierre la apariencia en escritorio, centrado, accesibilidad y regresiones conforme al plan; documentar controles, revisión y pendientes reales.
 
 **Verificación:** pruebas frontend focalizadas por bloque; suite completa, build, lint, recorrido visual local en escritorio y revisión del diff al cierre. Backend y base solo si un cambio autorizado los requiere. Integración y publicación requieren OK específico.
 
-**Estado (10/11/2026):** R01–R10 implementados y R11 con verificación parcial. Evidencia, controles locales y pendientes de aceptación en el [plan de rediseño](plan-rediseno-ui-ux.md#evidencia-de-ejecución--10112026). Sin integración, push ni publicación.
+**Estado (10/11/2026):** R01–R11 completos. Validación local con Administrador, Profesor y Vendedor registrada en el [plan de rediseño](plan-rediseno-ui-ux.md#evidencia-de-ejecución--10112026). Sin integración, push ni publicación.
 
 ### CP17 — Preparación de publicación
 
