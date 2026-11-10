@@ -1,6 +1,6 @@
 # T49.1 — Plan de rediseño visual y experiencia
 
-Fecha: 10/11/2026. Dirección visual y elaboración del plan acordadas con el usuario. **Planificación: sin implementación ni verificación nueva del producto.** Seguimiento de la tarea principal en [todo.md](todo.md#t49-1); el detalle y los checks de este archivo son la única lista de bloques de T49.1. La aceptación del plan no autoriza por sí sola ejecutar implementación, integrar ni publicar.
+Fecha: 10/11/2026. Dirección visual y elaboración del plan acordadas con el usuario. **R01–R10 implementados; R11 con verificación parcial.** Seguimiento de la tarea principal en [todo.md](todo.md#t49-1); el detalle y los checks de este archivo son la única lista de bloques de T49.1. La aceptación del plan no autoriza por sí sola ejecutar implementación, integrar ni publicar.
 
 ## Objetivo y referencias
 
@@ -33,58 +33,58 @@ Un responsable implementa, verifica y revisa su diff por bloque. Antes de cada b
 
 ### R01 — Línea de base y mapa de pantallas
 
-- [ ] Inventariar rutas y componentes en `frontend/src/App.tsx`, `app/AuthenticatedShell.tsx` y `features/`; identificar listados, fichas, formularios, diálogos, calendarios, configuración y sus pruebas, incluidos ambos inicios. Verificar estado de B22 y del entorno sin operar bases; documentar deuda o fallos previos con su identidad.
+- [x] Inventariar rutas y componentes en `frontend/src/App.tsx`, `app/AuthenticatedShell.tsx` y `features/`; identificar listados, fichas, formularios, diálogos, calendarios, configuración y sus pruebas, incluidos ambos inicios. Verificar estado de B22 y del entorno sin operar bases; documentar deuda o fallos previos con su identidad.
 - **Depende de:** T49.1 iniciada. **Verificación:** lectura de rutas, controles existentes y capturas de referencia local seguras; registrar destino y limitaciones. **Revisión:** propia. **Tamaño:** S; documentación/evidencia.
 
 ### R02 — Tema y estilos base
 
-- [ ] Ajustar `app/providers.tsx`, `index.css` y estilos comunes al sistema oscuro y acento acordados; conservar colores semánticos, etapa, legibilidad y foco. Evitar duplicación nueva de valores cuando un token existente resuelve el caso.
+- [x] Ajustar `app/providers.tsx`, `index.css` y estilos comunes al sistema oscuro y acento acordados; conservar colores semánticos, etapa, legibilidad y foco. Evitar duplicación nueva de valores cuando un token existente resuelve el caso.
 - **Depende de:** R01. **Verificación:** revisión visual comparativa de botones, campos, tablas y alertas; contraste de pares usados; pruebas focalizadas afectadas y `npm run build` en `frontend`. **Revisión:** propia. **Tamaño:** S–M.
 
 ### R03 — Shell, grupos y cuenta
 
-- [ ] Aplicar shell compacto con marca textual, grupos plegables y menú de cuenta superior. Conservar enlaces, filtros por permisos y comportamiento de sesión; abrir grupo de ruta activa sin dejar atrapado el foco. Teclado abre/cierra controles y Escape cierra el menú de cuenta con retorno de foco; ocultar grupos vacíos.
+- [x] Aplicar shell compacto con marca textual, grupos plegables y menú de cuenta superior. Conservar enlaces, filtros por permisos y comportamiento de sesión; abrir grupo de ruta activa sin dejar atrapado el foco. Teclado abre/cierra controles y Escape cierra el menú de cuenta con retorno de foco; ocultar grupos vacíos.
 - **Depende de:** R02. **Archivos probables:** `app/AuthenticatedShell.tsx`, tests de App/shell y estilos si hacen falta. **Verificación:** pruebas de apertura/cierre, navegación directa, perfil, logout y visibilidad por rol; recorrido manual administrador, vendedor y profesor. Si cambia lógica de sesión/autorización, revisión independiente. **Tamaño:** M.
 
 ### R04 — Piloto de Empresas y tablas compartidas
 
-- [ ] Rediseñar encabezado, filtros, tabla y paginación de Empresas, preservando columnas, búsqueda y acciones. Trabajar sobre estados con datos, vacíos, filtros, carga y error; comprobar textos largos. Reutilizar estilos compartidos solo si mantienen el comportamiento de sus consumidores.
+- [x] Rediseñar encabezado, filtros, tabla y paginación de Empresas, preservando columnas, búsqueda y acciones. Trabajar sobre estados con datos, vacíos, filtros, carga y error; comprobar textos largos. Reutilizar estilos compartidos solo si mantienen el comportamiento de sus consumidores.
 - **Depende de:** R02–R03. **Archivos probables:** `features/companies/CompaniesPage.tsx`, `companies.css` y tests existentes. **Verificación:** pruebas focalizadas de Empresas; inspección en 1280/1920 y con zoom, teclado y datos ficticios locales. **Revisión:** propia; contraste visual con el prototipo aprobado. **Tamaño:** M.
 
 ### R05 — Otros listados comerciales y académicos
 
-- [ ] Aplicar criterios del piloto a Contactos, Oportunidades y Alumnos, sin perder columnas, filtros, orden, accesos o paginación. Subdividir por pantalla si excede el tamaño; revisar tablas embebidas en detalles de cursos y configuración.
+- [x] Aplicar criterios del piloto a Contactos, Oportunidades y Alumnos, sin perder columnas, filtros, orden, accesos o paginación. Subdividir por pantalla si excede el tamaño; revisar tablas embebidas en detalles de cursos y configuración.
 - **Depende de:** R04. **Archivos probables:** `features/contacts`, `features/opportunities`, `features/students`, estilos y tests pertinentes. **Verificación:** tests focalizados por listado y revisión de datos largos, enlaces y estados. **Revisión:** propia por pantalla. **Tamaño:** M por subbloque.
 
 ### R06 — Fichas, formularios y diálogos
 
-- [ ] Actualizar componentes compartidos `RecordProfile`, `RecordForm`, `CommercialHistory` y consumidores de empresa/contacto/oportunidad/alumno; revisar además diálogos y formularios particulares. Mantener campos, validaciones, permisos, mensajes, navegación, acciones e historial; no esconder información ni convertir valores de solo lectura en campos editables. Subdividir por ficha/flujo.
+- [x] Actualizar componentes compartidos `RecordProfile`, `RecordForm`, `CommercialHistory` y consumidores de empresa/contacto/oportunidad/alumno; revisar además diálogos y formularios particulares. Mantener campos, validaciones, permisos, mensajes, navegación, acciones e historial; no esconder información ni convertir valores de solo lectura en campos editables. Subdividir por ficha/flujo.
 - **Depende de:** R02–R05. **Verificación:** tests de fichas, formularios y actividad afectados; recorrido de edición con errores, guardado y cancelación en entorno local autorizado. **Revisión:** propia por subbloque. **Tamaño:** M por flujo.
 
 ### R07 — Embudo y animación del arrastre
 
-- [ ] Adaptar `features/funnel/FunnelPage.tsx` y `funnel.css`: columnas compactas, cabeceras, conteos y tarjetas del prototipo; conservar tonos por etapa, despliegue, desplazamiento contenido y todos los invariantes del punto 2. El estado visual de origen, destino, arrastre y error debe ser claro; sin desplazar ni interceptar el foco o el puntero.
+- [x] Adaptar `features/funnel/FunnelPage.tsx` y `funnel.css`: columnas compactas, cabeceras, conteos y tarjetas del prototipo; conservar tonos por etapa, despliegue, desplazamiento contenido y todos los invariantes del punto 2. El estado visual de origen, destino, arrastre y error debe ser claro; sin desplazar ni interceptar el foco o el puntero.
 - **Depende de:** R02–R03. **Verificación:** `npm run test:run -- src/features/funnel/FunnelPage.test.tsx` y pruebas de cierre afectadas; recorrido local de arrastrar entre abiertas, cancelar, soltar en finales y cumplir permisos, con ratón y teclado; movimiento reducido. **Revisión:** propia del diff y checkpoint funcional. **Tamaño:** M.
 
 ### R08 — Inicio comercial, Profesor y módulos académicos
 
-- [ ] Adaptar ambos inicios a la jerarquía visual acordada sin cifras inventadas ni pérdida de consultas. Aplicar el sistema a Cursos, Clases, Talleres, Profesores, calendario y asistencia; incluir estados, botones y diálogos. Dividir por módulo; respetar permisos y visibilidad.
+- [x] Adaptar ambos inicios a la jerarquía visual acordada sin cifras inventadas ni pérdida de consultas. Aplicar el sistema a Cursos, Clases, Talleres, Profesores, calendario y asistencia; incluir estados, botones y diálogos. Dividir por módulo; respetar permisos y visibilidad.
 - **Depende de:** R02–R03. **Verificación:** tests focalizados de cada módulo e inicios; recorrido local con profesor y administrador, calendario/lista, asistencia y estados vacíos/error. **Revisión:** propia por bloque. **Tamaño:** M por módulo.
 
 ### R09 — Configuración y perfil
 
-- [ ] Adaptar usuarios, catálogos, servicios, embudos/etapas y perfil al sistema visual. Conservar manejo de niveles, habilitaciones, orden de etapas, validación y acciones por permiso. Subdividir en perfil/usuarios y catálogos/embudos si hace falta.
+- [x] Adaptar usuarios, catálogos, servicios, embudos/etapas y perfil al sistema visual. Conservar manejo de niveles, habilitaciones, orden de etapas, validación y acciones por permiso. Subdividir en perfil/usuarios y catálogos/embudos si hace falta.
 - **Depende de:** R02–R03. **Verificación:** tests focalizados correspondientes y recorrido local del orden de etapas con ratón y teclado. **Revisión:** propia; independiente si cambia seguridad/autorización. **Tamaño:** M por subbloque.
 
 ### R10 — Landing y acceso
 
-- [ ] Rediseñar `features/landing/LandingPage.tsx` y `features/login/LoginPage.tsx` con identidad compartida, composición más editorial y menos bloques repetidos. Conservar capacidades reales, textos relevantes, anclas, destino de contacto, redirecciones y manejo de errores; no introducir promesas, datos o correo ficticio nuevos. Dividir landing y login si hace falta.
+- [x] Rediseñar `features/landing/LandingPage.tsx` y `features/login/LoginPage.tsx` con identidad compartida, composición más editorial y menos bloques repetidos. Conservar capacidades reales, textos relevantes, anclas, destino de contacto, redirecciones y manejo de errores; no introducir promesas, datos o correo ficticio nuevos. Dividir landing y login si hace falta.
 - **Depende de:** R02. **Verificación:** tests existentes de landing/login y recorrido visual en escritorio; revisar centrado del login y sección hero; teclado y foco. **Revisión:** propia; independiente si cambia lógica de sesión. **Tamaño:** S–M por pantalla.
 
 ### R11 — Movimiento transversal y cierre
 
-- [ ] Homogeneizar duración y respuesta de interacciones ya tocadas; revisar movimiento reducido, estados de carga y continuidad visual. Evitar alterar comportamiento por decoración o sumar dependencia.
-- [ ] Ejecutar `npm run test:run`, `npm run build` y `npm run lint` desde `frontend`; registrar resultados reales, fallos previos/nuevos y controles no ejecutados. Aplicar `git diff --check` e inspeccionar también archivos nuevos y staged; revisar que no se pierdan funcionalidades.
+- [x] Homogeneizar duración y respuesta de interacciones ya tocadas; revisar movimiento reducido, estados de carga y continuidad visual. Evitar alterar comportamiento por decoración o sumar dependencia.
+- [x] Ejecutar `npm run test:run`, `npm run build` y `npm run lint` desde `frontend`; registrar resultados reales, fallos previos/nuevos y controles no ejecutados. Aplicar `git diff --check` e inspeccionar también archivos nuevos y staged; revisar que no se pierdan funcionalidades.
 - [ ] Recorrido local con los perfiles existentes: navegación/cuenta, filtros y fichas, movimientos del embudo, inicio de Profesor, calendario y landing; comparar centrado y legibilidad en dos tamaños de escritorio. Registrar evidencia visual sin datos sensibles y pendientes. Actualizar solo reglas visuales vigentes de la guía frontend y seguimiento de T49.1.
 - **Depende de:** R04–R10. **Revisión:** propia por bloque y agrupada al cierre, independiente si cambió autenticación/autorización u otro riesgo definido en §6.1. **Tamaño:** subdividir movimiento, controles y documentación.
 
@@ -100,3 +100,13 @@ Un responsable implementa, verifica y revisa su diff por bloque. Antes de cada b
 - Las pantallas del prototipo son orientación visual, no comportamiento probado ni autorización para quitar campos o agregar funciones comerciales.
 - La validación de la instancia publicada y el estado de la migración B22 no se deducen del merge Git. Comprobar destino y autorización antes de cualquier operación de base.
 - El esfuerzo exacto depende del inventario de R01; no se promete una duración sin medir. Si aparece una mejora de producto grande, describir alcance y pedir autorización antes de implementarla.
+
+
+## Evidencia de ejecución — 10/11/2026
+
+- **R01, línea de base:** `cambios-ui-ux` limpia al iniciar, en `f98e613`; `a9e9482` (B22) es ancestro. Mapa contrastado con `App.tsx`: landing y acceso; dos inicios y perfil; empresas, contactos y oportunidades con listados/fichas/alta/edición, actividades e historial; embudo y diálogos; alumnos, cursos, clases, talleres y profesores; usuarios, catálogos, servicios y etapas. Sus pruebas están en `App.test.tsx` y junto a cada feature. No se generó una nueva captura del estado previo al cambio.
+- **R02–R06 y R08–R10:** CSS compartido y tema MUI; tabla de Empresas con búsqueda en una fila a 1280 px y datos ficticios largos, con ajuste de teléfonos tras revisar la primera captura. Chrome a 1280×720 y 1920×1080 para Empresas, landing y acceso; centrado de Empresas medido respecto de `main` a 1920. Contrastes calculados: blanco sobre acento 4,73:1; azul claro sobre superficie 9,07:1; texto secundario sobre campo 9,04:1; borde de campo sobre campo 3,80:1.
+- **R03 y entorno:** PostgreSQL local en 5433, base `fluency_segunda_entrega_dev`; API en loopback en perfil Development. Servicios, tipos y embudos respondieron con el esquema B22 ya disponible; no se aplicó ninguna migración. Chrome inició sesión real de administrador, abrió 13 pantallas comerciales, académicas y de gestión a 1280 sin desplazamiento horizontal de página ni alertas de error, y comprobó perfil y cierre de sesión. La prueba focalizada cubrió plegado con Enter/Espacio y cierre con Escape con devolución de foco.
+- **R07:** una oportunidad de prueba identificada como «Prueba visual T49.1» en desarrollo. Chrome con eventos de navegador comprobó inicio y cancelación del arrastre con teclado, movimiento con puntero entre etapas abiertas y apertura y cancelación del diálogo al soltar en Perdida. Las pruebas de embudo y cierre también cubren permisos y rechazo del servidor. La oportunidad de prueba quedó en la base local para inspección.
+- **R11, controles:** suite frontend 194/194, más la prueba de teclado agregada y pasada en la repetición focalizada de `App.test.tsx` (16/16). Build y `git diff --check` correctos. Lint solo con la advertencia preexistente de Fast Refresh en `providers.tsx`. No se ejecutó la suite backend: la implementación no cambia su código, contratos ni esquema.
+- **Pendiente para cerrar R11:** recorrer con sesiones reales de Profesor y Vendedor; verificar en navegador el movimiento completo con flechas, el orden de etapas y la asistencia con datos. Las pruebas con fixtures cubren los perfiles y módulos, pero no sustituyen esos recorridos. Sin integración, push ni publicación.

@@ -1318,6 +1318,8 @@ T04.b se realiza en dos grupos documentales acotados: guía/evidencia/seguimient
 
 **Verificación:** pruebas frontend focalizadas por bloque; suite completa, build, lint, recorrido visual local en escritorio y revisión del diff al cierre. Backend y base solo si un cambio autorizado los requiere. Integración y publicación requieren OK específico.
 
+**Estado (10/11/2026):** R01–R10 implementados y R11 con verificación parcial. Evidencia, controles locales y pendientes de aceptación en el [plan de rediseño](plan-rediseno-ui-ux.md#evidencia-de-ejecución--10112026). Sin integración, push ni publicación.
+
 ### CP17 — Preparación de publicación
 
 - [x] Guía revisada, pendientes operativos explícitos; publicación y cualquier cambio de base/hosting requieren decisión posterior. Main sigue fuera de alcance.

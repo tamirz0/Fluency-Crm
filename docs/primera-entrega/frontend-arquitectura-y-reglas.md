@@ -238,10 +238,10 @@ Todos los formularios siguen las mismas reglas:
 
 La identidad visual es exclusivamente oscura y utiliza:
 
-- Noche `#0B1118` como fondo, tinta `#101C28` para navegación y pizarra `#162631` para superficies.
-- Borde `#344A55`, niebla `#E7EFF1` como texto principal y verde agua `#62BDB5` para acciones, selección y foco.
+- Carbón `#151619` como fondo, `#202226` para navegación y superficies y `#1B1D21` para campos. Los bordes decorativos usan `#353941`; los campos usan `#717885` para distinguir su límite.
+- Texto principal `#F0F1F4` y secundario `#B8BEC9`. Las acciones primarias usan azul `#4575B2` con texto blanco; enlaces, acciones secundarias y foco usan `#A5C6F2`.
 - Source Sans 3 como familia tipográfica.
-- Las cabeceras y los datos de las grillas se centran. Las cabeceras usan un fondo y borde inferior discretos para distinguirlas de los registros. Los nombres principales de Empresa, Contacto y Oportunidad usan un poco más de peso y contraste, más un subrayado tenue en su enlace.
+- El contenido se centra en el espacio disponible a la derecha del menú. Los listados agrupan búsqueda y filtros, contienen el desplazamiento horizontal en la tabla y destacan el enlace principal de cada fila con peso y foco visible.
 - Los íconos del dashboard conservan un tono propio por entidad. Las etapas comerciales usan una paleta discreta compartida por dashboard, grilla y embudo, siempre junto con su nombre.
 
 No existe selector ni variante clara. Los valores de solo lectura, incluidos Responsable y Etapa actual en la edición de oportunidades, se presentan como información semántica, nunca como inputs.
@@ -257,7 +257,7 @@ Las tres grillas omiten la columna Acción. En escritorio, un clic sobre la fila
 Mantener una interfaz sobria y operativa:
 
 - Texto alineado a la izquierda y líneas de lectura breves.
-- Sin gradientes, sombras decorativas, mayúsculas espaciadas ni colecciones de tarjetas idénticas sin función. Las superficies, estados y foco deben conservar contraste suficiente en oscuro; `Inactivo` tiene un tono explícito.
+- Superficies sobrias en el CRM y acentos discretos en la landing y el acceso. Las superficies, estados y foco deben conservar contraste suficiente en oscuro; `Inactivo` tiene un tono explícito.
 - Estados de carga mediante skeleton o indicador con `role="status"`.
 - Estados vacíos que expliquen qué aparecerá o qué acción puede realizarse.
 - Errores con causa comprensible y una acción concreta cuando sea posible.
