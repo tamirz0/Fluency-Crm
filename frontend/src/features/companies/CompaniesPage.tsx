@@ -93,18 +93,18 @@ export function CompaniesPage() {
   return <Box className="companies-page">
     <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Empresas</Typography><Typography className="companies-page-description">Organizaciones compartidas por todo el equipo comercial.</Typography></div><Button component={RouterLink} to="/empresas/nueva" variant="contained">Nueva empresa</Button></header>
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
-    <Box component="form" onSubmit={e => { e.preventDefault(); setQ(search.trim()); setPage(0) }} sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3, alignItems: 'start' }}>
+    <Box component="form" onSubmit={e => { e.preventDefault(); setQ(search.trim()); setPage(0) }} className="record-filters">
       <TextField label="Buscar empresas" type="search" value={search} onChange={e => setSearch(e.target.value)} helperText="Razón social, CUIT, correo o teléfono" />
-      <TextField select label="Estado" value={state} onChange={e => { setState(e.target.value); setPage(0) }} sx={{ minWidth: 160 }}><MenuItem value="">Todos</MenuItem>{states.data?.map(s => <MenuItem key={s.id} value={String(s.id)}>{s.descripcion}</MenuItem>)}</TextField>
-      <TextField select label="Origen" value={origin} onChange={e => { setOrigin(e.target.value); setPage(0) }} sx={{ minWidth: 160 }}><MenuItem value="">Todos</MenuItem>{origins.data?.map(s => <MenuItem key={s.id} value={String(s.id)}>{s.descripcion}</MenuItem>)}</TextField>
-      <Box sx={{ minWidth: 240, flex: '1 1 240px' }}><CompanyResponsibleSelect value={responsible} onChange={id => { setResponsible(id); setPage(0) }} helperText="Sin selección: todos los responsables" /></Box>
+      <TextField select label="Estado" value={state} onChange={e => { setState(e.target.value); setPage(0) }}><MenuItem value="">Todos</MenuItem>{states.data?.map(s => <MenuItem key={s.id} value={String(s.id)}>{s.descripcion}</MenuItem>)}</TextField>
+      <TextField select label="Origen" value={origin} onChange={e => { setOrigin(e.target.value); setPage(0) }}><MenuItem value="">Todos</MenuItem>{origins.data?.map(s => <MenuItem key={s.id} value={String(s.id)}>{s.descripcion}</MenuItem>)}</TextField>
+      <Box className="record-filter-lookup"><CompanyResponsibleSelect value={responsible} onChange={id => { setResponsible(id); setPage(0) }} helperText="Sin selección: todos los responsables" /></Box>
       <Button type="submit" variant="outlined">Buscar</Button><Button type="button" onClick={clear}>Limpiar filtros</Button>
     </Box>
     {(states.isError || origins.isError) && <Alert severity="warning" action={<Button onClick={() => { void states.refetch(); void origins.refetch() }}>Reintentar</Button>}>No pudimos cargar los filtros de catálogos.</Alert>}
     {isPending ? <CompanyListSkeleton /> : error ? <section className="company-feedback" aria-labelledby="companies-error-title">
       <Typography id="companies-error-title" component="h2" className="company-feedback-title">No pudimos cargar las empresas</Typography><Typography color="text.secondary">{error.message}</Typography><Button onClick={() => void refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button>
     </section> : <>
-      <Typography role="status" sx={{ mb: 2 }}>{data.totalCount} {data.totalCount === 1 ? 'empresa' : 'empresas'}</Typography>
+      <Typography role="status" className="record-count">{data.totalCount} {data.totalCount === 1 ? 'empresa' : 'empresas'}</Typography>
       {data.items.length === 0 ? <section className="company-feedback" aria-labelledby="companies-empty-title"><Business className="company-empty-icon" aria-hidden="true" /><Typography id="companies-empty-title" component="h2" className="company-feedback-title">{q || state || origin || responsible || page ? 'No hay empresas para estos filtros o página' : 'Todavía no hay empresas'}</Typography><Typography color="text.secondary">Las empresas registradas van a aparecer en este listado.</Typography></section> : <>
         <div className="company-list-desktop"><DesktopRows companies={data.items} onOpen={openCompany} /></div><div className="company-list-mobile"><MobileRecords companies={data.items} onOpen={openCompany} /></div>
       </>}

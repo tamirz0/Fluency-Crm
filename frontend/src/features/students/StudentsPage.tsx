@@ -21,14 +21,14 @@ export function StudentsPage() {
   const { data, error, isPending, refetch } = useQuery({ queryKey: [...studentQueryKeys.all, 'list', filters], queryFn: () => listStudents(filters) })
   return <Box className="companies-page records-page">
     <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Alumnos</Typography><Typography className="companies-page-description">Personas que ya contrataron un servicio de nivel de inglés.</Typography></div></header>
-    <Box component="form" onSubmit={e => { e.preventDefault(); setQ(search.trim()); setPage(0) }} sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3, alignItems: 'start' }}>
+    <Box component="form" onSubmit={e => { e.preventDefault(); setQ(search.trim()); setPage(0) }} className="record-filters">
       <TextField label="Buscar alumnos" type="search" value={search} onChange={e => setSearch(e.target.value)} helperText="Nombre, documento o correo" />
       <Button type="submit" variant="outlined">Buscar</Button><Button type="button" onClick={() => { setSearch(''); setQ(''); setPage(0) }}>Limpiar</Button>
     </Box>
     {isPending ? <div className="companies-loading" role="status" aria-label="Cargando alumnos"><Skeleton height={48} /><Skeleton height={48} /><Skeleton height={48} /></div> : error ? <section className="company-feedback" aria-labelledby="students-error-title">
       <Typography id="students-error-title" component="h2" className="company-feedback-title">No pudimos cargar los alumnos</Typography><Typography color="text.secondary">{error.message}</Typography><Button onClick={() => void refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button>
     </section> : <>
-      <Typography role="status" sx={{ mb: 2 }}>{data.totalCount} {data.totalCount === 1 ? 'alumno' : 'alumnos'}</Typography>
+      <Typography role="status" className="record-count">{data.totalCount} {data.totalCount === 1 ? 'alumno' : 'alumnos'}</Typography>
       {data.items.length === 0 ? <section className="company-feedback" aria-labelledby="students-empty-title">
         <Typography id="students-empty-title" component="h2" className="company-feedback-title">{q || page ? 'No hay alumnos para esta búsqueda' : 'Todavía no hay alumnos'}</Typography>
         <Typography color="text.secondary">Un contacto pasa a ser alumno cuando se gana una oportunidad de un servicio de tipo Clases (siempre asociado a un nivel de inglés). Si sos profesor, marcá tus niveles en Mi perfil.</Typography>

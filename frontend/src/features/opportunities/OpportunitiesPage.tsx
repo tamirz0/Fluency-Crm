@@ -85,23 +85,23 @@ export function OpportunitiesPage() {
   return <Box className="companies-page records-page">
     <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Oportunidades</Typography><Typography className="companies-page-description">Negociaciones compartidas por todo el equipo comercial.</Typography></div><Button component={RouterLink} to="/oportunidades/nueva" variant="contained">Nueva oportunidad</Button></header>
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
-    <Box component="form" onSubmit={(event) => { event.preventDefault(); setQ(search.trim()); setPage(0) }} sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3, alignItems: 'start' }}>
+    <Box component="form" onSubmit={(event) => { event.preventDefault(); setQ(search.trim()); setPage(0) }} className="record-filters">
       <TextField label="Buscar oportunidades" type="search" value={search} onChange={(event) => setSearch(event.target.value)} helperText="Título, empresa o contacto" />
-      <TextField select label="Estado" value={state} onChange={(event) => { setState(event.target.value); setPage(0) }} sx={{ minWidth: 160 }}>
+      <TextField select label="Estado" value={state} onChange={(event) => { setState(event.target.value); setPage(0) }}>
         <MenuItem value="">Todos</MenuItem>{Object.entries(stateLabels).map(([code, label]) => <MenuItem key={code} value={code}>{label}</MenuItem>)}
       </TextField>
-      <TextField select label="Embudo" value={funnel} onChange={(event) => { setFunnel(event.target.value); setPage(0) }} sx={{ minWidth: 180 }}>
+      <TextField select label="Embudo" value={funnel} onChange={(event) => { setFunnel(event.target.value); setPage(0) }}>
         <MenuItem value="">Todos</MenuItem>{funnels.data?.items.map((item) => <MenuItem key={item.id} value={String(item.id)}>{item.nombre}{item.activo ? '' : ' (inactivo)'}</MenuItem>)}
       </TextField>
-      <TextField select label="Origen" value={origin} onChange={(event) => { setOrigin(event.target.value); setPage(0) }} sx={{ minWidth: 160 }}>
+      <TextField select label="Origen" value={origin} onChange={(event) => { setOrigin(event.target.value); setPage(0) }}>
         <MenuItem value="">Todos</MenuItem>{origins.data?.map((item) => <MenuItem key={item.id} value={String(item.id)}>{item.descripcion}</MenuItem>)}
       </TextField>
-      <Box sx={{ minWidth: 240, flex: '1 1 240px' }}><CompanyResponsibleSelect value={responsible} onChange={(id) => { setResponsible(id); setPage(0) }} helperText="Sin selección: todos los responsables" /></Box>
+      <Box className="record-filter-lookup"><CompanyResponsibleSelect value={responsible} onChange={(id) => { setResponsible(id); setPage(0) }} helperText="Sin selección: todos los responsables" /></Box>
       <Button type="submit" variant="outlined">Buscar</Button><Button type="button" onClick={clear}>Limpiar filtros</Button>
     </Box>
     {(funnels.isError || origins.isError) && <Alert severity="warning" action={<Button onClick={() => { void funnels.refetch(); void origins.refetch() }}>Reintentar</Button>}>No pudimos cargar los filtros de embudos u orígenes.</Alert>}
     {isPending ? <OpportunityListSkeleton /> : error ? <section className="company-feedback" aria-labelledby="opportunities-error-title"><Typography component="h2" id="opportunities-error-title" className="company-feedback-title">No pudimos cargar las oportunidades</Typography><Typography color="text.secondary">{error.message}</Typography><Button onClick={() => void refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button></section> : <>
-      <Typography role="status" sx={{ mb: 2 }}>{data.totalCount} {Number(data.totalCount) === 1 ? 'oportunidad' : 'oportunidades'}</Typography>
+      <Typography role="status" className="record-count">{data.totalCount} {Number(data.totalCount) === 1 ? 'oportunidad' : 'oportunidades'}</Typography>
       {data.items.length === 0
         ? <section className="company-feedback" aria-labelledby="opportunities-empty-title"><Typography component="h2" id="opportunities-empty-title" className="company-feedback-title">{filtered || page ? 'No hay oportunidades para estos filtros o página' : 'Todavía no hay oportunidades'}</Typography><Typography color="text.secondary">Las oportunidades registradas van a aparecer en este listado.</Typography></section>
         : <><div className="company-list-desktop"><Rows items={data.items} onOpen={(id) => navigate(`/oportunidades/${id}`)} /></div><div className="company-list-mobile"><Cards items={data.items} onOpen={(id) => navigate(`/oportunidades/${id}`)} /></div></>}

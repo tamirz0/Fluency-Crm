@@ -89,7 +89,7 @@ export function StageOrderEditor({ funnel, stages, error, onError, onSaved, onEd
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       <Box sx={blockSx}>
         <Stack direction={{ xs: 'column', md: 'row' }} sx={{ p: 2, gap: 1, justifyContent: 'space-between', bgcolor: 'background.paper' }}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}><FiberManualRecord sx={{ fontSize: 12, color: 'primary.main' }} /><Typography component="h3" variant="subtitle1">Etapas abiertas</Typography></Stack>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}><FiberManualRecord sx={{ fontSize: 12, color: 'primary.light' }} /><Typography component="h3" variant="subtitle1">Etapas abiertas</Typography></Stack>
           <Typography id="stage-drag-help" variant="body2" color="text.secondary">Arrastrá desde el asa o usá las flechas ↑ y ↓. Las inactivas se reactivan al final.</Typography>
         </Stack>
         <Box role="status" aria-live="polite" sx={visuallyHidden}>{announcement}</Box>
@@ -106,7 +106,7 @@ export function StageOrderEditor({ funnel, stages, error, onError, onSaved, onEd
                   const target = sequence[index + (event.key === 'ArrowUp' ? -1 : 1)]
                   if (target) move(s.id, target.id)
                 }} sx={{ touchAction: 'none', cursor: draggingId === s.id ? 'grabbing' : 'grab' }}><DragIndicator fontSize="small" /></IconButton>
-                <Box component="span" aria-label={`Posición visual de ${s.nombre}`} sx={{ px: .75, border: '1px solid', borderColor: 'divider', borderRadius: .5, color: s.activo ? 'primary.main' : 'text.secondary', bgcolor: 'action.selected', fontWeight: 700 }}>{index + 1}</Box>
+                <Box component="span" aria-label={`Posición visual de ${s.nombre}`} sx={{ px: .75, border: '1px solid', borderColor: 'divider', borderRadius: .5, color: s.activo ? 'primary.light' : 'text.secondary', bgcolor: 'action.selected', fontWeight: 700 }}>{index + 1}</Box>
               </Stack></TableCell>
               <TableCell>{s.nombre}</TableCell><TableCell>Abierta</TableCell><TableCell><Chip size="small" variant="outlined" label={s.activo ? 'Activa' : 'Inactiva'} color={s.activo ? 'success' : 'default'} /></TableCell>
               <TableCell align="right"><Button disabled={disabled || draggingId !== null} aria-label={`Editar ${s.nombre}`} onClick={() => onEdit(s)}>Editar</Button><Button disabled={disabled || draggingId !== null} aria-label={`${s.activo ? 'Desactivar' : 'Reactivar'} ${s.nombre}`} onClick={() => onActive(s)}>{s.activo ? 'Desactivar' : 'Reactivar'}</Button></TableCell>

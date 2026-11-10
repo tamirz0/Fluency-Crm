@@ -8,7 +8,7 @@ export function AttendanceSummary({ data }: { data: Asistencia }) {
     <Typography component="h2" variant="h6" sx={{ mb: 1 }}>Asistencia</Typography>
     {!data.curso ? <Typography color="text.secondary">Todavía no está en un curso, por eso no tiene clases para asistir.</Typography> : <>
       <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-        <Typography component="p" aria-label={`Asistencias: ${data.presentes} de ${data.clases} clases`} sx={{ fontSize: { xs: 48, md: 64 }, fontWeight: 800, lineHeight: 1, color: 'primary.main' }}>{data.presentes}/{data.clases}</Typography>
+        <Typography component="p" aria-label={`Asistencias: ${data.presentes} de ${data.clases} clases`} sx={{ fontSize: { xs: 48, md: 64 }, fontWeight: 800, lineHeight: 1, color: 'primary.light' }}>{data.presentes}/{data.clases}</Typography>
         <Typography color="text.secondary">asistencias a las clases de {data.curso.descripcion} dictadas hasta hoy</Typography>
       </Box>
       {data.items.length === 0 ? <Typography color="text.secondary">El curso todavía no tiene clases dictadas.</Typography>

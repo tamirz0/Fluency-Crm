@@ -1,6 +1,6 @@
 import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Chip, Link, Stack, Typography } from '@mui/material'
 import type { SxProps, Theme } from '@mui/material'
-import { AutoStories, Business, CalendarMonth, ExpandMore, Groups, Handshake, History, MenuBook, School, Timeline, ViewKanban } from '@mui/icons-material'
+import { AutoStories, Business, CalendarMonth, ExpandMore, Groups, History, MenuBook, School, ViewKanban } from '@mui/icons-material'
 import type { ReactNode } from 'react'
 import { Link as RouterLink, Navigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
@@ -34,9 +34,9 @@ const modules: [string, string, ReactNode][] = [
   ['Profesores', 'Cada profesor con sus niveles, cursos y clases.', <Groups key="g" />],
 ]
 const benefits = [
-  ['Todo en un mismo lugar', 'De la primera consulta a la última clase: el equipo comercial y los profesores trabajan sobre la misma información, cada uno con lo que le corresponde ver.', <Handshake key="1" fontSize="inherit" />],
-  ['Fácil de usar desde el primer día', 'Pocas pantallas, pensadas para una academia de inglés: niveles de A1 a C2, cursos, clases y talleres. Sin configuraciones interminables.', <Timeline key="2" fontSize="inherit" />],
-  ['Estadísticas que crecen con tu academia', 'El inicio muestra tus alumnos, las oportunidades abiertas y las cerradas del mes, siempre calculadas con tus datos reales.', <Groups key="3" fontSize="inherit" />],
+  ['Todo en un mismo lugar', 'De la primera consulta a la última clase: el equipo comercial y los profesores trabajan sobre la misma información, cada uno con lo que le corresponde ver.'],
+  ['Fácil de usar desde el primer día', 'Pocas pantallas, pensadas para una academia de inglés: niveles de A1 a C2, cursos, clases y talleres. Sin configuraciones interminables.'],
+  ['Estadísticas que crecen con tu academia', 'El inicio muestra tus alumnos, las oportunidades abiertas y las cerradas del mes, siempre calculadas con tus datos reales.'],
 ] as const
 const faqs = [
   ['¿Cómo es el modelo de contratación?', 'Fluency se ofrece por suscripción, con un período de prueba para que tu equipo lo conozca antes de decidir. Escribinos desde Contacto y coordinamos los detalles.'],
@@ -51,7 +51,7 @@ const sectionSx: SxProps<Theme> = { py: { xs: 7, md: 11 }, scrollMarginTop: 72 }
 const card: SxProps<Theme> = { p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }
 
 function Eyebrow({ children }: { children: ReactNode }) {
-  return <Typography sx={{ color: 'primary.main', fontSize: 13, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', mb: 1.5 }}>• {children}</Typography>
+  return <Typography sx={{ color: 'primary.light', fontSize: 15, fontWeight: 650, mb: 1.5 }}> {children}</Typography>
 }
 function SectionTitle({ eyebrow, title, subtitle }: { eyebrow: string; title: string; subtitle?: string }) {
   return <Box sx={{ maxWidth: 720, mb: { xs: 4, md: 6 } }}><Eyebrow>{eyebrow}</Eyebrow><Typography component="h2" sx={{ fontSize: { xs: 28, md: 38 }, fontWeight: 750, lineHeight: 1.15, letterSpacing: '-.02em' }}>{title}</Typography>{subtitle && <Typography sx={{ mt: 2, color: 'text.secondary', fontSize: 18 }}>{subtitle}</Typography>}</Box>
@@ -59,16 +59,16 @@ function SectionTitle({ eyebrow, title, subtitle }: { eyebrow: string; title: st
 
 /** Maqueta del producto armada con componentes; solo usa rótulos genéricos, nunca datos reales. */
 function ProductMockup() {
-  const column = (name: string, cards: string[]) => <Box sx={{ flex: 1, minWidth: 0, p: 1, borderRadius: 1.5, bgcolor: 'rgba(11,17,24,.55)' }}>
+  const column = (name: string, cards: string[]) => <Box sx={{ flex: 1, minWidth: 0, p: 1, borderRadius: 1.5, bgcolor: 'var(--canvas)' }}>
     <Typography sx={{ fontSize: 11, fontWeight: 700, color: 'text.secondary', mb: 1 }}>{name}</Typography>
-    <Stack spacing={1}>{cards.map((text) => <Box key={text} sx={{ p: 1, borderRadius: 1, bgcolor: '#1B2C36', fontSize: 12, borderLeft: '3px solid #62BDB5' }}>{text}</Box>)}</Stack>
+    <Stack spacing={1}>{cards.map((text) => <Box key={text} sx={{ p: 1, borderRadius: 1, bgcolor: 'var(--field)', fontSize: 12, borderLeft: '3px solid var(--accent)' }}>{text}</Box>)}</Stack>
   </Box>
   return <Box aria-hidden="true" sx={{ width: '100%', p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 3, bgcolor: 'background.paper', boxShadow: '0 24px 60px rgba(0,0,0,.45)' }}>
     <Stack direction="row" spacing={.75} sx={{ mb: 2 }}>{[0, 1, 2].map((i) => <Box key={i} sx={{ width: 9, height: 9, borderRadius: '50%', bgcolor: 'divider' }} />)}</Stack>
     <Stack direction="row" spacing={1.5}>{column('Consulta', ['Inglés B1 · Grupal', 'Inglés A2 · 1 a 1'])}{column('Reunión', ['Inglés B2 · In-company'])}{column('Ganada', ['Inglés C1 · Grupal'])}</Stack>
-    <Box sx={{ mt: 2, p: 1.5, borderRadius: 1.5, bgcolor: 'rgba(11,17,24,.55)' }}>
-      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}><Typography sx={{ fontSize: 11, fontWeight: 700, color: 'text.secondary' }}>Asistencia de un alumno</Typography><Typography sx={{ fontSize: 22, fontWeight: 750, color: 'primary.main' }}>13/33</Typography></Stack>
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: .75, mt: 1 }}>{['L', 'M', 'M', 'J', 'V'].map((d, i) => <Box key={i} sx={{ p: .75, borderRadius: 1, bgcolor: '#1B2C36', textAlign: 'center', fontSize: 11, color: i % 2 ? 'text.secondary' : 'primary.main' }}>{d}<Box sx={{ mt: .5, height: 4, borderRadius: 2, bgcolor: i % 2 ? 'divider' : 'primary.main' }} /></Box>)}</Box>
+    <Box sx={{ mt: 2, p: 1.5, borderRadius: 1.5, bgcolor: 'var(--canvas)' }}>
+      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}><Typography sx={{ fontSize: 11, fontWeight: 700, color: 'text.secondary' }}>Asistencia de un alumno</Typography><Typography sx={{ fontSize: 22, fontWeight: 750, color: 'primary.light' }}>13/33</Typography></Stack>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: .75, mt: 1 }}>{['L', 'M', 'M', 'J', 'V'].map((d, i) => <Box key={i} sx={{ p: .75, borderRadius: 1, bgcolor: 'var(--field)', textAlign: 'center', fontSize: 11, color: i % 2 ? 'text.secondary' : 'primary.light' }}>{d}<Box sx={{ mt: .5, height: 4, borderRadius: 2, bgcolor: i % 2 ? 'divider' : 'primary.light' }} /></Box>)}</Box>
     </Box>
   </Box>
 }
@@ -77,9 +77,9 @@ export function LandingPage() {
   const { isAuthenticated } = useAuth()
   if (isAuthenticated) return <Navigate to="/inicio" replace />
   return <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', color: 'text.primary', overflowX: 'clip' }}>
-    <Box component="header" sx={{ position: 'sticky', top: 0, zIndex: 10, bgcolor: 'rgba(11,17,24,.9)', backdropFilter: 'blur(10px)', borderBottom: '1px solid', borderColor: 'divider' }}>
+    <Box component="header" sx={{ position: 'sticky', top: 0, zIndex: 10, bgcolor: 'rgba(21,22,25,.93)', backdropFilter: 'blur(10px)', borderBottom: '1px solid', borderColor: 'divider' }}>
       <Box sx={{ ...container, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, minHeight: 64 }}>
-        <Stack component="a" href="#inicio" direction="row" spacing={1} sx={{ alignItems: 'center', color: 'inherit', textDecoration: 'none' }}><School sx={{ color: 'primary.main' }} /><Typography sx={{ fontSize: 21, fontWeight: 750, letterSpacing: '-.02em' }}>Fluency</Typography></Stack>
+        <Stack component="a" href="#inicio" direction="row" spacing={1} sx={{ alignItems: 'center', color: 'inherit', textDecoration: 'none' }}><School sx={{ color: 'primary.light' }} /><Typography sx={{ fontSize: 21, fontWeight: 750, letterSpacing: '-.02em' }}>Fluency</Typography></Stack>
         <Stack component="nav" aria-label="Secciones" direction="row" spacing={3} sx={{ display: { xs: 'none', md: 'flex' } }}>{navLinks.map(([label, href]) => <Link key={href} href={href} underline="none" sx={{ color: 'text.secondary', fontWeight: 600, '&:hover': { color: 'text.primary' } }}>{label}</Link>)}</Stack>
         <Stack direction="row" spacing={1}>
           <Button component="a" href={contactHref} variant="outlined" size="small" sx={{ minHeight: 40 }}>Contacto</Button>
@@ -89,11 +89,11 @@ export function LandingPage() {
     </Box>
 
     <Box component="main">
-      <Box id="inicio" sx={{ ...sectionSx, pt: { xs: 6, md: 10 }, background: 'radial-gradient(circle at 80% 10%, rgba(98,189,181,.16), transparent 45%)' }}>
+      <Box id="inicio" sx={{ ...sectionSx, pt: { xs: 6, md: 10 }, background: 'radial-gradient(circle at 80% 10%, rgba(69,117,178,.16), transparent 45%)' }}>
         <Box sx={{ ...container, display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.05fr .95fr' }, gap: { xs: 5, md: 8 }, alignItems: 'center' }}>
           <Box>
             <Eyebrow>Gestión para academias de inglés</Eyebrow>
-            <Typography component="h1" sx={{ fontSize: { xs: 36, md: 54 }, fontWeight: 800, lineHeight: 1.08, letterSpacing: '-.03em' }}>Gestioná tu academia de inglés desde <Box component="span" sx={{ color: 'primary.main' }}>un solo lugar</Box></Typography>
+            <Typography component="h1" sx={{ fontSize: { xs: 36, md: 64 }, fontWeight: 760, lineHeight: 1.02, letterSpacing: '-.045em' }}>Gestioná tu academia de inglés desde <Box component="span" sx={{ color: 'primary.light' }}>un solo lugar</Box></Typography>
             <Typography sx={{ mt: 3, fontSize: { xs: 17, md: 20 }, color: 'text.secondary', maxWidth: 560 }}>Pasá de la desorganización y la información dispersa a una gestión clara: desde la primera consulta hasta la asistencia de cada alumno.</Typography>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 4 }}>
               <Button component="a" href="#como-funciona" variant="contained" size="large">Conocé más</Button>
@@ -104,35 +104,37 @@ export function LandingPage() {
         </Box>
       </Box>
 
-      <Box sx={{ borderTop: '1px solid', borderBottom: '1px solid', borderColor: 'divider', py: 4, bgcolor: 'rgba(22,38,49,.5)' }}>
+      <Box sx={{ borderTop: '1px solid', borderBottom: '1px solid', borderColor: 'divider', py: 4, bgcolor: 'background.paper' }}>
         <Box sx={{ ...container, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'center', justifyContent: 'center', gap: 2 }}>
           <Typography sx={{ color: 'text.secondary', fontWeight: 600, textAlign: 'center' }}>Pensado para academias: cada servicio, un nivel de inglés</Typography>
-          <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap', justifyContent: 'center' }}>{levels.map((l) => <Chip key={l} label={l} color="primary" variant="outlined" sx={{ fontWeight: 700 }} />)}</Stack>
+          <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap', justifyContent: 'center' }}>{levels.map((l) => <Chip key={l} label={l} variant="outlined" sx={{ fontWeight: 700, color: 'primary.light' }} />)}</Stack>
         </Box>
       </Box>
 
       <Box id="problema" sx={sectionSx}><Box sx={container}>
         <SectionTitle eyebrow="El problema" title="Gestionar una academia con planillas y chats sale caro" subtitle="Cuando la información está repartida, cada alumno nuevo y cada clase suman trabajo manual y errores." />
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 2.5 }}>{pains.map(([title, text]) => <Box key={title} sx={card}><Typography component="h3" sx={{ fontSize: 19, fontWeight: 700, mb: 1 }}>{title}</Typography><Typography sx={{ color: 'text.secondary' }}>{text}</Typography></Box>)}</Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 2.5 }}>{pains.map(([title, text]) => <Box key={title} sx={{ borderTop: '1px solid', borderColor: 'divider', py: 2 }}><Typography component="h3" sx={{ fontSize: 19, fontWeight: 700, mb: 1 }}>{title}</Typography><Typography sx={{ color: 'text.secondary' }}>{text}</Typography></Box>)}</Box>
       </Box></Box>
 
-      <Box id="como-funciona" sx={{ ...sectionSx, bgcolor: 'rgba(22,38,49,.35)' }}><Box sx={container}>
+      <Box id="como-funciona" sx={{ ...sectionSx, bgcolor: 'background.paper' }}><Box sx={container}>
         <SectionTitle eyebrow="Cómo funciona" title="De la consulta al aula, en cuatro pasos" />
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 2.5 }}>{steps.map(([title, text], i) => <Box key={title} sx={card}><Typography sx={{ color: 'primary.main', fontSize: 40, fontWeight: 800, lineHeight: 1 }}>{String(i + 1).padStart(2, '0')}</Typography><Typography component="h3" sx={{ fontSize: 21, fontWeight: 700, my: 1 }}>{title}</Typography><Typography sx={{ color: 'text.secondary' }}>{text}</Typography></Box>)}</Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 2.5 }}>{steps.map(([title, text], i) => <Box key={title} sx={{ borderTop: '2px solid', borderColor: 'primary.main', py: 2 }}><Typography sx={{ color: 'primary.light', fontSize: 40, fontWeight: 800, lineHeight: 1 }}>{String(i + 1).padStart(2, '0')}</Typography><Typography component="h3" sx={{ fontSize: 21, fontWeight: 700, my: 1 }}>{title}</Typography><Typography sx={{ color: 'text.secondary' }}>{text}</Typography></Box>)}</Box>
       </Box></Box>
 
       <Box id="modulos" sx={sectionSx}><Box sx={container}>
         <SectionTitle eyebrow="Módulos" title="Todo lo que una academia necesita" />
         <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap', mb: 4 }} aria-label="Ir a un módulo">{modules.map(([name]) => <Chip key={name} label={name} component="a" href={`#modulo-${name}`} clickable variant="outlined" />)}</Stack>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 2.5 }}>{modules.map(([name, text, icon]) => <Box key={name} id={`modulo-${name}`} sx={{ ...card, scrollMarginTop: 88 }}><Box sx={{ color: 'primary.main', mb: 1.5, display: 'flex' }}>{icon}</Box><Typography component="h3" sx={{ fontSize: 19, fontWeight: 700, mb: .5 }}>{name}</Typography><Typography sx={{ color: 'text.secondary' }}>{text}</Typography></Box>)}</Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 2.5 }}>{modules.map(([name, text, icon]) => <Box key={name} id={`modulo-${name}`} sx={{ ...card, scrollMarginTop: 88 }}><Box sx={{ color: 'primary.light', mb: 1.5, display: 'flex' }}>{icon}</Box><Typography component="h3" sx={{ fontSize: 19, fontWeight: 700, mb: .5 }}>{name}</Typography><Typography sx={{ color: 'text.secondary' }}>{text}</Typography></Box>)}</Box>
       </Box></Box>
 
-      <Box sx={{ ...sectionSx, bgcolor: 'rgba(22,38,49,.35)' }}><Box sx={container}>
+      <Box sx={{ ...sectionSx, bgcolor: 'background.paper' }}><Box sx={container}>
         <SectionTitle eyebrow="Por qué Fluency" title="Menos desorden, más tiempo para enseñar" />
-        <Stack spacing={{ xs: 5, md: 8 }}>{benefits.map(([title, text, icon], i) => <Box key={title} sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: { xs: 3, md: 8 }, alignItems: 'center' }}>
-          <Box sx={{ order: { xs: 0, md: i % 2 ? 1 : 0 }, fontSize: 64, color: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 180, border: '1px solid', borderColor: 'divider', borderRadius: 3, bgcolor: 'background.paper' }} aria-hidden="true">{icon}</Box>
-          <Box><Typography component="h3" sx={{ fontSize: { xs: 24, md: 30 }, fontWeight: 750, mb: 1.5 }}>{title}</Typography><Typography sx={{ color: 'text.secondary', fontSize: 18 }}>{text}</Typography></Box>
-        </Box>)}</Stack>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
+          {benefits.map(([title, text]) => <Box key={title} sx={{ py: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+            <Typography component="h3" sx={{ fontSize: 24, fontWeight: 750, mb: 1 }}>{title}</Typography>
+            <Typography sx={{ color: 'text.secondary', fontSize: 18 }}>{text}</Typography>
+          </Box>)}
+        </Box>
       </Box></Box>
 
       <Box id="preguntas" sx={sectionSx}><Box sx={{ ...container, maxWidth: 860 }}>
@@ -141,7 +143,7 @@ export function LandingPage() {
       </Box></Box>
 
       <Box id="contacto" sx={{ pb: { xs: 7, md: 11 } }}><Box sx={container}>
-        <Box sx={{ p: { xs: 4, md: 7 }, textAlign: 'center', borderRadius: 4, border: '1px solid', borderColor: 'primary.main', background: 'linear-gradient(135deg, rgba(98,189,181,.16), rgba(22,38,49,.8))' }}>
+        <Box sx={{ p: { xs: 4, md: 7 }, textAlign: 'center', borderRadius: 4, border: '1px solid', borderColor: 'primary.light', background: 'linear-gradient(135deg, rgba(69,117,178,.16), rgba(32,34,38,.8))' }}>
           <Typography component="h2" sx={{ fontSize: { xs: 28, md: 38 }, fontWeight: 800, letterSpacing: '-.02em' }}>Agendá una reunión y conocé Fluency</Typography>
           <Typography sx={{ mt: 2, mb: 4, color: 'text.secondary', fontSize: 18, maxWidth: 560, mx: 'auto' }}>Te mostramos una demo con el día a día de una academia y respondemos tus dudas.</Typography>
           <Button component="a" href={contactHref} variant="contained" size="large">Escribinos</Button>

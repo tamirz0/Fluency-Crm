@@ -30,7 +30,7 @@ export function MonthCalendar({ month, items, onDayClick, onItemClick, dayLabel 
   const days = monthGrid(month)
   const today = dayjs().format('YYYY-MM-DD')
   return <Box role="grid" aria-label={month.locale('es').format('MMMM YYYY')} sx={{ width: '100%', border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
-    <Box role="row" sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', bgcolor: '#1B2C36' }}>
+    <Box role="row" sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', bgcolor: 'background.paper' }}>
       {weekdays.map(day => <Typography role="columnheader" key={day} sx={{ p: 1, textAlign: 'center', fontSize: 12, fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase' }}>{day}</Typography>)}
     </Box>
     <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
@@ -47,7 +47,7 @@ export function MonthCalendar({ month, items, onDayClick, onItemClick, dayLabel 
             : <Typography component="span" sx={{ fontWeight: 700, fontSize: 14 }}>{day.date()}</Typography>}
           <Box sx={{ mt: .5, display: 'grid', gap: .5 }}>
             {dayItems.map(item => <Box component="button" type="button" key={item.id} onClick={event => { event.stopPropagation(); onItemClick(item.id) }}
-              sx={{ textAlign: 'left', width: '100%', minWidth: 0, p: '3px 6px', border: 0, borderLeft: '3px solid', borderColor: 'primary.main', borderRadius: 1, bgcolor: '#1B2C36', color: 'text.primary', font: 'inherit', cursor: 'pointer', '&:hover': { bgcolor: '#24394A' }, '&:focus-visible': { outline: '2px solid #8adbd3' } }}>
+              sx={{ textAlign: 'left', width: '100%', minWidth: 0, p: '3px 6px', border: 0, borderLeft: '3px solid', borderColor: 'primary.main', borderRadius: 1, bgcolor: 'background.paper', color: 'text.primary', font: 'inherit', cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' }, '&:focus-visible': { outline: '2px solid var(--accent-text)' } }}>
               <Typography component="span" noWrap sx={{ display: 'block', fontSize: 12, fontWeight: 700 }}>{item.title}</Typography>
               <Typography component="span" noWrap sx={{ display: 'block', fontSize: 11, color: 'text.secondary' }}>{item.subtitle}</Typography>
             </Box>)}

@@ -87,19 +87,19 @@ export function ContactsPage() {
   return <Box className="companies-page records-page">
     <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Contactos</Typography><Typography className="companies-page-description">Personas compartidas por todo el equipo comercial.</Typography></div><Button component={RouterLink} to="/contactos/nuevo" variant="contained">Nuevo contacto</Button></header>
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
-    <Box component="form" onSubmit={e => { e.preventDefault(); setQ(search.trim()); setPage(0) }} sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3, alignItems: 'start' }}>
+    <Box component="form" onSubmit={e => { e.preventDefault(); setQ(search.trim()); setPage(0) }} className="record-filters">
       <TextField label="Buscar contactos" type="search" value={search} onChange={e => setSearch(e.target.value)} helperText="Nombre, documento, correo, teléfono o empresa" />
-      <TextField select label="Estado" value={state} onChange={e => { setState(e.target.value); setPage(0) }} sx={{ minWidth: 160 }}><MenuItem value="">Todos</MenuItem>{states.data?.map(s => <MenuItem key={s.id} value={String(s.id)}>{s.descripcion}</MenuItem>)}</TextField>
-      <TextField select label="Origen" value={origin} onChange={e => { setOrigin(e.target.value); setPage(0) }} sx={{ minWidth: 160 }}><MenuItem value="">Todos</MenuItem>{origins.data?.map(s => <MenuItem key={s.id} value={String(s.id)}>{s.descripcion}</MenuItem>)}</TextField>
-      <Box sx={{ minWidth: 240, flex: '1 1 240px' }}><ContactCompanySelect value={company} onChange={id => { setCompany(id); setPage(0) }} helperText="Sin selección: todas las empresas" /></Box>
-      <Box sx={{ minWidth: 240, flex: '1 1 240px' }}><CompanyResponsibleSelect value={responsible} onChange={id => { setResponsible(id); setPage(0) }} helperText="Sin selección: todos los responsables" /></Box>
+      <TextField select label="Estado" value={state} onChange={e => { setState(e.target.value); setPage(0) }}><MenuItem value="">Todos</MenuItem>{states.data?.map(s => <MenuItem key={s.id} value={String(s.id)}>{s.descripcion}</MenuItem>)}</TextField>
+      <TextField select label="Origen" value={origin} onChange={e => { setOrigin(e.target.value); setPage(0) }}><MenuItem value="">Todos</MenuItem>{origins.data?.map(s => <MenuItem key={s.id} value={String(s.id)}>{s.descripcion}</MenuItem>)}</TextField>
+      <Box className="record-filter-lookup"><ContactCompanySelect value={company} onChange={id => { setCompany(id); setPage(0) }} helperText="Sin selección: todas las empresas" /></Box>
+      <Box className="record-filter-lookup"><CompanyResponsibleSelect value={responsible} onChange={id => { setResponsible(id); setPage(0) }} helperText="Sin selección: todos los responsables" /></Box>
       <Button type="submit" variant="outlined">Buscar</Button><Button type="button" onClick={clear}>Limpiar filtros</Button>
     </Box>
     {(states.isError || origins.isError) && <Alert severity="warning" action={<Button onClick={() => { void states.refetch(); void origins.refetch() }}>Reintentar</Button>}>No pudimos cargar los filtros de catálogos.</Alert>}
     {isPending ? <ContactListSkeleton /> : error ? <section className="company-feedback" aria-labelledby="contacts-error-title">
       <Typography id="contacts-error-title" component="h2" className="company-feedback-title">No pudimos cargar los contactos</Typography><Typography color="text.secondary">{error.message}</Typography><Button onClick={() => void refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button>
     </section> : <>
-      <Typography role="status" sx={{ mb: 2 }}>{data.totalCount} {data.totalCount === 1 ? 'contacto' : 'contactos'}</Typography>
+      <Typography role="status" className="record-count">{data.totalCount} {data.totalCount === 1 ? 'contacto' : 'contactos'}</Typography>
       {data.items.length === 0 ? <section className="company-feedback" aria-labelledby="contacts-empty-title">
         <Typography id="contacts-empty-title" component="h2" className="company-feedback-title">{filtered || page ? 'No hay contactos para estos filtros o página' : 'Todavía no hay contactos'}</Typography><Typography color="text.secondary">Los contactos registrados van a aparecer en este listado.</Typography>
       </section> : <>
