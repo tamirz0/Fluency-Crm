@@ -14,12 +14,14 @@ public sealed class ServicioMappingTests
         await using var connection = await fixture.OpenAsync();
         await SchemaTests.SeedContextAsync(connection);
         await using var db = new FluencyLocalDbContext(new DbContextOptionsBuilder<FluencyLocalDbContext>().UseNpgsql(fixture.ConnectionString).Options);
-        var stage = await db.EtapaComerciales.Include(x => x.IdEmbudoNavigation).ThenInclude(x => x.IdServicioNavigation)
+        var stage = await db.EtapaComerciales.Include(x => x.IdEmbudoNavigation).ThenInclude(x => x.TiposServicio)
             .Include(x => x.IdEstadoNavigation).SingleAsync(x => x.Nombre == "Abierta");
         Assert.True(stage.Activo);
         Assert.Equal("ABIERTA", stage.IdEstadoNavigation.Codigo);
         Assert.True(stage.IdEmbudoNavigation.Activo);
-        var service = stage.IdEmbudoNavigation.IdServicioNavigation;
+        Assert.Equal("CLASES", Assert.Single(stage.IdEmbudoNavigation.TiposServicio).Codigo);
+        var service = await db.Servicios.Include(x => x.IdTipoServicioNavigation).SingleAsync();
+        Assert.Equal("CLASES", service.IdTipoServicioNavigation.Codigo);
         service.PrecioReferencia = 1234567890.12m;
         service.Activo = false;
         await db.SaveChangesAsync();
@@ -28,6 +30,6 @@ public sealed class ServicioMappingTests
         Assert.True(await db.Embudos.Select(x => x.Activo).SingleAsync());
         // Historical reads use the target schema while opportunity management remains pending.
         Assert.Equal(1L, await CommercialSchemaFixture.ScalarAsync<long>(connection,
-            "SELECT count(*) FROM oportunidad o JOIN etapa_comercial e ON e.id=o.id_etapa JOIN embudo b ON b.id=e.id_embudo JOIN servicio s ON s.id=b.id_servicio WHERE NOT s.activo"));
+            "SELECT count(*) FROM oportunidad o JOIN etapa_comercial e ON e.id=o.id_etapa JOIN servicio s ON s.id=o.id_servicio WHERE NOT s.activo"));
     }
 }

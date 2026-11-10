@@ -1,10 +1,12 @@
 -- Fluency CRM: creación del esquema actual (segunda entrega) y del usuario "admin".
 -- Reemplaza al script de la primera entrega: ya no crea tablas anteriores ni usuarios de demostración.
 -- Es la unión, en orden, de segunda-entrega-esquema.sql, segunda-entrega-catalogos.sql,
--- segunda-entrega-roles.sql, segunda-entrega-bonus.sql y segunda-entrega-bonus-roles.sql (bonus de academia:
--- alumnos, cursos, clases, talleres y rol Profesor), más el alta del administrador. Si cambia alguno de ellos,
+-- segunda-entrega-roles.sql, segunda-entrega-bonus.sql, segunda-entrega-bonus-roles.sql (bonus de academia:
+-- alumnos, cursos, clases, talleres y rol Profesor) y segunda-entrega-embudos-base.sql (embudos "Clases de Inglés"
+-- y "Talleres" con sus etapas), más el alta del administrador. Si cambia alguno de ellos,
 -- actualizar este archivo (una prueba compara su contenido).
--- Para una base ya instalada que solo necesita el bonus: agregar-bonus-academia.sql.
+-- Para una base ya instalada que solo necesita el bonus: agregar-bonus-academia.sql; para sumar tipos de
+-- servicio, modalidades y embudos base: agregar-tipos-servicio-embudos.sql.
 --
 -- Uso (pgAdmin o psql), UNA sola vez sobre una base vacía:
 --   1. Crear la base (por ejemplo FluencyLocalDB) y abrir este archivo conectado a ella.
@@ -127,6 +129,12 @@ CREATE TABLE modalidad (
     descripcion varchar(100) NOT NULL CHECK (btrim(descripcion) <> ''),
     activo boolean NOT NULL DEFAULT true
 );
+CREATE TABLE tipo_servicio (
+    id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    descripcion varchar(100) NOT NULL CHECK (btrim(descripcion) <> ''),
+    codigo varchar(20) UNIQUE CHECK (codigo IS NULL OR btrim(codigo) <> ''),
+    activo boolean NOT NULL DEFAULT true
+);
 CREATE TABLE servicio (
     id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre varchar(150) NOT NULL CHECK (btrim(nombre) <> ''),
@@ -135,18 +143,31 @@ CREATE TABLE servicio (
     duracion_horas integer,
     id_nivel integer REFERENCES nivel_ingles(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     id_modalidad integer REFERENCES modalidad(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    id_tipo_servicio integer NOT NULL REFERENCES tipo_servicio(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     activo boolean NOT NULL DEFAULT true
 );
 CREATE INDEX ix_servicio_nivel ON servicio (id_nivel);
 CREATE INDEX ix_servicio_modalidad ON servicio (id_modalidad);
+CREATE INDEX ix_servicio_tipo ON servicio (id_tipo_servicio);
 CREATE TABLE embudo (
     id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre varchar(100) NOT NULL CHECK (btrim(nombre) <> ''),
     descripcion text,
-    id_servicio integer NOT NULL REFERENCES servicio(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     activo boolean NOT NULL DEFAULT true
 );
-CREATE INDEX ix_embudo_servicio ON embudo (id_servicio);
+-- Admisión de servicios: tipos admitidos y, opcionalmente, una selección puntual de servicios de un tipo.
+CREATE TABLE embudo_tipo_servicio (
+    id_embudo integer NOT NULL REFERENCES embudo(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    id_tipo_servicio integer NOT NULL REFERENCES tipo_servicio(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    PRIMARY KEY (id_embudo, id_tipo_servicio)
+);
+CREATE INDEX ix_embudo_tipo_servicio_tipo ON embudo_tipo_servicio (id_tipo_servicio);
+CREATE TABLE embudo_servicio (
+    id_embudo integer NOT NULL REFERENCES embudo(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    id_servicio integer NOT NULL REFERENCES servicio(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    PRIMARY KEY (id_embudo, id_servicio)
+);
+CREATE INDEX ix_embudo_servicio_servicio ON embudo_servicio (id_servicio);
 CREATE TABLE estado_oportunidad (
     id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     codigo varchar(100) NOT NULL UNIQUE CHECK (codigo IN ('ABIERTA', 'GANADA', 'PERDIDA')),
@@ -190,6 +211,7 @@ CREATE TABLE oportunidad (
     id_empresa integer REFERENCES empresa(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     id_contacto integer REFERENCES contacto(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     id_etapa integer NOT NULL REFERENCES etapa_comercial(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    id_servicio integer NOT NULL REFERENCES servicio(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     id_origen integer REFERENCES origen_comercial(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     valor numeric(12,2) NOT NULL CHECK (valor >= 0 AND valor <> 'NaN'::numeric),
     fecha_creacion timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -207,6 +229,7 @@ CREATE INDEX ix_oportunidad_responsable ON oportunidad (id_responsable);
 CREATE INDEX ix_oportunidad_empresa ON oportunidad (id_empresa);
 CREATE INDEX ix_oportunidad_contacto ON oportunidad (id_contacto);
 CREATE INDEX ix_oportunidad_etapa ON oportunidad (id_etapa);
+CREATE INDEX ix_oportunidad_servicio ON oportunidad (id_servicio);
 CREATE INDEX ix_oportunidad_origen ON oportunidad (id_origen);
 CREATE INDEX ix_oportunidad_motivo ON oportunidad (id_motivo_perdida);
 CREATE TABLE historial_etapas (
@@ -264,6 +287,7 @@ BEGIN
        OR EXISTS (SELECT 1 FROM origen_comercial)
        OR EXISTS (SELECT 1 FROM nivel_ingles)
        OR EXISTS (SELECT 1 FROM modalidad)
+       OR EXISTS (SELECT 1 FROM tipo_servicio)
        OR EXISTS (SELECT 1 FROM motivo_perdida)
        OR EXISTS (SELECT 1 FROM tipo_actividad) THEN
         RAISE EXCEPTION 'Los catálogos contienen datos previos; se conserva su contenido.';
@@ -277,7 +301,11 @@ VALUES ('Sitio Web'), ('Instagram'), ('Recomendación');
 INSERT INTO nivel_ingles (descripcion)
 VALUES ('A1'), ('A2'), ('B1'), ('B2'), ('C1'), ('C2');
 INSERT INTO modalidad (descripcion)
-VALUES ('Grupal Online'), ('Individual 1-to-1'), ('In-Company');
+VALUES ('Grupal Presencial'), ('Grupal Online'), ('Grupal Híbrido'), ('Particular Online'), ('Particular Presencial');
+-- Los códigos identifican los tipos base (reglas de nivel, alumno y talleres); los tipos que agregue el
+-- administrador no llevan código.
+INSERT INTO tipo_servicio (descripcion, codigo)
+VALUES ('Clases', 'CLASES'), ('Talleres', 'TALLERES');
 INSERT INTO motivo_perdida (descripcion)
 VALUES ('Presupuesto'), ('Horarios incompatibles'), ('Sin respuesta'), ('Otro');
 INSERT INTO tipo_actividad (nombre)
@@ -353,9 +381,6 @@ BEGIN
     END IF;
 END $$;
 
--- Un servicio de taller es de fecha única y no crea alumnos al ganarse.
-ALTER TABLE servicio ADD COLUMN es_taller boolean NOT NULL DEFAULT false;
-
 -- Niveles de inglés con los que trabaja cada profesor (usuario con rol PROFESOR).
 CREATE TABLE profesor_nivel (
     id_usuario integer NOT NULL REFERENCES usuario(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
@@ -375,7 +400,7 @@ CREATE TABLE curso (
 CREATE INDEX ix_curso_nivel ON curso (id_nivel);
 CREATE INDEX ix_curso_profesor ON curso (id_profesor);
 
--- Alumno = contacto cuya oportunidad ganada era un servicio con nivel. Sus datos personales viven en
+-- Alumno = contacto cuya oportunidad ganada era un servicio de tipo Clases. Sus datos personales viven en
 -- contacto; un contacto es alumno una sola vez y pertenece a lo sumo a un curso.
 CREATE TABLE alumno (
     id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -461,7 +486,40 @@ SELECT r.id, p.id FROM rol r CROSS JOIN permiso p
 WHERE p.codigo = 'GestionarAcademia' AND r.nombre IN ('ADMINISTRADOR', 'PROFESOR')
 ON CONFLICT DO NOTHING;
 
--- ===== 6. Usuario administrador inicial =====
+-- ===== 6. Embudos base (segunda-entrega-embudos-base.sql) =====
+DO $$
+BEGIN
+    IF current_setting('fluency.target_database', true) IS DISTINCT FROM current_database()
+       OR current_schema() IS NULL
+       OR current_setting('search_path') <> quote_ident(current_schema()) THEN
+        RAISE EXCEPTION 'Debe declarar expresamente la base y el esquema destino verificados.';
+    END IF;
+    IF to_regclass('embudo_tipo_servicio') IS NULL OR to_regclass('tipo_servicio') IS NULL THEN
+        RAISE EXCEPTION 'Falta el esquema de la segunda entrega.';
+    END IF;
+    IF (SELECT count(*) FROM tipo_servicio WHERE codigo IN ('CLASES', 'TALLERES')) <> 2 THEN
+        RAISE EXCEPTION 'Faltan los tipos de servicio base; ejecutar antes segunda-entrega-catalogos.sql.';
+    END IF;
+    IF EXISTS (SELECT 1 FROM embudo) OR EXISTS (SELECT 1 FROM etapa_comercial) THEN
+        RAISE EXCEPTION 'Los embudos contienen datos previos; se conserva su contenido.';
+    END IF;
+END $$;
+
+INSERT INTO embudo (nombre, descripcion)
+VALUES ('Clases de Inglés', 'Oportunidades de servicios de tipo Clases.'),
+       ('Talleres', 'Oportunidades de servicios de tipo Talleres.');
+INSERT INTO embudo_tipo_servicio (id_embudo, id_tipo_servicio)
+SELECT e.id, t.id FROM embudo e JOIN tipo_servicio t
+  ON (e.nombre = 'Clases de Inglés' AND t.codigo = 'CLASES') OR (e.nombre = 'Talleres' AND t.codigo = 'TALLERES');
+INSERT INTO etapa_comercial (id_embudo, id_estado, nombre, orden)
+SELECT e.id, s.id, x.nombre, x.orden
+FROM embudo e
+CROSS JOIN (VALUES ('Consulta recibida', 'ABIERTA', 1), ('Necesidad relevada', 'ABIERTA', 2),
+                   ('Nivel de inglés evaluado', 'ABIERTA', 3), ('Presupuesto enviado', 'ABIERTA', 4),
+                   ('Ganada', 'GANADA', 5), ('Perdida', 'PERDIDA', 6)) AS x(nombre, codigo, orden)
+JOIN estado_oportunidad s ON s.codigo = x.codigo;
+
+-- ===== 7. Usuario administrador inicial =====
 -- Usuario "admin" con el hash BCrypt (costo 12) acordado; la contraseña en claro no
 -- se guarda en el repositorio. Nombre, apellido y correo son datos de arranque que
 -- puede editar el propio administrador desde la pantalla de usuarios.

@@ -24,7 +24,7 @@ public sealed class TallerService(FluencyLocalDbContext db, Acceso.ActorActual a
 
     /// <summary>Servicios de taller activos para elegir al crear un taller (el Profesor no accede al listado de servicios).</summary>
     public async Task<IReadOnlyList<OpcionResponse>> ServiciosAsync(CancellationToken ct)
-        => await db.Servicios.AsNoTracking().Where(s => s.Activo && s.EsTaller).OrderBy(s => s.Nombre).ThenBy(s => s.Id)
+        => await db.Servicios.AsNoTracking().Where(s => s.Activo && s.IdTipoServicioNavigation.Codigo == TipoServicio.CodigoTalleres).OrderBy(s => s.Nombre).ThenBy(s => s.Id)
             .Select(s => new OpcionResponse(s.Id, s.Nombre)).ToListAsync(ct);
 
     public async Task<IReadOnlyList<TallerResponse>> ListAsync(DateOnly desde, DateOnly hasta, CancellationToken ct)
@@ -54,7 +54,7 @@ public sealed class TallerService(FluencyLocalDbContext db, Acceso.ActorActual a
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
         if (!await db.Usuarios.AnyAsync(u => u.Id == actor.Id && u.Activo, ct))
             throw new AcademiaOperationException(401, "UNAUTHENTICATED", "La sesión ya no está disponible.");
-        if (!await db.Servicios.AnyAsync(s => s.Id == request.IdServicio && s.Activo && s.EsTaller, ct))
+        if (!await db.Servicios.AnyAsync(s => s.Id == request.IdServicio && s.Activo && s.IdTipoServicioNavigation.Codigo == TipoServicio.CodigoTalleres, ct))
             throw new AcademiaOperationException(400, "REFERENCE_UNAVAILABLE", "El servicio de taller no está disponible.");
         var workshop = new Taller { IdServicio = request.IdServicio, Titulo = request.Titulo.Trim(), Fecha = request.Fecha, HoraInicio = request.HoraInicio, HoraFin = request.HoraFin };
         db.Talleres.Add(workshop);
@@ -70,7 +70,7 @@ public sealed class TallerService(FluencyLocalDbContext db, Acceso.ActorActual a
             && (db.Alumnos.Any(a => a.IdContacto == c.Id && a.Activo)
                 || (c.IdEstadoNavigation != null && c.IdEstadoNavigation.Descripcion.ToLower() == "cliente"
                     && db.Oportunidades.Any(o => o.Activo && o.IdContacto == c.Id && o.IdEtapaNavigation.IdEstadoNavigation.Codigo == "GANADA"
-                        && o.IdEtapaNavigation.IdEmbudoNavigation.IdServicio == serviceId))));
+                        && o.IdServicio == serviceId))));
 
     public async Task<IReadOnlyList<PersonaTallerResponse>> CandidatesAsync(int id, CancellationToken ct)
     {

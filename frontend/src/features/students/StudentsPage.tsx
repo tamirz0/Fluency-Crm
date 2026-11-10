@@ -10,7 +10,7 @@ import '../contacts/records.css'
 
 const columns = ['Nombre completo', 'Documento', 'Correo', 'Nivel', 'Curso']
 
-/** Alumnos: contactos que ganaron un servicio con nivel. El profesor solo ve los de sus niveles (lo decide el servidor). */
+/** Alumnos: contactos que ganaron un servicio de clases. El profesor solo ve los de sus niveles (lo decide el servidor). */
 export function StudentsPage() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
@@ -31,7 +31,7 @@ export function StudentsPage() {
       <Typography role="status" sx={{ mb: 2 }}>{data.totalCount} {data.totalCount === 1 ? 'alumno' : 'alumnos'}</Typography>
       {data.items.length === 0 ? <section className="company-feedback" aria-labelledby="students-empty-title">
         <Typography id="students-empty-title" component="h2" className="company-feedback-title">{q || page ? 'No hay alumnos para esta búsqueda' : 'Todavía no hay alumnos'}</Typography>
-        <Typography color="text.secondary">Un contacto pasa a ser alumno cuando se gana una oportunidad de un servicio con nivel de inglés. Si sos profesor, marcá tus niveles en Mi perfil.</Typography>
+        <Typography color="text.secondary">Un contacto pasa a ser alumno cuando se gana una oportunidad de un servicio de tipo Clases (siempre asociado a un nivel de inglés). Si sos profesor, marcá tus niveles en Mi perfil.</Typography>
       </section> : <TableContainer className="data-table-wrap"><Table aria-label="Alumnos" size="small">
         <caption className="visually-hidden">Listado de alumnos</caption>
         <TableHead><TableRow>{columns.map(label => <TableCell key={label}>{label}</TableCell>)}</TableRow></TableHead>

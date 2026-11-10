@@ -16,6 +16,7 @@ public sealed class CatalogoService(FluencyLocalDbContext db, ActorActual actor)
         "origenes-comerciales" => db.OrigenComerciales.AsNoTracking().Select(x => new CatalogoResponse { Id = x.Id, Descripcion = x.Descripcion, Nombre = null, Activo = x.Activo }),
         "niveles-ingles" => db.NivelesIngles.AsNoTracking().Select(x => new CatalogoResponse { Id = x.Id, Descripcion = x.Descripcion, Nombre = null, Activo = x.Activo }),
         "modalidades" => db.Modalidades.AsNoTracking().Select(x => new CatalogoResponse { Id = x.Id, Descripcion = x.Descripcion, Nombre = null, Activo = x.Activo }),
+        "tipos-servicio" => db.TiposServicio.AsNoTracking().Select(x => new CatalogoResponse { Id = x.Id, Descripcion = x.Descripcion, Nombre = null, Activo = x.Activo }),
         "motivos-perdida" => db.MotivosPerdida.AsNoTracking().Select(x => new CatalogoResponse { Id = x.Id, Descripcion = x.Descripcion, Nombre = null, Activo = x.Activo }),
         "tipos-actividad" => db.TiposActividad.AsNoTracking().Select(x => new CatalogoResponse { Id = x.Id, Nombre = x.Nombre, Descripcion = null, Activo = x.Activo }),
         _ => throw Missing()
@@ -61,7 +62,7 @@ public sealed class CatalogoService(FluencyLocalDbContext db, ActorActual actor)
         object entity = catalogo switch
         {
             "estados-cliente" => new EstadoCliente(), "origenes-comerciales" => new OrigenComercial(),
-            "niveles-ingles" => new NivelIngles(), "modalidades" => new Modalidad(),
+            "niveles-ingles" => new NivelIngles(), "modalidades" => new Modalidad(), "tipos-servicio" => new TipoServicio(),
             "motivos-perdida" => new MotivoPerdida(), "tipos-actividad" => new TipoActividad(), _ => throw Missing()
         };
         var field = catalogo == "tipos-actividad" ? nameof(TipoActividad.Nombre) : nameof(EstadoCliente.Descripcion);

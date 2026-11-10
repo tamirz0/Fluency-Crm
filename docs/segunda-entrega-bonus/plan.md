@@ -34,14 +34,14 @@ El CRM funciona pero se ve genérico para una academia de inglés. Este bonus lo
 | Tema | Decisión |
 |---|---|
 | Alumno | No es un estado nuevo del catálogo: es la **existencia de una fila `alumno`** (derivado). Una empresa nunca es alumno; sí el contacto de la oportunidad ganada. |
-| Cuándo se crea | Al ganar, dentro de la transacción de `CloseAsync`, si la oportunidad tiene **contacto**, su servicio tiene **nivel** y **no es taller**. Si el contacto ya es alumno no se duplica ni se cambia. Reabrir no lo revierte (igual que Potencial → Cliente). |
+| Cuándo se crea | Al ganar, dentro de la transacción de `CloseAsync`, si la oportunidad tiene **contacto** y su servicio es de **tipo Clases** (siempre con nivel; desde el 09/11/2026 el taller se distingue por su tipo, no por un indicador). Si el contacto ya es alumno no se duplica ni se cambia. Reabrir no lo revierte (igual que Potencial → Cliente). |
 | Datos del alumno | Los personales se leen del contacto (FK única, sin duplicar columnas). El nivel se guarda en `alumno`. |
 | Curso | Nombre, nivel y profesor. El nivel debe estar entre los niveles del profesor y coincidir con el del alumno que se suma. Un alumno tiene **un solo curso** (`alumno.id_curso` nullable); si ya tiene otro: 409. «Solo se suman alumnos»: **no se incluye quitar** (limitación conocida; extra si sobra tiempo). |
 | Clase | Título, fecha (el día clickeado), hora de inicio y fin (se muestra como subtítulo), curso, `es_examen` y `temas_examen` opcional. El Profesor solo crea en sus cursos; el Administrador elige profesor y luego uno de sus cursos. |
 | Asistencia y notas | Tabla `clase_alumno(id_clase, id_alumno, presente, nota)` con upsert. Sin fila = «sin registrar», cuenta como no asistió. Nota 0–10, decimales permitidos, opcional. |
 | «13/33» | Presentes / clases **del curso con fecha ≤ hoy**. Alumno sin curso: «sin curso». |
 | Vista «Lista» | Lista de **clases** (el pedido dice «cursos», probable errata). |
-| Taller | Título, fecha única, horario y `id_servicio` (servicio `es_taller`). Inscribibles: contactos Cliente **con oportunidad ganada de ese servicio** ∪ alumnos; se inscribe el contacto y se muestran lista y cantidad. Gestionan Administrador y Profesor. Sin quitar inscripción (extra). |
+| Taller | Título, fecha única, horario y `id_servicio` (servicio de tipo Talleres). Inscribibles: contactos Cliente **con oportunidad ganada de ese servicio** ∪ alumnos; se inscribe el contacto y se muestran lista y cantidad. Gestionan Administrador y Profesor. Sin quitar inscripción (extra). |
 | Profesor y datos | No usa `/contactos`: tiene `/alumnos/:id` (sin historial comercial) con `RecordProfile`. El bloque de asistencia es un componente compartido con la ficha de contacto, donde lo ven Administrador, Responsable y Vendedor. |
 | Inicio | La tarjeta «Alumnos» pasa a contar filas `alumno` activas (hoy cuenta contactos Cliente, [plan express §4](../../tasks/plan-express-pre-entrega.md)); actualizar su SPEC y test. El Profesor entra a `/clases`. |
 

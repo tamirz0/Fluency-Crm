@@ -50,6 +50,8 @@ public partial class FluencyLocalDbContext : DbContext
 
     public virtual DbSet<Servicio> Servicios { get; set; }
 
+    public virtual DbSet<TipoServicio> TiposServicio { get; set; }
+
     public virtual DbSet<Embudo> Embudos { get; set; }
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
@@ -254,9 +256,26 @@ public partial class FluencyLocalDbContext : DbContext
             entity.Property(e => e.Nombre).HasMaxLength(100).HasColumnName("nombre");
             entity.Property(e => e.Descripcion).HasColumnName("descripcion");
             entity.Property(e => e.Activo).HasDefaultValue(true).HasColumnName("activo");
-            entity.Property(e => e.IdServicio).HasColumnName("id_servicio");
-            entity.HasOne(e => e.IdServicioNavigation).WithMany(e => e.Embudos)
-                .HasForeignKey(e => e.IdServicio).OnDelete(DeleteBehavior.Restrict);
+            entity.HasMany(e => e.TiposServicio).WithMany()
+                .UsingEntity<Dictionary<string, object>>("embudo_tipo_servicio",
+                    r => r.HasOne<TipoServicio>().WithMany().HasForeignKey("id_tipo_servicio").OnDelete(DeleteBehavior.Restrict),
+                    l => l.HasOne<Embudo>().WithMany().HasForeignKey("id_embudo").OnDelete(DeleteBehavior.Restrict),
+                    j => j.HasKey("id_embudo", "id_tipo_servicio"));
+            entity.HasMany(e => e.Servicios).WithMany()
+                .UsingEntity<Dictionary<string, object>>("embudo_servicio",
+                    r => r.HasOne<Servicio>().WithMany().HasForeignKey("id_servicio").OnDelete(DeleteBehavior.Restrict),
+                    l => l.HasOne<Embudo>().WithMany().HasForeignKey("id_embudo").OnDelete(DeleteBehavior.Restrict),
+                    j => j.HasKey("id_embudo", "id_servicio"));
+        });
+
+        modelBuilder.Entity<TipoServicio>(entity =>
+        {
+            entity.ToTable("tipo_servicio");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).UseIdentityAlwaysColumn().HasColumnName("id");
+            entity.Property(e => e.Descripcion).HasMaxLength(100).HasColumnName("descripcion");
+            entity.Property(e => e.Codigo).HasMaxLength(20).HasColumnName("codigo");
+            entity.Property(e => e.Activo).HasDefaultValue(true).HasSentinel(true).HasColumnName("activo");
         });
 
         modelBuilder.Entity<EtapaComercial>(entity =>
@@ -358,6 +377,8 @@ public partial class FluencyLocalDbContext : DbContext
             entity.Property(e => e.IdEmpresa).HasColumnName("id_empresa");
             entity.Property(e => e.IdContacto).HasColumnName("id_contacto");
             entity.Property(e => e.IdEtapa).HasColumnName("id_etapa");
+            entity.Property(e => e.IdServicio).HasColumnName("id_servicio");
+            entity.HasOne(d => d.IdServicioNavigation).WithMany().HasForeignKey(d => d.IdServicio).OnDelete(DeleteBehavior.Restrict);
             entity.Property(e => e.IdOrigen).HasColumnName("id_origen");
             entity.Property(e => e.Valor).HasPrecision(12, 2).HasColumnName("valor");
             entity.Property(e => e.FechaCreacion).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("fecha_creacion");
@@ -491,6 +512,7 @@ public partial class FluencyLocalDbContext : DbContext
             entity.Property(e => e.DuracionHoras).HasColumnName("duracion_horas");
             entity.Property(e => e.IdModalidad).HasColumnName("id_modalidad");
             entity.Property(e => e.IdNivel).HasColumnName("id_nivel");
+            entity.Property(e => e.IdTipoServicio).HasColumnName("id_tipo_servicio");
             entity.Property(e => e.Nombre)
                 .HasMaxLength(150)
                 .HasColumnName("nombre");
@@ -507,6 +529,10 @@ public partial class FluencyLocalDbContext : DbContext
                 .HasForeignKey(d => d.IdNivel)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("servicio_id_nivel_fkey");
+
+            entity.HasOne(d => d.IdTipoServicioNavigation).WithMany(p => p.Servicios)
+                .HasForeignKey(d => d.IdTipoServicio)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Usuario>(entity =>

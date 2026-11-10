@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { createWorkshop, listWorkshopServices, workshopQueryKeys } from '../../api/client'
 
-/** Alta de un taller de fecha única en el día elegido, a partir de un servicio marcado como taller. */
+/** Alta de un taller de fecha única en el día elegido, a partir de un servicio de tipo Talleres. */
 export function WorkshopDialog({ date, onClose, onSaved }: { date: string; onClose: () => void; onSaved: (id: number) => void }) {
   const client = useQueryClient()
   const [title, setTitle] = useState('')
@@ -27,7 +27,7 @@ export function WorkshopDialog({ date, onClose, onSaved }: { date: string; onClo
         {save.isError && <Alert severity="error">{save.error.message}</Alert>}
         <TextField label="Título" value={title} onChange={e => setTitle(e.target.value)} required autoFocus error={touched && !!errors.title} helperText={touched ? errors.title : undefined} />
         <TextField select label="Servicio de taller" value={service} onChange={e => setService(e.target.value)} required error={touched && !!errors.service}
-          helperText={touched && errors.service ? errors.service : services.isError ? services.error.message : services.data?.length === 0 ? 'No hay servicios de taller. Marcá uno como taller en Servicios.' : 'Los anotados salen de quienes compraron este servicio.'}>
+          helperText={touched && errors.service ? errors.service : services.isError ? services.error.message : services.data?.length === 0 ? 'No hay servicios de taller. Creá uno de tipo Talleres en Servicios.' : 'Los anotados salen de quienes compraron este servicio.'}>
           {services.data?.map(s => <MenuItem key={s.id} value={String(s.id)}>{s.descripcion}</MenuItem>)}
         </TextField>
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>

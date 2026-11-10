@@ -21,9 +21,9 @@ public partial class Servicio
 
     public bool Activo { get; set; } = true;
 
-    public bool EsTaller { get; set; }
+    public int IdTipoServicio { get; set; }
 
-    public virtual ICollection<Embudo> Embudos { get; set; } = new List<Embudo>();
+    public virtual TipoServicio IdTipoServicioNavigation { get; set; } = null!;
 
     public virtual Modalidad? IdModalidadNavigation { get; set; }
 

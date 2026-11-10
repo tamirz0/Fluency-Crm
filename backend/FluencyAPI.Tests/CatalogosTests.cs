@@ -17,7 +17,7 @@ public sealed class CatalogosTests
         using var anonymous = factory.Client();
         Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.GetAsync("/catalogos/origenes-comerciales/opciones")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await seller.GetAsync("/catalogos/origenes-comerciales")).StatusCode);
-        foreach (var catalog in new[] { "estados-cliente", "origenes-comerciales", "niveles-ingles", "modalidades", "motivos-perdida", "tipos-actividad" })
+        foreach (var catalog in new[] { "estados-cliente", "origenes-comerciales", "niveles-ingles", "modalidades", "motivos-perdida", "tipos-actividad", "tipos-servicio" })
         {
             var body = catalog == "tipos-actividad" ? new { nombre = "Prueba CP05" } as object : new { descripcion = "Prueba CP05" };
             var path = "/catalogos/" + catalog;

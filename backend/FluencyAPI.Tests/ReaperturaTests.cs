@@ -41,9 +41,9 @@ public sealed class ReaperturaTests
             await CommercialSchemaFixture.ExecuteAsync(db, "INSERT INTO motivo_perdida(descripcion) VALUES ('Precio')");
             reason = await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM motivo_perdida WHERE descripcion='Precio'");
         }
-        var id = await CreateAsync(seller, new { titulo = "Ciclo", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, valor = 100 });
-        var stillOpen = await CreateAsync(seller, new { titulo = "Abierta", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
-        var removed = await CreateAsync(admin, new { titulo = "Eliminada", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
+        var id = await CreateAsync(seller, new { titulo = "Ciclo", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, valor = 100 });
+        var stillOpen = await CreateAsync(seller, new { titulo = "Abierta", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        var removed = await CreateAsync(admin, new { titulo = "Eliminada", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE oportunidad SET activo=false WHERE id={removed}");
         Assert.Equal(HttpStatusCode.OK, (await Post(seller, id, "ganar", """{"fechaCierre":"2026-12-01","valor":100}""")).StatusCode);
@@ -122,7 +122,7 @@ public sealed class ReaperturaTests
         var seed = await AltaOportunidadTests.SeedAsync(factory, admin);
         for (var round = 0; round < 3; round++)
         {
-            var id = await CreateAsync(admin, new { titulo = $"Carrera {round}", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
+            var id = await CreateAsync(admin, new { titulo = $"Carrera {round}", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
             Assert.Equal(HttpStatusCode.OK, (await Post(admin, id, "ganar", """{"fechaCierre":"2026-12-01","valor":10}""")).StatusCode);
             var results = await Task.WhenAll(Post(admin, id, "reabrir", $$"""{"idEtapa":{{seed.FirstOpen}},"justificacion":"A"}"""), Post(admin, id, "reabrir", $$"""{"idEtapa":{{seed.SecondOpen}},"justificacion":"B"}"""));
             Assert.Equal(1, results.Count(r => r.StatusCode == HttpStatusCode.OK));
@@ -130,7 +130,7 @@ public sealed class ReaperturaTests
             Assert.Equal(3L, await HistoryAsync(factory, id));
         }
 
-        var closed = await CreateAsync(admin, new { titulo = "Atómica", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, valor = 70 });
+        var closed = await CreateAsync(admin, new { titulo = "Atómica", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, valor = 70 });
         Assert.Equal(HttpStatusCode.OK, (await Post(admin, closed, "ganar", """{"fechaCierre":"2026-12-01","valor":70,"observacion":"ok"}""")).StatusCode);
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, "ALTER TABLE historial_etapas ADD CONSTRAINT ck_prueba_rollback CHECK (observacion IS NULL OR observacion NOT LIKE 'Reapertura%') NOT VALID");

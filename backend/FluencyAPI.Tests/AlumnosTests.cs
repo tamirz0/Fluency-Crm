@@ -10,9 +10,9 @@ public sealed class AlumnosTests
 {
     private static async Task<JsonElement> Json(HttpResponseMessage r) => await r.Content.ReadFromJsonAsync<JsonElement>();
 
-    private static async Task<int> NewOpportunityAsync(HttpClient client, int funnel, int? company, int? contact)
+    private static async Task<int> NewOpportunityAsync(HttpClient client, int funnel, int service, int? company, int? contact)
     {
-        var response = await client.PostAsJsonAsync("/oportunidades", new { idEmbudo = funnel, idEmpresa = company, idContacto = contact });
+        var response = await client.PostAsJsonAsync("/oportunidades", new { idEmbudo = funnel, idServicio = service, idEmpresa = company, idContacto = contact });
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         return (await Json(response)).GetProperty("id").GetInt32();
     }
@@ -44,17 +44,17 @@ public sealed class AlumnosTests
         }
 
         // Servicio sin nivel: no hay alumno.
-        await WinAsync(admin, await NewOpportunityAsync(admin, seed.Funnel, null, seed.ContactA));
+        await WinAsync(admin, await NewOpportunityAsync(admin, seed.Funnel, seed.Service, null, seed.ContactA));
         Assert.Equal(0, await StudentsAsync(factory));
 
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE servicio SET id_nivel={level} WHERE nombre='Servicio ficticio'");
         // Una empresa sin contacto nunca genera alumno.
-        await WinAsync(admin, await NewOpportunityAsync(admin, seed.Funnel, seed.CompanyB, null));
+        await WinAsync(admin, await NewOpportunityAsync(admin, seed.Funnel, seed.Service, seed.CompanyB, null));
         Assert.Equal(0, await StudentsAsync(factory));
 
         // Un contacto de empresa gana un servicio con nivel: es alumno de ese nivel y sin curso.
-        var won = await NewOpportunityAsync(admin, seed.Funnel, seed.CompanyA, seed.ContactA);
+        var won = await NewOpportunityAsync(admin, seed.Funnel, seed.Service, seed.CompanyA, seed.ContactA);
         await WinAsync(admin, won);
         await using (var db = await factory.OpenAsync())
         {
@@ -63,15 +63,15 @@ public sealed class AlumnosTests
         }
 
         // Ganar otra vez con el mismo contacto no duplica; reabrir no revierte.
-        await WinAsync(admin, await NewOpportunityAsync(admin, seed.Funnel, null, seed.ContactA));
+        await WinAsync(admin, await NewOpportunityAsync(admin, seed.Funnel, seed.Service, null, seed.ContactA));
         var reopen = await admin.PostAsync($"/oportunidades/{won}/reabrir", new StringContent($$"""{"idEtapa":{{seed.FirstOpen}},"justificacion":"Error de carga"}""", Encoding.UTF8, "application/json"));
         Assert.Equal(HttpStatusCode.OK, reopen.StatusCode);
         Assert.Equal(1, await StudentsAsync(factory));
 
-        // Un taller no crea alumno aunque el servicio tenga nivel.
+        // Un taller no crea alumno aunque el servicio tenga nivel (su tipo es Talleres).
         await using (var db = await factory.OpenAsync())
-            await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE servicio SET es_taller=true, id_nivel={level} WHERE nombre='Otro servicio'");
-        await WinAsync(admin, await NewOpportunityAsync(admin, otherFunnel, null, other));
+            await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE servicio SET id_nivel={level} WHERE nombre='Otro servicio'");
+        await WinAsync(admin, await NewOpportunityAsync(admin, otherFunnel, seed.OtherService, null, other));
         Assert.Equal(1, await StudentsAsync(factory));
     }
 

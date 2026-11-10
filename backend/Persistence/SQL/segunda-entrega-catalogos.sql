@@ -13,6 +13,7 @@ BEGIN
        OR EXISTS (SELECT 1 FROM origen_comercial)
        OR EXISTS (SELECT 1 FROM nivel_ingles)
        OR EXISTS (SELECT 1 FROM modalidad)
+       OR EXISTS (SELECT 1 FROM tipo_servicio)
        OR EXISTS (SELECT 1 FROM motivo_perdida)
        OR EXISTS (SELECT 1 FROM tipo_actividad) THEN
         RAISE EXCEPTION 'Los catálogos contienen datos previos; se conserva su contenido.';
@@ -26,7 +27,11 @@ VALUES ('Sitio Web'), ('Instagram'), ('Recomendación');
 INSERT INTO nivel_ingles (descripcion)
 VALUES ('A1'), ('A2'), ('B1'), ('B2'), ('C1'), ('C2');
 INSERT INTO modalidad (descripcion)
-VALUES ('Grupal Online'), ('Individual 1-to-1'), ('In-Company');
+VALUES ('Grupal Presencial'), ('Grupal Online'), ('Grupal Híbrido'), ('Particular Online'), ('Particular Presencial');
+-- Los códigos identifican los tipos base (reglas de nivel, alumno y talleres); los tipos que agregue el
+-- administrador no llevan código.
+INSERT INTO tipo_servicio (descripcion, codigo)
+VALUES ('Clases', 'CLASES'), ('Talleres', 'TALLERES');
 INSERT INTO motivo_perdida (descripcion)
 VALUES ('Presupuesto'), ('Horarios incompatibles'), ('Sin respuesta'), ('Otro');
 INSERT INTO tipo_actividad (nombre)

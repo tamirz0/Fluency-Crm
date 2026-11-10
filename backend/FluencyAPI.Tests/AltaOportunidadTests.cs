@@ -7,7 +7,7 @@ namespace FluencyAPI.Tests;
 
 public sealed class AltaOportunidadTests
 {
-    internal sealed record Seed(int CompanyA, int CompanyB, int ContactA, int Funnel, int FirstOpen, int SecondOpen, int Won, int OtherFunnelOpen);
+    internal sealed record Seed(int CompanyA, int CompanyB, int ContactA, int Funnel, int FirstOpen, int SecondOpen, int Won, int OtherFunnelOpen, int Service, int OtherService);
 
     // Fixture mínimo propio: SeedContextAsync multiplica filas por cada usuario de AuthApiFactory.
     internal static async Task<Seed> SeedAsync(AuthApiFactory factory, HttpClient client)
@@ -18,9 +18,14 @@ public sealed class AltaOportunidadTests
         var contactA = await CreateAsync("/contactos", new { nombre = "Ana", apellido = "Prueba", correo = "ana@example.invalid", idEmpresa = companyA });
         await using var db = await factory.OpenAsync();
         await CommercialSchemaFixture.ExecuteAsync(db, """
-            INSERT INTO servicio(nombre,precio_referencia) VALUES ('Servicio ficticio',100.25),('Otro servicio',50);
-            INSERT INTO embudo(nombre,id_servicio) SELECT 'Embudo ficticio',id FROM servicio WHERE nombre='Servicio ficticio';
-            INSERT INTO embudo(nombre,id_servicio) SELECT 'Otro embudo',id FROM servicio WHERE nombre='Otro servicio';
+            INSERT INTO servicio(nombre,precio_referencia,id_tipo_servicio,id_modalidad)
+            SELECT v.nombre,v.precio,t.id,m.id
+            FROM (VALUES ('Servicio ficticio',100.25,'CLASES'),('Otro servicio',50,'TALLERES')) AS v(nombre,precio,codigo)
+            JOIN tipo_servicio t ON t.codigo=v.codigo CROSS JOIN modalidad m WHERE m.descripcion='Grupal Online';
+            INSERT INTO embudo(nombre) VALUES ('Embudo ficticio'),('Otro embudo');
+            INSERT INTO embudo_tipo_servicio(id_embudo,id_tipo_servicio)
+            SELECT b.id,t.id FROM embudo b JOIN tipo_servicio t
+              ON (b.nombre='Embudo ficticio' AND t.codigo='CLASES') OR (b.nombre='Otro embudo' AND t.codigo='TALLERES');
             INSERT INTO etapa_comercial(id_embudo,id_estado,nombre,orden)
             SELECT b.id,e.id,CASE e.codigo WHEN 'ABIERTA' THEN 'Primera' WHEN 'GANADA' THEN 'Ganada' ELSE 'Perdida' END,
             CASE e.codigo WHEN 'GANADA' THEN 1 WHEN 'PERDIDA' THEN 2 ELSE 3 END FROM embudo b CROSS JOIN estado_oportunidad e;
@@ -32,7 +37,9 @@ public sealed class AltaOportunidadTests
             await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM etapa_comercial WHERE nombre='Primera' AND id_embudo=(SELECT id FROM embudo WHERE nombre='Embudo ficticio')"),
             await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM etapa_comercial WHERE nombre='Segunda'"),
             await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM etapa_comercial WHERE nombre='Ganada' AND id_embudo=(SELECT id FROM embudo WHERE nombre='Embudo ficticio')"),
-            await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM etapa_comercial WHERE nombre='Primera' AND id_embudo=(SELECT id FROM embudo WHERE nombre='Otro embudo')"));
+            await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM etapa_comercial WHERE nombre='Primera' AND id_embudo=(SELECT id FROM embudo WHERE nombre='Otro embudo')"),
+            await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM servicio WHERE nombre='Servicio ficticio'"),
+            await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM servicio WHERE nombre='Otro servicio'"));
     }
 
     private static async Task<JsonElement> Json(HttpResponseMessage response) => await response.Content.ReadFromJsonAsync<JsonElement>();
@@ -52,12 +59,17 @@ public sealed class AltaOportunidadTests
         using var anonymous = factory.Client();
         var seed = await SeedAsync(factory, admin);
 
-        Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.PostAsJsonAsync("/oportunidades", new { titulo = "X", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA })).StatusCode);
-        // El servicio inactivo no bloquea un embudo activo.
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.PostAsJsonAsync("/oportunidades", new { titulo = "X", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA })).StatusCode);
+        // Un servicio inactivo no se puede elegir para una oportunidad nueva; reactivado, el alta sigue.
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, "UPDATE servicio SET activo=false WHERE nombre='Servicio ficticio'");
+        var inactive = await seller.PostAsJsonAsync("/oportunidades", new { titulo = "X", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        Assert.Equal(HttpStatusCode.BadRequest, inactive.StatusCode);
+        Assert.Equal("REFERENCE_UNAVAILABLE", (await Json(inactive)).GetProperty("code").GetString());
+        await using (var db = await factory.OpenAsync())
+            await CommercialSchemaFixture.ExecuteAsync(db, "UPDATE servicio SET activo=true WHERE nombre='Servicio ficticio'");
 
-        var response = await seller.PostAsJsonAsync("/oportunidades", new { titulo = "  Curso B1  ", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
+        var response = await seller.PostAsJsonAsync("/oportunidades", new { titulo = "  Curso B1  ", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var created = await Json(response);
         var id = created.GetProperty("id").GetInt32();
@@ -68,7 +80,13 @@ public sealed class AltaOportunidadTests
         Assert.Equal("ABIERTA", created.GetProperty("estado").GetString());
         Assert.Equal(seed.Funnel, created.GetProperty("idEmbudo").GetInt32());
         Assert.Equal("Servicio ficticio", created.GetProperty("servicioNombre").GetString());
-        Assert.False(created.GetProperty("servicioActivo").GetBoolean());
+        Assert.True(created.GetProperty("servicioActivo").GetBoolean());
+        // Desactivar el servicio después no afecta a la oportunidad: se sigue leyendo y se informa como inactivo.
+        await using (var db = await factory.OpenAsync())
+            await CommercialSchemaFixture.ExecuteAsync(db, "UPDATE servicio SET activo=false WHERE nombre='Servicio ficticio'");
+        Assert.False((await Json(await admin.GetAsync($"/oportunidades/{id}"))).GetProperty("servicioActivo").GetBoolean());
+        await using (var db = await factory.OpenAsync())
+            await CommercialSchemaFixture.ExecuteAsync(db, "UPDATE servicio SET activo=true WHERE nombre='Servicio ficticio'");
         Assert.Equal(factory.SellerId, created.GetProperty("idResponsable").GetInt32());
         Assert.Equal(100.25m, created.GetProperty("valor").GetDecimal());
         Assert.True(created.GetProperty("activo").GetBoolean());
@@ -85,7 +103,7 @@ public sealed class AltaOportunidadTests
         // Cualquier usuario lee la oportunidad, pero el vendedor ajeno no recibe acciones.
         var seenByAdmin = await Json(await admin.GetAsync($"/oportunidades/{id}"));
         Assert.True(seenByAdmin.GetProperty("accionesPermitidas").GetProperty("editar").GetBoolean());
-        var adminsOwn = await Json(await admin.PostAsJsonAsync("/oportunidades", new { titulo = "Del admin", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA }));
+        var adminsOwn = await Json(await admin.PostAsJsonAsync("/oportunidades", new { titulo = "Del admin", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA }));
         var seenBySeller = await Json(await seller.GetAsync($"/oportunidades/{adminsOwn.GetProperty("id").GetInt32()}"));
         Assert.Equal(factory.AdminId, seenBySeller.GetProperty("idResponsable").GetInt32());
         Assert.All(seenBySeller.GetProperty("accionesPermitidas").EnumerateObject(), action => Assert.False(action.Value.GetBoolean(), action.Name));
@@ -100,15 +118,15 @@ public sealed class AltaOportunidadTests
         var seed = await SeedAsync(factory, admin);
         async Task<JsonElement> Create(object body) { var r = await admin.PostAsJsonAsync("/oportunidades", body); Assert.Equal(HttpStatusCode.Created, r.StatusCode); return await Json(r); }
 
-        var omitted = await Create(new { titulo = "A", idEmbudo = seed.Funnel, idContacto = seed.ContactA, cantidadParticipantes = 5 });
+        var omitted = await Create(new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idContacto = seed.ContactA, cantidadParticipantes = 5 });
         Assert.Equal(100.25m, omitted.GetProperty("valor").GetDecimal());
         Assert.Equal(5, omitted.GetProperty("cantidadParticipantes").GetInt32());
         Assert.Equal(JsonValueKind.Null, omitted.GetProperty("idEmpresa").ValueKind);
-        Assert.Equal(100.25m, (await Create(new { titulo = "B", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, valor = (decimal?)null })).GetProperty("valor").GetDecimal());
-        Assert.Equal(0m, (await Create(new { titulo = "C", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, valor = 0 })).GetProperty("valor").GetDecimal());
+        Assert.Equal(100.25m, (await Create(new { titulo = "B", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, valor = (decimal?)null })).GetProperty("valor").GetDecimal());
+        Assert.Equal(0m, (await Create(new { titulo = "C", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, valor = 0 })).GetProperty("valor").GetDecimal());
         var full = await Create(new
         {
-            titulo = "D", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idContacto = seed.ContactA, idEtapa = seed.SecondOpen,
+            titulo = "D", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idContacto = seed.ContactA, idEtapa = seed.SecondOpen,
             valor = 1500.5, fechaEstimadaCierre = "2026-12-31", objetivoAprendizaje = "  Reuniones  ", disponibilidadHoraria = "Martes", observaciones = "  "
         });
         Assert.Equal(seed.SecondOpen, full.GetProperty("idEtapa").GetInt32());
@@ -130,15 +148,15 @@ public sealed class AltaOportunidadTests
         var seed = await SeedAsync(factory, admin);
         async Task<JsonElement> Create(object body) { var r = await admin.PostAsJsonAsync("/oportunidades", body); Assert.Equal(HttpStatusCode.Created, r.StatusCode); return await Json(r); }
 
-        var company = await Create(new { idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
+        var company = await Create(new { idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
         Assert.Equal(JsonValueKind.Null, company.GetProperty("titulo").ValueKind);
         Assert.Equal("Empresa A", company.GetProperty("tituloVisible").GetString());
-        var contact = await Create(new { idEmbudo = seed.Funnel, idContacto = seed.ContactA });
+        var contact = await Create(new { idEmbudo = seed.Funnel, idServicio = seed.Service, idContacto = seed.ContactA });
         Assert.Equal("Ana Prueba", contact.GetProperty("tituloVisible").GetString());
-        var both = await Create(new { idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idContacto = seed.ContactA, titulo = "   " });
+        var both = await Create(new { idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idContacto = seed.ContactA, titulo = "   " });
         Assert.Equal(JsonValueKind.Null, both.GetProperty("titulo").ValueKind);
         Assert.Equal("Empresa A – Ana Prueba", both.GetProperty("tituloVisible").GetString());
-        var titled = await Create(new { idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, titulo = "Curso B1" });
+        var titled = await Create(new { idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, titulo = "Curso B1" });
         Assert.Equal("Curso B1", titled.GetProperty("titulo").GetString());
         Assert.Equal("Curso B1", titled.GetProperty("tituloVisible").GetString());
         // La lectura posterior muestra lo mismo.
@@ -152,9 +170,9 @@ public sealed class AltaOportunidadTests
         using var admin = factory.Client(); await UsuariosTests.SignIn(admin, factory);
         using var seller = factory.Client(); await UsuariosTests.SignIn(seller, factory, "seller");
         var seed = await SeedAsync(factory, admin);
-        var body = new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA };
+        var body = new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA };
 
-        var assigned = await admin.PostAsJsonAsync("/oportunidades", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idResponsable = factory.SellerId });
+        var assigned = await admin.PostAsJsonAsync("/oportunidades", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idResponsable = factory.SellerId });
         Assert.Equal(HttpStatusCode.Created, assigned.StatusCode);
         var created = await Json(assigned);
         Assert.Equal(factory.SellerId, created.GetProperty("idResponsable").GetInt32());
@@ -163,24 +181,24 @@ public sealed class AltaOportunidadTests
         await using (var db = await factory.OpenAsync())
             Assert.Equal(factory.AdminId, await CommercialSchemaFixture.ScalarAsync<int>(db, $"SELECT id_usuario FROM historial_etapas WHERE id_oportunidad={created.GetProperty("id").GetInt32()}"));
 
-        var other = await seller.PostAsJsonAsync("/oportunidades", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idResponsable = factory.AdminId });
+        var other = await seller.PostAsJsonAsync("/oportunidades", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idResponsable = factory.AdminId });
         Assert.Equal(HttpStatusCode.Forbidden, other.StatusCode);
         Assert.Equal("FORBIDDEN", (await Json(other)).GetProperty("code").GetString());
-        Assert.Equal(HttpStatusCode.Created, (await seller.PostAsJsonAsync("/oportunidades", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idResponsable = factory.SellerId })).StatusCode);
+        Assert.Equal(HttpStatusCode.Created, (await seller.PostAsJsonAsync("/oportunidades", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idResponsable = factory.SellerId })).StatusCode);
 
         foreach (var forged in new object[]
                  {
-                     new { titulo = "F", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idUsuario = factory.AdminId },
-                     new { titulo = "F", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, estado = "GANADA" },
-                     new { titulo = "F", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, activo = false },
-                     new { titulo = "F", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idServicio = 1 },
-                     new { titulo = "F", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, fechaCreacion = "2020-01-01T00:00:00Z" },
+                     new { titulo = "F", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idUsuario = factory.AdminId },
+                     new { titulo = "F", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, estado = "GANADA" },
+                     new { titulo = "F", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, activo = false },
+                     new { titulo = "F", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idModalidad = 1 },
+                     new { titulo = "F", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, fechaCreacion = "2020-01-01T00:00:00Z" },
                  })
             Assert.Equal(HttpStatusCode.BadRequest, (await admin.PostAsJsonAsync("/oportunidades", forged)).StatusCode);
 
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE usuario SET activo=false WHERE id={factory.SellerId}");
-        var inactive = await admin.PostAsJsonAsync("/oportunidades", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idResponsable = factory.SellerId });
+        var inactive = await admin.PostAsJsonAsync("/oportunidades", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idResponsable = factory.SellerId });
         Assert.Equal(HttpStatusCode.BadRequest, inactive.StatusCode);
         Assert.Equal("REFERENCE_UNAVAILABLE", (await Json(inactive)).GetProperty("code").GetString());
         Assert.Equal(2L, await CountAsync(factory, "oportunidad"));
@@ -200,19 +218,22 @@ public sealed class AltaOportunidadTests
         }
         var cases = new (string Name, object Body, string Code)[]
         {
-            ("sin cliente", new { titulo = "A", idEmbudo = seed.Funnel }, "VALIDATION_FAILED"),
-            ("título demasiado largo", new { titulo = new string('x', 101), idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA }, "VALIDATION_FAILED"),
-            ("sin embudo", new { titulo = "A", idEmpresa = seed.CompanyA }, "VALIDATION_FAILED"),
-            ("valor negativo", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, valor = -1 }, "VALIDATION_FAILED"),
-            ("valor con tres decimales", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, valor = 1.005 }, "VALIDATION_FAILED"),
-            ("participantes cero", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, cantidadParticipantes = 0 }, "VALIDATION_FAILED"),
-            ("embudo inexistente", new { titulo = "A", idEmbudo = 999999, idEmpresa = seed.CompanyA }, "REFERENCE_UNAVAILABLE"),
-            ("empresa inactiva", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = inactiveCompany }, "REFERENCE_UNAVAILABLE"),
-            ("contacto inexistente", new { titulo = "A", idEmbudo = seed.Funnel, idContacto = 999999 }, "REFERENCE_UNAVAILABLE"),
-            ("origen inexistente", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idOrigen = 999999 }, "REFERENCE_UNAVAILABLE"),
-            ("contacto de otra empresa", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyB, idContacto = seed.ContactA }, "VALIDATION_FAILED"),
-            ("etapa final", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idEtapa = seed.Won }, "REFERENCE_UNAVAILABLE"),
-            ("etapa de otro embudo", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idEtapa = seed.OtherFunnelOpen }, "REFERENCE_UNAVAILABLE"),
+            ("sin cliente", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service }, "VALIDATION_FAILED"),
+            ("título demasiado largo", new { titulo = new string('x', 101), idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA }, "VALIDATION_FAILED"),
+            ("sin embudo", new { titulo = "A", idServicio = seed.Service, idEmpresa = seed.CompanyA }, "VALIDATION_FAILED"),
+            ("sin servicio", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA }, "VALIDATION_FAILED"),
+            ("servicio inexistente", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = 999999, idEmpresa = seed.CompanyA }, "REFERENCE_UNAVAILABLE"),
+            ("servicio que el embudo no admite", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.OtherService, idEmpresa = seed.CompanyA }, "VALIDATION_FAILED"),
+            ("valor negativo", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, valor = -1 }, "VALIDATION_FAILED"),
+            ("valor con tres decimales", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, valor = 1.005 }, "VALIDATION_FAILED"),
+            ("participantes cero", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, cantidadParticipantes = 0 }, "VALIDATION_FAILED"),
+            ("embudo inexistente", new { titulo = "A", idEmbudo = 999999, idServicio = seed.Service, idEmpresa = seed.CompanyA }, "REFERENCE_UNAVAILABLE"),
+            ("empresa inactiva", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = inactiveCompany }, "REFERENCE_UNAVAILABLE"),
+            ("contacto inexistente", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idContacto = 999999 }, "REFERENCE_UNAVAILABLE"),
+            ("origen inexistente", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idOrigen = 999999 }, "REFERENCE_UNAVAILABLE"),
+            ("contacto de otra empresa", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyB, idContacto = seed.ContactA }, "VALIDATION_FAILED"),
+            ("etapa final", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idEtapa = seed.Won }, "REFERENCE_UNAVAILABLE"),
+            ("etapa de otro embudo", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idEtapa = seed.OtherFunnelOpen }, "REFERENCE_UNAVAILABLE"),
         };
         foreach (var (name, body, code) in cases)
         {
@@ -225,15 +246,15 @@ public sealed class AltaOportunidadTests
         // Etapa desactivada y embudo desactivado tampoco sirven; sin abierta activa el alta se bloquea con 409.
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE etapa_comercial SET activo=false WHERE id={seed.SecondOpen}");
-        Assert.Equal(HttpStatusCode.BadRequest, (await admin.PostAsJsonAsync("/oportunidades", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idEtapa = seed.SecondOpen })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await admin.PostAsJsonAsync("/oportunidades", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idEtapa = seed.SecondOpen })).StatusCode);
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE etapa_comercial SET activo=false WHERE id={seed.FirstOpen}");
-        var blocked = await admin.PostAsJsonAsync("/oportunidades", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
+        var blocked = await admin.PostAsJsonAsync("/oportunidades", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
         Assert.Equal(HttpStatusCode.Conflict, blocked.StatusCode);
         Assert.Equal("BUSINESS_CONFLICT", (await Json(blocked)).GetProperty("code").GetString());
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE etapa_comercial SET activo=true WHERE id={seed.FirstOpen}; UPDATE embudo SET activo=false WHERE id={seed.Funnel}");
-        Assert.Equal(HttpStatusCode.BadRequest, (await admin.PostAsJsonAsync("/oportunidades", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await admin.PostAsJsonAsync("/oportunidades", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA })).StatusCode);
 
         Assert.Equal(0L, await CountAsync(factory, "oportunidad"));
         Assert.Equal(0L, await CountAsync(factory, "historial_etapas"));
@@ -249,7 +270,7 @@ public sealed class AltaOportunidadTests
             await CommercialSchemaFixture.ExecuteAsync(db, "ALTER TABLE historial_etapas ADD CONSTRAINT ck_prueba_rollback CHECK (observacion IS NOT NULL)");
 
         HttpResponseMessage? response = null;
-        var error = await Record.ExceptionAsync(async () => response = await admin.PostAsJsonAsync("/oportunidades", new { titulo = "A", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA }));
+        var error = await Record.ExceptionAsync(async () => response = await admin.PostAsJsonAsync("/oportunidades", new { titulo = "A", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA }));
         Assert.True(error is not null || response!.StatusCode == HttpStatusCode.InternalServerError);
         Assert.Equal(0L, await CountAsync(factory, "oportunidad"));
         Assert.Equal(0L, await CountAsync(factory, "historial_etapas"));
@@ -267,8 +288,8 @@ public sealed class AltaOportunidadTests
             var company = (await Json(await admin.PostAsJsonAsync("/empresas", new { razonSocial = $"Carrera {round}" }))).GetProperty("id").GetInt32();
             var contact = (await Json(await admin.PostAsJsonAsync("/contactos", new { nombre = "Eva", apellido = $"R{round}", correo = $"r{round}@example.invalid" }))).GetProperty("id").GetInt32();
             var removals = new[] { admin.DeleteAsync($"/empresas/{company}"), admin.DeleteAsync($"/contactos/{contact}") };
-            var creation = seller.PostAsJsonAsync("/oportunidades", new { titulo = $"R{round}", idEmbudo = seed.Funnel, idEmpresa = company, idContacto = (int?)null });
-            var creationWithContact = seller.PostAsJsonAsync("/oportunidades", new { titulo = $"C{round}", idEmbudo = seed.Funnel, idContacto = contact });
+            var creation = seller.PostAsJsonAsync("/oportunidades", new { titulo = $"R{round}", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = company, idContacto = (int?)null });
+            var creationWithContact = seller.PostAsJsonAsync("/oportunidades", new { titulo = $"C{round}", idEmbudo = seed.Funnel, idServicio = seed.Service, idContacto = contact });
             await Task.WhenAll(removals.Append(creation).Append(creationWithContact));
             foreach (var removal in removals) Assert.Contains((await removal).StatusCode, new[] { HttpStatusCode.NoContent, HttpStatusCode.Conflict });
             foreach (var result in new[] { await creation, await creationWithContact })

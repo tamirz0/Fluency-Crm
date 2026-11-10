@@ -26,9 +26,6 @@ BEGIN
     END IF;
 END $$;
 
--- Un servicio de taller es de fecha única y no crea alumnos al ganarse.
-ALTER TABLE servicio ADD COLUMN es_taller boolean NOT NULL DEFAULT false;
-
 -- Niveles de inglés con los que trabaja cada profesor (usuario con rol PROFESOR).
 CREATE TABLE profesor_nivel (
     id_usuario integer NOT NULL REFERENCES usuario(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
@@ -48,7 +45,7 @@ CREATE TABLE curso (
 CREATE INDEX ix_curso_nivel ON curso (id_nivel);
 CREATE INDEX ix_curso_profesor ON curso (id_profesor);
 
--- Alumno = contacto cuya oportunidad ganada era un servicio con nivel. Sus datos personales viven en
+-- Alumno = contacto cuya oportunidad ganada era un servicio de tipo Clases. Sus datos personales viven en
 -- contacto; un contacto es alumno una sola vez y pertenece a lo sumo a un curso.
 CREATE TABLE alumno (
     id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

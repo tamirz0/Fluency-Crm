@@ -12,19 +12,26 @@ public sealed class SchemaTests
         await using var fixture = new CommercialSchemaFixture();
         await fixture.InitializeAsync();
         await using var db = await fixture.OpenAsync();
-        Assert.Equal(28L, await ScalarAsync<long>(db,
+        Assert.Equal(31L, await ScalarAsync<long>(db,
             "SELECT count(*) FROM information_schema.tables WHERE table_schema=current_schema()"));
         Assert.Equal(new[] { "ABIERTA", "GANADA", "PERDIDA" },
             await ScalarAsync<string[]>(db, "SELECT array_agg(codigo ORDER BY codigo) FROM estado_oportunidad"));
         Assert.Equal(4L, await ScalarAsync<long>(db, "SELECT count(*) FROM estado_cliente WHERE activo"));
         Assert.Equal(9L, await ScalarAsync<long>(db, "SELECT count(*) FROM tipo_actividad WHERE activo"));
         Assert.Equal(6L, await ScalarAsync<long>(db, "SELECT count(*) FROM nivel_ingles WHERE activo"));
-        Assert.Equal(3L, await ScalarAsync<long>(db, "SELECT count(*) FROM modalidad WHERE activo"));
+        Assert.Equal(5L, await ScalarAsync<long>(db, "SELECT count(*) FROM modalidad WHERE activo"));
+        Assert.Equal(new[] { "CLASES", "TALLERES" },
+            await ScalarAsync<string[]>(db, "SELECT array_agg(codigo ORDER BY codigo) FROM tipo_servicio WHERE activo"));
         Assert.Equal(0L, await ScalarAsync<long>(db,
             "SELECT (SELECT count(*) FROM usuario)+(SELECT count(*) FROM rol)+(SELECT count(*) FROM permiso)+(SELECT count(*) FROM servicio)+(SELECT count(*) FROM embudo)"));
+        // Embudo y estado se derivan de la etapa; el servicio se guarda en la oportunidad.
         Assert.Equal(0L, await ScalarAsync<long>(db, """
             SELECT count(*) FROM information_schema.columns WHERE table_schema=current_schema()
-            AND table_name='oportunidad' AND column_name IN ('id_embudo','id_servicio','id_estado')
+            AND table_name='oportunidad' AND column_name IN ('id_embudo','id_estado')
+            """));
+        Assert.Equal(1L, await ScalarAsync<long>(db, """
+            SELECT count(*) FROM information_schema.columns WHERE table_schema=current_schema()
+            AND table_name='oportunidad' AND column_name='id_servicio' AND is_nullable='NO'
             """));
         Assert.Equal(2L, await ScalarAsync<long>(db, """
             SELECT count(*) FROM information_schema.columns WHERE table_schema=current_schema()
@@ -145,7 +152,7 @@ public sealed class SchemaTests
             Assert.Equal(PostgresErrorCodes.UniqueViolation,
                 (await Assert.ThrowsAsync<PostgresException>(() => command.ExecuteNonQueryAsync())).SqlState);
         }
-        await ExecuteAsync(db, "INSERT INTO embudo(nombre,id_servicio) SELECT 'Segundo',id FROM servicio");
+        await ExecuteAsync(db, "INSERT INTO embudo(nombre) VALUES ('Segundo')");
         await ExecuteAsync(db, """
             INSERT INTO etapa_comercial(id_embudo,id_estado,nombre,orden)
             SELECT b.id,e.id,'Abierta segundo',3 FROM embudo b CROSS JOIN estado_oportunidad e
@@ -239,7 +246,7 @@ public sealed class SchemaTests
         try
         {
             await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.CleanupAsync());
-            Assert.Equal(28L, await ScalarAsync<long>(db,
+            Assert.Equal(31L, await ScalarAsync<long>(db,
                 "SELECT count(*) FROM information_schema.tables WHERE table_schema=current_schema() AND table_type='BASE TABLE'"));
             Assert.Equal(0L, await ScalarAsync<long>(db, "SELECT count(*) FROM unexpected_guard"));
         }
@@ -260,13 +267,15 @@ public sealed class SchemaTests
         INSERT INTO contacto(nombre,apellido,correo,id_empresa,id_estado,id_responsable)
         SELECT 'Ana','Prueba','ana@example.invalid',c.id,e.id,u.id
         FROM empresa c CROSS JOIN estado_cliente e CROSS JOIN usuario u WHERE c.razon_social='Empresa A' AND e.descripcion='Potencial';
-        INSERT INTO servicio(nombre,precio_referencia) VALUES ('Servicio ficticio',100.25);
-        INSERT INTO embudo(nombre,id_servicio) SELECT 'Embudo ficticio',id FROM servicio;
+        INSERT INTO servicio(nombre,precio_referencia,id_tipo_servicio,id_modalidad)
+        SELECT 'Servicio ficticio',100.25,t.id,m.id FROM tipo_servicio t CROSS JOIN modalidad m WHERE t.codigo='CLASES' AND m.descripcion='Grupal Online';
+        INSERT INTO embudo(nombre) VALUES ('Embudo ficticio');
+        INSERT INTO embudo_tipo_servicio(id_embudo,id_tipo_servicio) SELECT b.id,s.id_tipo_servicio FROM embudo b CROSS JOIN servicio s;
         INSERT INTO etapa_comercial(id_embudo,id_estado,nombre,orden)
         SELECT b.id,e.id,CASE e.codigo WHEN 'ABIERTA' THEN 'Abierta' WHEN 'GANADA' THEN 'Ganada' ELSE 'Perdida' END,
         CASE e.codigo WHEN 'GANADA' THEN 1 WHEN 'PERDIDA' THEN 2 ELSE 3 END FROM embudo b CROSS JOIN estado_oportunidad e;
-        INSERT INTO oportunidad(titulo,id_responsable,id_empresa,id_contacto,id_etapa,valor)
-        SELECT 'Negociación',u.id,c.id,p.id,e.id,100.25 FROM usuario u CROSS JOIN empresa c CROSS JOIN contacto p
-        CROSS JOIN etapa_comercial e WHERE c.razon_social='Empresa A' AND e.nombre='Abierta';
+        INSERT INTO oportunidad(titulo,id_responsable,id_empresa,id_contacto,id_etapa,id_servicio,valor)
+        SELECT 'Negociación',u.id,c.id,p.id,e.id,s.id,100.25 FROM usuario u CROSS JOIN empresa c CROSS JOIN contacto p
+        CROSS JOIN etapa_comercial e CROSS JOIN servicio s WHERE c.razon_social='Empresa A' AND e.nombre='Abierta';
         """);
 }

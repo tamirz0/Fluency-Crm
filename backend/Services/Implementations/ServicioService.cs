@@ -12,7 +12,9 @@ public sealed class ServicioService(FluencyLocalDbContext db, ActorActual actor)
     private IQueryable<ServicioResponse> Query() => db.Servicios.AsNoTracking().Select(s => new ServicioResponse
     {
         Id = s.Id, Nombre = s.Nombre, Descripcion = s.Descripcion, PrecioReferencia = s.PrecioReferencia,
-        DuracionHoras = s.DuracionHoras, Activo = s.Activo, EsTaller = s.EsTaller,
+        DuracionHoras = s.DuracionHoras, Activo = s.Activo,
+        Tipo = new TipoServicioResponse { Id = s.IdTipoServicio, Descripcion = s.IdTipoServicioNavigation.Descripcion, Activo = s.IdTipoServicioNavigation.Activo,
+            NivelObligatorio = s.IdTipoServicioNavigation.Codigo == TipoServicio.CodigoClases },
         Nivel = s.IdNivelNavigation == null ? null : new CatalogoResponse { Id = s.IdNivelNavigation.Id, Descripcion = s.IdNivelNavigation.Descripcion, Activo = s.IdNivelNavigation.Activo },
         Modalidad = s.IdModalidadNavigation == null ? null : new CatalogoResponse { Id = s.IdModalidadNavigation.Id, Descripcion = s.IdModalidadNavigation.Descripcion, Activo = s.IdModalidadNavigation.Activo }
     });
@@ -22,10 +24,15 @@ public sealed class ServicioService(FluencyLocalDbContext db, ActorActual actor)
             && j.IdRolNavigation.PermisoRoles.Any(p => p.IdPermisoNavigation.Codigo == RolesYPermisos.AdministrarConfiguracion)), ct))
             throw new ServicioOperationException(403, "FORBIDDEN", "No tiene permiso para administrar servicios.");
     }
-    public async Task<PageResponse<ServicioResponse>> ListAsync(string? q, string activo, int page, int pageSize, CancellationToken ct)
+    /// <summary>Todos los tipos (también inactivos, para conservar referencias) con su regla de nivel.</summary>
+    public async Task<IReadOnlyList<TipoServicioResponse>> TiposAsync(CancellationToken ct)
+        => await db.TiposServicio.AsNoTracking().OrderBy(t => t.Descripcion).ThenBy(t => t.Id).Select(t => new TipoServicioResponse
+        { Id = t.Id, Descripcion = t.Descripcion, Activo = t.Activo, NivelObligatorio = t.Codigo == TipoServicio.CodigoClases }).ToListAsync(ct);
+    public async Task<PageResponse<ServicioResponse>> ListAsync(string? q, string activo, int? idTipoServicio, int page, int pageSize, CancellationToken ct)
     {
         if (activo != "true") await RequireAdminAsync(ct);
         var query = Query();
+        if (idTipoServicio is { } typeId) query = query.Where(s => s.Tipo.Id == typeId);
         query = activo switch
         {
             "true" => query.Where(s => s.Activo), "false" => query.Where(s => !s.Activo), "todos" => query,
@@ -45,13 +52,23 @@ public sealed class ServicioService(FluencyLocalDbContext db, ActorActual actor)
         => await Query().SingleOrDefaultAsync(s => s.Id == id, ct) ?? throw Missing();
     public async Task<ServicioResponse> WriteAsync(int? id, ServicioRequest? request, bool? activo, CancellationToken ct)
     {
-        if (id is null && (request is null || !request.HasField(nameof(request.Nombre)) || !request.HasField(nameof(request.PrecioReferencia))))
-            throw new ServicioOperationException(400, "VALIDATION_FAILED", "Nombre y precio son obligatorios.");
+        if (id is null && (request is null || !request.HasField(nameof(request.Nombre)) || !request.HasField(nameof(request.PrecioReferencia))
+            || !request.HasField(nameof(request.IdTipoServicio)) || !request.HasField(nameof(request.IdModalidad))))
+            throw new ServicioOperationException(400, "VALIDATION_FAILED", "Nombre, precio, tipo de servicio y modalidad son obligatorios.");
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
         await RequireAdminAsync(ct);
         var service = id is null ? new Servicio() : await db.Servicios.SingleOrDefaultAsync(s => s.Id == id, ct) ?? throw Missing();
         if (request is not null)
         {
+            if (request.HasField(nameof(request.IdTipoServicio)) && (id is null || request.IdTipoServicio != service.IdTipoServicio))
+            {
+                if (!await db.TiposServicio.AnyAsync(t => t.Id == request.IdTipoServicio && t.Activo, ct))
+                    throw new ServicioOperationException(400, "REFERENCE_UNAVAILABLE", "El tipo de servicio no está disponible.");
+                // El tipo decide en qué embudos entra y qué módulos lo usan: un servicio ya utilizado lo conserva.
+                if (id is not null && (await db.Oportunidades.AnyAsync(o => o.IdServicio == id, ct) || await db.Talleres.AnyAsync(t => t.IdServicio == id, ct)
+                    || await db.Embudos.AnyAsync(e => e.Servicios.Any(s => s.Id == id), ct)))
+                    throw new ServicioOperationException(409, "BUSINESS_CONFLICT", "Un servicio utilizado conserva su tipo.");
+            }
             if (request.HasField(nameof(request.IdNivel)) && request.IdNivel is not null && (id is null || request.IdNivel != service.IdNivel)
                 && !await db.NivelesIngles.AnyAsync(x => x.Id == request.IdNivel && x.Activo, ct))
                 throw new ServicioOperationException(400, "REFERENCE_UNAVAILABLE", "El nivel no está disponible.");
@@ -64,7 +81,12 @@ public sealed class ServicioService(FluencyLocalDbContext db, ActorActual actor)
             if (request.HasField(nameof(request.DuracionHoras))) service.DuracionHoras = request.DuracionHoras;
             if (request.HasField(nameof(request.IdNivel))) service.IdNivel = request.IdNivel;
             if (request.HasField(nameof(request.IdModalidad))) service.IdModalidad = request.IdModalidad;
-            if (request.HasField(nameof(request.EsTaller))) service.EsTaller = request.EsTaller!.Value;
+            if (request.HasField(nameof(request.IdTipoServicio))) service.IdTipoServicio = request.IdTipoServicio!.Value;
+            // Reglas del estado final: toda modalidad es obligatoria y las clases exigen nivel.
+            if (service.IdModalidad is null)
+                throw new ServicioOperationException(400, "VALIDATION_FAILED", "La modalidad es obligatoria.");
+            if (service.IdNivel is null && await db.TiposServicio.AnyAsync(t => t.Id == service.IdTipoServicio && t.Codigo == TipoServicio.CodigoClases, ct))
+                throw new ServicioOperationException(400, "VALIDATION_FAILED", "Los servicios de tipo Clases requieren un nivel de inglés.");
         }
         if (activo is not null) service.Activo = activo.Value;
         if (id is null) db.Servicios.Add(service);

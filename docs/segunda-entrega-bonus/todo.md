@@ -25,6 +25,7 @@ Plan del 09/11/2026: [plan.md](plan.md). **Plan aprobado; B01–B21 implementada
 - [x] [B19 — Ajustes tras la revisión del usuario](#b19)
 - [x] [B20 — Inicio del Profesor](#b20)
 - [x] [B21 — Scripts SQL de instalación y actualización](#b21)
+- [x] [B22 — Tipos de servicio, modalidades y embudos base](#b22)
 
 ## Detalle
 
@@ -389,6 +390,22 @@ Plan del 09/11/2026: [plan.md](plan.md). **Plan aprobado; B01–B21 implementada
 
 **Evidencia (09/11/2026):** suite backend completa 191/191 (12 min 47 s) antes de este cambio; después `ScriptsSqlTests`, `SchemaTests` y `BonusSchemaTests` 26/26. Los scripts no se ejecutaron contra ninguna base real.
 
+<a id="b22"></a>
+
+### B22 — Tipos de servicio, modalidades y embudos base
+
+**Resultado:** pedido del usuario (09/11/2026): embudos con etapas por defecto, tipos de servicio, modalidades por defecto y embudos que admiten tipos/servicios.
+
+**Aceptación:**
+
+- [x] Todo embudo nace con Consulta recibida, Necesidad relevada, Nivel de inglés evaluado y Presupuesto enviado (órdenes 1–4) más Ganada y Perdida (5 y 6); las etapas siguen siendo editables, reordenables y desactivables (sin borrado físico, decisión del usuario).
+- [x] Tipos de servicio (Clases y Talleres por defecto; el administrador agrega más por catálogo, solo con el nombre). Clases exige nivel; Talleres y los tipos propios lo tienen opcional (casilla «Asociado a un nivel de inglés»). Modalidad obligatoria; cinco modalidades por defecto.
+- [x] Embudos base «Clases de Inglés» y «Talleres» (`segunda-entrega-embudos-base.sql`), editables. Cada embudo admite tipos completos (también servicios futuros) o una selección puntual; la oportunidad guarda su servicio y solo se crea en un embudo que lo admite.
+- [x] Alumno al ganar y módulo de talleres se basan en el tipo (reemplaza `es_taller`). Scripts: `creacion-tablas.sql` y `agregar-tipos-servicio-embudos.sql` (bases instaladas, repetible).
+
+**Evidencia (09/11/2026):** backend completo 197/198 en 16 min 2 s; el único fallo (`AltaOportunidadTests.MinimalCreation…`, por un ajuste de ese mismo test) quedó corregido y pasa 1/1. Frontend 194/194 (un test descubrió que desactivar/reactivar un servicio sin modalidad quedaba bloqueado por la validación del formulario; corregido). `tsc`, build y lint sin advertencias nuevas; `schema.d.ts` regenerado. `ScriptsSqlTests` ejecuta `embudos-base` y la migración sobre una base con la forma anterior. **Pendiente:** aplicar `agregar-tipos-servicio-embudos.sql` a la base local de desarrollo y el recorrido manual (requiere OK del usuario); producción sin tocar; sin merge ni publicación.
+
 ## Registro de cambios
 
 - 09/11/2026: plan bonus escrito y aprobado por el usuario. Solo documentación; sin código, servicios, suites, merge ni publicación.
+- 09/11/2026: B22 (tipos de servicio, modalidades por defecto, admisión de servicios por embudo y etapas iniciales) implementada y verificada por pruebas; sin merge ni publicación.

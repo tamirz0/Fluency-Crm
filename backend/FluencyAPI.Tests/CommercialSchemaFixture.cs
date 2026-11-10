@@ -8,8 +8,9 @@ internal sealed class CommercialSchemaFixture : IAsyncDisposable
     internal static readonly string[] TablesInDropOrder =
     [
         "taller_inscripcion", "taller", "clase_alumno", "clase", "alumno", "curso", "profesor_nivel",
-        "actividad", "historial_etapas", "oportunidad", "etapa_comercial", "embudo", "servicio",
-        "contacto", "empresa", "permiso_rol", "usuario_rol", "tipo_actividad", "motivo_perdida",
+        "actividad", "historial_etapas", "oportunidad", "etapa_comercial", "embudo_servicio",
+        "embudo_tipo_servicio", "embudo", "servicio", "tipo_servicio", "contacto", "empresa", "permiso_rol",
+        "usuario_rol", "tipo_actividad", "motivo_perdida",
         "estado_oportunidad", "modalidad", "nivel_ingles", "origen_comercial", "estado_cliente",
         "permiso", "rol", "usuario", "probe"
     ];

@@ -42,10 +42,10 @@ public sealed class CierreTests
             retiredReason = await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM motivo_perdida WHERE descripcion='Retirado'");
             lost = await CommercialSchemaFixture.ScalarAsync<int>(db, $"SELECT id FROM etapa_comercial WHERE nombre='Perdida' AND id_embudo={seed.Funnel}");
         }
-        var won = await CreateAsync(seller, new { titulo = "Para ganar", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, valor = 100 });
-        var toLose = await CreateAsync(seller, new { titulo = "Para perder", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, valor = 300 });
-        var theirs = await CreateAsync(admin, new { titulo = "Del admin", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
-        var removed = await CreateAsync(admin, new { titulo = "Eliminada", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
+        var won = await CreateAsync(seller, new { titulo = "Para ganar", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, valor = 100 });
+        var toLose = await CreateAsync(seller, new { titulo = "Para perder", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, valor = 300 });
+        var theirs = await CreateAsync(admin, new { titulo = "Del admin", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        var removed = await CreateAsync(admin, new { titulo = "Eliminada", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE oportunidad SET activo=false WHERE id={removed}");
 
@@ -138,7 +138,7 @@ public sealed class CierreTests
 
         for (var round = 0; round < 3; round++)
         {
-            var id = await CreateAsync(seller, new { titulo = $"Carrera {round}", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
+            var id = await CreateAsync(seller, new { titulo = $"Carrera {round}", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
             var results = await Task.WhenAll(Post(seller, id, "ganar", """{"fechaCierre":"2026-12-01","valor":10}"""), Post(admin, id, "perder", $$"""{"fechaCierre":"2026-12-02","idMotivoPerdida":{{reason}}}"""));
             Assert.Equal(1, results.Count(r => r.StatusCode == HttpStatusCode.OK));
             Assert.Equal(1, results.Count(r => r.StatusCode == HttpStatusCode.Conflict));
@@ -149,7 +149,7 @@ public sealed class CierreTests
             Assert.Equal(state == "PERDIDA" ? 1L : 0L, await CommercialSchemaFixture.ScalarAsync<long>(db, $"SELECT count(*) FROM oportunidad WHERE id={id} AND id_motivo_perdida IS NOT NULL"));
         }
 
-        var open = await CreateAsync(seller, new { titulo = "Atómica", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, valor = 50 });
+        var open = await CreateAsync(seller, new { titulo = "Atómica", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, valor = 50 });
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, "ALTER TABLE historial_etapas ADD CONSTRAINT ck_prueba_rollback CHECK (observacion IS NOT NULL) NOT VALID");
         HttpResponseMessage? response = null;
@@ -181,13 +181,13 @@ public sealed class CierreTests
         }
 
         // Perder no cambia el estado de nadie.
-        var lost = await CreateAsync(admin, new { titulo = "Perdida", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idContacto = seed.ContactA });
+        var lost = await CreateAsync(admin, new { titulo = "Perdida", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idContacto = seed.ContactA });
         Assert.Equal(HttpStatusCode.OK, (await Post(admin, lost, "perder", $$"""{"fechaCierre":"2026-12-01","idMotivoPerdida":{{reason}}}""")).StatusCode);
         Assert.Equal("Potencial", await State("empresa", seed.CompanyA));
         Assert.Equal("Potencial", await State("contacto", seed.ContactA));
 
         // Ganar pasa empresa y contacto de Potencial a Cliente.
-        var won = await CreateAsync(admin, new { titulo = "Ganada", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idContacto = seed.ContactA });
+        var won = await CreateAsync(admin, new { titulo = "Ganada", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idContacto = seed.ContactA });
         Assert.Equal(HttpStatusCode.OK, (await Post(admin, won, "ganar", """{"fechaCierre":"2026-12-02","valor":1}""")).StatusCode);
         Assert.Equal("Cliente", await State("empresa", seed.CompanyA));
         Assert.Equal("Cliente", await State("contacto", seed.ContactA));
@@ -195,7 +195,7 @@ public sealed class CierreTests
         // Un estado distinto de Potencial se respeta.
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE empresa SET id_estado=(SELECT id FROM estado_cliente WHERE descripcion='No contactar') WHERE id={seed.CompanyB}");
-        var other = await CreateAsync(admin, new { titulo = "Otra", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyB });
+        var other = await CreateAsync(admin, new { titulo = "Otra", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyB });
         Assert.Equal(HttpStatusCode.OK, (await Post(admin, other, "ganar", """{"fechaCierre":"2026-12-03","valor":1}""")).StatusCode);
         Assert.Equal("No contactar", await State("empresa", seed.CompanyB));
     }

@@ -16,7 +16,8 @@ public sealed class CatalogoMappingTests
         Assert.Equal(4, await db.EstadoClientes.CountAsync(x => x.Activo));
         Assert.Equal(3, await db.OrigenComerciales.CountAsync(x => x.Activo));
         Assert.Equal(6, await db.NivelesIngles.CountAsync(x => x.Activo));
-        Assert.Equal(3, await db.Modalidades.CountAsync(x => x.Activo));
+        Assert.Equal(5, await db.Modalidades.CountAsync(x => x.Activo));
+        Assert.Equal(2, await db.TiposServicio.CountAsync(x => x.Activo));
         Assert.Equal(9, await db.TiposActividad.CountAsync(x => x.Activo));
         Assert.Equal(4, await db.MotivosPerdida.CountAsync(x => x.Activo));
         Assert.Equal(new[] { "ABIERTA", "GANADA", "PERDIDA" }, await db.EstadoOportunidades.OrderBy(x => x.Codigo).Select(x => x.Codigo).ToArrayAsync());

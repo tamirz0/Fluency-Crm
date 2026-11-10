@@ -79,6 +79,19 @@ it('muestra estados fijos sin acciones y usa nombre para tipos de actividad', as
   await userEvent.click(dialog.getByRole('button', { name: 'Guardar' }))
   await waitFor(() => expect(vi.mocked(fetch).mock.calls.some(([r]) => (r as Request).method === 'POST' && new URL((r as Request).url).pathname === '/api/catalogos/tipos-actividad')).toBe(true))
 })
+it('agrega un tipo de servicio y una modalidad pidiendo solo el nombre', async () => {
+  mount(); await screen.findByRole('heading', { name: 'Catálogos' })
+  for (const [label, path, value] of [['Tipos de servicio', 'tipos-servicio', 'Evaluaciones de nivel'], ['Modalidades', 'modalidades', 'Particular Híbrido']] as const) {
+    await choose('Catálogo', label)
+    await userEvent.click(await screen.findByRole('button', { name: 'Nueva opción' }))
+    const dialog = within(screen.getByRole('dialog'))
+    await userEvent.type(dialog.getByLabelText('Descripción', { exact: false }), value)
+    await userEvent.click(dialog.getByRole('button', { name: 'Guardar' }))
+    await waitFor(() => expect(vi.mocked(fetch).mock.calls.some(([r]) => (r as Request).method === 'POST' && new URL((r as Request).url).pathname === `/api/catalogos/${path}`)).toBe(true))
+    expect(items.at(-1)).toEqual({ descripcion: value, id: 2, activo: true })
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  }
+})
 it('permite reintentar carga, muestra vacío y conserva el formulario cuando falla guardar', async () => {
   failList = true; mount()
   expect(await screen.findByText('No pudimos cargar el catálogo.')).toBeTruthy()

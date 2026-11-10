@@ -21,15 +21,16 @@ namespace FluencyAPI.Controllers;
 [ProducesResponseType<ProblemDetails>(409)]
 public sealed class EmbudosController(EmbudoService service) : ControllerBase
 {
-    /// <summary>Lista embudos; solo administrador consulta inactivos.</summary>
+    /// <summary>Lista embudos; solo administrador consulta inactivos. Con idServicio, los que admiten ese servicio.</summary>
     [HttpGet, ProducesResponseType<PageResponse<EmbudoResponse>>(200)]
     public async Task<ActionResult<PageResponse<EmbudoResponse>>> List([FromQuery] string? q, CancellationToken ct,
-        [FromQuery] string activo = "true", [FromQuery, Range(1, int.MaxValue)] int page = 1, [FromQuery, Range(1, 100)] int pageSize = 25)
-        => Ok(await service.ListAsync(q, activo, page, pageSize, ct));
+        [FromQuery] string activo = "true", [FromQuery, Range(1, int.MaxValue)] int? idServicio = null,
+        [FromQuery, Range(1, int.MaxValue)] int page = 1, [FromQuery, Range(1, 100)] int pageSize = 25)
+        => Ok(await service.ListAsync(q, activo, idServicio, page, pageSize, ct));
     /// <summary>Consulta un embudo y sus referencias conservadas.</summary>
     [HttpGet("{id:int}"), ProducesResponseType<EmbudoResponse>(200)]
     public async Task<ActionResult<EmbudoResponse>> Get(int id, CancellationToken ct) => Ok(await service.GetAsync(id, ct));
-    /// <summary>Crea embudo y sus dos finales en una transacción.</summary>
+    /// <summary>Crea el embudo con su admisión de servicios, sus cuatro etapas iniciales y los dos finales en una transacción.</summary>
     [HttpPost, Authorize(Policy = RolesYPermisos.AdministrarConfiguracion), ProducesResponseType<EmbudoResponse>(201)]
     public async Task<ActionResult<EmbudoResponse>> Create([FromBody] EmbudoRequest request, CancellationToken ct)
     {
