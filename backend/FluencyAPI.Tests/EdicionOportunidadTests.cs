@@ -28,10 +28,10 @@ public sealed class EdicionOportunidadTests
         using var seller = factory.Client(); await UsuariosTests.SignIn(seller, factory, "seller");
         using var anonymous = factory.Client();
         var seed = await AltaOportunidadTests.SeedAsync(factory, admin);
-        var mine = await CreateAsync(seller, new { titulo = "Propia", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
-        var theirs = await CreateAsync(admin, new { titulo = "Del admin", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
-        var closed = await CreateAsync(admin, new { titulo = "Cerrada", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
-        var removed = await CreateAsync(admin, new { titulo = "Eliminada", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
+        var mine = await CreateAsync(seller, new { titulo = "Propia", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        var theirs = await CreateAsync(admin, new { titulo = "Del admin", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        var closed = await CreateAsync(admin, new { titulo = "Cerrada", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        var removed = await CreateAsync(admin, new { titulo = "Eliminada", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE oportunidad SET id_etapa={seed.Won}, fecha_cierre=now() WHERE id={closed}; UPDATE oportunidad SET activo=false WHERE id={removed}");
 
@@ -106,7 +106,7 @@ public sealed class EdicionOportunidadTests
             otherOrigin = await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM origen_comercial WHERE descripcion='Retirado'");
         }
         inactiveCompany = (await Json(await admin.PostAsJsonAsync("/empresas", new { razonSocial = "Empresa C" }))).GetProperty("id").GetInt32();
-        var id = await CreateAsync(admin, new { titulo = "Con contacto", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idContacto = seed.ContactA });
+        var id = await CreateAsync(admin, new { titulo = "Con contacto", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idContacto = seed.ContactA });
         await using (var db = await factory.OpenAsync())
             // El contacto cambió de empresa después del alta: la pareja guardada ya no es compatible.
             await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE contacto SET id_empresa={seed.CompanyB} WHERE id={seed.ContactA}; UPDATE empresa SET activo=false WHERE id={inactiveCompany}");

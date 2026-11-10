@@ -26,8 +26,7 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
         IdEtapa = o.IdEtapa, EtapaNombre = o.IdEtapaNavigation.Nombre, EtapaActiva = o.IdEtapaNavigation.Activo,
         Estado = o.IdEtapaNavigation.IdEstadoNavigation.Codigo,
         IdEmbudo = o.IdEtapaNavigation.IdEmbudo, EmbudoNombre = o.IdEtapaNavigation.IdEmbudoNavigation.Nombre, EmbudoActivo = o.IdEtapaNavigation.IdEmbudoNavigation.Activo,
-        IdServicio = o.IdEtapaNavigation.IdEmbudoNavigation.IdServicio, ServicioNombre = o.IdEtapaNavigation.IdEmbudoNavigation.IdServicioNavigation.Nombre,
-        ServicioActivo = o.IdEtapaNavigation.IdEmbudoNavigation.IdServicioNavigation.Activo,
+        IdServicio = o.IdServicio, ServicioNombre = o.IdServicioNavigation.Nombre, ServicioActivo = o.IdServicioNavigation.Activo,
         IdOrigen = o.IdOrigen, OrigenDescripcion = o.IdOrigenNavigation == null ? null : o.IdOrigenNavigation.Descripcion,
         OrigenActivo = o.IdOrigenNavigation == null ? null : o.IdOrigenNavigation.Activo,
         Valor = o.Valor, FechaCreacion = o.FechaCreacion, FechaEstimadaCierre = o.FechaEstimadaCierre, FechaCierre = o.FechaCierre,
@@ -93,7 +92,7 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
     public async Task<FunnelResponse> FunnelAsync(int idEmbudo, int? idResponsable, CancellationToken ct)
     {
         var funnel = await db.Embudos.AsNoTracking().Where(b => b.Id == idEmbudo)
-            .Select(b => new { b.Id, b.Nombre, b.Activo, b.IdServicio, ServicioNombre = b.IdServicioNavigation.Nombre, ServicioActivo = b.IdServicioNavigation.Activo })
+            .Select(b => new { b.Id, b.Nombre, b.Activo })
             .SingleOrDefaultAsync(ct) ?? throw new OportunidadOperationException(404, "NOT_FOUND", "No existe el embudo.");
         var owner = EsSuperior ? idResponsable : actor.Id;
         var stages = await db.EtapaComerciales.AsNoTracking().Where(e => e.IdEmbudo == idEmbudo && e.Activo)
@@ -101,7 +100,7 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
         var query = Query().Where(o => o.IdEmbudo == idEmbudo);
         if (owner is not null) query = query.Where(o => o.IdResponsable == owner);
         var cards = (await query.OrderByDescending(o => o.FechaCreacion).ThenByDescending(o => o.Id).ToListAsync(ct)).Select(WithActions).ToLookup(o => o.IdEtapa);
-        return new(funnel.Id, funnel.Nombre, funnel.Activo, funnel.IdServicio, funnel.ServicioNombre, funnel.ServicioActivo,
+        return new(funnel.Id, funnel.Nombre, funnel.Activo,
             stages.Select(e => new FunnelEtapa(e.Id, e.Nombre, e.Orden, e.Estado, cards[e.Id].ToList())).ToList());
     }
 
@@ -128,11 +127,15 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
             throw new OportunidadOperationException(401, "UNAUTHENTICATED", "La sesión ya no está disponible.");
         if (!await db.Usuarios.AnyAsync(u => u.Id == responsible && u.Activo, ct)) throw Invalid("El responsable no está disponible.");
 
-        // El servicio inactivo no bloquea: solo importa que el embudo esté activo.
-        var funnel = await db.Embudos.AsNoTracking().Where(b => b.Id == request.IdEmbudo && b.Activo)
-            .Select(b => new { b.Id, Price = b.IdServicioNavigation.PrecioReferencia }).SingleOrDefaultAsync(ct)
+        // El embudo debe estar activo; el servicio, activo y admitido por el embudo (después puede desactivarse sin afectar la oportunidad).
+        var funnelId = await db.Embudos.AsNoTracking().Where(b => b.Id == request.IdEmbudo && b.Activo).Select(b => (int?)b.Id).SingleOrDefaultAsync(ct)
             ?? throw Invalid("El embudo no está disponible.");
-        var openStages = db.EtapaComerciales.Where(e => e.IdEmbudo == funnel.Id && e.Activo && e.IdEstadoNavigation.Codigo == "ABIERTA");
+        var service = await db.Servicios.AsNoTracking().Where(s => s.Id == request.IdServicio && s.Activo)
+            .Select(s => new { s.Id, s.IdTipoServicio, Price = s.PrecioReferencia }).SingleOrDefaultAsync(ct)
+            ?? throw Invalid("El servicio no está disponible.");
+        if (!await db.Embudos.Where(b => b.Id == funnelId).AnyAsync(EmbudoAdmision.Admite(service.Id, service.IdTipoServicio), ct))
+            throw Invalid("El embudo no admite ese servicio.", "VALIDATION_FAILED");
+        var openStages = db.EtapaComerciales.Where(e => e.IdEmbudo == funnelId && e.Activo && e.IdEstadoNavigation.Codigo == "ABIERTA");
         int? stageId;
         if (request.IdEtapa is { } requested)
             stageId = await openStages.Where(e => e.Id == requested).Select(e => (int?)e.Id).SingleOrDefaultAsync(ct)
@@ -154,7 +157,7 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
         var item = new Oportunidad
         {
             Titulo = Text(request.Titulo), IdResponsable = responsible, IdEmpresa = request.IdEmpresa, IdContacto = request.IdContacto,
-            IdEtapa = stageId.Value, IdOrigen = request.IdOrigen, Valor = request.Valor ?? funnel.Price,
+            IdEtapa = stageId.Value, IdServicio = service.Id, IdOrigen = request.IdOrigen, Valor = request.Valor ?? service.Price,
             FechaEstimadaCierre = request.FechaEstimadaCierre, ObjetivoAprendizaje = Text(request.ObjetivoAprendizaje),
             CantidadParticipantes = request.CantidadParticipantes, DisponibilidadHoraria = Text(request.DisponibilidadHoraria),
             Observaciones = Text(request.Observaciones),
@@ -326,7 +329,7 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
         if (result == "GANADA")
         {
             await PromoverAClienteAsync(item, ct);
-            await CrearAlumnoAsync(item, current.IdEmbudo, ct);
+            await CrearAlumnoAsync(item, ct);
         }
         var response = await GetAsync(id, ct);
         await transaction.CommitAsync(ct);
@@ -334,14 +337,14 @@ public sealed class OportunidadService(FluencyLocalDbContext db, ActorActual act
     }
 
     /// <summary>
-    /// Al ganar un servicio con nivel (no taller), el contacto de la oportunidad pasa a ser alumno de ese nivel, sin curso. Una empresa
+    /// Al ganar un servicio de tipo Clases (siempre con nivel), el contacto de la oportunidad pasa a ser alumno de ese nivel, sin curso. Una empresa
     /// sin contacto no genera alumno; si el contacto ya es alumno no se duplica ni se modifica. Reabrir no lo revierte.
     /// </summary>
-    private async Task CrearAlumnoAsync(Oportunidad item, int idEmbudo, CancellationToken ct)
+    private async Task CrearAlumnoAsync(Oportunidad item, CancellationToken ct)
     {
         if (item.IdContacto is not { } contactId) return;
-        var service = await db.Embudos.Where(e => e.Id == idEmbudo).Select(e => new { e.IdServicioNavigation.IdNivel, e.IdServicioNavigation.EsTaller }).SingleAsync(ct);
-        if (service.IdNivel is not { } level || service.EsTaller) return;
+        var service = await db.Servicios.Where(s => s.Id == item.IdServicio).Select(s => new { s.IdNivel, s.IdTipoServicioNavigation.Codigo }).SingleAsync(ct);
+        if (service.IdNivel is not { } level || service.Codigo != TipoServicio.CodigoClases) return;
         if (await db.Alumnos.AnyAsync(a => a.IdContacto == contactId, ct)) return;
         db.Alumnos.Add(new Alumno { IdContacto = contactId, IdNivel = level });
         await db.SaveChangesAsync(ct);

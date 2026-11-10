@@ -21,7 +21,6 @@ public sealed class TalleresTests
         int workshopService, workshopFunnel, plainService;
         await using (var db = await factory.OpenAsync())
         {
-            await CommercialSchemaFixture.ExecuteAsync(db, "UPDATE servicio SET es_taller=true WHERE nombre='Otro servicio'");
             workshopService = await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM servicio WHERE nombre='Otro servicio'");
             plainService = await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM servicio WHERE nombre='Servicio ficticio'");
             workshopFunnel = await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM embudo WHERE nombre='Otro embudo'");
@@ -41,7 +40,7 @@ public sealed class TalleresTests
         Assert.Equal(HttpStatusCode.Created, (await admin.PostAsJsonAsync("/talleres", Workshop(workshopService, day: "2026-12-05"))).StatusCode);
 
         // Un contacto que ganó el taller pasa a Cliente y es candidato; un alumno también; un contacto cualquiera no.
-        var bought = await admin.PostAsJsonAsync("/oportunidades", new { idEmbudo = workshopFunnel, idEmpresa = seed.CompanyA, idContacto = seed.ContactA });
+        var bought = await admin.PostAsJsonAsync("/oportunidades", new { idEmbudo = workshopFunnel, idServicio = workshopService, idEmpresa = seed.CompanyA, idContacto = seed.ContactA });
         var opportunity = (await Json(bought)).GetProperty("id").GetInt32();
         Assert.Equal(HttpStatusCode.OK, (await admin.PostAsync($"/oportunidades/{opportunity}/ganar", new StringContent("""{"fechaCierre":"2026-11-09","valor":1}""", Encoding.UTF8, "application/json"))).StatusCode);
         var student = await AlumnosTests.SeedStudentsAsync(factory, admin, ("Alicia", "Alumna", 0));

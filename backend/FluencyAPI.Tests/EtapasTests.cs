@@ -17,8 +17,7 @@ public sealed class EtapasTests
         await using var db = await factory.OpenAsync();
         Assert.Equal(0L, await CommercialSchemaFixture.ScalarAsync<long>(db, "SELECT count(*) FROM etapa_comercial"));
         var stage = await CommercialSchemaFixture.ScalarAsync<int>(db, """
-            WITH s AS (INSERT INTO servicio(nombre,precio_referencia) VALUES ('Fixture',0) RETURNING id),
-                 b AS (INSERT INTO embudo(nombre,id_servicio) SELECT 'Fixture',id FROM s RETURNING id)
+            WITH b AS (INSERT INTO embudo(nombre) VALUES ('Fixture') RETURNING id)
             INSERT INTO etapa_comercial(nombre,id_embudo,id_estado,orden)
             SELECT 'Abierta',b.id,e.id,3 FROM b CROSS JOIN estado_oportunidad e WHERE e.codigo='ABIERTA' RETURNING id
             """);
@@ -30,9 +29,9 @@ public sealed class EtapasTests
     {
         await using var factory = new AuthApiFactory(); await factory.InitializeAsync();
         using var admin = factory.Client(); await UsuariosTests.SignIn(admin, factory);
-        var service = await EmbudosTests.Create(admin, "/servicios", new { nombre = "CP07", precioReferencia = 0 });
-        var funnel = await EmbudosTests.Create(admin, "/embudos", new { nombre = "Proceso", idServicio = service });
-        var stage = await EmbudosTests.Create(admin, $"/embudos/{funnel}/etapas", new { nombre = "Abierta", orden = 3 });
+        var service = await EmbudosTests.ClassService(admin);
+        var funnel = await EmbudosTests.Create(admin, "/embudos", new { nombre = "Proceso", tipos = EmbudosTests.Types(EmbudosTests.ClassesType) });
+        var stage = await EmbudosTests.Create(admin, $"/embudos/{funnel}/etapas", new { nombre = "Abierta", orden = 20 });
         await using var db = await factory.OpenAsync();
         var company = await CommercialSchemaFixture.ScalarAsync<int>(db, $"INSERT INTO empresa(razon_social,id_estado,id_responsable) VALUES ('Carrera fixture',1,{factory.AdminId}) RETURNING id");
         await using var tx = await db.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
@@ -41,7 +40,7 @@ public sealed class EtapasTests
         (await admin.PostAsync($"/etapas/{stage}/desactivar", null)).EnsureSuccessStatusCode();
         var error = await Assert.ThrowsAsync<PostgresException>(async () =>
         {
-            await CommercialSchemaFixture.ExecuteAsync(db, $"INSERT INTO oportunidad(titulo,id_responsable,id_empresa,id_etapa,valor) VALUES ('Carrera fixture',{factory.AdminId},{company},{stage},0)", tx);
+            await CommercialSchemaFixture.ExecuteAsync(db, $"INSERT INTO oportunidad(titulo,id_responsable,id_empresa,id_etapa,id_servicio,valor) VALUES ('Carrera fixture',{factory.AdminId},{company},{stage},{service},0)", tx);
             await tx.CommitAsync();
         });
         Assert.Equal(PostgresErrorCodes.SerializationFailure, error.SqlState);
@@ -54,11 +53,11 @@ public sealed class EtapasTests
     {
         await using var factory = new AuthApiFactory(); await factory.InitializeAsync();
         using var admin = factory.Client(); await UsuariosTests.SignIn(admin, factory);
-        var service = await EmbudosTests.Create(admin, "/servicios", new { nombre = "CP07", precioReferencia = 0 });
-        var funnel = await EmbudosTests.Create(admin, "/embudos", new { nombre = "Proceso", idServicio = service });
-        var other = await EmbudosTests.Create(admin, "/embudos", new { nombre = "Otro", idServicio = service });
-        var open = await EmbudosTests.Create(admin, $"/embudos/{funnel}/etapas", new { nombre = "Consulta", orden = 3 });
-        var unused = await EmbudosTests.Create(admin, $"/embudos/{funnel}/etapas", new { nombre = "Sin uso", orden = 4 });
+        await EmbudosTests.ClassService(admin);
+        var funnel = await EmbudosTests.Create(admin, "/embudos", new { nombre = "Proceso", tipos = EmbudosTests.Types(EmbudosTests.ClassesType) });
+        var other = await EmbudosTests.Create(admin, "/embudos", new { nombre = "Otro", tipos = EmbudosTests.Types(EmbudosTests.ClassesType) });
+        var open = await EmbudosTests.Create(admin, $"/embudos/{funnel}/etapas", new { nombre = "Consulta", orden = 20 });
+        var unused = await EmbudosTests.Create(admin, $"/embudos/{funnel}/etapas", new { nombre = "Sin uso", orden = 21 });
         (await admin.PatchAsJsonAsync($"/etapas/{unused}", new { idEmbudo = other, orden = 9 })).EnsureSuccessStatusCode();
         var opportunity = await EmbudosTests.Opportunity(factory, open);
         Assert.Equal(HttpStatusCode.Conflict, (await admin.PostAsync($"/etapas/{open}/desactivar", null)).StatusCode);
@@ -99,15 +98,15 @@ public sealed class EtapasTests
         await using var factory = new AuthApiFactory(); await factory.InitializeAsync();
         using var first = factory.Client(); await UsuariosTests.SignIn(first, factory);
         using var second = factory.Client(); await UsuariosTests.SignIn(second, factory);
-        var service = await EmbudosTests.Create(first, "/servicios", new { nombre = "CP07", precioReferencia = 0 });
-        var funnel = await EmbudosTests.Create(first, "/embudos", new { nombre = "Carrera", idServicio = service });
-        var results = await Task.WhenAll(first.PostAsJsonAsync($"/embudos/{funnel}/etapas", new { nombre = "Primera", orden = 3 }), second.PostAsJsonAsync($"/embudos/{funnel}/etapas", new { nombre = "Segunda", orden = 3 }));
+        await EmbudosTests.ClassService(first);
+        var funnel = await EmbudosTests.Create(first, "/embudos", new { nombre = "Carrera", tipos = EmbudosTests.Types(EmbudosTests.ClassesType) });
+        var results = await Task.WhenAll(first.PostAsJsonAsync($"/embudos/{funnel}/etapas", new { nombre = "Primera", orden = 20 }), second.PostAsJsonAsync($"/embudos/{funnel}/etapas", new { nombre = "Segunda", orden = 20 }));
         Assert.Single(results, r => r.StatusCode == HttpStatusCode.Created);
         var conflict = Assert.Single(results, r => r.StatusCode == HttpStatusCode.Conflict);
         Assert.Contains((await conflict.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString(), new[] { "DUPLICATE_VALUE", "CONCURRENT_CHANGE" });
         await using var a = await factory.OpenAsync(); await using var b = await factory.OpenAsync();
-        Assert.Equal(3L, await CommercialSchemaFixture.ScalarAsync<long>(a, $"SELECT count(*) FROM etapa_comercial WHERE id_embudo={funnel}"));
-        var rawFunnel = await CommercialSchemaFixture.ScalarAsync<int>(a, $"INSERT INTO embudo(nombre,id_servicio) VALUES ('Solo fixture',{service}) RETURNING id");
+        Assert.Equal(7L, await CommercialSchemaFixture.ScalarAsync<long>(a, $"SELECT count(*) FROM etapa_comercial WHERE id_embudo={funnel}"));
+        var rawFunnel = await CommercialSchemaFixture.ScalarAsync<int>(a, "INSERT INTO embudo(nombre) VALUES ('Solo fixture') RETURNING id");
         await using var ta = await a.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
         await using var tb = await b.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
         await CommercialSchemaFixture.ExecuteAsync(a, $"INSERT INTO etapa_comercial(nombre,id_embudo,id_estado,orden) SELECT 'Ganada A',{rawFunnel},id,1 FROM estado_oportunidad WHERE codigo='GANADA'", ta);
@@ -123,14 +122,17 @@ public sealed class EtapasTests
     {
         await using var factory = new AuthApiFactory(); await factory.InitializeAsync();
         using var admin = factory.Client(); await UsuariosTests.SignIn(admin, factory);
-        var service = await EmbudosTests.Create(admin, "/servicios", new { nombre = "CP07", precioReferencia = 0 });
-        var funnel = await EmbudosTests.Create(admin, "/embudos", new { nombre = "Proceso", idServicio = service });
+        await EmbudosTests.ClassService(admin);
+        var funnel = await EmbudosTests.Create(admin, "/embudos", new { nombre = "Proceso", tipos = EmbudosTests.Types(EmbudosTests.ClassesType) });
         var stages = (await admin.GetFromJsonAsync<JsonElement>($"/embudos/{funnel}/etapas")).EnumerateArray().ToArray();
-        Assert.Equal(2, stages.Length);
-        var won = stages[0].GetProperty("id").GetInt32(); var lost = stages[1].GetProperty("id").GetInt32();
+        Assert.Equal(6, stages.Length);
+        var won = stages.Single(s => s.GetProperty("estado").GetString() == "GANADA").GetProperty("id").GetInt32();
+        var lost = stages.Single(s => s.GetProperty("estado").GetString() == "PERDIDA").GetProperty("id").GetInt32();
+        var defaults = stages.Where(s => s.GetProperty("estado").GetString() == "ABIERTA").Select(s => new { id = s.GetProperty("id").GetInt32(), orden = s.GetProperty("orden").GetInt32() }).ToArray();
         var open = await EmbudosTests.Create(admin, $"/embudos/{funnel}/etapas", new { nombre = "Consulta", orden = 7 });
-        (await admin.PutAsJsonAsync($"/embudos/{funnel}/orden-etapas", new { etapas = new[] { new { id = won, orden = 2 }, new { id = lost, orden = 1 }, new { id = open, orden = 7 } } })).EnsureSuccessStatusCode();
-        Assert.Equal(2, (await admin.GetFromJsonAsync<JsonElement>($"/etapas/{won}")).GetProperty("orden").GetInt32());
+        // Las finales intercambian su lugar (Ganada 6, Perdida 5); las demás conservan el suyo.
+        (await admin.PutAsJsonAsync($"/embudos/{funnel}/orden-etapas", new { etapas = defaults.Concat([new { id = won, orden = 6 }, new { id = lost, orden = 5 }, new { id = open, orden = 7 }]).ToArray() })).EnsureSuccessStatusCode();
+        Assert.Equal(6, (await admin.GetFromJsonAsync<JsonElement>($"/etapas/{won}")).GetProperty("orden").GetInt32());
         Assert.Equal(HttpStatusCode.Conflict, (await admin.PatchAsJsonAsync($"/etapas/{open}", new { nombre = "No guardar", orden = 1 })).StatusCode);
         Assert.Equal("Consulta", (await admin.GetFromJsonAsync<JsonElement>($"/etapas/{open}")).GetProperty("nombre").GetString());
         foreach (var final in new[] { won, lost })
@@ -151,7 +153,7 @@ public sealed class EtapasTests
         Assert.Equal(HttpStatusCode.BadRequest, (await admin.PostAsJsonAsync($"/embudos/{funnel}/etapas", new { nombre = "No" })).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await admin.PatchAsJsonAsync($"/etapas/{open}", new { activo = false })).StatusCode);
         var before = await admin.GetFromJsonAsync<JsonElement>($"/embudos/{funnel}/etapas");
-        var secondFunnel = await EmbudosTests.Create(admin, "/embudos", new { nombre = "Otro", idServicio = service });
+        var secondFunnel = await EmbudosTests.Create(admin, "/embudos", new { nombre = "Otro", tipos = EmbudosTests.Types(EmbudosTests.ClassesType) });
         await EmbudosTests.Create(admin, $"/embudos/{secondFunnel}/etapas", new { nombre = "Ocupada", orden = 99 });
         await using (var db = await factory.OpenAsync()) await CommercialSchemaFixture.ExecuteAsync(db, "CREATE UNIQUE INDEX fixture_orden_99 ON etapa_comercial(orden) WHERE orden=99");
         var positions = before.EnumerateArray().Select(s => new { id = s.GetProperty("id").GetInt32(), orden = s.GetProperty("id").GetInt32() == won ? 99 : s.GetProperty("orden").GetInt32() }).ToArray();

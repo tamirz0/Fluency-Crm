@@ -31,7 +31,7 @@ public sealed class EdicionActividadTests
         }
         async Task<int> Opportunity(HttpClient client, string title)
         {
-            var r = await client.PostAsJsonAsync("/oportunidades", new { titulo = title, idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idContacto = seed.ContactA });
+            var r = await client.PostAsJsonAsync("/oportunidades", new { titulo = title, idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idContacto = seed.ContactA });
             return (await Json(r)).GetProperty("id").GetInt32();
         }
         async Task<int> Activity(HttpClient client, string context, string text = "Original")
@@ -124,7 +124,7 @@ public sealed class EdicionActividadTests
             await CommercialSchemaFixture.ExecuteAsync(db, "INSERT INTO tipo_actividad(nombre) VALUES ('Llamada ficticia')");
             type = await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM tipo_actividad WHERE nombre='Llamada ficticia'");
         }
-        var opportunity = (await Json(await seller.PostAsJsonAsync("/oportunidades", new { titulo = "Propia", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idContacto = seed.ContactA }))).GetProperty("id").GetInt32();
+        var opportunity = (await Json(await seller.PostAsJsonAsync("/oportunidades", new { titulo = "Propia", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idContacto = seed.ContactA }))).GetProperty("id").GetInt32();
         async Task<int> Activity(string context)
         {
             var r = await seller.PostAsync("/actividades", new StringContent($$"""{"idTipo":{{type}},{{context}},"fechaHora":"{{Iso(DateTime.UtcNow.AddHours(-1))}}","descripcion":"Hecho"}""", Encoding.UTF8, "application/json"));

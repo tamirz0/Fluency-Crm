@@ -31,10 +31,10 @@ public sealed class BajaOportunidadTests
         using var seller = factory.Client(); await UsuariosTests.SignIn(seller, factory, "seller");
         using var anonymous = factory.Client();
         var seed = await AltaOportunidadTests.SeedAsync(factory, admin);
-        var open = await CreateAsync(seller, new { titulo = "Abierta", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
-        var closed = await CreateAsync(seller, new { titulo = "Cerrada", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
-        var theirs = await CreateAsync(admin, new { titulo = "Del admin", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
-        var kept = await CreateAsync(seller, new { titulo = "Se queda", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
+        var open = await CreateAsync(seller, new { titulo = "Abierta", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        var closed = await CreateAsync(seller, new { titulo = "Cerrada", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        var theirs = await CreateAsync(admin, new { titulo = "Del admin", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        var kept = await CreateAsync(seller, new { titulo = "Se queda", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
         Assert.Equal(HttpStatusCode.OK, (await seller.PostAsync($"/oportunidades/{closed}/ganar", new StringContent("""{"fechaCierre":"2026-12-01","valor":10}""", Encoding.UTF8, "application/json"))).StatusCode);
         var historyBefore = await CountAsync(factory, "SELECT count(*) FROM historial_etapas");
 
@@ -75,9 +75,9 @@ public sealed class BajaOportunidadTests
         using var admin = factory.Client(); await UsuariosTests.SignIn(admin, factory);
         var seed = await AltaOportunidadTests.SeedAsync(factory, admin);
         var companyOnly = (await Json(await admin.PostAsJsonAsync("/empresas", new { razonSocial = "Solo empresa" }))).GetProperty("id").GetInt32();
-        var open = await CreateAsync(admin, new { titulo = "Abierta", idEmbudo = seed.Funnel, idEmpresa = companyOnly });
-        var withContact = await CreateAsync(admin, new { titulo = "Con contacto", idEmbudo = seed.Funnel, idContacto = seed.ContactA });
-        var closed = await CreateAsync(admin, new { titulo = "Cerrada", idEmbudo = seed.Funnel, idEmpresa = companyOnly });
+        var open = await CreateAsync(admin, new { titulo = "Abierta", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = companyOnly });
+        var withContact = await CreateAsync(admin, new { titulo = "Con contacto", idEmbudo = seed.Funnel, idServicio = seed.Service, idContacto = seed.ContactA });
+        var closed = await CreateAsync(admin, new { titulo = "Cerrada", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = companyOnly });
         Assert.Equal(HttpStatusCode.OK, (await admin.PostAsync($"/oportunidades/{closed}/ganar", new StringContent("""{"fechaCierre":"2026-12-01","valor":10}""", Encoding.UTF8, "application/json"))).StatusCode);
 
         // Con oportunidades vigentes (abiertas o cerradas) los bloqueos de clientes y embudos se aplican.
@@ -112,7 +112,7 @@ public sealed class BajaOportunidadTests
         var seed = await AltaOportunidadTests.SeedAsync(factory, admin);
         for (var round = 0; round < 4; round++)
         {
-            var id = await CreateAsync(seller, new { titulo = $"Ronda {round}", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
+            var id = await CreateAsync(seller, new { titulo = $"Ronda {round}", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
             var results = await Task.WhenAll(
                 seller.PatchAsync($"/oportunidades/{id}", new StringContent("""{"observaciones":"edición"}""", Encoding.UTF8, "application/json")),
                 admin.DeleteAsync($"/oportunidades/{id}"));

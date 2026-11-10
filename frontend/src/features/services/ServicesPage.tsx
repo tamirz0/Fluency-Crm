@@ -38,7 +38,7 @@ function ServiceList() {
         <TableHead><TableRow><TableCell>Nombre</TableCell><TableCell>Precio de referencia</TableCell><TableCell>Tipo / Nivel / Modalidad</TableCell><TableCell>Estado</TableCell><TableCell>Acciones</TableCell></TableRow></TableHead>
         <TableBody>{items.data.items.map(item => <TableRow key={item.id}>
           <TableCell>{item.nombre}</TableCell><TableCell>{Number(item.precioReferencia).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-          <TableCell>{item.esTaller ? 'Taller · ' : ''}{[item.nivel, item.modalidad].filter(x => x != null).map(x => `${x.descripcion}${x.activo ? '' : ' (Inactivo)'}`).join(' / ') || 'Sin especificar'}</TableCell>
+          <TableCell>{[item.tipo, item.nivel, item.modalidad].filter(x => x != null).map(x => `${x.descripcion}${x.activo ? '' : ' (Inactivo)'}`).join(' / ')}</TableCell>
           <TableCell><Chip size="small" label={item.activo ? 'Activo' : 'Inactivo'} color={item.activo ? 'success' : 'default'} variant="outlined" /></TableCell>
           <TableCell><Stack direction="row" sx={{ flexWrap: 'wrap' }}><Button size="small" aria-label={`Editar ${item.nombre}`} onClick={() => setAction({ mode: 'edit', item })}>Editar</Button><Button size="small" color={item.activo ? 'warning' : 'primary'} aria-label={`${item.activo ? 'Desactivar' : 'Reactivar'} ${item.nombre}`} onClick={() => setAction({ mode: 'active', item })}>{item.activo ? 'Desactivar' : 'Reactivar'}</Button></Stack></TableCell>
         </TableRow>)}{!items.data.items.length && <TableRow><TableCell colSpan={5}>No hay servicios para estos filtros.</TableCell></TableRow>}</TableBody>

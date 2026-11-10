@@ -5,7 +5,7 @@ namespace Services.DTO;
 /// <summary>Operaciones que el actor puede intentar; la API vuelve a comprobarlas al ejecutar.</summary>
 public sealed record AccionesOportunidad(bool Editar, bool Reasignar, bool Mover, bool Cerrar, bool Reabrir, bool DarDeBaja, bool GestionarActividades);
 
-/// <summary>Oportunidad con referencias etiquetadas; embudo, servicio y estado se derivan de la etapa.</summary>
+/// <summary>Oportunidad con referencias etiquetadas; el embudo y el estado se derivan de la etapa y el servicio es el elegido al crearla.</summary>
 public sealed record OportunidadResponse
 {
     public required int Id { get; init; }
@@ -58,16 +58,17 @@ public sealed record HistorialEtapaResponse(int Id, int? IdEtapaAnterior, string
 public sealed record FunnelEtapa(int Id, string Nombre, int Orden, string Estado, IReadOnlyList<OportunidadResponse> Oportunidades);
 
 /// <summary>Embudo con sus columnas activas; puede ser un embudo inactivo, que solo se consulta.</summary>
-public sealed record FunnelResponse(int IdEmbudo, string Nombre, bool Activo, int IdServicio, string ServicioNombre, bool ServicioActivo, IReadOnlyList<FunnelEtapa> Etapas);
+public sealed record FunnelResponse(int IdEmbudo, string Nombre, bool Activo, IReadOnlyList<FunnelEtapa> Etapas);
 
 /// <summary>
-/// Alta de oportunidad. Requiere embudo (solo contexto, no se persiste) y empresa o contacto; el título es opcional.
+/// Alta de oportunidad. Requiere servicio, embudo que lo admita (solo contexto, no se persiste) y empresa o contacto; el título es opcional.
 /// Autor, estado y fechas los fija el servidor; propiedades desconocidas se rechazan.
 /// </summary>
 public sealed record CreateOportunidadRequest : IValidatableObject
 {
     [MaxLength(100)] public string? Titulo { get; init; }
     [Range(1, int.MaxValue)] public int IdEmbudo { get; init; }
+    [Range(1, int.MaxValue)] public int IdServicio { get; init; }
     [Range(1, int.MaxValue)] public int? IdEmpresa { get; init; }
     [Range(1, int.MaxValue)] public int? IdContacto { get; init; }
     [Range(1, int.MaxValue)] public int? IdEtapa { get; init; }
@@ -84,6 +85,7 @@ public sealed record CreateOportunidadRequest : IValidatableObject
     public IEnumerable<ValidationResult> Validate(ValidationContext context)
     {
         if (IdEmbudo <= 0) yield return new("El embudo es obligatorio.", [nameof(IdEmbudo)]);
+        if (IdServicio <= 0) yield return new("El servicio es obligatorio.", [nameof(IdServicio)]);
         if (IdEmpresa is null && IdContacto is null)
             yield return new("Indique una empresa o un contacto.", [nameof(IdEmpresa), nameof(IdContacto)]);
         if (Valor is { } value && (value is < 0 or > 9999999999.99m || decimal.Round(value, 2) != value))

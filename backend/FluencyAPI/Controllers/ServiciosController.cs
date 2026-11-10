@@ -25,8 +25,14 @@ public sealed class ServiciosController(IServicioService services) : ControllerB
     [HttpGet]
     [ProducesResponseType<PageResponse<ServicioResponse>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<PageResponse<ServicioResponse>>> List([FromQuery] string? q, CancellationToken ct,
-        [FromQuery] string activo = "true", [FromQuery, Range(1, int.MaxValue)] int page = 1, [FromQuery, Range(1, 100)] int pageSize = 25)
-        => Ok(await services.ListAsync(q, activo, page, pageSize, ct));
+        [FromQuery] string activo = "true", [FromQuery, Range(1, int.MaxValue)] int? idTipoServicio = null,
+        [FromQuery, Range(1, int.MaxValue)] int page = 1, [FromQuery, Range(1, 100)] int pageSize = 25)
+        => Ok(await services.ListAsync(q, activo, idTipoServicio, page, pageSize, ct));
+
+    /// <summary>Tipos de servicio con su regla de nivel; los tipos se administran en el catálogo tipos-servicio.</summary>
+    [HttpGet("tipos")]
+    [ProducesResponseType<IReadOnlyList<TipoServicioResponse>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<TipoServicioResponse>>> Types(CancellationToken ct) => Ok(await services.TiposAsync(ct));
 
     /// <summary>Consulta el servicio conservando referencias inactivas.</summary>
     [HttpGet("{id:int}")]

@@ -20,7 +20,7 @@ const pains = [
 const steps = [
   ['Captá', 'Registrá empresas y personas interesadas y quién de tu equipo las atiende.'],
   ['Seguí', 'Mové cada oportunidad por el embudo del servicio, con actividades e historial a la vista.'],
-  ['Convertí', 'Al ganar la venta de un servicio con nivel, la persona pasa a ser alumno de ese nivel.'],
+  ['Convertí', 'Al ganar la venta de un servicio de clases, la persona pasa a ser alumno del nivel de ese servicio.'],
   ['Organizá', 'Armá cursos, programá clases y talleres y llevá la asistencia y las notas.'],
 ] as const
 const modules: [string, string, ReactNode][] = [

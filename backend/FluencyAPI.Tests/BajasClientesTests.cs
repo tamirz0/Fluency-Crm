@@ -27,13 +27,15 @@ public sealed class BajasClientesTests
         var contactId = await CreateAsync("/contactos", new { nombre = "Ana", apellido = "Prueba", correo = "ana@example.invalid", idEmpresa = companyA });
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, $"""
-                INSERT INTO servicio(nombre,precio_referencia) VALUES ('Servicio ficticio',100.25);
-                INSERT INTO embudo(nombre,id_servicio) SELECT 'Embudo ficticio',id FROM servicio;
+                INSERT INTO servicio(nombre,precio_referencia,id_tipo_servicio,id_modalidad)
+                SELECT 'Servicio ficticio',100.25,t.id,m.id FROM tipo_servicio t CROSS JOIN modalidad m WHERE t.codigo='CLASES' AND m.descripcion='Grupal Online';
+                INSERT INTO embudo(nombre) VALUES ('Embudo ficticio');
+                INSERT INTO embudo_tipo_servicio(id_embudo,id_tipo_servicio) SELECT b.id,s.id_tipo_servicio FROM embudo b CROSS JOIN servicio s;
                 INSERT INTO etapa_comercial(id_embudo,id_estado,nombre,orden)
                 SELECT b.id,e.id,CASE e.codigo WHEN 'ABIERTA' THEN 'Abierta' WHEN 'GANADA' THEN 'Ganada' ELSE 'Perdida' END,
                 CASE e.codigo WHEN 'GANADA' THEN 1 WHEN 'PERDIDA' THEN 2 ELSE 3 END FROM embudo b CROSS JOIN estado_oportunidad e;
-                INSERT INTO oportunidad(titulo,id_responsable,id_empresa,id_contacto,id_etapa,valor)
-                SELECT 'Negociación',{factory.AdminId},{companyA},{contactId},id,100.25 FROM etapa_comercial WHERE nombre='Abierta'
+                INSERT INTO oportunidad(titulo,id_responsable,id_empresa,id_contacto,id_etapa,id_servicio,valor)
+                SELECT 'Negociación',{factory.AdminId},{companyA},{contactId},e.id,(SELECT min(id) FROM servicio),100.25 FROM etapa_comercial e WHERE e.nombre='Abierta'
                 """);
         Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.DeleteAsync($"/empresas/{companyA}")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.DeleteAsync($"/contactos/{contactId}")).StatusCode);

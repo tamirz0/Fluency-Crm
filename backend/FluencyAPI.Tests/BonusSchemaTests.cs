@@ -27,7 +27,7 @@ public sealed class BonusSchemaTests
     }
 
     [Fact]
-    public async Task CreatesAcademicTablesAndTallerFlagWithoutChangingBaseData()
+    public async Task CreatesAcademicTablesAndNoLongerKeepsTheTallerFlagOnServices()
     {
         await using var fixture = new CommercialSchemaFixture();
         await fixture.InitializeAsync();
@@ -36,9 +36,10 @@ public sealed class BonusSchemaTests
             SELECT count(*) FROM information_schema.tables WHERE table_schema=current_schema()
             AND table_name IN ('profesor_nivel','alumno','curso','clase','clase_alumno','taller','taller_inscripcion')
             """));
-        Assert.Equal(1L, await ScalarAsync<long>(db, """
+        // El servicio de taller se identifica por su tipo, no por un indicador propio.
+        Assert.Equal(0L, await ScalarAsync<long>(db, """
             SELECT count(*) FROM information_schema.columns WHERE table_schema=current_schema()
-            AND table_name='servicio' AND column_name='es_taller' AND column_default='false' AND is_nullable='NO'
+            AND table_name='servicio' AND column_name='es_taller'
             """));
         Assert.Equal(0L, await ScalarAsync<long>(db, """
             SELECT count(*) FROM pg_catalog.pg_constraint c JOIN pg_catalog.pg_namespace n ON n.oid=c.connamespace

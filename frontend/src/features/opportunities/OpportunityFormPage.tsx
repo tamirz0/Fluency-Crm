@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Controller, useForm, useWatch, type SubmitHandler } from 'react-hook-form'
 import { Link as RouterLink, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
-import { catalogQueryKeys, contactoQueryKeys, createOpportunity, empresaQueryKeys, getCatalogOptions, getCompany, getContact, getOpportunity, getService, listContacts, listFunnels, listStages, opportunityQueryKeys, patchOpportunity, type CreateOportunidadRequest, type Oportunidad, type PatchOportunidadRequest } from '../../api/client'
+import { catalogQueryKeys, contactoQueryKeys, createOpportunity, empresaQueryKeys, getCatalogOptions, getCompany, getContact, getOpportunity, listContacts, listFunnels, listServices, listStages, opportunityQueryKeys, patchOpportunity, type CreateOportunidadRequest, type Oportunidad, type PatchOportunidadRequest } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { CompanyResponsibleSelect } from '../companies/CompanyResponsibleSelect'
 import { ContactCompanySelect } from '../contacts/ContactCompanySelect'
@@ -25,6 +25,7 @@ const dateField = z.string().optional().superRefine((value, context) => { const 
 const participantsField = z.string().optional().refine(value => !value?.trim() || /^[1-9]\d{0,8}$/.test(value.trim()), 'Ingresá un número entero mayor que cero.')
 const opportunitySchema = z.object({
   titulo: z.string().trim().max(100, 'Máximo 100 caracteres.').optional(),
+  idServicio: z.string().min(1, 'Seleccioná el servicio.'),
   idEmbudo: z.string().min(1, 'Seleccioná el embudo.'),
   idEtapa: z.string().optional(), idEmpresa: z.string().optional(), idContacto: z.string().optional(), idResponsable: z.string().optional(), idOrigen: z.string().optional(),
   valor: valueField, fechaEstimadaCierre: dateField,
@@ -37,7 +38,7 @@ const money = (value: number | string) => new Intl.NumberFormat('es-AR', { style
 
 type CompanyOption = { id: number; razonSocial: string }
 type ContactOption = { id: number; label: string; idEmpresa: number | null; empresa: string }
-type Context = { company?: CompanyOption; contact?: ContactOption; idEmbudo: string }
+type Context = { company?: CompanyOption; contact?: ContactOption }
 
 /** Busca contactos en el servidor, acotados a la empresa elegida cuando la hay. */
 export function OpportunityContactSelect({ value, onChange, idEmpresa, current }: { value: string; onChange: (contact: ContactOption | null) => void; idEmpresa?: string; current?: ContactOption }) {
@@ -65,7 +66,7 @@ function OpportunityEditor({ context }: { context: Context }) {
   const isSuperior = Boolean(user?.roles?.includes('ADMINISTRADOR') || user?.roles?.includes('RESPONSABLE_COMERCIAL'))
   const ownName = user ? `${user.nombre} ${user.apellido}`.trim() : ''
   const { register, handleSubmit, setError, setValue, control, formState: { errors } } = useForm<OpportunityFormValues>({
-    defaultValues: { titulo: '', idEmbudo: context.idEmbudo, idEtapa: '', idEmpresa: context.company ? String(context.company.id) : '', idContacto: context.contact ? String(context.contact.id) : '', idResponsable: user ? String(user.id) : '', idOrigen: '', valor: '', fechaEstimadaCierre: '', objetivoAprendizaje: '', cantidadParticipantes: '', disponibilidadHoraria: '', observaciones: '' },
+    defaultValues: { titulo: '', idServicio: '', idEmbudo: '', idEtapa: '', idEmpresa: context.company ? String(context.company.id) : '', idContacto: context.contact ? String(context.contact.id) : '', idResponsable: user ? String(user.id) : '', idOrigen: '', valor: '', fechaEstimadaCierre: '', objetivoAprendizaje: '', cantidadParticipantes: '', disponibilidadHoraria: '', observaciones: '' },
     mode: 'onBlur', resolver: zodResolver(opportunitySchema),
   })
   const [company, setCompany] = useState(context.company)
@@ -75,21 +76,26 @@ function OpportunityEditor({ context }: { context: Context }) {
   const selectedCompany = useWatch({ control, name: 'idEmpresa' }) ?? ''
   const selectedContact = useWatch({ control, name: 'idContacto' }) ?? ''
   const selectedFunnel = useWatch({ control, name: 'idEmbudo' }) ?? ''
-  const funnels = useQuery({ queryKey: ['embudos', 'opciones'], queryFn: () => listFunnels({ pageSize: 100 }) })
+  const selectedService = useWatch({ control, name: 'idServicio' }) ?? ''
+  const serviceId = normalizeId(selectedService)
+  const services = useQuery({ queryKey: ['servicios', 'opciones', 'activos'], queryFn: () => listServices({ activo: 'true', pageSize: 100 }) })
+  // Los embudos son los que admiten el servicio elegido.
+  const funnels = useQuery({ queryKey: ['embudos', 'opciones', serviceId], queryFn: () => listFunnels({ idServicio: serviceId as number, pageSize: 100 }), enabled: serviceId !== null })
   const origins = useQuery({ queryKey: catalogQueryKeys.commercialOrigins, queryFn: () => getCatalogOptions('origenes-comerciales') })
-  const funnel = funnels.data?.items.find(item => String(item.id) === selectedFunnel)
-  // Con un único embudo disponible no hay nada que elegir.
+  const service = services.data?.items.find(item => String(item.id) === selectedService)
+  // Con un único servicio o embudo disponible no hay nada que elegir.
+  const onlyService = services.data?.items.length === 1 ? String(services.data.items[0].id) : ''
+  useEffect(() => { if (onlyService && !selectedService) setValue('idServicio', onlyService) }, [onlyService, selectedService, setValue])
   const onlyFunnel = funnels.data?.items.length === 1 ? String(funnels.data.items[0].id) : ''
   useEffect(() => { if (onlyFunnel && !selectedFunnel) setValue('idEmbudo', onlyFunnel) }, [onlyFunnel, selectedFunnel, setValue])
   const funnelId = normalizeId(selectedFunnel)
   const stages = useQuery({ queryKey: ['embudos', funnelId, 'etapas', 'true'], queryFn: () => listStages(funnelId as number), enabled: funnelId !== null })
-  const service = useQuery({ queryKey: [...catalogQueryKeys.services, funnel?.servicio.id], queryFn: () => getService(funnel!.servicio.id), enabled: funnel !== undefined })
   const openStages = useMemo(() => (stages.data ?? []).filter(stage => stage.estado === 'ABIERTA' && stage.activo).sort((a, b) => Number(a.orden) - Number(b.orden)), [stages.data])
   const noOpenStage = funnelId !== null && stages.isSuccess && openStages.length === 0
   const relationshipError = errors.root?.message as string | undefined
 
   const mutation = useMutation({ mutationFn: (values: OpportunityFormValues) => {
-    const payload: CreateOportunidadRequest = { idEmbudo: Number(values.idEmbudo) }
+    const payload: CreateOportunidadRequest = { idEmbudo: Number(values.idEmbudo), idServicio: Number(values.idServicio) }
     const title = normalizeOptionalText(values.titulo)
     if (title) payload.titulo = title
     const ids = { idEmpresa: normalizeId(values.idEmpresa), idContacto: normalizeId(values.idContacto), idEtapa: normalizeId(values.idEtapa), idOrigen: normalizeId(values.idOrigen), cantidadParticipantes: normalizeId(values.cantidadParticipantes) }
@@ -108,7 +114,7 @@ function OpportunityEditor({ context }: { context: Context }) {
     navigate(`/oportunidades/${saved.id}`, { state: { confirmation: confirmationFor('Oportunidad', 'creada') } })
   }, onError: (error) => { saving.current = false; setError('root.serverError', { message: saveErrorMessage(error) }) } })
   const submit: SubmitHandler<OpportunityFormValues> = (values) => { if (saving.current || mutation.isPending) return; saving.current = true; mutation.mutate(values) }
-  const canSubmit = !noOpenStage && !stages.isError && !funnels.isError && !datePickerError
+  const canSubmit = !noOpenStage && !stages.isError && !funnels.isError && !services.isError && !datePickerError
 
   const changeCompany = (value: string) => {
     setValue('idEmpresa', value); setCompany(undefined)
@@ -133,14 +139,20 @@ function OpportunityEditor({ context }: { context: Context }) {
       {relationshipError && <p id="opportunity-relationship-error" className="record-form-error" role="alert">{relationshipError}</p>}
       {notice && <p className="record-form-note record-form-note--warning">{notice}</p>}
     </FormSection>
-    <FormSection title="Seguimiento" description="El servicio y el estado se derivan del embudo y la etapa; no hace falta elegirlos.">
-      <TextField select fullWidth required label="Embudo" value={selectedFunnel} error={Boolean(errors.idEmbudo)} helperText={errors.idEmbudo?.message}
+    <FormSection title="Seguimiento" description="Elegí el servicio y el embudo que lo admite; el estado se deriva de la etapa.">
+      <TextField select fullWidth required label="Servicio" value={selectedService} error={Boolean(errors.idServicio)} helperText={errors.idServicio?.message}
+        onChange={event => { setValue('idServicio', event.target.value, { shouldValidate: true }); setValue('idEmbudo', ''); setValue('idEtapa', '') }}>
+        <MenuItem value="">Seleccioná un servicio</MenuItem>
+        {(services.data?.items ?? []).map(item => <MenuItem key={item.id} value={String(item.id)}>{item.nombre}</MenuItem>)}
+      </TextField>
+      {services.isError && <CatalogMessage error={services.error} blocking onRetry={() => void services.refetch()} />}
+      <TextField select fullWidth required label="Embudo" value={selectedFunnel} error={Boolean(errors.idEmbudo)} disabled={serviceId === null} helperText={errors.idEmbudo?.message ?? (serviceId === null ? 'Primero elegí el servicio.' : undefined)}
         onChange={event => { setValue('idEmbudo', event.target.value, { shouldValidate: true }); setValue('idEtapa', '') }}>
         <MenuItem value="">Seleccioná un embudo</MenuItem>
         {(funnels.data?.items ?? []).map(item => <MenuItem key={item.id} value={String(item.id)}>{item.nombre}</MenuItem>)}
       </TextField>
       {funnels.isError && <CatalogMessage error={funnels.error} blocking onRetry={() => void funnels.refetch()} />}
-      {funnel && <ReadOnlyValue className="readonly-value--commercial" label="Servicio" value={(funnel.servicio.nombre ?? funnel.servicio.descripcion ?? '') + (funnel.servicio.activo ? '' : ' (inactivo)')} description="Se deriva del embudo." />}
+      {funnels.isSuccess && funnels.data.items.length === 0 && <Alert severity="warning" role="alert">Ningún embudo activo admite este servicio. Pedile a un administrador que lo configure.</Alert>}
       <Controller name="idEtapa" control={control} render={({ field }) => <TextField select fullWidth label="Etapa inicial" value={field.value ?? ''} onChange={field.onChange} disabled={funnelId === null || openStages.length === 0} slotProps={{ inputLabel: { shrink: true }, select: { displayEmpty: true } }}>
         <MenuItem value="">{openStages[0] ? `${openStages[0].nombre} (por defecto)` : 'Primero elegí un embudo'}</MenuItem>
         {openStages.slice(1).map(stage => <MenuItem key={stage.id} value={String(stage.id)}>{stage.nombre}</MenuItem>)}
@@ -148,7 +160,7 @@ function OpportunityEditor({ context }: { context: Context }) {
       {noOpenStage && <Alert severity="error" role="alert">Este embudo no tiene una etapa abierta activa. Pedile a un administrador que la configure antes de crear oportunidades.</Alert>}
       {stages.isError && <CatalogMessage error={stages.error} blocking onRetry={() => void stages.refetch()} />}
       <TextField {...register('valor')} label="Valor" fullWidth slotProps={{ htmlInput: { inputMode: 'decimal' } }} error={Boolean(errors.valor)}
-        helperText={errors.valor?.message ?? (service.data ? `Si lo dejás vacío se usa el precio de referencia del servicio (${money(service.data.precioReferencia)}). Podés ingresar 0.` : 'Si lo dejás vacío se usa el precio de referencia del servicio.')} />
+        helperText={errors.valor?.message ?? (service ? `Si lo dejás vacío se usa el precio de referencia del servicio (${money(service.precioReferencia)}). Podés ingresar 0.` : 'Si lo dejás vacío se usa el precio de referencia del servicio.')} />
       <Controller name="fechaEstimadaCierre" control={control} render={({ field, fieldState }) => {
         const isoValue = commercialDateToIso(field.value ?? '').value
         return <DatePicker label="Fecha estimada de cierre" format="DD/MM/YYYY" value={isoValue ? dayjs(isoValue) : null}
@@ -189,7 +201,6 @@ export function NewOpportunityPage() {
   const company = companyQuery.data
   const contact = contactQuery.data
   return <OpportunityEditor context={{
-    idEmbudo: params.get('idEmbudo') ?? '',
     company: company ? { id: Number(company.id), razonSocial: company.razonSocial } : undefined,
     contact: contact ? { id: Number(contact.id), label: contactFullName(contact), idEmpresa: contact.idEmpresa == null ? null : Number(contact.idEmpresa), empresa: contact.empresaRazonSocial ?? '' } : undefined,
   }} />

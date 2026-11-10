@@ -14,8 +14,6 @@ public partial class FluencyLocalDbContext
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Servicio>().Property(e => e.EsTaller).HasDefaultValue(false).HasColumnName("es_taller");
-
         modelBuilder.Entity<ProfesorNivel>(entity =>
         {
             entity.HasKey(e => new { e.IdUsuario, e.IdNivel }).HasName("profesor_nivel_pkey");

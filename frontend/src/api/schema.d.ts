@@ -2852,12 +2852,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lista embudos; solo administrador consulta inactivos. */
+        /** Lista embudos; solo administrador consulta inactivos. Con idServicio, los que admiten ese servicio. */
         get: {
             parameters: {
                 query?: {
                     q?: string;
                     activo?: string;
+                    idServicio?: number | string;
                     page?: number | string;
                     pageSize?: number | string;
                 };
@@ -2936,7 +2937,7 @@ export interface paths {
             };
         };
         put?: never;
-        /** Crea embudo y sus dos finales en una transacción. */
+        /** Crea el embudo con su admisión de servicios, sus cuatro etapas iniciales y los dos finales en una transacción. */
         post: {
             parameters: {
                 query?: never;
@@ -6585,6 +6586,7 @@ export interface paths {
                 query?: {
                     q?: string;
                     activo?: string;
+                    idTipoServicio?: number | string;
                     page?: number | string;
                     pageSize?: number | string;
                 };
@@ -6747,6 +6749,99 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/servicios/tipos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tipos de servicio con su regla de nivel; los tipos se administran en el catálogo tipos-servicio. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TipoServicioResponse"][];
+                        "application/json": components["schemas"]["TipoServicioResponse"][];
+                        "text/json": components["schemas"]["TipoServicioResponse"][];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationProblemDetails"];
+                        "application/json": components["schemas"]["ValidationProblemDetails"];
+                        "text/json": components["schemas"]["ValidationProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -8754,13 +8849,15 @@ export interface components {
             idAlumnos?: null | (number | string)[];
         };
         /**
-         * @description Alta de oportunidad. Requiere embudo (solo contexto, no se persiste) y empresa o contacto; el título es opcional.
+         * @description Alta de oportunidad. Requiere servicio, embudo que lo admita (solo contexto, no se persiste) y empresa o contacto; el título es opcional.
          *     Autor, estado y fechas los fija el servidor; propiedades desconocidas se rechazan.
          */
         CreateOportunidadRequest: {
             titulo?: null | string;
             /** Format: int32 */
             idEmbudo?: number | string;
+            /** Format: int32 */
+            idServicio?: number | string;
             /** Format: int32 */
             idEmpresa?: null | number | string;
             /** Format: int32 */
@@ -8827,17 +8924,28 @@ export interface components {
         EmbudoRequest: {
             nombre?: null | string;
             descripcion?: null | string;
-            /** Format: int32 */
-            idServicio?: null | number | string;
+            /** @description Reemplaza la admisión completa del embudo; al menos un tipo. */
+            tipos?: null | components["schemas"]["EmbudoTipoRequest"][];
         };
-        /** @description Embudo con su servicio legible incluso si está inactivo. */
+        /** @description Embudo con los tipos de servicio que admite, legibles incluso si están inactivos. */
         EmbudoResponse: {
             /** Format: int32 */
             id: number | string;
             nombre: string;
             descripcion?: null | string;
-            servicio: components["schemas"]["CatalogoResponse"];
+            tipos: components["schemas"]["EmbudoTipoResponse"][];
             activo: boolean;
+        };
+        /** @description Tipo admitido por el embudo; IdServicios opcional restringe a esos servicios del tipo. */
+        EmbudoTipoRequest: {
+            /** Format: int32 */
+            idTipoServicio?: number | string;
+            idServicios?: null | (number | string)[];
+        };
+        /** @description Tipo admitido por un embudo; Servicios lista la selección puntual (vacía: entran todos los servicios del tipo). */
+        EmbudoTipoResponse: {
+            tipo: components["schemas"]["TipoServicioResponse"];
+            servicios: components["schemas"]["CatalogoResponse"][];
         };
         /** @description Alta requiere razón social; los defaults se aplican solo a campos omitidos. */
         EmpresaRequest: {
@@ -8927,10 +9035,6 @@ export interface components {
             idEmbudo: number | string;
             nombre: string;
             activo: boolean;
-            /** Format: int32 */
-            idServicio: number | string;
-            servicioNombre: string;
-            servicioActivo: boolean;
             etapas: components["schemas"]["FunnelEtapa"][];
         };
         /** @description Cierre como ganada: fecha y valor final obligatorios (cero es válido). */
@@ -9048,7 +9152,7 @@ export interface components {
             id: number | string;
             descripcion: string;
         };
-        /** @description Oportunidad con referencias etiquetadas; embudo, servicio y estado se derivan de la etapa. */
+        /** @description Oportunidad con referencias etiquetadas; el embudo y el estado se derivan de la etapa y el servicio es el elegido al crearla. */
         OportunidadResponse: {
             /** Format: int32 */
             id: number | string;
@@ -9368,7 +9472,7 @@ export interface components {
             codigo: string;
             etiqueta: string;
         };
-        /** @description Campos editables; alta requiere nombre y precio, PATCH conserva omisiones. */
+        /** @description Campos editables; alta requiere nombre, precio, tipo y modalidad, PATCH conserva omisiones. */
         ServicioRequest: {
             nombre?: null | string;
             descripcion?: null | string;
@@ -9380,7 +9484,8 @@ export interface components {
             idNivel?: null | number | string;
             /** Format: int32 */
             idModalidad?: null | number | string;
-            esTaller?: null | boolean;
+            /** Format: int32 */
+            idTipoServicio?: null | number | string;
         };
         /** @description Servicio y referencias legibles aun cuando están inactivos. */
         ServicioResponse: {
@@ -9394,9 +9499,8 @@ export interface components {
             duracionHoras?: null | number | string;
             nivel?: null | components["schemas"]["CatalogoResponse"];
             modalidad?: null | components["schemas"]["CatalogoResponse"];
+            tipo: components["schemas"]["TipoServicioResponse"];
             activo: boolean;
-            /** @description Un taller es de fecha única y no crea alumnos al ganarse. */
-            esTaller?: boolean;
         };
         /** @description Identidad y vencimiento absoluto de la sesión actual. */
         SesionResponse: {
@@ -9421,6 +9525,14 @@ export interface components {
             servicio: components["schemas"]["OpcionResponse"];
             /** Format: int32 */
             cantidadInscriptos: number | string;
+        };
+        /** @description Tipo de servicio; NivelObligatorio indica que sus servicios exigen un nivel de inglés (Clases). */
+        TipoServicioResponse: {
+            /** Format: int32 */
+            id: number | string;
+            descripcion: string;
+            activo: boolean;
+            nivelObligatorio: boolean;
         };
         /** @description Edición completa de los datos de una clase; el curso no cambia (arrastraría su asistencia). */
         UpdateClaseRequest: {

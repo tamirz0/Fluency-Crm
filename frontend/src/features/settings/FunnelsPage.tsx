@@ -22,16 +22,16 @@ function FunnelList() {
   const current = funnels.data?.items.find(f => f.id === selected?.id) ?? selected
   return <Box className="companies-page">
     <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 2, mb: 2 }}><Typography component="h1" className="companies-page-title">Embudos y etapas</Typography><Button variant="contained" onClick={() => setAction({})}>Nuevo embudo</Button></Stack>
-    <Typography className="companies-page-description" sx={{ mb: 3 }}>Cada embudo pertenece a un servicio. Ganada y Perdida se crean automáticamente; las etapas abiertas se agregan según el proceso.</Typography>
+    <Typography className="companies-page-description" sx={{ mb: 3 }}>Cada embudo admite los servicios de uno o más tipos. Nace con las etapas Consulta recibida, Necesidad relevada, Nivel de inglés evaluado y Presupuesto enviado, más Ganada y Perdida; todas se pueden editar, reordenar o desactivar.</Typography>
     <Box component="form" onSubmit={e => { e.preventDefault(); setSearch(q.trim()); setPage(0) }} sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
       <TextField label="Buscar embudos" value={q} onChange={e => setQ(e.target.value)} size="small" />
       <TextField select label="Estado de embudos" value={active} onChange={e => { setActive(e.target.value as typeof active); setPage(0) }} size="small"><MenuItem value="todos">Todos</MenuItem><MenuItem value="true">Activos</MenuItem><MenuItem value="false">Inactivos</MenuItem></TextField>
       <Button type="submit">Buscar</Button><Button onClick={() => void funnels.refetch()}>Actualizar embudos</Button>
     </Box>
     {funnels.isPending ? <Box role="status">Cargando embudos…</Box> : funnels.error ? <Alert severity="error" action={<Button onClick={() => void funnels.refetch()}>Reintentar</Button>}>{funnels.error.message}</Alert> : <>
-      <TableContainer className="data-table-wrap"><Table size="small" aria-label="Embudos"><TableHead><TableRow><TableCell>Nombre</TableCell><TableCell>Servicio</TableCell><TableCell>Estado</TableCell><TableCell>Acciones</TableCell></TableRow></TableHead>
+      <TableContainer className="data-table-wrap"><Table size="small" aria-label="Embudos"><TableHead><TableRow><TableCell>Nombre</TableCell><TableCell>Servicios que admite</TableCell><TableCell>Estado</TableCell><TableCell>Acciones</TableCell></TableRow></TableHead>
         <TableBody>{funnels.data.items.map(f => <TableRow key={f.id} selected={f.id === current?.id}>
-          <TableCell>{f.nombre}</TableCell><TableCell>{f.servicio.descripcion}{!f.servicio.activo && ' (Inactivo)'}</TableCell><TableCell><Chip size="small" variant="outlined" label={f.activo ? 'Activo' : 'Inactivo'} color={f.activo ? 'success' : 'default'} /></TableCell>
+          <TableCell>{f.nombre}</TableCell><TableCell>{f.tipos.map(t => `${t.tipo.descripcion}${t.tipo.activo ? '' : ' (Inactivo)'}${t.servicios.length ? `: ${t.servicios.map(s => s.descripcion).join(', ')}` : ' (todos)'}`).join(' · ')}</TableCell><TableCell><Chip size="small" variant="outlined" label={f.activo ? 'Activo' : 'Inactivo'} color={f.activo ? 'success' : 'default'} /></TableCell>
           <TableCell><Button aria-label={`Etapas de ${f.nombre}`} onClick={() => setSelected(f)}>Etapas</Button><Button aria-label={`Editar ${f.nombre}`} onClick={() => setAction({ item: f })}>Editar</Button><Button aria-label={`${f.activo ? 'Desactivar' : 'Reactivar'} ${f.nombre}`} onClick={() => setAction({ item: f, active: true })}>{f.activo ? 'Desactivar' : 'Reactivar'}</Button></TableCell>
         </TableRow>)}{!funnels.data.items.length && <TableRow><TableCell colSpan={4}>No hay embudos para estos filtros.</TableCell></TableRow>}</TableBody>
       </Table></TableContainer>

@@ -9,7 +9,8 @@ import App from '../../App'
 
 const admin = { id: 1, nombre: 'Ana', apellido: 'Prueba', roles: ['ADMINISTRADOR'], permisos: ['AdministrarConfiguracion'] }
 let allowed = true, failList = false, failSave = false
-const initial = { id: 1, nombre: 'Inglés B1', descripcion: 'Curso', precioReferencia: 10.25, duracionHoras: 20, activo: true, nivel: { id: 1, descripcion: 'B1', activo: false }, modalidad: { id: 1, descripcion: 'Virtual', activo: false } }
+const types = [{ id: 1, descripcion: 'Clases', activo: true, nivelObligatorio: true }, { id: 2, descripcion: 'Talleres', activo: true, nivelObligatorio: false }]
+const initial = { id: 1, nombre: 'Inglés B1', descripcion: 'Curso', precioReferencia: 10.25, duracionHoras: 20, activo: true, tipo: types[0], nivel: { id: 1, descripcion: 'B1', activo: false }, modalidad: { id: 1, descripcion: 'Virtual', activo: false } }
 let items = [initial]
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 beforeEach(() => {
@@ -19,9 +20,10 @@ beforeEach(() => {
     if (url.pathname.endsWith('/csrf')) return json({ requestToken: 'csrf' })
     if (url.pathname.endsWith('/me')) return json({ usuario: allowed ? admin : { ...admin, roles: ['VENDEDOR'], permisos: [] } })
     if (url.pathname.includes('/catalogos/')) return json([{ id: 2, descripcion: 'Otra opción', activo: true }])
+    if (url.pathname === '/api/servicios/tipos') return json(types)
     if (r.method === 'POST' && url.pathname === '/api/servicios') {
       if (failSave) return json({ title: 'No se pudo guardar el servicio.' }, 409)
-      const body = await r.clone().json(); const saved = { ...initial, ...body, id: 2, nivel: null, modalidad: null }; items = [...items, saved]; return json(saved, 201)
+      const body = await r.clone().json(); const saved = { ...initial, ...body, id: 2, tipo: types.find(x => x.id === body.idTipoServicio) ?? initial.tipo, nivel: null, modalidad: null }; items = [...items, saved]; return json(saved, 201)
     }
     if (r.method === 'PATCH') {
       if (failSave) return json({ title: 'La referencia no está disponible.' }, 400)
@@ -33,6 +35,10 @@ beforeEach(() => {
     return json({ items: filtered, totalCount: filtered.length, page: 1, pageSize: 25 })
   }))
 })
+async function pick(dialog: ReturnType<typeof within>, label: RegExp, option: string) {
+  fireEvent.mouseDown(await dialog.findByRole('combobox', { name: label }))
+  await userEvent.click(await screen.findByRole('option', { name: option }))
+}
 function mount() {
   window.history.pushState({}, '', '/configuracion/servicios')
   render(<AppProviders queryClient={createQueryClient()}><BrowserRouter><AuthProvider><App /></AuthProvider></BrowserRouter></AppProviders>)
@@ -42,11 +48,12 @@ it('crea precio cero sin duplicar envíos y desactiva/reactiva', async () => {
   const d = within(screen.getByRole('dialog'))
   await userEvent.type(d.getByLabelText('Nombre', { exact: false }), 'Curso CP06')
   await userEvent.type(d.getByLabelText('Precio de referencia', { exact: false }), '0')
+  await pick(d, /Tipo de servicio/, 'Talleres'); await pick(d, /Modalidad/, 'Otra opción')
   const form = d.getByRole('button', { name: 'Guardar' }).closest('form')!
   fireEvent.submit(form); fireEvent.submit(form)
   expect(await screen.findByText('Curso CP06')).toBeTruthy()
   const calls = vi.mocked(fetch).mock.calls.filter(([r]) => (r as Request).method === 'POST' && new URL((r as Request).url).pathname === '/api/servicios')
-  expect(calls).toHaveLength(1); expect(await (calls[0][0] as Request).clone().json()).toMatchObject({ precioReferencia: 0 })
+  expect(calls).toHaveLength(1); expect(await (calls[0][0] as Request).clone().json()).toMatchObject({ precioReferencia: 0, idTipoServicio: 2, idModalidad: 2, idNivel: null })
   await userEvent.click(screen.getByRole('button', { name: 'Desactivar Curso CP06' }))
   await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirmar' }))
   await userEvent.click(await screen.findByRole('button', { name: 'Reactivar Curso CP06' }))
@@ -92,16 +99,43 @@ it('deniega la pantalla y oculta el enlace a operadores', async () => {
   expect(screen.queryByRole('link', { name: 'Servicios' })).toBeNull()
   expect(vi.mocked(fetch).mock.calls.some(([r]) => new URL((r as Request).url).pathname === '/api/servicios')).toBe(false)
 })
-it('envia la casilla Es taller y la muestra en el listado', async () => {
+it('las clases exigen nivel y los talleres lo piden opcional; tipo y modalidad son obligatorios', async () => {
+  mount(); await userEvent.click(await screen.findByRole('button', { name: 'Nuevo servicio' }))
+  const d = within(screen.getByRole('dialog'))
+  await userEvent.type(d.getByLabelText('Nombre', { exact: false }), 'Clases de conversación')
+  await userEvent.type(d.getByLabelText('Precio de referencia', { exact: false }), '20')
+  const posts = () => vi.mocked(fetch).mock.calls.filter(([r]) => (r as Request).method === 'POST' && new URL((r as Request).url).pathname === '/api/servicios')
+  // Sin tipo ni modalidad no se envía nada.
+  await userEvent.click(d.getByRole('button', { name: 'Guardar' }))
+  expect(await d.findByText('Elegí el tipo de servicio.')).toBeTruthy(); expect(d.getByText('Elegí la modalidad.')).toBeTruthy()
+  expect(posts()).toHaveLength(0)
+  // Clases: la casilla queda marcada y bloqueada, el nivel es obligatorio.
+  await pick(d, /Tipo de servicio/, 'Clases'); await pick(d, /Modalidad/, 'Otra opción')
+  const box = d.getByRole('checkbox', { name: /Asociado a un nivel de inglés/ }) as HTMLInputElement
+  expect(box.checked).toBe(true); expect(box.disabled).toBe(true)
+  await userEvent.click(d.getByRole('button', { name: 'Guardar' }))
+  expect(await d.findByText('Elegí el nivel de inglés.')).toBeTruthy(); expect(posts()).toHaveLength(0)
+  await pick(d, /Nivel de inglés/, 'Otra opción')
+  await userEvent.click(d.getByRole('button', { name: 'Guardar' }))
+  expect(await screen.findByText(/Clases de conversación/)).toBeTruthy()
+  expect(await (posts()[0][0] as Request).clone().json()).toMatchObject({ idTipoServicio: 1, idModalidad: 2, idNivel: 2 })
+})
+it('en un taller la casilla de nivel es opcional y sin marcar no envía nivel', async () => {
   mount(); await userEvent.click(await screen.findByRole('button', { name: 'Nuevo servicio' }))
   const d = within(screen.getByRole('dialog'))
   await userEvent.type(d.getByLabelText('Nombre', { exact: false }), 'Taller de conversación')
   await userEvent.type(d.getByLabelText('Precio de referencia', { exact: false }), '20')
-  const box = d.getByRole('checkbox', { name: /Es un taller/ }) as HTMLInputElement
-  expect(box.checked).toBe(false)
-  await userEvent.click(box)
+  await pick(d, /Tipo de servicio/, 'Talleres'); await pick(d, /Modalidad/, 'Otra opción')
+  const box = d.getByRole('checkbox', { name: /Asociado a un nivel de inglés/ }) as HTMLInputElement
+  expect(box.checked).toBe(false); expect(box.disabled).toBe(false)
+  expect(d.queryByRole('combobox', { name: /Nivel de inglés/ })).toBeNull()
   await userEvent.click(d.getByRole('button', { name: 'Guardar' }))
   expect(await screen.findByText(/Taller de conversación/)).toBeTruthy()
   const calls = vi.mocked(fetch).mock.calls.filter(([r]) => (r as Request).method === 'POST' && new URL((r as Request).url).pathname === '/api/servicios')
-  expect(await (calls[0][0] as Request).clone().json()).toMatchObject({ esTaller: true })
+  expect(await (calls[0][0] as Request).clone().json()).toMatchObject({ idTipoServicio: 2, idNivel: null })
+  // Marcar la casilla muestra el nivel.
+  await userEvent.click(screen.getByRole('button', { name: 'Nuevo servicio' }))
+  const next = within(screen.getByRole('dialog')); await pick(next, /Tipo de servicio/, 'Talleres')
+  await userEvent.click(next.getByRole('checkbox', { name: /Asociado a un nivel de inglés/ }))
+  expect(await next.findByRole('combobox', { name: /Nivel de inglés/ })).toBeTruthy()
 })

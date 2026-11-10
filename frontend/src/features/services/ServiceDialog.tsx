@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react'
 import { Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, MenuItem, TextField, Typography } from '@mui/material'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { createService, patchService, setServiceActive, getCatalogOptions, catalogQueryKeys, type Servicio, type ServicioRequest } from '../../api/client'
+import { createService, patchService, setServiceActive, getCatalogOptions, listServiceTypes, catalogQueryKeys, type Servicio, type ServicioRequest } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 
 export type ServiceAction = 'create' | 'edit' | 'active'
@@ -13,28 +13,36 @@ const schema = z.object({
   descripcion: z.string(),
   precioReferencia: z.string().trim().refine(v => /^\d+([.,]\d{1,2})?$/.test(v) && Number(v.replace(',', '.')) <= 9999999999.99, 'Ingresá un precio no negativo, hasta 9999999999.99 y con hasta dos decimales.'),
   duracionHoras: z.string().trim().refine(v => v === '' || /^-?\d+$/.test(v) && Number(v) >= -2147483648 && Number(v) <= 2147483647, 'Ingresá una cantidad de horas entera válida.'),
-  idNivel: z.string(), idModalidad: z.string(), esTaller: z.boolean(),
+  idTipoServicio: z.string().min(1, 'Elegí el tipo de servicio.'), idModalidad: z.string().min(1, 'Elegí la modalidad.'),
+  conNivel: z.boolean(), idNivel: z.string(),
 })
 type Values = z.infer<typeof schema>
-function payload(v: Values): ServicioRequest {
-  return { nombre: v.nombre.trim(), descripcion: v.descripcion.trim() || null, precioReferencia: Number(v.precioReferencia.replace(',', '.')), duracionHoras: v.duracionHoras === '' ? null : Number(v.duracionHoras), idNivel: v.idNivel === '' ? null : Number(v.idNivel), idModalidad: v.idModalidad === '' ? null : Number(v.idModalidad), esTaller: v.esTaller }
+/** El nivel solo viaja si el servicio está asociado a uno (siempre en las clases). */
+function payload(v: Values, withLevel: boolean): ServicioRequest {
+  return { nombre: v.nombre.trim(), descripcion: v.descripcion.trim() || null, precioReferencia: Number(v.precioReferencia.replace(',', '.')), duracionHoras: v.duracionHoras === '' ? null : Number(v.duracionHoras), idTipoServicio: Number(v.idTipoServicio), idModalidad: Number(v.idModalidad), idNivel: withLevel && v.idNivel !== '' ? Number(v.idNivel) : null }
 }
 export function ServiceDialog({ mode, item, onClose, onSaved }: { mode: ServiceAction; item?: Servicio; onClose: () => void; onSaved: () => void }) {
   const { isLoading } = useAuth()
   const client = useQueryClient()
   const pending = useRef(false)
   const [error, setError] = useState('')
-  const defaults = { nombre: item?.nombre ?? '', descripcion: item?.descripcion ?? '', precioReferencia: item ? String(item.precioReferencia) : '', duracionHoras: item?.duracionHoras == null ? '' : String(item.duracionHoras), idNivel: item?.nivel ? String(item.nivel.id) : '', idModalidad: item?.modalidad ? String(item.modalidad.id) : '', esTaller: item?.esTaller ?? false }
-  const { register, control, handleSubmit, formState: { errors, isSubmitting, isDirty } } = useForm({ resolver: zodResolver(schema), defaultValues: defaults })
+  const defaults = { nombre: item?.nombre ?? '', descripcion: item?.descripcion ?? '', precioReferencia: item ? String(item.precioReferencia) : '', duracionHoras: item?.duracionHoras == null ? '' : String(item.duracionHoras), idTipoServicio: item ? String(item.tipo.id) : '', idModalidad: item?.modalidad ? String(item.modalidad.id) : '', conNivel: !!item?.nivel, idNivel: item?.nivel ? String(item.nivel.id) : '' }
+  const { register, control, handleSubmit, setError: setFieldError, formState: { errors, isSubmitting, isDirty } } = useForm({ resolver: zodResolver(schema), defaultValues: defaults })
+  const types = useQuery({ queryKey: ['catalogos', 'tipos-servicio', 'con-regla'], queryFn: listServiceTypes, enabled: mode !== 'active' })
+  const typeId = useWatch({ control, name: 'idTipoServicio' })
+  const withLevelChecked = useWatch({ control, name: 'conNivel' })
+  const levelRequired = !!types.data?.find(t => String(t.id) === typeId)?.nivelObligatorio
+  const showLevel = levelRequired || withLevelChecked
   const levels = useQuery({ queryKey: ['catalogos', 'niveles-ingles', 'opciones'], queryFn: () => getCatalogOptions('niveles-ingles'), enabled: mode !== 'active' })
   const modalities = useQuery({ queryKey: ['catalogos', 'modalidades', 'opciones'], queryFn: () => getCatalogOptions('modalidades'), enabled: mode !== 'active' })
   const title = mode === 'create' ? 'Nuevo servicio' : mode === 'edit' ? 'Editar servicio' : item?.activo ? 'Desactivar servicio' : 'Reactivar servicio'
   const save = async (values?: Values) => {
     if (pending.current || isLoading) return
+    if (values && showLevel && values.idNivel === '') { setFieldError('idNivel', { message: 'Elegí el nivel de inglés.' }); return }
     pending.current = true; setError('')
     try {
-      const body = values ? payload(values) : {}
-      const baseline: ServicioRequest = item ? payload(defaults) : {}
+      const body = values ? payload(values, showLevel) : {}
+      const baseline: ServicioRequest = item ? payload(defaults, !!item.nivel) : {}
       const patch: ServicioRequest = Object.fromEntries(Object.entries(body).filter(([key, value]) => value !== baseline[key as keyof ServicioRequest]))
       if (mode === 'edit' && !Object.keys(patch).length) { setError('No hay cambios para guardar.'); return }
       const saved = mode === 'active' ? await setServiceActive(item!.id, !item!.activo) : mode === 'create' ? await createService(body) : await patchService(item!.id, patch)
@@ -47,24 +55,36 @@ export function ServiceDialog({ mode, item, onClose, onSaved }: { mode: ServiceA
   }
   return <Dialog open onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm" aria-labelledby="service-dialog-title">
     <DialogTitle id="service-dialog-title">{title}</DialogTitle>
-    <Box component="form" noValidate onSubmit={event => { if (mode === 'active') { event.preventDefault(); void handleSubmit(() => save())(event) } else void handleSubmit(save)(event) }}>
+    <Box component="form" noValidate onSubmit={event => { if (mode === 'active') { event.preventDefault(); void save() } else void handleSubmit(save)(event) }}>
       <DialogContent sx={{ display: 'grid', gap: 2, pt: 1 }}>
         {error && <Alert severity="error">{error}</Alert>}
         {isLoading && <Alert severity="warning">Necesitamos comprobar tu sesión antes de guardar.</Alert>}
-        {mode === 'active' ? <Typography>¿Confirmás {item?.activo ? 'desactivar' : 'reactivar'} «{item?.nombre}»? Los embudos existentes conservan su estado; desactivar el servicio solo impide elegirlo en nuevos embudos.</Typography> : <>
+        {mode === 'active' ? <Typography>¿Confirmás {item?.activo ? 'desactivar' : 'reactivar'} «{item?.nombre}»? Los embudos existentes conservan su estado; desactivar el servicio solo impide elegirlo en nuevas oportunidades.</Typography> : <>
           <TextField {...register('nombre')} label="Nombre" required autoFocus disabled={isSubmitting || isLoading} error={!!errors.nombre} helperText={errors.nombre?.message} />
           <TextField {...register('descripcion')} label="Descripción" multiline minRows={2} disabled={isSubmitting || isLoading} />
           <TextField {...register('precioReferencia')} label="Precio de referencia" required slotProps={{ htmlInput: { inputMode: 'decimal' } }} disabled={isSubmitting || isLoading} error={!!errors.precioReferencia} helperText={errors.precioReferencia?.message ?? 'Importe total. Cero es válido; hasta dos decimales.'} />
           <TextField {...register('duracionHoras')} label="Duración en horas" disabled={isSubmitting || isLoading} error={!!errors.duracionHoras} helperText={errors.duracionHoras?.message} />
-          {([{ field: 'idNivel', label: 'Nivel de inglés', query: levels, reference: item?.nivel }, { field: 'idModalidad', label: 'Modalidad', query: modalities, reference: item?.modalidad }] as const).map(({ field, label, query, reference }) => <Box key={field}>
+          {types.error && <Alert severity="error" action={<Button onClick={() => void types.refetch()}>Reintentar tipos</Button>}>{types.error.message}</Alert>}
+          <Controller name="idTipoServicio" control={control} render={({ field: input }) => <TextField {...input} select fullWidth required label="Tipo de servicio" disabled={isSubmitting || isLoading || types.isPending || !!types.error} error={!!errors.idTipoServicio} helperText={errors.idTipoServicio?.message ?? (types.isPending ? 'Cargando tipos…' : 'Los tipos nuevos se agregan en Catálogos.')}>
+            {item && !types.data?.some(x => x.id === item.tipo.id) && <MenuItem value={String(item.tipo.id)}>{item.tipo.descripcion}</MenuItem>}
+            {types.data?.filter(x => x.activo || String(x.id) === defaults.idTipoServicio).map(x => <MenuItem key={x.id} value={String(x.id)}>{x.descripcion}{x.activo ? '' : ' (Inactivo)'}</MenuItem>)}
+          </TextField>} />
+          {([{ field: 'idModalidad', label: 'Modalidad', query: modalities, reference: item?.modalidad }] as const).map(({ field, label, query, reference }) => <Box key={field}>
             {query.error && <Alert severity="error" action={<Button onClick={() => void query.refetch()}>Reintentar {label}</Button>}>{query.error.message}</Alert>}
-            <Controller name={field} control={control} render={({ field: input }) => <TextField {...input} select fullWidth label={label} disabled={isSubmitting || isLoading || query.isPending || !!query.error} helperText={query.isPending ? 'Cargando opciones…' : 'Opcional'}>
-              <MenuItem value="">Sin especificar</MenuItem>
+            <Controller name={field} control={control} render={({ field: input }) => <TextField {...input} select fullWidth required label={label} disabled={isSubmitting || isLoading || query.isPending || !!query.error} error={!!errors.idModalidad} helperText={errors.idModalidad?.message ?? (query.isPending ? 'Cargando opciones…' : 'Las modalidades nuevas se agregan en Catálogos.')}>
               {reference && !query.data?.some(x => x.id === reference.id) && <MenuItem value={String(reference.id)}>{reference.descripcion}{reference.activo ? '' : ' (Inactivo)'}</MenuItem>}
               {query.data?.map(x => <MenuItem key={x.id} value={String(x.id)}>{x.descripcion}</MenuItem>)}
             </TextField>} />
           </Box>)}
-          <Controller name="esTaller" control={control} render={({ field: input }) => <FormControlLabel label="Es un taller (fecha única; al ganarlo no se crea un alumno)" control={<Checkbox checked={input.value} onChange={event => input.onChange(event.target.checked)} disabled={isSubmitting || isLoading} />} />} />
+          <Controller name="conNivel" control={control} render={({ field: input }) => <FormControlLabel label={levelRequired ? 'Asociado a un nivel de inglés (obligatorio en las clases)' : 'Asociado a un nivel de inglés'} control={<Checkbox checked={showLevel} onChange={event => input.onChange(event.target.checked)} disabled={isSubmitting || isLoading || levelRequired} />} />} />
+          {showLevel && <Box>
+            {levels.error && <Alert severity="error" action={<Button onClick={() => void levels.refetch()}>Reintentar Nivel de inglés</Button>}>{levels.error.message}</Alert>}
+            <Controller name="idNivel" control={control} render={({ field: input }) => <TextField {...input} select fullWidth required label="Nivel de inglés" disabled={isSubmitting || isLoading || levels.isPending || !!levels.error} error={!!errors.idNivel} helperText={errors.idNivel?.message ?? (levels.isPending ? 'Cargando opciones…' : undefined)}>
+              <MenuItem value="">Elegir nivel</MenuItem>
+              {item?.nivel && !levels.data?.some(x => x.id === item.nivel!.id) && <MenuItem value={String(item.nivel.id)}>{item.nivel.descripcion}{item.nivel.activo ? '' : ' (Inactivo)'}</MenuItem>}
+              {levels.data?.map(x => <MenuItem key={x.id} value={String(x.id)}>{x.descripcion}</MenuItem>)}
+            </TextField>} />
+          </Box>}
         </>}
       </DialogContent>
       <DialogActions><Button disabled={isSubmitting} onClick={onClose}>Cancelar</Button><Button disabled={isSubmitting || isLoading || mode === 'edit' && !isDirty} type="submit" variant="contained">{isSubmitting ? 'Guardando…' : mode === 'active' ? 'Confirmar' : 'Guardar'}</Button></DialogActions>

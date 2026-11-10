@@ -115,6 +115,12 @@ CREATE TABLE modalidad (
     descripcion varchar(100) NOT NULL CHECK (btrim(descripcion) <> ''),
     activo boolean NOT NULL DEFAULT true
 );
+CREATE TABLE tipo_servicio (
+    id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    descripcion varchar(100) NOT NULL CHECK (btrim(descripcion) <> ''),
+    codigo varchar(20) UNIQUE CHECK (codigo IS NULL OR btrim(codigo) <> ''),
+    activo boolean NOT NULL DEFAULT true
+);
 CREATE TABLE servicio (
     id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre varchar(150) NOT NULL CHECK (btrim(nombre) <> ''),
@@ -123,18 +129,31 @@ CREATE TABLE servicio (
     duracion_horas integer,
     id_nivel integer REFERENCES nivel_ingles(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     id_modalidad integer REFERENCES modalidad(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    id_tipo_servicio integer NOT NULL REFERENCES tipo_servicio(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     activo boolean NOT NULL DEFAULT true
 );
 CREATE INDEX ix_servicio_nivel ON servicio (id_nivel);
 CREATE INDEX ix_servicio_modalidad ON servicio (id_modalidad);
+CREATE INDEX ix_servicio_tipo ON servicio (id_tipo_servicio);
 CREATE TABLE embudo (
     id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre varchar(100) NOT NULL CHECK (btrim(nombre) <> ''),
     descripcion text,
-    id_servicio integer NOT NULL REFERENCES servicio(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     activo boolean NOT NULL DEFAULT true
 );
-CREATE INDEX ix_embudo_servicio ON embudo (id_servicio);
+-- Admisión de servicios: tipos admitidos y, opcionalmente, una selección puntual de servicios de un tipo.
+CREATE TABLE embudo_tipo_servicio (
+    id_embudo integer NOT NULL REFERENCES embudo(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    id_tipo_servicio integer NOT NULL REFERENCES tipo_servicio(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    PRIMARY KEY (id_embudo, id_tipo_servicio)
+);
+CREATE INDEX ix_embudo_tipo_servicio_tipo ON embudo_tipo_servicio (id_tipo_servicio);
+CREATE TABLE embudo_servicio (
+    id_embudo integer NOT NULL REFERENCES embudo(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    id_servicio integer NOT NULL REFERENCES servicio(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    PRIMARY KEY (id_embudo, id_servicio)
+);
+CREATE INDEX ix_embudo_servicio_servicio ON embudo_servicio (id_servicio);
 CREATE TABLE estado_oportunidad (
     id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     codigo varchar(100) NOT NULL UNIQUE CHECK (codigo IN ('ABIERTA', 'GANADA', 'PERDIDA')),
@@ -178,6 +197,7 @@ CREATE TABLE oportunidad (
     id_empresa integer REFERENCES empresa(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     id_contacto integer REFERENCES contacto(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     id_etapa integer NOT NULL REFERENCES etapa_comercial(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    id_servicio integer NOT NULL REFERENCES servicio(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     id_origen integer REFERENCES origen_comercial(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
     valor numeric(12,2) NOT NULL CHECK (valor >= 0 AND valor <> 'NaN'::numeric),
     fecha_creacion timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -195,6 +215,7 @@ CREATE INDEX ix_oportunidad_responsable ON oportunidad (id_responsable);
 CREATE INDEX ix_oportunidad_empresa ON oportunidad (id_empresa);
 CREATE INDEX ix_oportunidad_contacto ON oportunidad (id_contacto);
 CREATE INDEX ix_oportunidad_etapa ON oportunidad (id_etapa);
+CREATE INDEX ix_oportunidad_servicio ON oportunidad (id_servicio);
 CREATE INDEX ix_oportunidad_origen ON oportunidad (id_origen);
 CREATE INDEX ix_oportunidad_motivo ON oportunidad (id_motivo_perdida);
 CREATE TABLE historial_etapas (

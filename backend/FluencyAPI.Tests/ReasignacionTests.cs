@@ -43,10 +43,10 @@ public sealed class ReasignacionTests
         var retired = await AccountAsync(admin, "retirado", ["VENDEDOR"]);
         Assert.Equal(HttpStatusCode.OK, (await admin.PostAsync($"/usuarios/{retired}/desactivar", null)).StatusCode);
         using var seller2 = factory.Client(); await UsuariosTests.SignIn(seller2, factory, "vendedor2", "Ficticia123!");
-        var mine = await CreateAsync(seller, new { titulo = "Propia", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
-        var adminsOwn = await CreateAsync(admin, new { titulo = "Del admin", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
-        var closed = await CreateAsync(admin, new { titulo = "Cerrada", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
-        var removed = await CreateAsync(admin, new { titulo = "Eliminada", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
+        var mine = await CreateAsync(seller, new { titulo = "Propia", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        var adminsOwn = await CreateAsync(admin, new { titulo = "Del admin", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        var closed = await CreateAsync(admin, new { titulo = "Cerrada", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        var removed = await CreateAsync(admin, new { titulo = "Eliminada", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE oportunidad SET id_etapa={seed.Won}, fecha_cierre=now() WHERE id={closed}; UPDATE oportunidad SET activo=false WHERE id={removed}");
         string Target(int user) => $$"""{"idResponsable":{{user}}}""";
@@ -113,7 +113,7 @@ public sealed class ReasignacionTests
 
         for (var round = 0; round < 5; round++)
         {
-            var id = await CreateAsync(seller, new { titulo = $"Ronda {round}", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
+            var id = await CreateAsync(seller, new { titulo = $"Ronda {round}", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
             var edit = Patch(seller, id, $$"""{"observaciones":"edición {{round}}"}""");
             var reassign = Reassign(seller, id, $$"""{"idResponsable":{{otherSeller}}}""");
             var results = await Task.WhenAll(edit, reassign);

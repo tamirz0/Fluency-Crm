@@ -33,11 +33,11 @@ public sealed class ConsultaOportunidadesTests
             otherFunnel = await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM embudo WHERE nombre='Otro embudo'");
             origin = await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM origen_comercial WHERE descripcion='Referido'");
         }
-        var first = await CreateAsync(admin, new { titulo = "Curso Inglés", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idResponsable = factory.SellerId, idOrigen = origin });
-        var second = await CreateAsync(admin, new { idEmbudo = seed.Funnel, idEmpresa = seed.CompanyB });
-        var third = await CreateAsync(seller, new { idEmbudo = otherFunnel, idContacto = seed.ContactA });
-        var closed = await CreateAsync(admin, new { titulo = "Cerrada", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
-        var removed = await CreateAsync(admin, new { titulo = "Eliminada", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
+        var first = await CreateAsync(admin, new { titulo = "Curso Inglés", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idResponsable = factory.SellerId, idOrigen = origin });
+        var second = await CreateAsync(admin, new { idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyB });
+        var third = await CreateAsync(seller, new { idEmbudo = otherFunnel, idServicio = seed.OtherService, idContacto = seed.ContactA });
+        var closed = await CreateAsync(admin, new { titulo = "Cerrada", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        var removed = await CreateAsync(admin, new { titulo = "Eliminada", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE oportunidad SET id_etapa={seed.Won}, fecha_cierre=now() WHERE id={closed}; UPDATE oportunidad SET activo=false WHERE id={removed}");
 
@@ -91,8 +91,8 @@ public sealed class ConsultaOportunidadesTests
         using var admin = factory.Client(); await UsuariosTests.SignIn(admin, factory);
         using var seller = factory.Client(); await UsuariosTests.SignIn(seller, factory, "seller");
         var seed = await AltaOportunidadTests.SeedAsync(factory, admin);
-        var id = await CreateAsync(admin, new { titulo = "Con historia", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
-        var removed = await CreateAsync(admin, new { titulo = "Eliminada", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
+        var id = await CreateAsync(admin, new { titulo = "Con historia", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        var removed = await CreateAsync(admin, new { titulo = "Eliminada", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, $"""
                 INSERT INTO historial_etapas(id_oportunidad,id_etapa_anterior,id_nueva_etapa,fecha_hora,id_usuario,observacion) VALUES
@@ -138,11 +138,11 @@ public sealed class ConsultaOportunidadesTests
         int otherFunnel;
         await using (var db = await factory.OpenAsync())
             otherFunnel = await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM embudo WHERE nombre='Otro embudo'");
-        var mine = await CreateAsync(seller, new { idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
-        var theirs = await CreateAsync(admin, new { idEmbudo = seed.Funnel, idEmpresa = seed.CompanyB });
-        var closed = await CreateAsync(admin, new { idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idResponsable = factory.SellerId });
-        var removed = await CreateAsync(admin, new { idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
-        var elsewhere = await CreateAsync(admin, new { idEmbudo = otherFunnel, idEmpresa = seed.CompanyA });
+        var mine = await CreateAsync(seller, new { idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        var theirs = await CreateAsync(admin, new { idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyB });
+        var closed = await CreateAsync(admin, new { idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idResponsable = factory.SellerId });
+        var removed = await CreateAsync(admin, new { idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        var elsewhere = await CreateAsync(admin, new { idEmbudo = otherFunnel, idServicio = seed.OtherService, idEmpresa = seed.CompanyA });
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE oportunidad SET id_etapa={seed.Won}, fecha_cierre=now() WHERE id={closed}; UPDATE oportunidad SET activo=false WHERE id={removed}");
 

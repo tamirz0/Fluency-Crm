@@ -35,7 +35,7 @@ public sealed class HistorialComercialTests
             Assert.Equal(HttpStatusCode.Created, r.StatusCode);
             return (await Json(r)).GetProperty("id").GetInt32();
         }
-        var opportunity = (await Json(await seller.PostAsJsonAsync("/oportunidades", new { titulo = "Propia", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA, idContacto = seed.ContactA }))).GetProperty("id").GetInt32();
+        var opportunity = (await Json(await seller.PostAsJsonAsync("/oportunidades", new { titulo = "Propia", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA, idContacto = seed.ContactA }))).GetProperty("id").GetInt32();
         Assert.Equal(HttpStatusCode.OK, (await seller.PostAsync($"/oportunidades/{opportunity}/mover", new StringContent($$"""{"idEtapa":{{seed.SecondOpen}},"observacion":"Avanzó"}""", Encoding.UTF8, "application/json"))).StatusCode);
         var both = await Activity(seller, $"\"idEmpresa\":{seed.CompanyA},\"idContacto\":{seed.ContactA}", now.AddDays(-3), "Por empresa y contacto");
         var contactOnly = await Activity(admin, $"\"idContacto\":{seed.ContactA}", now.AddDays(-1), "Solo contacto");
@@ -105,7 +105,7 @@ public sealed class HistorialComercialTests
         Assert.Equal(new[] { ("ACTIVIDAD", viaOpportunity) }, Keys(await Read($"/empresas/{seed.CompanyA}/historial-comercial")));
 
         // Cada actividad indica qué puede intentar el actor: la de una oportunidad ajena no se edita, la propia y la compartida sí.
-        var adminOpportunity = (await Json(await admin.PostAsJsonAsync("/oportunidades", new { titulo = "Del admin", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA }))).GetProperty("id").GetInt32();
+        var adminOpportunity = (await Json(await admin.PostAsJsonAsync("/oportunidades", new { titulo = "Del admin", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA }))).GetProperty("id").GetInt32();
         var foreign = await Activity(admin, $"\"idEmpresa\":{seed.CompanyA},\"idOportunidad\":{adminOpportunity}", now.AddHours(-1), "De una oportunidad ajena");
         var shared = await Activity(admin, $"\"idEmpresa\":{seed.CompanyA}", now.AddHours(-2), "Compartida");
         var withActions = (await Read($"/empresas/{seed.CompanyA}/historial-comercial")).GetProperty("items").EnumerateArray()

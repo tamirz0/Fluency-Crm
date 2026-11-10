@@ -1,6 +1,6 @@
 namespace Persistence.Models;
 
-// Embudo, servicio y estado no se persisten: se derivan de la etapa actual.
+// Embudo y estado no se persisten: se derivan de la etapa actual. El servicio sí (id_servicio).
 public partial class Oportunidad
 {
     public int Id { get; set; }
@@ -15,6 +15,8 @@ public partial class Oportunidad
     public int? IdContacto { get; set; }
 
     public int IdEtapa { get; set; }
+
+    public int IdServicio { get; set; }
 
     public int? IdOrigen { get; set; }
 
@@ -45,6 +47,8 @@ public partial class Oportunidad
     public virtual Contacto? IdContactoNavigation { get; set; }
 
     public virtual EtapaComercial IdEtapaNavigation { get; set; } = null!;
+
+    public virtual Servicio IdServicioNavigation { get; set; } = null!;
 
     public virtual OrigenComercial? IdOrigenNavigation { get; set; }
 

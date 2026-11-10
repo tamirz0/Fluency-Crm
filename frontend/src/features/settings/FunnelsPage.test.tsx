@@ -9,7 +9,9 @@ import App from '../../App'
 
 const admin = { id: 1, nombre: 'Ana', apellido: 'Prueba', roles: ['ADMINISTRADOR'], permisos: ['AdministrarConfiguracion'] }
 const service = { id: 1, nombre: 'Inglés', activo: true }
-const funnel = { id: 1, nombre: 'Inscripciones', descripcion: null, servicio: { id: 1, descripcion: 'Inglés', activo: false }, activo: true }
+const types = [{ id: 1, descripcion: 'Clases', activo: true, nivelObligatorio: true }, { id: 2, descripcion: 'Talleres', activo: true, nivelObligatorio: false }]
+// Admite una selección puntual de Clases cuyo único servicio (que ya no se ofrece como opción) hoy está inactivo.
+const funnel = { id: 1, nombre: 'Inscripciones', descripcion: null, tipos: [{ tipo: types[0], servicios: [{ id: 7, descripcion: 'Inglés viejo', activo: false }] }], activo: true }
 const finals = [{ id: 1, nombre: 'Ganada', descripcion: null, orden: 1, idEmbudo: 1, estado: 'GANADA', activo: true }, { id: 2, nombre: 'Perdida', descripcion: null, orden: 2, idEmbudo: 1, estado: 'PERDIDA', activo: true }]
 const openStage = (id: number, nombre: string, orden: number, activo = true) => ({ ...finals[0], id, nombre, orden, estado: 'ABIERTA', activo })
 function arrangeStages() {
@@ -33,6 +35,7 @@ beforeEach(() => {
     const url = new URL(r.url), path = url.pathname
     if (path.endsWith('/csrf')) return json({ requestToken: 'csrf' })
     if (path.endsWith('/me')) return json({ usuario: allowed ? admin : { ...admin, roles: ['VENDEDOR'], permisos: [] } })
+    if (path === '/api/servicios/tipos') return json(types)
     if (path === '/api/servicios') return json({ items: [service], totalCount: 1, page: 1, pageSize: 100 })
     if (r.method !== 'GET') {
       if (path.endsWith('/orden-etapas') && orderGate) await orderGate
@@ -40,9 +43,9 @@ beforeEach(() => {
       const body = r.body ? await r.clone().json() : {}
       if (path.endsWith('/orden-etapas')) { stages = stages.map(s => ({ ...s, orden: body.etapas.find((e: { id: number }) => e.id === s.id)?.orden ?? s.orden })); return json(stages) }
       if (path.endsWith('/etapas')) { const saved = { ...finals[0], ...body, id: Math.max(...stages.map(s => s.id)) + 1, estado: 'ABIERTA' }; stages = [...stages, saved]; return json(saved, 201) }
-      if (path === '/api/embudos') { const saved = { ...funnel, ...body, id: 2 }; funnels = [...funnels, saved]; return json(saved, 201) }
+      if (path === '/api/embudos') { const saved = { ...funnel, nombre: body.nombre, descripcion: body.descripcion, id: 2 }; funnels = [...funnels, saved]; return json(saved, 201) }
       if (path.startsWith('/api/etapas/')) { const id = Number(path.split('/')[3]); stages = stages.map(s => s.id === id ? { ...s, ...body, ...(path.endsWith('/desactivar') ? { activo: false } : path.endsWith('/reactivar') ? { activo: true, orden: 9 } : {}) } : s); return json(stages.find(s => s.id === id)) }
-      const id = Number(path.split('/')[3]); funnels = funnels.map(f => f.id === id ? { ...f, ...body, ...(path.endsWith('/desactivar') ? { activo: false } : path.endsWith('/reactivar') ? { activo: true } : {}) } : f); return json(funnels.find(f => f.id === id))
+      const id = Number(path.split('/')[3]); funnels = funnels.map(f => f.id === id ? { ...f, ...body, tipos: f.tipos, ...(path.endsWith('/desactivar') ? { activo: false } : path.endsWith('/reactivar') ? { activo: true } : {}) } : f); return json(funnels.find(f => f.id === id))
     }
     if (path.endsWith('/etapas')) return json(stages)
     if (failList) return json({ title: 'Error de carga.' }, 500)
@@ -87,17 +90,19 @@ it('deniega configuración y no consulta embudos para operadores', async () => {
   expect(screen.queryByRole('link', { name: 'Embudos y etapas' })).toBeNull()
   expect(vi.mocked(fetch).mock.calls.some(([r]) => new URL((r as Request).url).pathname === '/api/embudos')).toBe(false)
 })
-it('crea embudo sin abiertas, edita conservando servicio inactivo y muestra el bloqueo de baja', async () => {
+it('crea embudo admitiendo un tipo, edita conservando el servicio inactivo y muestra el bloqueo de baja', async () => {
   mount(); await userEvent.click(await screen.findByRole('button', { name: 'Nuevo embudo' }))
   let d = within(screen.getByRole('dialog'))
   await userEvent.type(d.getByLabelText('Nombre', { exact: false }), 'Nuevo proceso')
-  fireEvent.mouseDown(d.getByRole('combobox', { name: /Servicio/ })); await userEvent.click(await screen.findByRole('option', { name: 'Inglés' }))
+  expect(d.getByText(/Se crearán las etapas Consulta recibida, Necesidad relevada, Nivel de inglés evaluado y Presupuesto enviado/)).toBeTruthy()
+  await userEvent.click(await d.findByRole('checkbox', { name: 'Clases' }))
   await userEvent.click(d.getByRole('button', { name: 'Guardar' }))
   expect(await screen.findByText('Nuevo proceso')).toBeTruthy()
   const create = vi.mocked(fetch).mock.calls.find(([r]) => (r as Request).method === 'POST' && new URL((r as Request).url).pathname === '/api/embudos')!
-  expect(await (create[0] as Request).clone().json()).toEqual({ nombre: 'Nuevo proceso', descripcion: null, idServicio: 1 })
+  expect(await (create[0] as Request).clone().json()).toEqual({ nombre: 'Nuevo proceso', descripcion: null, tipos: [{ idTipoServicio: 1, idServicios: null }] })
   await userEvent.click(screen.getByRole('button', { name: 'Editar Inscripciones' })); d = within(screen.getByRole('dialog'))
-  // The current service stays readable even if no longer available for new assignments.
+  // El servicio admitido sigue legible aunque hoy esté inactivo y no viaja si no cambia la admisión.
+  expect(await d.findByText('Inglés viejo (Inactivo)')).toBeTruthy()
   await userEvent.type(d.getByLabelText('Descripción'), 'Actualizada')
   await userEvent.click(d.getByRole('button', { name: 'Guardar' }))
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
@@ -109,6 +114,25 @@ it('crea embudo sin abiertas, edita conservando servicio inactivo y muestra el b
   expect(vi.mocked(fetch).mock.calls.filter(([r]) => new URL((r as Request).url).pathname.endsWith('/desactivar'))).toHaveLength(1)
   conflict = false; await userEvent.click(d.getByRole('button', { name: 'Confirmar' }))
   expect(await screen.findByRole('button', { name: 'Reactivar Inscripciones' })).toBeTruthy()
+})
+it('exige al menos un tipo y permite admitir todos los servicios de un tipo o solo algunos', async () => {
+  mount(); await userEvent.click(await screen.findByRole('button', { name: 'Nuevo embudo' }))
+  const d = within(screen.getByRole('dialog'))
+  await userEvent.type(d.getByLabelText('Nombre', { exact: false }), 'Solo algunos')
+  const posts = () => vi.mocked(fetch).mock.calls.filter(([r]) => (r as Request).method === 'POST' && new URL((r as Request).url).pathname === '/api/embudos')
+  await userEvent.click(d.getByRole('button', { name: 'Guardar' }))
+  expect(await d.findByText('Seleccioná al menos un tipo de servicio.')).toBeTruthy(); expect(posts()).toHaveLength(0)
+  await userEvent.click(await d.findByRole('checkbox', { name: 'Clases' }))
+  expect((d.getByRole('radio', { name: /Todos los servicios de este tipo/ }) as HTMLInputElement).checked).toBe(true)
+  await userEvent.click(d.getByRole('radio', { name: 'Solo algunos' }))
+  await userEvent.click(d.getByRole('button', { name: 'Guardar' }))
+  expect(await d.findByText('Elegí al menos un servicio o admití todos los del tipo.')).toBeTruthy(); expect(posts()).toHaveLength(0)
+  fireEvent.mouseDown(await d.findByRole('combobox', { name: /Servicios de Clases/ })); await userEvent.click(await screen.findByRole('option', { name: 'Inglés' }))
+  await userEvent.keyboard('{Escape}')
+  await userEvent.click(await d.findByRole('checkbox', { name: 'Talleres' }))
+  await userEvent.click(d.getByRole('button', { name: 'Guardar' }))
+  await waitFor(() => expect(posts()).toHaveLength(1))
+  expect(await (posts()[0][0] as Request).clone().json()).toEqual({ nombre: 'Solo algunos', descripcion: null, tipos: [{ idTipoServicio: 1, idServicios: [1] }, { idTipoServicio: 2, idServicios: null }] })
 })
 it('oculta embudo y estado en finales y permite desactivar/reactivar abiertas', async () => {
   stages = [...finals, { ...finals[0], id: 3, nombre: 'Consulta', estado: 'ABIERTA', orden: 3 }]

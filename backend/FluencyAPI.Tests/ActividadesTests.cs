@@ -102,9 +102,9 @@ public sealed class ActividadesTests
         var when = Iso(DateTime.UtcNow.AddHours(-2));
         string Body(int? opportunity, string client) => $$"""{"idTipo":{{s.Type}},{{client}},{{(opportunity is null ? "" : $"\"idOportunidad\":{opportunity},")}}"fechaHora":"{{when}}","descripcion":"Reunión"}""";
         var company = $"\"idEmpresa\":{s.Seed.CompanyA}";
-        var mine = await CreateOpportunityAsync(seller, new { titulo = "Propia", idEmbudo = s.Seed.Funnel, idEmpresa = s.Seed.CompanyA, idContacto = s.Seed.ContactA });
-        var theirs = await CreateOpportunityAsync(admin, new { titulo = "Del admin", idEmbudo = s.Seed.Funnel, idEmpresa = s.Seed.CompanyA });
-        var closed = await CreateOpportunityAsync(seller, new { titulo = "Cerrada", idEmbudo = s.Seed.Funnel, idEmpresa = s.Seed.CompanyA });
+        var mine = await CreateOpportunityAsync(seller, new { titulo = "Propia", idEmbudo = s.Seed.Funnel, idServicio = s.Seed.Service, idEmpresa = s.Seed.CompanyA, idContacto = s.Seed.ContactA });
+        var theirs = await CreateOpportunityAsync(admin, new { titulo = "Del admin", idEmbudo = s.Seed.Funnel, idServicio = s.Seed.Service, idEmpresa = s.Seed.CompanyA });
+        var closed = await CreateOpportunityAsync(seller, new { titulo = "Cerrada", idEmbudo = s.Seed.Funnel, idServicio = s.Seed.Service, idEmpresa = s.Seed.CompanyA });
         Assert.Equal(HttpStatusCode.OK, (await seller.PostAsync($"/oportunidades/{closed}/ganar", new StringContent("""{"fechaCierre":"2026-12-01","valor":10}""", Encoding.UTF8, "application/json"))).StatusCode);
         long history;
         await using (var db = await factory.OpenAsync()) history = await CommercialSchemaFixture.ScalarAsync<long>(db, "SELECT count(*) FROM historial_etapas");
@@ -147,7 +147,7 @@ public sealed class ActividadesTests
     {
         var s = await StartAsync(); await using var factory = s.Factory; using var admin = s.Admin; using var seller = s.Seller;
         var now = DateTime.UtcNow;
-        var opportunity = await CreateOpportunityAsync(admin, new { titulo = "Del admin", idEmbudo = s.Seed.Funnel, idEmpresa = s.Seed.CompanyA, idContacto = s.Seed.ContactA });
+        var opportunity = await CreateOpportunityAsync(admin, new { titulo = "Del admin", idEmbudo = s.Seed.Funnel, idServicio = s.Seed.Service, idEmpresa = s.Seed.CompanyA, idContacto = s.Seed.ContactA });
         async Task<int> Add(HttpClient client, string context, DateTime occurred, string text, string? result = null)
         {
             var response = await Post(client, $$"""{"idTipo":{{s.Type}},{{context}},"fechaHora":"{{Iso(occurred)}}","descripcion":"{{text}}"{{(result is null ? "" : $",\"resultado\":\"{result}\"")}}}""");

@@ -40,10 +40,10 @@ public sealed class MovimientoTests
             await CommercialSchemaFixture.ExecuteAsync(db, $"INSERT INTO etapa_comercial(id_embudo,id_estado,nombre,orden,activo) SELECT {seed.Funnel},id,'Retirada',9,false FROM estado_oportunidad WHERE codigo='ABIERTA'");
             inactiveStage = await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT id FROM etapa_comercial WHERE nombre='Retirada'");
         }
-        var mine = await CreateAsync(seller, new { titulo = "Propia", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
-        var theirs = await CreateAsync(admin, new { titulo = "Del admin", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
-        var closed = await CreateAsync(admin, new { titulo = "Cerrada", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
-        var removed = await CreateAsync(admin, new { titulo = "Eliminada", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
+        var mine = await CreateAsync(seller, new { titulo = "Propia", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        var theirs = await CreateAsync(admin, new { titulo = "Del admin", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        var closed = await CreateAsync(admin, new { titulo = "Cerrada", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
+        var removed = await CreateAsync(admin, new { titulo = "Eliminada", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE oportunidad SET id_etapa={seed.Won}, fecha_cierre=now() WHERE id={closed}; UPDATE oportunidad SET activo=false WHERE id={removed}");
         string Target(int stage, string? note = null) => note is null ? $$"""{"idEtapa":{{stage}}}""" : $$"""{"idEtapa":{{stage}},"observacion":"{{note}}"}""";
@@ -110,7 +110,7 @@ public sealed class MovimientoTests
         using var admin = factory.Client(); await UsuariosTests.SignIn(admin, factory);
         using var seller = factory.Client(); await UsuariosTests.SignIn(seller, factory, "seller");
         var seed = await AltaOportunidadTests.SeedAsync(factory, admin);
-        var id = await CreateAsync(seller, new { titulo = "Atómica", idEmbudo = seed.Funnel, idEmpresa = seed.CompanyA });
+        var id = await CreateAsync(seller, new { titulo = "Atómica", idEmbudo = seed.Funnel, idServicio = seed.Service, idEmpresa = seed.CompanyA });
 
         // Dos movimientos simultáneos a destinos distintos: ninguno falla con error de servidor y la historia concuerda con la etapa final.
         for (var round = 0; round < 4; round++)

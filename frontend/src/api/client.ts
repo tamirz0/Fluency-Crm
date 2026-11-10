@@ -292,6 +292,7 @@ export const configurableCatalogs = [
   { id: 'origenes-comerciales', label: 'Orígenes comerciales' },
   { id: 'niveles-ingles', label: 'Niveles de inglés' },
   { id: 'modalidades', label: 'Modalidades' },
+  { id: 'tipos-servicio', label: 'Tipos de servicio' },
   { id: 'motivos-perdida', label: 'Motivos de pérdida' },
   { id: 'tipos-actividad', label: 'Tipos de actividad' },
 ] as const
@@ -321,8 +322,13 @@ export type InicioResumen = components['schemas']['InicioResumenResponse']
 export function getHomeSummary() { return getResponseData(() => api.GET('/inicio/resumen')) }
 export function getOpportunityStates() { return getResponseData(() => api.GET('/estados-oportunidad')) }
 
-export function listServices(query: CatalogQuery = {}) {
+export type TipoServicio = components['schemas']['TipoServicioResponse']
+export function listServices(query: CatalogQuery & { idTipoServicio?: number } = {}) {
   return getResponseData(() => api.GET('/servicios', { params: { query } }))
+}
+/** Tipos de servicio (también inactivos) con la regla de nivel: las clases lo exigen. */
+export function listServiceTypes() {
+  return getResponseData(() => api.GET('/servicios/tipos'))
 }
 export function getService(id: Servicio['id']) {
   return getResponseData(() => api.GET('/servicios/{id}', { params: { path: { id: Number(id) } } }))
@@ -344,7 +350,8 @@ export type Embudo = components['schemas']['EmbudoResponse']
 export type EmbudoRequest = components['schemas']['EmbudoRequest']
 export type EtapaConfiguracion = components['schemas']['EtapaComercialResponse']
 export type EtapaRequest = components['schemas']['EtapaComercialRequest']
-export function listFunnels(query: CatalogQuery = {}) { return getResponseData(() => api.GET('/embudos', { params: { query } })) }
+/** Con idServicio, solo los embudos que admiten ese servicio. */
+export function listFunnels(query: CatalogQuery & { idServicio?: number } = {}) { return getResponseData(() => api.GET('/embudos', { params: { query } })) }
 export function createFunnel(body: EmbudoRequest) { return getResponseData(() => api.POST('/embudos', { body })) }
 export function patchFunnel(id: number, body: EmbudoRequest) { return getResponseData(() => api.PATCH('/embudos/{id}', { params: { path: { id } }, body })) }
 export function setFunnelActive(id: number, active: boolean) {

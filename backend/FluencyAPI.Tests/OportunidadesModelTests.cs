@@ -20,7 +20,7 @@ public sealed class OportunidadesModelTests
         await using var db = Open(fixture);
 
         var model = db.Model;
-        Assert.Null(model.FindEntityType(typeof(Oportunidad))!.FindProperty("IdServicio"));
+        Assert.False(model.FindEntityType(typeof(Oportunidad))!.FindProperty("IdServicio")!.IsNullable);
         Assert.Null(model.FindEntityType(typeof(Oportunidad))!.FindProperty("IdEstado"));
         Assert.Null(model.FindEntityType(typeof(Oportunidad))!.FindProperty("IdEmbudo"));
         Assert.DoesNotContain(model.GetEntityTypes(), t => t.ClrType.Name is "OportunidadItem" or "LogOportunidadCambio");
@@ -28,11 +28,12 @@ public sealed class OportunidadesModelTests
             type => Assert.All(model.FindEntityType(type)!.GetForeignKeys(), fk => Assert.Equal(DeleteBehavior.Restrict, fk.DeleteBehavior)));
 
         var item = await db.Oportunidades.AsNoTracking()
-            .Include(o => o.IdEtapaNavigation).ThenInclude(e => e.IdEmbudoNavigation).ThenInclude(b => b.IdServicioNavigation)
+            .Include(o => o.IdEtapaNavigation).ThenInclude(e => e.IdEmbudoNavigation)
+            .Include(o => o.IdServicioNavigation)
             .Include(o => o.IdEtapaNavigation).ThenInclude(e => e.IdEstadoNavigation)
             .SingleAsync();
         Assert.Equal("Embudo ficticio", item.IdEtapaNavigation.IdEmbudoNavigation.Nombre);
-        Assert.Equal("Servicio ficticio", item.IdEtapaNavigation.IdEmbudoNavigation.IdServicioNavigation.Nombre);
+        Assert.Equal("Servicio ficticio", item.IdServicioNavigation.Nombre);
         Assert.Equal("ABIERTA", item.IdEtapaNavigation.IdEstadoNavigation.Codigo);
         Assert.Equal(100.25m, item.Valor);
         Assert.True(item.Activo);
@@ -61,6 +62,7 @@ public sealed class OportunidadesModelTests
         var stage = await db.EtapaComerciales.SingleAsync(e => e.Nombre == "Abierta");
         var lost = await db.EtapaComerciales.SingleAsync(e => e.Nombre == "Perdida");
         var company = await db.Empresas.SingleAsync(e => e.RazonSocial == "Empresa B");
+        var service = await db.Servicios.SingleAsync();
         var reason = new MotivoPerdida { Descripcion = "Precio" };
         db.MotivosPerdida.Add(reason);
         await db.SaveChangesAsync();
@@ -68,12 +70,12 @@ public sealed class OportunidadesModelTests
         var closedAt = DateTime.UtcNow;
         var created = new Oportunidad
         {
-            Titulo = "Curso corporativo", IdResponsable = user.Id, IdEmpresa = company.Id, IdEtapa = stage.Id,
+            Titulo = "Curso corporativo", IdResponsable = user.Id, IdEmpresa = company.Id, IdEtapa = stage.Id, IdServicio = service.Id,
             Valor = 9999999999.99m, FechaEstimadaCierre = new DateOnly(2026, 12, 31),
             ObjetivoAprendizaje = "Reuniones en inglés", CantidadParticipantes = 12, DisponibilidadHoraria = "Martes y jueves",
             HistorialEtapas = { new HistorialEtapa { IdNuevaEtapa = stage.Id, IdUsuario = user.Id, Observacion = "Alta" } }
         };
-        var zero = new Oportunidad { Titulo = "Sin costo", IdResponsable = user.Id, IdContacto = (await db.Contactos.SingleAsync()).Id, IdEtapa = stage.Id, Valor = 0m };
+        var zero = new Oportunidad { Titulo = "Sin costo", IdResponsable = user.Id, IdContacto = (await db.Contactos.SingleAsync()).Id, IdEtapa = stage.Id, IdServicio = service.Id, Valor = 0m };
         db.Oportunidades.AddRange(created, zero);
         await db.SaveChangesAsync();
 
@@ -103,7 +105,7 @@ public sealed class OportunidadesModelTests
         foreach (var sql in new[] { $"DELETE FROM oportunidad WHERE id={created.Id}", $"DELETE FROM etapa_comercial WHERE id={lost.Id}" })
             Assert.Equal(Npgsql.PostgresErrorCodes.ForeignKeyViolation,
                 (await Assert.ThrowsAsync<Npgsql.PostgresException>(() => CommercialSchemaFixture.ExecuteAsync(connection, sql))).SqlState);
-        Assert.Equal(6L, await CommercialSchemaFixture.ScalarAsync<long>(connection,
+        Assert.Equal(7L, await CommercialSchemaFixture.ScalarAsync<long>(connection,
             "SELECT count(*) FROM pg_indexes WHERE schemaname=current_schema() AND indexname LIKE 'ix_oportunidad_%'"));
         Assert.Equal(4L, await CommercialSchemaFixture.ScalarAsync<long>(connection,
             "SELECT count(*) FROM pg_indexes WHERE schemaname=current_schema() AND indexname LIKE 'ix_historial_%'"));
