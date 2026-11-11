@@ -141,7 +141,7 @@ export function CompanyDetailPage() {
           <section className="company-fiche-card" aria-labelledby="company-info-heading">
             <header className="company-fiche-card-heading">
               <Typography component="h2" id="company-info-heading"><InfoOutlined fontSize="small" />Información general</Typography>
-              {canManage && <Button component={RouterLink} to={`/empresas/${company.id}/editar`} size="small" aria-label="Editar empresa">Modificar</Button>}
+              {canManage && <Button component={RouterLink} to={`/empresas/${company.id}/editar`} state={{ companyEditBackground: location }} size="small" aria-label="Editar empresa">Modificar</Button>}
             </header>
             <ProfileRows rows={[
               { label: 'Responsable comercial', value: company.responsableNombre && <span className="company-fiche-owner"><span className="company-fiche-contact-avatar" aria-hidden="true">{initials(company.responsableNombre)}</span>{company.responsableNombre}{company.responsableActivo === false && ' (inactivo)'}</span> },

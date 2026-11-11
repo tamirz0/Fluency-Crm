@@ -1,0 +1,59 @@
+.company-edit-dialog.MuiPaper-root {
+  --dialog-padding: clamp(18px, 4vw, 36px);
+  width: min(772px, calc(100% - 32px));
+  margin: 16px;
+  max-height: calc(100% - 32px);
+  background: #151b2b;
+}
+
+.company-edit-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex: none;
+  gap: 12px;
+  padding: 24px var(--dialog-padding) 12px;
+}
+.company-edit-heading .MuiDialogTitle-root { display: flex; align-items: center; gap: 10px; font-size: 24px; line-height: 32px; }
+.company-edit-heading .MuiDialogTitle-root svg { color: var(--dialog-accent); }
+.company-edit-heading .commercial-dialog-context { margin-top: 4px; font-size: 14px; line-height: 20px; }
+.company-edit-heading .MuiIconButton-root { width: 44px; height: 44px; color: var(--dialog-muted); margin: -6px -8px 0 0; }
+
+.company-edit-form { display: flex; flex-direction: column; min-height: 0; }
+.company-edit-dialog .commercial-dialog-content { gap: 24px; padding-block: 16px; }
+.company-edit-dialog .record-form-section { padding: 0; border: 0; background: transparent; }
+.company-edit-dialog .record-form-section-heading { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; padding: 0; border: 0; }
+.company-edit-dialog .record-form-section-heading::after { content: ''; flex: 1; border-top: 1px solid var(--dialog-border); }
+.company-edit-dialog .record-form-section-heading h2 {
+  color: var(--dialog-accent);
+  font: 600 12px/18px Inter, system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.company-edit-dialog .record-form-grid { grid-template-columns: minmax(0, 1fr); gap: 16px 18px; }
+.company-edit-dialog .MuiInputLabel-root {
+  position: static;
+  transform: none;
+  max-width: 100%;
+  margin-bottom: 6px;
+  line-height: 20px;
+  font-weight: 500;
+}
+.company-edit-dialog .MuiOutlinedInput-root { min-height: 46px; background: #0b1120; }
+.company-edit-dialog .MuiOutlinedInput-root:not(.Mui-focused):not(.Mui-error) .MuiOutlinedInput-notchedOutline { border-color: transparent; }
+.company-edit-dialog .MuiOutlinedInput-root:not(.Mui-focused):not(.Mui-error):hover .MuiOutlinedInput-notchedOutline { border-color: #536178; }
+.company-edit-dialog .MuiOutlinedInput-notchedOutline legend { width: 0; padding: 0; }
+.company-edit-dialog .MuiOutlinedInput-input { padding-block: 12px; }
+.company-edit-dialog .MuiInputAdornment-root svg { color: #969bab; font-size: 20px; }
+.company-edit-dialog .MuiOutlinedInput-inputMultiline,
+.company-edit-dialog .MuiInputBase-inputMultiline { padding: 0; }
+.company-edit-dialog .MuiDialogActions-root { padding-block: 16px; background: #191f2f; }
+
+@media (min-width: 640px) {
+  .company-edit-dialog .record-form-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .company-edit-dialog .record-form-grid > * { grid-column: span 2; }
+  .company-edit-dialog .record-form-section:nth-of-type(1) .record-form-grid > :first-child { grid-column: span 4; }
+  .company-edit-dialog .record-form-section:nth-of-type(1) .record-form-grid > :nth-child(n+3),
+  .company-edit-dialog .record-form-section:nth-of-type(2) .record-form-grid > :nth-child(-n+2) { grid-column: span 3; }
+  .company-edit-dialog .record-form-section:last-child .record-form-grid > * { grid-column: 1 / -1; }
+}

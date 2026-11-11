@@ -78,6 +78,18 @@ describe('empresas CP08 con sesión real', () => {
     expect(menu.getAllByRole('menuitem').map(item => item.textContent)).toEqual(['Ver ficha completa'])
   })
 
+  it('abre la edición como modal desde el listado y cancelar conserva la búsqueda', async () => {
+    renderApp()
+    const actor = userEvent.setup()
+    await actor.type(await screen.findByRole('searchbox', { name: 'Buscar empresas' }), 'Acme')
+    await actor.click((await openCompanyActions()).getByRole('menuitem', { name: 'Editar datos de empresa' }))
+    const dialog = within(await screen.findByRole('dialog', { name: 'Editar empresa' }))
+    expect((dialog.getByRole('textbox', { name: /Razón social/ }) as HTMLInputElement).value).toBe('Acme Idiomas')
+    await actor.click(dialog.getByRole('button', { name: 'Cancelar' }))
+    expect((await screen.findByRole('searchbox', { name: 'Buscar empresas' }) as HTMLInputElement).value).toBe('Acme')
+    expect(window.location.pathname).toBe('/empresas')
+  })
+
   it('pide confirmación, conserva la empresa ante un conflicto y actualiza la lista cuando la baja se completa', async () => {
     removeHandler = () => json({ title: 'Tiene contactos activos.' }, 409)
     renderApp()
