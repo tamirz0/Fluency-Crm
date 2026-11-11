@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation, useMatch, type Location } from 'react-router-dom'
 import { AuthenticatedShell } from './app/AuthenticatedShell'
 import { ProtectedRoute } from './app/ProtectedRoute'
 import { RequireAcademy, RequireAdmin, RequireCommercial } from './app/RequirePermission'
@@ -38,7 +38,10 @@ function HomeEntry() {
   return canUseCommercial(user) ? <HomePage /> : <TeacherHomePage />
 }
 function App() {
-  return <Routes>
+  const location = useLocation()
+  const editingCompany = useMatch('/empresas/:idEmpresa/editar')
+  const background = editingCompany ? location.state?.companyEditBackground as Location | undefined : undefined
+  return <><Routes location={background ?? location}>
     <Route path="/" element={<LandingPage />} />
     <Route path="/login" element={<LoginPage />} />
     <Route element={<ProtectedRoute />}><Route element={<AuthenticatedShell />}>
@@ -61,7 +64,7 @@ function App() {
       <Route path="/empresas" element={<CompaniesPage />} />
       <Route path="/empresas/nueva" element={<NewCompanyPage />} />
       <Route path="/empresas/:idEmpresa" element={<CompanyDetailPage />} />
-      <Route path="/empresas/:idEmpresa/editar" element={<EditCompanyPage />} />
+      <Route path="/empresas/:idEmpresa/editar" element={<><CompanyDetailPage /><EditCompanyPage /></>} />
       <Route path="/contactos" element={<ContactsPage />} />
       <Route path="/contactos/nuevo" element={<NewContactPage />} />
       <Route path="/contactos/:idContacto" element={<ContactDetailPage />} />
@@ -79,5 +82,9 @@ function App() {
     </Route></Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
+    {background && <Routes><Route element={<ProtectedRoute />}><Route element={<RequireCommercial />}>
+      <Route path="/empresas/:idEmpresa/editar" element={<EditCompanyPage />} />
+    </Route></Route></Routes>}
+  </>
 }
 export default App

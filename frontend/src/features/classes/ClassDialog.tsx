@@ -45,16 +45,16 @@ export function ClassDialog({ date, lesson, onClose, onSaved }: { date?: string;
   const errors = { title: title.trim() ? '' : 'Ingresá el título.', course: editing || course ? '' : 'Elegí un curso.', time: end > start ? '' : 'El fin debe ser posterior al inicio.', day: day ? '' : 'Elegí la fecha.' }
   const invalid = Object.values(errors).some(Boolean)
   const submit = () => { setTouched(true); if (!invalid && !save.isPending) save.mutate() }
-  return <Dialog open onClose={save.isPending ? undefined : onClose} fullWidth maxWidth="sm" aria-labelledby="class-dialog-title">
+  return <Dialog open onClose={save.isPending ? undefined : onClose} fullWidth maxWidth="sm" aria-labelledby="class-dialog-title" slotProps={{ paper: { className: 'record-dialog fluency-shell-type' } }}>
     <DialogTitle id="class-dialog-title">{editing ? 'Editar clase' : `Nueva clase · ${dayjs(day).locale('es').format('dddd D [de] MMMM')}`}</DialogTitle>
     <Box component="form" noValidate onSubmit={event => { event.preventDefault(); submit() }}>
       <DialogContent sx={{ display: 'grid', gap: 2, pt: 1 }}>
         {save.isError && <Alert severity="error">{save.error.message}</Alert>}
         {editing && <Typography color="text.secondary">Curso: <strong>{lesson.curso.descripcion}</strong> · {lesson.profesor.descripcion}</Typography>}
-        {!editing && isAdmin && <TextField select label="Profesor" value={teacher} onChange={e => { setTeacher(e.target.value); setCourse('') }} required helperText={teachers.isError ? teachers.error.message : teachers.isPending ? 'Cargando profesores…' : teachers.data?.length === 0 ? 'Todavía no hay profesores. Creá uno desde Usuarios.' : undefined}>
+        {!editing && isAdmin && <TextField select slotProps={{ select: { MenuProps: { slotProps: { paper: { className: 'record-dialog-options fluency-shell-type' } } } } }} label="Profesor" value={teacher} onChange={e => { setTeacher(e.target.value); setCourse('') }} required helperText={teachers.isError ? teachers.error.message : teachers.isPending ? 'Cargando profesores…' : teachers.data?.length === 0 ? 'Todavía no hay profesores. Creá uno desde Usuarios.' : undefined}>
           {teachers.data?.map(t => <MenuItem key={t.id} value={String(t.id)}>{t.apellido}, {t.nombre}</MenuItem>)}
         </TextField>}
-        {!editing && <TextField select label="Curso" value={course} onChange={e => chooseCourse(e.target.value)} required disabled={isAdmin && !teacher}
+        {!editing && <TextField select slotProps={{ select: { MenuProps: { slotProps: { paper: { className: 'record-dialog-options fluency-shell-type' } } } } }} label="Curso" value={course} onChange={e => chooseCourse(e.target.value)} required disabled={isAdmin && !teacher}
           error={touched && !!errors.course} helperText={touched && errors.course ? errors.course : courses.isError ? courses.error.message : isAdmin && !teacher ? 'Elegí primero un profesor.' : courses.data?.items.length === 0 ? 'No hay cursos para elegir. Creá uno desde Cursos.' : undefined}>
           {courses.data?.items.map(c => <MenuItem key={c.id} value={String(c.id)}>{c.nombre} · {c.nivel.descripcion}</MenuItem>)}
         </TextField>}

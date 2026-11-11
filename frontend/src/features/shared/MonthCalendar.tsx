@@ -20,16 +20,17 @@ export function MonthNavigation({ month, onChange }: { month: Dayjs; onChange: (
  * Calendario mensual. Cada casilla muestra los elementos del día (título y, debajo, el horario);
  * hacer clic en el día pide crear uno nuevo y hacerlo en un elemento lo abre.
  */
-export function MonthCalendar({ month, items, onDayClick, onItemClick, dayLabel }: {
+export function MonthCalendar({ month, items, onDayClick, onItemClick, dayLabel, className }: {
   month: Dayjs
   items: CalendarItem[]
   onDayClick?: (date: string) => void
   onItemClick: (id: number) => void
   dayLabel: (date: string) => string
+  className?: string
 }) {
   const days = monthGrid(month)
   const today = dayjs().format('YYYY-MM-DD')
-  return <Box role="grid" aria-label={month.locale('es').format('MMMM YYYY')} sx={{ width: '100%', border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
+  return <Box role="grid" aria-label={month.locale('es').format('MMMM YYYY')} className={className} sx={{ width: '100%', border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
     <Box role="row" sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', bgcolor: 'background.paper' }}>
       {weekdays.map(day => <Typography role="columnheader" key={day} sx={{ p: 1, textAlign: 'center', fontSize: 12, fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase' }}>{day}</Typography>)}
     </Box>
