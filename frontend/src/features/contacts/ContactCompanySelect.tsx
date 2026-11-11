@@ -6,8 +6,8 @@ import { listCompanies } from '../../api/client'
 type CompanyOption = { id: number; razonSocial: string }
 
 /** Busca empresas en el servidor; `current` conserva la etiqueta de la empresa ya vinculada aunque no aparezca en la búsqueda. */
-export function ContactCompanySelect({ value, onChange, current, helperText, disabled = false, size }: {
-  value: string; onChange: (value: string) => void; current?: CompanyOption; helperText?: string; disabled?: boolean; size?: 'small'
+export function ContactCompanySelect({ value, onChange, current, helperText, disabled = false, size, optionsClassName }: {
+  value: string; onChange: (value: string) => void; current?: CompanyOption; helperText?: string; disabled?: boolean; size?: 'small'; optionsClassName?: string
 }) {
   const [chosen, setChosen] = useState(current)
   const [search, setSearch] = useState('')
@@ -18,6 +18,7 @@ export function ContactCompanySelect({ value, onChange, current, helperText, dis
   const total = Number(companies.data?.totalCount ?? 0)
   return <Box>
     <Autocomplete size={size} options={options} value={selected} disabled={disabled} loading={companies.isPending} filterOptions={x => x}
+      slotProps={{ paper: { className: optionsClassName } }}
       getOptionLabel={o => o.razonSocial} isOptionEqualToValue={(a, b) => a.id === b.id}
       onChange={(_, o) => { setChosen(o ?? undefined); onChange(o ? String(o.id) : '') }}
       onInputChange={(_, input, reason) => { if (reason === 'input' || reason === 'clear') setSearch(input) }}

@@ -96,7 +96,7 @@ export function ContactsPage() {
   }
   const filtered = Boolean(q || state || origin || responsible || company)
   return <Box className="companies-list-surface"><Box className="companies-page companies-list-page fluency-shell-type records-page">
-    <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Contactos</Typography><Typography className="companies-page-description">Personas compartidas por todo el equipo comercial.</Typography></div><Button component={RouterLink} to="/contactos/nuevo" variant="contained" className="company-new-button" startIcon={<Add />}>Nuevo contacto</Button></header>
+    <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Contactos</Typography><Typography className="companies-page-description">Personas compartidas por todo el equipo comercial.</Typography></div><Button component={RouterLink} to="/contactos/nuevo" state={{ contactFormBackground: location }} variant="contained" className="company-new-button" startIcon={<Add />}>Nuevo contacto</Button></header>
     {contactRemoved ? <Alert severity="success" className="record-form-confirmation" onClose={() => setContactRemoved(false)}>{confirmationFor('Contacto', 'dado de baja')}</Alert>
       : typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
     <Box component="form" onSubmit={e => { e.preventDefault(); setQ(search.trim()); setPage(0) }} className="record-filters">
