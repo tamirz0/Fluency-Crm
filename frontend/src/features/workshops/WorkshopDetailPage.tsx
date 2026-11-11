@@ -6,8 +6,10 @@ import { useState } from 'react'
 import { Link as RouterLink, useParams } from 'react-router-dom'
 import { ApiRequestError, enrollInWorkshop, getWorkshop, getWorkshopCandidates, workshopQueryKeys } from '../../api/client'
 import { parsePositiveId } from '../shared/display'
+import { AcademyDetailPage } from '../shared/AcademyDetailPage'
 import '../companies/companies.css'
 import '../contacts/records.css'
+import '../shared/academy-pages.css'
 
 function Enroll({ id }: { id: number }) {
   const client = useQueryClient()
@@ -33,18 +35,20 @@ export function WorkshopDetailPage() {
   const query = useQuery({ queryKey: workshopQueryKeys.detail(id ?? 0), queryFn: () => getWorkshop(id as number), enabled: id !== undefined })
   const back = <Link component={RouterLink} to="/talleres" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a talleres</Link>
   if (id === undefined || (query.isError && query.error instanceof ApiRequestError && query.error.status === 404))
-    return <Box className="companies-page company-result-page records-page">{back}<section className="company-feedback"><Typography component="h1" className="company-feedback-title">No encontramos el taller</Typography></section></Box>
-  if (query.isPending) return <Box className="companies-page company-result-page records-page" role="status" aria-label="Cargando taller"><Skeleton width="54%" height={54} /><Skeleton /><Skeleton /></Box>
-  if (query.isError) return <Box className="companies-page company-result-page records-page">{back}<Alert severity="error">No pudimos cargar el taller. {query.error.message}</Alert></Box>
+    return <AcademyDetailPage>{back}<section className="company-feedback"><Typography component="h1" className="company-feedback-title">No encontramos el taller</Typography></section></AcademyDetailPage>
+  if (query.isPending) return <AcademyDetailPage><Box role="status" aria-label="Cargando taller"><Skeleton width="54%" height={54} /><Skeleton /><Skeleton /></Box></AcademyDetailPage>
+  if (query.isError) return <AcademyDetailPage>{back}<Alert severity="error">No pudimos cargar el taller. {query.error.message}</Alert></AcademyDetailPage>
   const { taller, inscriptos } = query.data
-  return <Box className="companies-page company-result-page records-page">
+  return <AcademyDetailPage>
     {back}
-    <Typography component="h1" className="companies-page-title">{taller.titulo}</Typography>
-    <Typography className="companies-page-description">{dayjs(taller.fecha).locale('es').format('dddd D [de] MMMM [de] YYYY')} · {taller.horaInicio.slice(0, 5)} a {taller.horaFin.slice(0, 5)} · {taller.servicio.descripcion}</Typography>
-    <Typography component="p" sx={{ mt: 3, fontSize: 40, fontWeight: 800, color: 'primary.light' }} aria-label={`Anotados: ${taller.cantidadInscriptos}`}>{taller.cantidadInscriptos} <Typography component="span" color="text.secondary">{taller.cantidadInscriptos === 1 ? 'persona anotada' : 'personas anotadas'}</Typography></Typography>
+    <Box className="academy-detail-heading" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0.5 }}>
+      <Typography component="h1" className="companies-page-title">{taller.titulo}</Typography>
+      <Typography className="companies-page-description">{dayjs(taller.fecha).locale('es').format('dddd D [de] MMMM [de] YYYY')} · {taller.horaInicio.slice(0, 5)} a {taller.horaFin.slice(0, 5)} · {taller.servicio.descripcion}</Typography>
+    </Box>
+    <Typography component="p" className="academy-detail-count" sx={{ mt: 3, fontSize: 40, fontWeight: 800 }} aria-label={`Anotados: ${taller.cantidadInscriptos}`}>{taller.cantidadInscriptos} <Typography component="span" color="text.secondary">{taller.cantidadInscriptos === 1 ? 'persona anotada' : 'personas anotadas'}</Typography></Typography>
     {inscriptos.length === 0 ? <section className="company-feedback"><Typography color="text.secondary">Todavía no hay personas anotadas.</Typography></section>
       : <TableContainer className="data-table-wrap"><Table size="small" aria-label="Personas anotadas"><TableHead><TableRow><TableCell>Apellido y nombre</TableCell><TableCell>Documento</TableCell><TableCell>Tipo</TableCell></TableRow></TableHead>
         <TableBody>{inscriptos.map(p => <TableRow key={p.idContacto}><TableCell>{p.apellido}, {p.nombre}</TableCell><TableCell>{p.documento?.trim() || '-'}</TableCell><TableCell>{p.esAlumno ? <Chip size="small" color="primary" variant="outlined" label="Alumno" /> : <Chip size="small" variant="outlined" label="Cliente" />}</TableCell></TableRow>)}</TableBody></Table></TableContainer>}
     <Enroll id={id} />
-  </Box>
+  </AcademyDetailPage>
 }
