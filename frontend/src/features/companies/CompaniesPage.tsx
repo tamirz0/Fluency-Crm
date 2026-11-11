@@ -95,7 +95,7 @@ export function CompaniesPage() {
   }
   const clear = () => { setSearch(''); setQ(''); setState(''); setOrigin(''); setResponsible(''); setPage(0) }
   return <Box className="companies-list-surface"><Box className="companies-page companies-list-page fluency-shell-type">
-    <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Empresas</Typography><Typography className="companies-page-description">Organizaciones compartidas por todo el equipo comercial.</Typography></div><Button component={RouterLink} to="/empresas/nueva" variant="contained" className="company-new-button" startIcon={<Add />}>Nueva empresa</Button></header>
+    <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Empresas</Typography><Typography className="companies-page-description">Organizaciones compartidas por todo el equipo comercial.</Typography></div><Button component={RouterLink} to="/empresas/nueva" state={{ companyFormBackground: location }} variant="contained" className="company-new-button" startIcon={<Add />}>Nueva empresa</Button></header>
     {companyRemoved ? <Alert severity="success" className="record-form-confirmation" onClose={() => setCompanyRemoved(false)}>{confirmationFor('Empresa', 'dada de baja')}</Alert>
       : typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
     <Box component="form" onSubmit={e => { e.preventDefault(); setQ(search.trim()); setPage(0) }} className="record-filters">

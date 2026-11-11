@@ -32,7 +32,7 @@ export function CompanyActions({ company, onRemoved, inDetail = false }: { compa
         Opciones de cuenta
       </ListSubheader>
       {!inDetail && <MenuItem component={RouterLink} to={path} onClick={close}><ListItemIcon><VisibilityOutlined fontSize="small" /></ListItemIcon>Ver ficha completa</MenuItem>}
-      {!inDetail && canManage && <MenuItem component={RouterLink} to={`${path}/editar`} state={{ companyEditBackground: location }} onClick={close}><ListItemIcon><EditOutlined fontSize="small" /></ListItemIcon>Editar datos de empresa</MenuItem>}
+      {!inDetail && canManage && <MenuItem component={RouterLink} to={`${path}/editar`} state={{ companyFormBackground: location }} onClick={close}><ListItemIcon><EditOutlined fontSize="small" /></ListItemIcon>Editar datos de empresa</MenuItem>}
       {!inDetail && canCreateOpportunity && <MenuItem component={RouterLink} to={`/oportunidades/nueva?idEmpresa=${company.id}`} onClick={close}><ListItemIcon><TrendingUp fontSize="small" /></ListItemIcon>Crear oportunidad comercial</MenuItem>}
       {!inDetail && canManage && <Divider />}
       {canManage && <MenuItem className="company-actions-remove" onClick={() => { close(); setRemoving(true) }}><ListItemIcon><ArchiveOutlined fontSize="small" /></ListItemIcon>Dar de baja</MenuItem>}

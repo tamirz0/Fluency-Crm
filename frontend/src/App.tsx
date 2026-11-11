@@ -40,7 +40,8 @@ function HomeEntry() {
 function App() {
   const location = useLocation()
   const editingCompany = useMatch('/empresas/:idEmpresa/editar')
-  const background = editingCompany ? location.state?.companyEditBackground as Location | undefined : undefined
+  const creatingCompany = useMatch('/empresas/nueva')
+  const background = editingCompany || creatingCompany ? location.state?.companyFormBackground as Location | undefined : undefined
   return <><Routes location={background ?? location}>
     <Route path="/" element={<LandingPage />} />
     <Route path="/login" element={<LoginPage />} />
@@ -62,7 +63,7 @@ function App() {
       </Route>
       <Route element={<RequireCommercial />}>
       <Route path="/empresas" element={<CompaniesPage />} />
-      <Route path="/empresas/nueva" element={<NewCompanyPage />} />
+      <Route path="/empresas/nueva" element={<><CompaniesPage /><NewCompanyPage /></>} />
       <Route path="/empresas/:idEmpresa" element={<CompanyDetailPage />} />
       <Route path="/empresas/:idEmpresa/editar" element={<><CompanyDetailPage /><EditCompanyPage /></>} />
       <Route path="/contactos" element={<ContactsPage />} />
@@ -83,6 +84,7 @@ function App() {
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
     {background && <Routes><Route element={<ProtectedRoute />}><Route element={<RequireCommercial />}>
+      <Route path="/empresas/nueva" element={<NewCompanyPage />} />
       <Route path="/empresas/:idEmpresa/editar" element={<EditCompanyPage />} />
     </Route></Route></Routes>}
   </>

@@ -8,7 +8,7 @@ import { Navigate, useLocation, useNavigate, useParams, type Location } from 're
 import { z } from 'zod'
 import { catalogQueryKeys, createCompany, empresaQueryKeys, getCatalogOptions, getCompany, patchCompany, type CreateEmpresaRequest, type PatchEmpresaRequest, type Empresa } from '../../api/client'
 import { buildDifferentialPatch, confirmationFor, normalizeId, normalizeText, saveErrorMessage } from '../shared/formUtils'
-import { CatalogMessage, FormSection, RecordFormPage, RecordQueryState } from '../shared/RecordForm'
+import { CatalogMessage, FormSection, RecordQueryState } from '../shared/RecordForm'
 import { parsePositiveId } from '../shared/display'
 import { CompanyResponsibleSelect } from './CompanyResponsibleSelect'
 import { useAuth } from '../../auth/useAuth'
@@ -26,16 +26,16 @@ type CompanyFormValues = z.input<typeof companySchema>
 
 const companyPatchFields = ['razonSocial', 'cuit', 'industria', 'correo', 'telefono', 'direccion', 'idEstado', 'idOrigen', 'idResponsable', 'observaciones'] as const
 const companyPatchIdFields = ['idEstado', 'idOrigen', 'idResponsable'] as const
-const editFieldIcon = (icon: ReactNode) => ({ input: { startAdornment: <InputAdornment position="start">{icon}</InputAdornment> } })
+const fieldIcon = (icon: ReactNode) => ({ input: { startAdornment: <InputAdornment position="start">{icon}</InputAdornment> } })
 
 function initialCompanyValues(company?: Empresa): CompanyFormValues {
   return { razonSocial: company?.razonSocial ?? '', cuit: company?.cuit ?? '', industria: company?.industria ?? '', correo: company?.correo ?? '', telefono: company?.telefono ?? '', direccion: company?.direccion ?? '', idEstado: company?.idEstado == null ? '' : String(company.idEstado), idOrigen: company?.idOrigen == null ? '' : String(company.idOrigen), idResponsable: company?.idResponsable == null ? '' : String(company.idResponsable), observaciones: company?.observaciones ?? '' }
 }
 
-function CatalogSelect({ label, name, value, onChange, options, error, className, editing }: { label: string; name: string; value: string; onChange: (value: string) => void; options: { id: number | string; descripcion: string; activo?: boolean }[]; error?: string; className?: string; editing: boolean }) {
+function CatalogSelect({ label, name, value, onChange, options, error, className }: { label: string; name: string; value: string; onChange: (value: string) => void; options: { id: number | string; descripcion: string; activo?: boolean }[]; error?: string; className?: string }) {
   const displayOptions = value && !options.some((option) => String(option.id) === value) ? [{ id: value, descripcion: 'Cargando…' }, ...options] : options
   return <TextField select fullWidth className={className} label={label} name={name} value={value} onChange={(event) => onChange(event.target.value)} error={Boolean(error)} helperText={error}
-    slotProps={editing ? { select: { displayEmpty: true, MenuProps: { slotProps: { paper: { className: 'commercial-dialog-options' } } } } } : undefined}>
+    slotProps={{ select: { displayEmpty: true, MenuProps: { slotProps: { paper: { className: 'commercial-dialog-options' } } } } }}>
     <MenuItem value="">-</MenuItem>{displayOptions.map((option) => <MenuItem key={option.id} value={String(option.id)} disabled={option.activo === false && String(option.id) !== value}>{option.descripcion}</MenuItem>)}
   </TextField>
 }
@@ -63,8 +63,8 @@ function CompanyEditor({ company, mode, background }: { company?: Empresa; mode:
     void queryClient.invalidateQueries({ queryKey: empresaQueryKeys.all })
     void queryClient.invalidateQueries({ queryKey: ['contactos'] })
     void queryClient.invalidateQueries({ queryKey: ['oportunidades'] })
-    const destination = background ? { pathname: background.pathname, search: background.search, hash: background.hash } : `/empresas/${saved.id}`
-    navigate(destination, { replace: mode === 'edit', state: { confirmation: confirmationFor('Empresa', mode === 'create' ? 'creada' : 'actualizada') } })
+    const destination = mode === 'edit' && background ? { pathname: background.pathname, search: background.search, hash: background.hash } : `/empresas/${saved.id}`
+    navigate(destination, { replace: true, state: { confirmation: confirmationFor('Empresa', mode === 'create' ? 'creada' : 'actualizada') } })
   }, onError: (error) => { saving.current = false; setError('root.serverError', { message: saveErrorMessage(error) }) } })
   useEffect(() => { reset(initialCompanyValues(company)) }, [company, reset])
   const differential = mode === 'edit' ? buildDifferentialPatch(baseline as Record<string, unknown>, currentValues as Record<string, unknown>, [...companyPatchFields], [...companyPatchIdFields]) : undefined
@@ -87,33 +87,34 @@ function CompanyEditor({ company, mode, background }: { company?: Empresa; mode:
   const close = () => {
     if (saving.current || mutation.isPending) return
     if (background) void navigate(-1)
-    else void navigate(`/empresas/${company?.id}`, { replace: true })
+    else void navigate(company ? `/empresas/${company.id}` : '/empresas', { replace: true })
   }
-  const identification = <FormSection title="Identificación" description={editing ? undefined : 'Los datos que ayudan a reconocer la organización.'}>
-      <TextField {...register('razonSocial')} label="Razón social" required fullWidth error={Boolean(errors.razonSocial)} helperText={errors.razonSocial?.message} slotProps={editing ? editFieldIcon(<BusinessOutlined />) : undefined} />
+  const identification = <FormSection title="Identificación">
+      <TextField {...register('razonSocial')} label="Razón social" required fullWidth error={Boolean(errors.razonSocial)} helperText={errors.razonSocial?.message} slotProps={fieldIcon(<BusinessOutlined />)} />
       <TextField {...register('cuit')} label="CUIT" fullWidth error={Boolean(errors.cuit)} helperText={errors.cuit?.message} />
       <TextField {...register('industria')} label="Industria" fullWidth error={Boolean(errors.industria)} helperText={errors.industria?.message} />
-      <TextField {...register('direccion')} className={editing ? undefined : 'record-form-wide'} label="Dirección" fullWidth error={Boolean(errors.direccion)} helperText={errors.direccion?.message} slotProps={editing ? editFieldIcon(<LocationOnOutlined />) : undefined} />
+      <TextField {...register('direccion')} label="Dirección" fullWidth error={Boolean(errors.direccion)} helperText={errors.direccion?.message} slotProps={fieldIcon(<LocationOnOutlined />)} />
     </FormSection>
   const contactFields = <>
-      <TextField {...register('correo')} label="Correo" type="email" fullWidth error={Boolean(errors.correo)} helperText={errors.correo?.message} slotProps={editing ? editFieldIcon(<AlternateEmail />) : undefined} />
-      <TextField {...register('telefono')} label="Teléfono" fullWidth error={Boolean(errors.telefono)} helperText={errors.telefono?.message} slotProps={editing ? editFieldIcon(<PhoneOutlined />) : undefined} />
+      <TextField {...register('correo')} label="Correo" type="email" fullWidth error={Boolean(errors.correo)} helperText={errors.correo?.message} slotProps={fieldIcon(<AlternateEmail />)} />
+      <TextField {...register('telefono')} label="Teléfono" fullWidth error={Boolean(errors.telefono)} helperText={errors.telefono?.message} slotProps={fieldIcon(<PhoneOutlined />)} />
     </>
   const commercialFields = <>
-      <div><Controller name="idEstado" control={control} render={({ field, fieldState }) => <CatalogSelect editing={editing} className="record-form-emphasis" label="Estado" name={field.name} value={field.value ?? ''} onChange={field.onChange} options={stateOptions.map(s => ({ ...s, descripcion: s.descripcion ?? '-' }))} error={fieldState.error?.message ?? (stateRequired ? 'Potencial no está disponible. Seleccioná un estado activo.' : undefined)} />} />{mode === 'create' && !currentValues.idEstado && defaultState && <p>Predeterminado: Potencial.</p>}{stateQuery.isError && <CatalogMessage error={stateQuery.error} onRetry={() => void stateQuery.refetch()} />}</div>
-      <div><Controller name="idOrigen" control={control} render={({ field, fieldState }) => <CatalogSelect editing={editing} label="Origen" name={field.name} value={field.value ?? ''} onChange={field.onChange} options={originOptions.map(s => ({ ...s, descripcion: s.descripcion ?? '-' }))} error={fieldState.error?.message} />} />{originQuery.isError && <CatalogMessage error={originQuery.error} onRetry={() => void originQuery.refetch()} />}</div>
+      <div><Controller name="idEstado" control={control} render={({ field, fieldState }) => <CatalogSelect className="record-form-emphasis" label="Estado" name={field.name} value={field.value ?? ''} onChange={field.onChange} options={stateOptions.map(s => ({ ...s, descripcion: s.descripcion ?? '-' }))} error={fieldState.error?.message ?? (stateRequired ? 'Potencial no está disponible. Seleccioná un estado activo.' : undefined)} />} />{mode === 'create' && !currentValues.idEstado && defaultState && <p>Predeterminado: Potencial.</p>}{stateQuery.isError && <CatalogMessage error={stateQuery.error} onRetry={() => void stateQuery.refetch()} />}</div>
+      <div><Controller name="idOrigen" control={control} render={({ field, fieldState }) => <CatalogSelect label="Origen" name={field.name} value={field.value ?? ''} onChange={field.onChange} options={originOptions.map(s => ({ ...s, descripcion: s.descripcion ?? '-' }))} error={fieldState.error?.message} />} />{originQuery.isError && <CatalogMessage error={originQuery.error} onRetry={() => void originQuery.refetch()} />}</div>
     </>
   const responsible = (
-      <Controller name="idResponsable" control={control} render={({ field }) => <CompanyResponsibleSelect value={field.value ?? ''} onChange={field.onChange} disabled={mutation.isPending} optionsClassName={editing ? 'commercial-dialog-options' : undefined} current={company ? { id: company.idResponsable, nombre: company.responsableNombre, activo: company.responsableActivo } : undefined} helperText={mode === 'create' ? 'Si no elegís otro responsable, se asigna al usuario de la sesión.' : 'Conservá el responsable actual o elegí otro usuario activo.'} />} />
+      <Controller name="idResponsable" control={control} render={({ field }) => <CompanyResponsibleSelect value={field.value ?? ''} onChange={field.onChange} disabled={mutation.isPending} optionsClassName="commercial-dialog-options" current={company ? { id: company.idResponsable, nombre: company.responsableNombre, activo: company.responsableActivo } : undefined} helperText={mode === 'create' ? 'Si no elegís otro responsable, se asigna al usuario de la sesión.' : 'Conservá el responsable actual o elegí otro usuario activo.'} />} />
   )
-  const notes = <FormSection title={editing ? 'Notas' : 'Observaciones'}><TextField {...register('observaciones')} className="record-form-wide" label={editing ? 'Observaciones internas' : 'Observaciones'} fullWidth multiline minRows={editing ? 3 : 4} /></FormSection>
-  if (editing) return <Dialog open onClose={close} disableRestoreFocus={!background} fullWidth maxWidth={false} aria-labelledby="company-edit-title" slotProps={{ paper: { className: 'commercial-dialog company-edit-dialog' } }}>
+  const notes = <FormSection title="Notas"><TextField {...register('observaciones')} className="record-form-wide" label="Observaciones internas" fullWidth multiline minRows={3} /></FormSection>
+  const title = editing ? 'Editar empresa' : 'Nueva empresa'
+  return <Dialog open onClose={close} disableRestoreFocus={!background} fullWidth maxWidth={false} aria-labelledby="company-form-title" slotProps={{ paper: { className: 'commercial-dialog company-edit-dialog' } }}>
     <header className="company-edit-heading">
       <div>
-        <DialogTitle id="company-edit-title"><BusinessOutlined aria-hidden="true" />Editar empresa</DialogTitle>
-        <Typography className="commercial-dialog-context">Actualizá los datos de la organización sin perder el contexto comercial.</Typography>
+        <DialogTitle id="company-form-title"><BusinessOutlined aria-hidden="true" />{title}</DialogTitle>
+        <Typography className="commercial-dialog-context">{editing ? 'Actualizá los datos de la organización sin perder el contexto comercial.' : 'Registrá una organización para sumarla a tu actividad comercial.'}</Typography>
       </div>
-      <IconButton onClick={close} disabled={mutation.isPending} aria-label="Cerrar edición"><Close /></IconButton>
+      <IconButton onClick={close} disabled={mutation.isPending} aria-label="Cerrar formulario"><Close /></IconButton>
     </header>
     <form className="company-edit-form" noValidate onSubmit={event => { event.preventDefault(); submitForm() }}>
       <DialogContent className="commercial-dialog-content">
@@ -124,26 +125,22 @@ function CompanyEditor({ company, mode, background }: { company?: Empresa; mode:
       </DialogContent>
       <DialogActions>
         <Button onClick={close} disabled={mutation.isPending}>Cancelar</Button>
-        <Button type="submit" variant="contained" disabled={mutation.isPending || !canSubmit} startIcon={<SaveOutlined />}>{mutation.isPending ? 'Guardando…' : 'Guardar cambios'}</Button>
+        <Button type="submit" variant="contained" disabled={mutation.isPending || !canSubmit} startIcon={<SaveOutlined />}>{mutation.isPending ? 'Guardando…' : editing ? 'Guardar cambios' : 'Crear empresa'}</Button>
       </DialogActions>
     </form>
   </Dialog>
-  return <RecordFormPage backLabel="Volver a empresas" backTo="/empresas" title="Nueva empresa" description="Registrá una organización para sumarla a tu actividad comercial." onSubmit={submitForm} submitLabel="Crear empresa" submitting={mutation.isPending} disabled={!canSubmit} error={formError}>
-    {identification}
-    <FormSection title="Contacto" description="Elegí cómo se comunica el equipo con la organización.">{contactFields}</FormSection>
-    <FormSection title="Datos comerciales" description="Definí el estado y el origen de la relación.">{commercialFields}</FormSection>
-    <FormSection title="Responsable" description="La empresa es compartida: todos los usuarios activos pueden consultarla y editarla.">{responsible}</FormSection>
-    {notes}
-  </RecordFormPage>
 }
 
-export function NewCompanyPage() { return <CompanyEditor mode="create" /> }
+export function NewCompanyPage() {
+  const location = useLocation()
+  return <CompanyEditor mode="create" background={location.state?.companyFormBackground} />
+}
 
 export function EditCompanyPage() {
   const { idEmpresa } = useParams()
   const location = useLocation()
   const navigate = useNavigate()
-  const background = location.state?.companyEditBackground as Location | undefined
+  const background = location.state?.companyFormBackground as Location | undefined
   const canManage = useAuth().user?.permisos?.includes('GestionarClientes')
   const id = parsePositiveId(idEmpresa)
   const query = useQuery({ queryKey: empresaQueryKeys.detail(id ?? 0), queryFn: () => getCompany(id as number), enabled: Boolean(canManage && id !== undefined) })
