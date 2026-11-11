@@ -57,7 +57,10 @@ function mount() {
   render(<AppProviders queryClient={createQueryClient()}><BrowserRouter><AuthProvider><App /></AuthProvider></BrowserRouter></AppProviders>)
 }
 it('explica embudo sin abiertas, conserva finales y crea una abierta con un solo envío', async () => {
-  mount(); await userEvent.click(await screen.findByRole('button', { name: 'Etapas de Inscripciones' }))
+  mount()
+  const funnelRow = (await screen.findByRole('button', { name: 'Etapas de Inscripciones' })).closest('tr')!
+  await userEvent.click(within(funnelRow).getByText('Activo'))
+  expect(within(funnelRow).getByRole('button', { name: 'Etapas de Inscripciones' }).getAttribute('aria-expanded')).toBe('true')
   expect(await screen.findByText(/no permite altas de oportunidades/i)).toBeTruthy()
   expect(screen.queryByRole('button', { name: 'Desactivar Ganada' })).toBeNull()
   await userEvent.click(screen.getByRole('button', { name: 'Nueva etapa abierta' }))
@@ -100,7 +103,11 @@ it('crea embudo admitiendo un tipo, edita conservando el servicio inactivo y mue
   expect(await screen.findByText('Nuevo proceso')).toBeTruthy()
   const create = vi.mocked(fetch).mock.calls.find(([r]) => (r as Request).method === 'POST' && new URL((r as Request).url).pathname === '/api/embudos')!
   expect(await (create[0] as Request).clone().json()).toEqual({ nombre: 'Nuevo proceso', descripcion: null, tipos: [{ idTipoServicio: 1, idServicios: null }] })
-  await userEvent.click(screen.getByRole('button', { name: 'Editar Inscripciones' })); d = within(screen.getByRole('dialog'))
+  await userEvent.click(screen.getByRole('button', { name: 'Opciones de Inscripciones' }))
+  expect(screen.getAllByRole('menuitem').map(item => item.textContent)).toEqual(['Editar', 'Desactivar'])
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Editar' }))
+  d = within(await screen.findByRole('dialog'))
+  expect(screen.queryByRole('table', { name: 'Etapas abiertas', hidden: true })).toBeNull()
   // El servicio admitido sigue legible aunque hoy esté inactivo y no viaja si no cambia la admisión.
   expect(await d.findByText('Inglés viejo (Inactivo)')).toBeTruthy()
   await userEvent.type(d.getByLabelText('Descripción'), 'Actualizada')
@@ -108,12 +115,16 @@ it('crea embudo admitiendo un tipo, edita conservando el servicio inactivo y mue
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   const patch = vi.mocked(fetch).mock.calls.find(([r]) => (r as Request).method === 'PATCH')!
   expect(await (patch[0] as Request).clone().json()).toEqual({ descripcion: 'Actualizada' })
-  await userEvent.click(screen.getByRole('button', { name: 'Desactivar Inscripciones' })); d = within(screen.getByRole('dialog'))
+  await userEvent.click(screen.getByRole('button', { name: 'Opciones de Inscripciones' }))
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Desactivar' }))
+  d = within(await screen.findByRole('dialog'))
   conflict = true; await userEvent.click(d.getByRole('button', { name: 'Confirmar' }))
   expect(await d.findByText('Los datos cambiaron. Recargue e intente nuevamente.')).toBeTruthy()
   expect(vi.mocked(fetch).mock.calls.filter(([r]) => new URL((r as Request).url).pathname.endsWith('/desactivar'))).toHaveLength(1)
   conflict = false; await userEvent.click(d.getByRole('button', { name: 'Confirmar' }))
-  expect(await screen.findByRole('button', { name: 'Reactivar Inscripciones' })).toBeTruthy()
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  await userEvent.click(await screen.findByRole('button', { name: 'Opciones de Inscripciones' }))
+  expect(await screen.findByRole('menuitem', { name: 'Reactivar' })).toBeTruthy()
 })
 it('exige al menos un tipo y permite admitir todos los servicios de un tipo o solo algunos', async () => {
   mount(); await userEvent.click(await screen.findByRole('button', { name: 'Nuevo embudo' }))
@@ -162,6 +173,7 @@ it('separa abiertas numeradas y finales fijas por estado aunque tengan nombres y
   expect(system.getAllByRole('row').slice(1).map(row => within(row).getAllByRole('cell')[0].textContent)).toEqual(['InscripciónSistema', 'No confirmadaSistema'])
   expect(system.queryByRole('columnheader', { name: 'Orden' })).toBeNull()
   expect(system.queryByRole('button', { name: /Mover|Desactivar|Reactivar/ })).toBeNull()
+  expect(system.getAllByRole('button').map(button => button.getAttribute('aria-label'))).toEqual(['Editar Inscripción', 'Editar No confirmada'])
   expect(system.queryByLabelText(/Posición visual/)).toBeNull()
 })
 it('arrastra solo abiertas activas y guarda una vez conservando posiciones, huecos y finales', async () => {
