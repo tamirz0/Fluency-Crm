@@ -256,14 +256,20 @@
 .companies-page .MuiTablePagination-toolbar { flex-wrap: wrap; justify-content: flex-end; padding-inline: 0; }
 .companies-page .MuiTablePagination-spacer { display: none; }
 
+.companies-list-surface,
+.company-actions-menu {
+  --company-bg: #0b0f17;
+  --company-panel: #0e131f;
+  --company-raised: #121826;
+  --company-divider: #1e293b;
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+  --accent-text: #60a5fa;
+}
+
 .companies-list-surface {
-  --company-bg: #0d1322;
-  --company-panel: #151b2b;
-  --company-inset: #080e1d;
-  --company-divider: #2f3445;
-  --text-main: #dde2f8;
-  --text-muted: #a5aec3;
-  --accent-text: #adc6ff;
+  --border: var(--company-divider);
+  --company-table-edge: #1d2026;
   min-height: calc(100svh - 64px);
   background: var(--company-bg);
 }
@@ -278,31 +284,31 @@
 .companies-list-page .company-new-button.MuiButton-root {
   min-height: 40px;
   padding-inline: 16px;
-  background: #4d8eff;
-  color: #08162e;
+  background: #2563eb;
+  color: #fff;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 650;
   text-transform: none;
 }
-.companies-list-page .company-new-button.MuiButton-root:hover { background: #80adff; }
+.companies-list-page .company-new-button.MuiButton-root:hover { background: #1d4ed8; }
 
 .companies-list-page .record-filters {
   align-items: flex-start;
   gap: 6px;
   margin-bottom: 10px;
   padding: 9px 10px;
-  border: 1px solid #353941;
+  border: 1px solid var(--company-divider);
   border-radius: 8px;
-  background: #1a1e29;
+  background: var(--company-panel);
 }
 .companies-list-page .record-filters > .MuiTextField-root { flex-basis: 78px; min-width: min(100%, 78px); }
 .companies-list-page .record-filters > .MuiTextField-root:first-child { flex: 3 1 176px; min-width: min(100%, 176px); }
 .companies-list-page .record-filter-lookup { flex-basis: 120px; min-width: min(100%, 120px); }
 .companies-list-page .record-filters :is(.MuiInputBase-root, .MuiInputLabel-root, .MuiButton-root) { font: inherit; font-size: 13px; }
 .companies-list-page .record-filters .MuiInputLabel-shrink { font-size: 16px; }
-.companies-list-page .record-filters .MuiInputBase-root { min-height: 40px; background: transparent; }
-.companies-list-page .record-filters .MuiOutlinedInput-notchedOutline { border-color: #4a5364; }
+.companies-list-page .record-filters .MuiInputBase-root { min-height: 40px; background: var(--company-raised); color: var(--text-main); }
+.companies-list-page .record-filters .MuiOutlinedInput-notchedOutline { border-color: #334155; }
 .companies-list-page .record-filters .Mui-focused .MuiOutlinedInput-notchedOutline { border-color: var(--accent-text); }
 .companies-list-page .record-filters > .MuiButton-root { min-height: 40px; min-width: 0; margin: 0; text-transform: none; color: var(--accent-text); }
 .companies-list-page .record-count { padding-inline: 4px; font-size: 12px; }
@@ -315,6 +321,11 @@
   background: var(--company-panel);
 }
 .companies-list-page .data-table-wrap { border: 0; border-radius: 0; }
+.companies-list-page .MuiTableBody-root { background: #151b2b; }
+.companies-list-page .MuiTableBody-root .MuiTableCell-root {
+  border-color: #2a3446;
+  color: #cbd5e1;
+}
 .companies-list-page .MuiTableCell-root {
   padding: 13px 9px;
   border-color: var(--company-divider);
@@ -329,8 +340,9 @@
 .companies-list-page .MuiTableCell-root:nth-child(4) { min-width: 69px; }
 .companies-list-page .MuiTableCell-root:last-child { padding-inline-end: 12px; }
 .companies-list-page .MuiTableCell-head {
-  background: var(--company-inset);
-  color: #c2c6d6;
+  background: var(--company-table-edge);
+  border-bottom-color: #334155;
+  color: var(--text-main);
   font-size: 11px;
   font-weight: 650;
   letter-spacing: .055em;
@@ -339,31 +351,33 @@
 }
 .companies-list-page .company-name-cell.MuiTableCell-root { font-size: 14px !important; font-weight: 600 !important; }
 .company-cuit { display: block; margin-top: 3px; color: var(--text-muted); font: 11px ui-monospace, monospace; }
-.company-origin { display: inline-block; padding: 3px 7px; border-radius: 4px; background: #242a3a; color: #c2c6d6; font-size: 11px; font-weight: 600; }
-.companies-list-page .company-clickable-row:hover td { background: #191f2f; }
-.companies-list-page .company-clickable-row:focus-within td { outline: 0; background: #191f2f; }
+.company-origin { display: inline-block; padding: 3px 7px; border-radius: 4px; background: var(--company-divider); color: #cbd5e1; font-size: 11px; font-weight: 600; }
+.companies-list-page .company-contact-links .MuiLink-root { color: var(--accent-text); }
+.companies-list-page .company-clickable-row:hover td,
+.companies-list-page .company-clickable-row:focus-within td { background: #1e293b; }
+.companies-list-page .company-clickable-row:focus-within td { outline: 0; }
 .companies-list-page .company-clickable-row:hover .company-name-cell a { color: var(--accent-text); }
-.company-actions .MuiIconButton-root { width: 36px; height: 40px; border-radius: 6px; color: #c2c6d6; }
-.company-actions .MuiIconButton-root:is(:hover, .Mui-focusVisible, [aria-expanded="true"]) { background: #242a3a; color: #adc6ff; }
+.company-actions .MuiIconButton-root { width: 36px; height: 40px; border-radius: 6px; color: var(--text-muted); }
+.company-actions .MuiIconButton-root:is(:hover, .Mui-focusVisible, [aria-expanded="true"]) { background: var(--company-divider); color: var(--accent-text); }
 .company-actions-menu.MuiPaper-root {
   width: min(320px, calc(100vw - 32px));
-  border: 1px solid #353941;
+  border: 1px solid var(--company-divider);
   border-radius: 12px;
-  background: #1a1e29;
-  color: #dde2f8;
+  background: var(--company-panel);
+  color: var(--text-main);
 }
 .company-actions-menu .MuiList-root { padding-block: 0 6px; }
 .company-actions-menu .company-actions-heading {
   padding-block: 12px;
-  border-bottom: 1px solid #353941;
-  color: #a5aec3;
+  border-bottom: 1px solid var(--company-divider);
+  color: var(--text-muted);
   font: 500 11px/1.4 Inter, system-ui, sans-serif;
   letter-spacing: .05em;
   text-transform: uppercase;
 }
 .company-actions-menu .MuiMenuItem-root { min-height: 44px; font-size: 14px; white-space: normal; }
-.company-actions-menu .MuiListItemIcon-root { min-width: 32px; color: #adc6ff; }
-.company-actions-menu .MuiDivider-root { border-color: #353941; }
+.company-actions-menu .MuiListItemIcon-root { min-width: 32px; color: var(--accent-text); }
+.company-actions-menu .MuiDivider-root { border-color: var(--company-divider); }
 .company-actions-menu .company-actions-remove,
 .company-actions-menu .company-actions-remove .MuiListItemIcon-root { color: #ffb4ab; }
 .companies-list-page .company-status.MuiChip-root {
@@ -391,10 +405,10 @@
   white-space: normal;
   overflow-wrap: anywhere;
 }
-.companies-list-page .company-status--positive { color: #6ffbbe !important; background: #163734 !important; }
+.companies-list-page .company-status--positive { color: #34d399 !important; background: #34d39922 !important; }
 .companies-list-page .company-status--inactive { color: #ffb4ab !important; background: #432932 !important; }
-.companies-list-page .company-status--prospect { color: #adc6ff !important; background: #203658 !important; }
-.company-table-panel .MuiTablePagination-root { background: var(--company-inset); color: #c2c6d6; }
+.companies-list-page .company-status--prospect { color: #93c5fd !important; background: #60a5fa22 !important; }
+.company-table-panel .MuiTablePagination-root { background: var(--company-table-edge); color: var(--text-main); }
 .company-table-panel .MuiTablePagination-toolbar { justify-content: flex-start; gap: 4px 8px; padding: 4px 16px; }
 .company-table-panel .MuiTablePagination-displayedRows { margin-inline-start: auto; }
 .company-table-panel .MuiTablePagination-select { font: inherit; font-size: 13px; }
