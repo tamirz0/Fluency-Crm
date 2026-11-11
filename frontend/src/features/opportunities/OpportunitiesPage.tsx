@@ -1,31 +1,35 @@
-import { Refresh } from '@mui/icons-material'
-import { Alert, Box, Button, Chip, Link, MenuItem, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material'
+import { Add, Refresh, Search, SearchOff } from '@mui/icons-material'
+import { Alert, Box, Button, Chip, InputAdornment, Link, MenuItem, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material'
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link as RouterLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { getCatalogOptions, listFunnels, listOpportunities, opportunityQueryKeys, type Oportunidad, type OportunidadQuery } from '../../api/client'
 import { CompanyResponsibleSelect } from '../companies/CompanyResponsibleSelect'
 import { displayValue, formatCommercialDate } from '../shared/display'
-import { money, stateLabels } from './opportunityData'
+import { confirmationFor } from '../shared/formUtils'
+import { money, opportunityStateClass, stateLabels } from './opportunityData'
+import { OpportunityActions } from './OpportunityActions'
 import '../contacts/records.css'
 import '../companies/companies.css'
+import './opportunities.css'
 
-const columns = ['Título', 'Embudo', 'Etapa', 'Empresa', 'Contacto', 'Responsable', 'Valor', 'Cierre estimado']
+const columns = ['Título', 'Embudo', 'Etapa', 'Empresa', 'Contacto', 'Responsable', 'Valor', 'Cierre estimado', 'Acciones']
 const nowrapColumns = ['Valor', 'Cierre estimado']
 
-function Rows({ items, onOpen }: { items: Oportunidad[]; onOpen: (id: number | string) => void }) {
+function Rows({ items, onOpen, onRemoved }: { items: Oportunidad[]; onOpen: (id: number | string) => void; onRemoved: (id: number | string) => void }) {
   return <TableContainer className="data-table-wrap"><Table aria-label="Oportunidades" size="small">
     <caption className="visually-hidden">Listado de oportunidades</caption>
-    <TableHead><TableRow>{columns.map((column) => <TableCell key={column} className={nowrapColumns.includes(column) ? 'nowrap' : undefined}>{column}</TableCell>)}</TableRow></TableHead>
+    <TableHead><TableRow>{columns.map((column) => <TableCell key={column} align={column === 'Acciones' ? 'right' : undefined} className={nowrapColumns.includes(column) ? 'nowrap' : undefined}>{column}</TableCell>)}</TableRow></TableHead>
     <TableBody>{items.map((item) => <TableRow key={item.id} className="company-clickable-row" onClick={() => onOpen(item.id)}>
       <TableCell className="company-name-cell"><Link component={RouterLink} to={`/oportunidades/${item.id}`} aria-label={`Abrir ficha de ${item.tituloVisible}`} underline="hover" onClick={(event) => event.stopPropagation()}>{item.tituloVisible}</Link></TableCell>
       <TableCell>{item.embudoNombre}{item.embudoActivo ? '' : ' (inactivo)'}</TableCell>
-      <TableCell><Chip className="company-status company-stage-chip" label={`${item.etapaNombre} · ${stateLabels[item.estado] ?? item.estado}`} size="small" /></TableCell>
+      <TableCell><Chip className={`company-status company-stage-chip ${opportunityStateClass(item.estado)}`} label={`${item.etapaNombre} · ${stateLabels[item.estado] ?? item.estado}`} size="small" /></TableCell>
       <TableCell><CompanyLink item={item} /></TableCell>
       <TableCell><ContactLink item={item} /></TableCell>
       <TableCell>{item.responsableNombre}{item.responsableActivo ? '' : ' (inactivo)'}</TableCell>
       <TableCell className="nowrap">{money(item.valor)}</TableCell>
       <TableCell className="nowrap">{formatCommercialDate(item.fechaEstimadaCierre)}</TableCell>
+      <TableCell align="right"><OpportunityActions opportunity={item} onRemoved={() => onRemoved(item.id)} /></TableCell>
     </TableRow>)}</TableBody>
   </Table></TableContainer>
 }
@@ -38,10 +42,10 @@ function ContactLink({ item }: { item: Oportunidad }) {
   return item.idContacto ? <Link component={RouterLink} to={`/contactos/${item.idContacto}`} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(item.contactoNombre)}</Link> : <>-</>
 }
 
-function Cards({ items, onOpen }: { items: Oportunidad[]; onOpen: (id: number | string) => void }) {
+function Cards({ items, onOpen, onRemoved }: { items: Oportunidad[]; onOpen: (id: number | string) => void; onRemoved: (id: number | string) => void }) {
   return <ul className="company-record-list" aria-label="Oportunidades">
     {items.map((item) => <li className="company-record company-clickable-record" key={item.id} onClick={() => onOpen(item.id)}>
-      <div className="company-record-heading"><h2><Link component={RouterLink} to={`/oportunidades/${item.id}`} aria-label={`Abrir ficha de ${item.tituloVisible}`} underline="hover" onClick={(event) => event.stopPropagation()}>{item.tituloVisible}</Link></h2><Chip className="company-status company-stage-chip" label={`${item.etapaNombre} · ${stateLabels[item.estado] ?? item.estado}`} size="small" /></div>
+      <div className="company-record-heading"><h2><Link component={RouterLink} to={`/oportunidades/${item.id}`} aria-label={`Abrir ficha de ${item.tituloVisible}`} underline="hover" onClick={(event) => event.stopPropagation()}>{item.tituloVisible}</Link></h2><Chip className={`company-status company-stage-chip ${opportunityStateClass(item.estado)}`} label={`${item.etapaNombre} · ${stateLabels[item.estado] ?? item.estado}`} size="small" /><OpportunityActions opportunity={item} onRemoved={() => onRemoved(item.id)} /></div>
       <dl className="company-record-fields">
         <div><dt>Embudo</dt><dd>{item.embudoNombre}{item.embudoActivo ? '' : ' (inactivo)'}</dd></div>
         <div><dt>Responsable</dt><dd>{item.responsableNombre}{item.responsableActivo ? '' : ' (inactivo)'}</dd></div>
@@ -65,6 +69,8 @@ function OpportunityListSkeleton() {
 export function OpportunitiesPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const queryClient = useQueryClient()
+  const [opportunityRemoved, setOpportunityRemoved] = useState(false)
   const [search, setSearch] = useState('')
   const [q, setQ] = useState('')
   const [params, setParams] = useSearchParams()
@@ -90,30 +96,40 @@ export function OpportunitiesPage() {
   const origins = useQuery({ queryKey: ['catalogos', 'origenes-comerciales'], queryFn: () => getCatalogOptions('origenes-comerciales') })
   const filtered = Boolean(q || state || origin || funnel || responsible)
   const clear = () => { setSearch(''); setQ(''); setState(''); setOrigin(''); setFunnel(''); setResponsible(''); setPage(0) }
-  return <Box className="companies-page records-page">
-    <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Oportunidades</Typography><Typography className="companies-page-description">Negociaciones compartidas por todo el equipo comercial.</Typography></div><Button component={RouterLink} to="/oportunidades/nueva" variant="contained">Nueva oportunidad</Button></header>
-    {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
+  const onRemoved = (id: number | string) => {
+    setOpportunityRemoved(true)
+    if (data?.items.length === 1) setPage(current => Math.max(0, current - 1))
+    queryClient.removeQueries({ queryKey: opportunityQueryKeys.detail(Number(id)) })
+    void queryClient.invalidateQueries({ queryKey: ['oportunidades'] })
+  }
+  return <Box className="companies-list-surface"><Box className="companies-page companies-list-page fluency-shell-type records-page">
+    <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Oportunidades</Typography><Typography className="companies-page-description">Negociaciones compartidas por todo el equipo comercial.</Typography></div><Button component={RouterLink} to="/oportunidades/nueva" variant="contained" className="company-new-button" startIcon={<Add />}>Nueva oportunidad</Button></header>
+    {opportunityRemoved ? <Alert severity="success" className="record-form-confirmation" onClose={() => setOpportunityRemoved(false)}>{confirmationFor('Oportunidad', 'dada de baja')}</Alert>
+      : typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
     <Box component="form" onSubmit={(event) => { event.preventDefault(); setQ(search.trim()); setPage(0) }} className="record-filters">
-      <TextField label="Buscar oportunidades" type="search" value={search} onChange={(event) => setSearch(event.target.value)} helperText="Título, empresa o contacto" />
-      <TextField select label="Estado" value={state} onChange={(event) => { setState(event.target.value); setPage(0) }}>
+      <TextField size="small" type="search" placeholder="Título, empresa o contacto…" value={search} onChange={(event) => setSearch(event.target.value)}
+        slotProps={{ htmlInput: { 'aria-label': 'Buscar oportunidades' }, input: { startAdornment: <InputAdornment position="start"><Search fontSize="small" /></InputAdornment> } }} />
+      <TextField size="small" select label="Estado" value={state} onChange={(event) => { setState(event.target.value); setPage(0) }}>
         <MenuItem value="">Todos</MenuItem>{Object.entries(stateLabels).map(([code, label]) => <MenuItem key={code} value={code}>{label}</MenuItem>)}
       </TextField>
-      <TextField select label="Embudo" value={funnel} onChange={(event) => { setFunnel(event.target.value); setPage(0) }}>
+      <TextField size="small" select label="Embudo" value={funnel} onChange={(event) => { setFunnel(event.target.value); setPage(0) }}>
         <MenuItem value="">Todos</MenuItem>{funnels.data?.items.map((item) => <MenuItem key={item.id} value={String(item.id)}>{item.nombre}{item.activo ? '' : ' (inactivo)'}</MenuItem>)}
       </TextField>
-      <TextField select label="Origen" value={origin} onChange={(event) => { setOrigin(event.target.value); setPage(0) }}>
+      <TextField size="small" select label="Origen" value={origin} onChange={(event) => { setOrigin(event.target.value); setPage(0) }}>
         <MenuItem value="">Todos</MenuItem>{origins.data?.map((item) => <MenuItem key={item.id} value={String(item.id)}>{item.descripcion}</MenuItem>)}
       </TextField>
-      <Box className="record-filter-lookup"><CompanyResponsibleSelect value={responsible} onChange={(id) => { setResponsible(id); setPage(0) }} helperText="Sin selección: todos los responsables" /></Box>
-      <Button type="submit" variant="outlined">Buscar</Button><Button type="button" onClick={clear}>Limpiar filtros</Button>
+      <Box className="record-filter-lookup"><CompanyResponsibleSelect value={responsible} onChange={(id) => { setResponsible(id); setPage(0) }} size="small" /></Box>
+      <Button type="submit">Buscar</Button><Button type="button" onClick={clear}>Limpiar filtros</Button>
     </Box>
     {(funnels.isError || origins.isError) && <Alert severity="warning" action={<Button onClick={() => { void funnels.refetch(); void origins.refetch() }}>Reintentar</Button>}>No pudimos cargar los filtros de embudos u orígenes.</Alert>}
-    {isPending ? <OpportunityListSkeleton /> : error ? <section className="company-feedback" aria-labelledby="opportunities-error-title"><Typography component="h2" id="opportunities-error-title" className="company-feedback-title">No pudimos cargar las oportunidades</Typography><Typography color="text.secondary">{error.message}</Typography><Button onClick={() => void refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button></section> : <>
+    {isPending ? <OpportunityListSkeleton /> : error ? <section className="company-feedback" aria-labelledby="opportunities-error-title"><Typography component="h2" id="opportunities-error-title" className="company-feedback-title">No pudimos cargar las oportunidades</Typography><Typography color="text.secondary">{error.message}</Typography><div className="company-feedback-actions"><Button onClick={() => void refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button></div></section> : <>
       <Typography role="status" className="record-count">{data.totalCount} {Number(data.totalCount) === 1 ? 'oportunidad' : 'oportunidades'}</Typography>
+      <div className="company-table-panel">
       {data.items.length === 0
-        ? <section className="company-feedback" aria-labelledby="opportunities-empty-title"><Typography component="h2" id="opportunities-empty-title" className="company-feedback-title">{filtered || page ? 'No hay oportunidades para estos filtros o página' : 'Todavía no hay oportunidades'}</Typography><Typography color="text.secondary">Las oportunidades registradas van a aparecer en este listado.</Typography></section>
-        : <><div className="company-list-desktop"><Rows items={data.items} onOpen={(id) => navigate(`/oportunidades/${id}`)} /></div><div className="company-list-mobile"><Cards items={data.items} onOpen={(id) => navigate(`/oportunidades/${id}`)} /></div></>}
+        ? <section className="company-feedback" aria-labelledby="opportunities-empty-title"><SearchOff className="company-empty-icon" /><Typography component="h2" id="opportunities-empty-title" className="company-feedback-title">{filtered || page ? 'No hay oportunidades para estos filtros o página' : 'Todavía no hay oportunidades'}</Typography><Typography color="text.secondary">{filtered ? 'Probá con otra búsqueda o limpiá los filtros.' : 'Las oportunidades registradas van a aparecer en este listado.'}</Typography></section>
+        : <><div className="company-list-desktop"><Rows items={data.items} onOpen={(id) => navigate(`/oportunidades/${id}`)} onRemoved={onRemoved} /></div><div className="company-list-mobile"><Cards items={data.items} onOpen={(id) => navigate(`/oportunidades/${id}`)} onRemoved={onRemoved} /></div></>}
       <TablePagination component="div" count={Number(data.totalCount)} page={page} rowsPerPage={pageSize} rowsPerPageOptions={[10, 25, 50, 100]} onPageChange={(_, next) => setPage(next)} onRowsPerPageChange={(event) => { setPageSize(Number(event.target.value)); setPage(0) }} labelRowsPerPage="Oportunidades por página" labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`} getItemAriaLabel={(type) => ({ first: 'Primera página', last: 'Última página', next: 'Página siguiente', previous: 'Página anterior' })[type]} />
+      </div>
     </>}
-  </Box>
+  </Box></Box>
 }

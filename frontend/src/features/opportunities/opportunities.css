@@ -1,0 +1,11 @@
+.companies-list-page .company-stage-chip.opportunity-state--won,
+.company-status.opportunity-state--won {
+  color: #34d399 !important;
+  background: #34d39922 !important;
+}
+
+.companies-list-page .company-stage-chip.opportunity-state--lost,
+.company-status.opportunity-state--lost {
+  color: #f87171 !important;
+  background: #f8717122 !important;
+}

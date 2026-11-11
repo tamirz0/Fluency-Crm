@@ -8,7 +8,7 @@ import { displayValue, formatCommercialDate, parsePositiveId } from '../shared/d
 import { confirmationFor } from '../shared/formUtils'
 import { RemoveRecordButton } from '../shared/RemoveRecordButton'
 import { ProfileHeader, ProfileRows, ProfileStats } from '../shared/RecordProfile'
-import { clientLabel, money, stateLabels } from './opportunityData'
+import { clientLabel, money, opportunityStateClass, stateLabels } from './opportunityData'
 import { CloseOpportunityDialog, type CloseResult } from './CloseOpportunityDialog'
 import { MoveStageDialog } from './MoveStageDialog'
 import { CommercialHistory } from '../activities/CommercialHistory'
@@ -17,13 +17,14 @@ import { ReassignDialog } from './ReassignDialog'
 import { ReopenOpportunityDialog } from './ReopenOpportunityDialog'
 import '../contacts/records.css'
 import '../companies/companies.css'
+import './opportunities.css'
 
 const dateTime = (value: string | null | undefined) => value ? new Date(value).toLocaleDateString('es-AR') : '-'
 const inactive = (name: string, active: boolean | null | undefined) => active === false ? `${name} (inactivo)` : name
 
 function OpportunityProfile({ opportunity, actions }: { opportunity: Oportunidad; actions: ReactNode }) {
   return <article className="profile-sheet" aria-label={`Ficha de ${opportunity.tituloVisible}`}>
-    <ProfileHeader name={opportunity.tituloVisible} subtitle={opportunity.titulo ? clientLabel(opportunity) : undefined} status={<Chip className="company-status company-status--prospect" label={stateLabels[opportunity.estado] ?? opportunity.estado} size="small" />} actions={actions} />
+    <ProfileHeader name={opportunity.tituloVisible} subtitle={opportunity.titulo ? clientLabel(opportunity) : undefined} status={<Chip className={`company-status ${opportunityStateClass(opportunity.estado)}`} label={stateLabels[opportunity.estado] ?? opportunity.estado} size="small" />} actions={actions} />
     <ProfileStats items={[
       { label: 'Etapa', value: inactive(opportunity.etapaNombre, opportunity.etapaActiva) },
       { label: 'Valor', value: money(opportunity.valor) },
@@ -60,7 +61,8 @@ export function OpportunityDetailPage() {
   const [activityRegistered, setActivityRegistered] = useState(false)
   const [closing, setClosing] = useState<CloseResult | '' | null>(null)
   const [reassigned, setReassigned] = useState(false)
-  const from = (location.state as { from?: { to?: unknown; label?: unknown } } | null)?.from
+  const routeState = location.state as { from?: { to?: unknown; label?: unknown }; openActivity?: unknown } | null
+  const from = routeState?.from
   const back = typeof from?.to === 'string' && typeof from.label === 'string' ? { to: from.to, label: from.label } : opportunity?.idEmpresa ?{ to: `/empresas/${opportunity.idEmpresa}`, label: 'Volver a la empresa' } : opportunity?.idContacto ? { to: `/contactos/${opportunity.idContacto}`, label: 'Volver al contacto' } : { to: '/inicio', label: 'Volver al inicio' }
   const backLink = <Link component={RouterLink} to={back.to} className="company-back-link" underline="hover"><ArrowBack fontSize="small" />{back.label}</Link>
 
@@ -75,7 +77,7 @@ export function OpportunityDetailPage() {
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
     {activityRegistered && <Alert severity="success" className="record-form-confirmation">Actividad registrada.</Alert>}
     {reassigned && <Alert severity="success" className="record-form-confirmation">Oportunidad reasignada. Podés consultarla, pero ya no editarla.</Alert>}
-    <OpportunityProfile opportunity={opportunity} actions={<>{opportunity.accionesPermitidas.editar && <Button component={RouterLink} to={`/oportunidades/${opportunity.id}/editar`} variant="outlined">Editar</Button>}{opportunity.accionesPermitidas.mover && <Button variant="outlined" onClick={() => setMoving(true)}>Cambiar etapa</Button>}{opportunity.accionesPermitidas.cerrar && <Button variant="outlined" onClick={() => setClosing('')}>Cerrar</Button>}{opportunity.accionesPermitidas.reabrir && <Button variant="outlined" onClick={() => setReopening(true)}>Reabrir</Button>}{opportunity.accionesPermitidas.gestionarActividades && <RegisterActivityButton context={{ label: opportunity.tituloVisible, idOportunidad: Number(opportunity.id), ...(opportunity.idEmpresa == null ? {} : { idEmpresa: Number(opportunity.idEmpresa) }), ...(opportunity.idContacto == null ? {} : { idContacto: Number(opportunity.idContacto) }) }} onRegistered={() => setActivityRegistered(true)} />}{opportunity.accionesPermitidas.darDeBaja && <RemoveRecordButton noun="oportunidad" name={opportunity.tituloVisible} remove={() => deleteOpportunity(Number(opportunity.id))} onRemoved={() => {
+    <OpportunityProfile opportunity={opportunity} actions={<>{opportunity.accionesPermitidas.editar && <Button component={RouterLink} to={`/oportunidades/${opportunity.id}/editar`} variant="outlined">Editar</Button>}{opportunity.accionesPermitidas.mover && <Button variant="outlined" onClick={() => setMoving(true)}>Cambiar etapa</Button>}{opportunity.accionesPermitidas.cerrar && <Button variant="outlined" onClick={() => setClosing('')}>Cerrar</Button>}{opportunity.accionesPermitidas.reabrir && <Button variant="outlined" onClick={() => setReopening(true)}>Reabrir</Button>}{opportunity.accionesPermitidas.gestionarActividades && <RegisterActivityButton context={{ label: opportunity.tituloVisible, idOportunidad: Number(opportunity.id), ...(opportunity.idEmpresa == null ? {} : { idEmpresa: Number(opportunity.idEmpresa) }), ...(opportunity.idContacto == null ? {} : { idContacto: Number(opportunity.idContacto) }) }} onRegistered={() => setActivityRegistered(true)} openOnMount={routeState?.openActivity === true} />}{opportunity.accionesPermitidas.darDeBaja && <RemoveRecordButton noun="oportunidad" name={opportunity.tituloVisible} remove={() => deleteOpportunity(Number(opportunity.id))} onRemoved={() => {
       queryClient.removeQueries({ queryKey: opportunityQueryKeys.detail(Number(opportunity.id)) })
       void queryClient.invalidateQueries({ queryKey: ['oportunidades'] })
       navigate('/oportunidades', { state: { confirmation: confirmationFor('Oportunidad', 'dada de baja') } })
