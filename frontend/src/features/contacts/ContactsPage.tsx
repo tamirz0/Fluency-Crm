@@ -1,13 +1,15 @@
-import { Refresh } from '@mui/icons-material'
-import { Alert, Box, Button, Link, MenuItem, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material'
+import { Add, Refresh, Search, SearchOff } from '@mui/icons-material'
+import { Alert, Box, Button, InputAdornment, Link, MenuItem, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material'
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 import { contactoQueryKeys, getCatalogOptions, listContacts, type Contacto } from '../../api/client'
 import { CompanyResponsibleSelect } from '../companies/CompanyResponsibleSelect'
 import { CompanyStatus } from '../companies/CompanyStatus'
 import { contactFullName, displayValue } from '../shared/display'
+import { confirmationFor } from '../shared/formUtils'
 import { ContactCompanySelect } from './ContactCompanySelect'
+import { ContactActions } from './ContactActions'
 import '../companies/companies.css'
 import './records.css'
 
@@ -25,10 +27,10 @@ function ContactPhone({ contact }: { contact: Contacto }) {
     : <span className="company-muted">-</span>
 }
 
-function ContactRows({ contacts, onOpen }: { contacts: Contacto[]; onOpen: (id: string | number) => void }) {
+function ContactRows({ contacts, onOpen, onRemoved }: { contacts: Contacto[]; onOpen: (id: string | number) => void; onRemoved: () => void }) {
   return <TableContainer className="data-table-wrap"><Table aria-label="Contactos" size="small">
     <caption className="visually-hidden">Listado de contactos</caption>
-    <TableHead><TableRow>{columns.map((label) => <TableCell key={label}>{label}</TableCell>)}</TableRow></TableHead>
+    <TableHead><TableRow>{columns.map((label) => <TableCell key={label} scope="col">{label}</TableCell>)}<TableCell scope="col"><span className="visually-hidden">Acciones</span></TableCell></TableRow></TableHead>
     <TableBody>{contacts.map((contact) => <TableRow key={contact.id} className="company-clickable-row" onClick={() => onOpen(contact.id)}>
       <TableCell className="company-name-cell"><Link component={RouterLink} to={`/contactos/${contact.id}`} aria-label={`Abrir ficha de ${contactFullName(contact)}`} underline="hover" onClick={(event) => event.stopPropagation()}>{contactFullName(contact)}</Link></TableCell>
       <TableCell><CompanyStatus value={contact.estadoDescripcion} /></TableCell>
@@ -38,14 +40,15 @@ function ContactRows({ contacts, onOpen }: { contacts: Contacto[]; onOpen: (id: 
       <TableCell><ContactPhone contact={contact} /></TableCell>
       <TableCell>{displayValue(contact.origenDescripcion)}</TableCell>
       <TableCell>{displayValue(contact.responsableNombre)}{contact.responsableActivo === false ? ' (inactivo)' : ''}</TableCell>
+      <TableCell align="right"><ContactActions contact={contact} onRemoved={onRemoved} /></TableCell>
     </TableRow>)}</TableBody>
   </Table></TableContainer>
 }
 
-function ContactCards({ contacts, onOpen }: { contacts: Contacto[]; onOpen: (id: string | number) => void }) {
+function ContactCards({ contacts, onOpen, onRemoved }: { contacts: Contacto[]; onOpen: (id: string | number) => void; onRemoved: () => void }) {
   return <ul className="company-record-list" aria-label="Contactos">
     {contacts.map((contact) => <li className="company-record company-clickable-record" key={contact.id} onClick={() => onOpen(contact.id)}>
-      <div className="company-record-heading"><h2><Link component={RouterLink} to={`/contactos/${contact.id}`} aria-label={`Abrir ficha de ${contactFullName(contact)}`} underline="hover" onClick={(event) => event.stopPropagation()}>{contactFullName(contact)}</Link></h2><CompanyStatus value={contact.estadoDescripcion} /></div>
+      <div className="company-record-heading"><h2><Link component={RouterLink} to={`/contactos/${contact.id}`} aria-label={`Abrir ficha de ${contactFullName(contact)}`} underline="hover" onClick={(event) => event.stopPropagation()}>{contactFullName(contact)}</Link></h2><CompanyStatus value={contact.estadoDescripcion} /><ContactActions contact={contact} onRemoved={onRemoved} /></div>
       <dl className="company-record-fields">
         <div><dt>Empresa</dt><dd>{contact.idEmpresa ? <Link component={RouterLink} to={`/empresas/${contact.idEmpresa}`} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(contact.empresaRazonSocial)}</Link> : displayValue(contact.empresaRazonSocial)}</dd></div>
         <div><dt>Cargo</dt><dd>{displayValue(contact.cargo)}</dd></div>
@@ -60,16 +63,19 @@ function ContactCards({ contacts, onOpen }: { contacts: Contacto[]; onOpen: (id:
 
 function ContactListSkeleton() {
   return <div className="companies-loading" role="status" aria-label="Cargando contactos">
-    <TableContainer className="data-table-wrap"><Table aria-hidden="true" size="small">
-      <TableHead><TableRow>{columns.map((label) => <TableCell key={label}>{label}</TableCell>)}</TableRow></TableHead>
-      <TableBody>{[0, 1, 2, 3].map((row) => <TableRow key={row}>{columns.map((label, cell) => <TableCell key={label}><Skeleton width={cell === 0 ? '85%' : '70%'} /></TableCell>)}</TableRow>)}</TableBody>
+    <TableContainer className="data-table-wrap company-skeleton-table"><Table aria-hidden="true" size="small">
+      <TableHead><TableRow>{columns.map((label) => <TableCell key={label}>{label}</TableCell>)}<TableCell /></TableRow></TableHead>
+      <TableBody>{[0, 1, 2, 3].map((row) => <TableRow key={row}>{columns.map((label, cell) => <TableCell key={label}><Skeleton width={cell === 0 ? '85%' : '70%'} /></TableCell>)}<TableCell /></TableRow>)}</TableBody>
     </Table></TableContainer>
+    <ul className="company-record-list company-skeleton-list" aria-hidden="true">{[0, 1, 2].map(row => <li className="company-record" key={row}><Skeleton width="62%" height={32} /><Skeleton width="44%" /><Skeleton width="76%" /><Skeleton width="36%" height={32} /></li>)}</ul>
   </div>
 }
 
 export function ContactsPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const queryClient = useQueryClient()
+  const [contactRemoved, setContactRemoved] = useState(false)
   const [search, setSearch] = useState('')
   const [q, setQ] = useState('')
   const [state, setState] = useState('')
@@ -83,30 +89,37 @@ export function ContactsPage() {
   const states = useQuery({ queryKey: ['catalogos', 'estados-cliente'], queryFn: () => getCatalogOptions('estados-cliente') })
   const origins = useQuery({ queryKey: ['catalogos', 'origenes-comerciales'], queryFn: () => getCatalogOptions('origenes-comerciales') })
   const clear = () => { setSearch(''); setQ(''); setState(''); setOrigin(''); setResponsible(''); setCompany(''); setPage(0) }
+  const onRemoved = () => {
+    setContactRemoved(true)
+    if (data?.items.length === 1) setPage(current => Math.max(0, current - 1))
+    void queryClient.invalidateQueries({ queryKey: contactoQueryKeys.all })
+  }
   const filtered = Boolean(q || state || origin || responsible || company)
-  return <Box className="companies-page records-page">
-    <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Contactos</Typography><Typography className="companies-page-description">Personas compartidas por todo el equipo comercial.</Typography></div><Button component={RouterLink} to="/contactos/nuevo" variant="contained">Nuevo contacto</Button></header>
-    {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
+  return <Box className="companies-list-surface"><Box className="companies-page companies-list-page fluency-shell-type records-page">
+    <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Contactos</Typography><Typography className="companies-page-description">Personas compartidas por todo el equipo comercial.</Typography></div><Button component={RouterLink} to="/contactos/nuevo" variant="contained" className="company-new-button" startIcon={<Add />}>Nuevo contacto</Button></header>
+    {contactRemoved ? <Alert severity="success" className="record-form-confirmation" onClose={() => setContactRemoved(false)}>{confirmationFor('Contacto', 'dado de baja')}</Alert>
+      : typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
     <Box component="form" onSubmit={e => { e.preventDefault(); setQ(search.trim()); setPage(0) }} className="record-filters">
-      <TextField label="Buscar contactos" type="search" value={search} onChange={e => setSearch(e.target.value)} helperText="Nombre, documento, correo, teléfono o empresa" />
-      <TextField select label="Estado" value={state} onChange={e => { setState(e.target.value); setPage(0) }}><MenuItem value="">Todos</MenuItem>{states.data?.map(s => <MenuItem key={s.id} value={String(s.id)}>{s.descripcion}</MenuItem>)}</TextField>
-      <TextField select label="Origen" value={origin} onChange={e => { setOrigin(e.target.value); setPage(0) }}><MenuItem value="">Todos</MenuItem>{origins.data?.map(s => <MenuItem key={s.id} value={String(s.id)}>{s.descripcion}</MenuItem>)}</TextField>
-      <Box className="record-filter-lookup"><ContactCompanySelect value={company} onChange={id => { setCompany(id); setPage(0) }} helperText="Sin selección: todas las empresas" /></Box>
-      <Box className="record-filter-lookup"><CompanyResponsibleSelect value={responsible} onChange={id => { setResponsible(id); setPage(0) }} helperText="Sin selección: todos los responsables" /></Box>
-      <Button type="submit" variant="outlined">Buscar</Button><Button type="button" onClick={clear}>Limpiar filtros</Button>
+      <TextField size="small" type="search" placeholder="Nombre, documento, correo…" value={search} onChange={e => setSearch(e.target.value)}
+        slotProps={{ htmlInput: { 'aria-label': 'Buscar contactos' }, input: { startAdornment: <InputAdornment position="start"><Search fontSize="small" /></InputAdornment> } }} />
+      <TextField size="small" select label="Estado" value={state} onChange={e => { setState(e.target.value); setPage(0) }}><MenuItem value="">Todos</MenuItem>{states.data?.map(s => <MenuItem key={s.id} value={String(s.id)}>{s.descripcion}</MenuItem>)}</TextField>
+      <TextField size="small" select label="Origen" value={origin} onChange={e => { setOrigin(e.target.value); setPage(0) }}><MenuItem value="">Todos</MenuItem>{origins.data?.map(s => <MenuItem key={s.id} value={String(s.id)}>{s.descripcion}</MenuItem>)}</TextField>
+      <Box className="record-filter-lookup"><ContactCompanySelect value={company} onChange={id => { setCompany(id); setPage(0) }} size="small" /></Box>
+      <Box className="record-filter-lookup"><CompanyResponsibleSelect value={responsible} onChange={id => { setResponsible(id); setPage(0) }} size="small" /></Box>
+      <Button type="submit">Buscar</Button><Button type="button" onClick={clear}>Limpiar filtros</Button>
     </Box>
     {(states.isError || origins.isError) && <Alert severity="warning" action={<Button onClick={() => { void states.refetch(); void origins.refetch() }}>Reintentar</Button>}>No pudimos cargar los filtros de catálogos.</Alert>}
     {isPending ? <ContactListSkeleton /> : error ? <section className="company-feedback" aria-labelledby="contacts-error-title">
       <Typography id="contacts-error-title" component="h2" className="company-feedback-title">No pudimos cargar los contactos</Typography><Typography color="text.secondary">{error.message}</Typography><Button onClick={() => void refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button>
     </section> : <>
       <Typography role="status" className="record-count">{data.totalCount} {data.totalCount === 1 ? 'contacto' : 'contactos'}</Typography>
-      {data.items.length === 0 ? <section className="company-feedback" aria-labelledby="contacts-empty-title">
-        <Typography id="contacts-empty-title" component="h2" className="company-feedback-title">{filtered || page ? 'No hay contactos para estos filtros o página' : 'Todavía no hay contactos'}</Typography><Typography color="text.secondary">Los contactos registrados van a aparecer en este listado.</Typography>
-      </section> : <>
-        <div className="company-list-desktop"><ContactRows contacts={data.items} onOpen={(id) => navigate(`/contactos/${id}`)} /></div>
-        <div className="company-list-mobile"><ContactCards contacts={data.items} onOpen={(id) => navigate(`/contactos/${id}`)} /></div>
+      <div className="company-table-panel">
+      {data.items.length === 0 ? <section className="company-feedback" aria-labelledby="contacts-empty-title"><SearchOff className="company-empty-icon" /><Typography id="contacts-empty-title" component="h2" className="company-feedback-title">{filtered || page ? 'No hay contactos para estos filtros o página' : 'Todavía no hay contactos'}</Typography><Typography color="text.secondary">{filtered ? 'Probá con otra búsqueda o limpiá los filtros.' : 'Los contactos registrados van a aparecer en este listado.'}</Typography></section> : <>
+        <div className="company-list-desktop"><ContactRows contacts={data.items} onOpen={(id) => navigate(`/contactos/${id}`)} onRemoved={onRemoved} /></div>
+        <div className="company-list-mobile"><ContactCards contacts={data.items} onOpen={(id) => navigate(`/contactos/${id}`)} onRemoved={onRemoved} /></div>
       </>}
-      <TablePagination component="div" count={Number(data.totalCount)} page={page} rowsPerPage={pageSize} rowsPerPageOptions={[10, 25, 50, 100]} onPageChange={(_, p) => setPage(p)} onRowsPerPageChange={e => { setPageSize(Number(e.target.value)); setPage(0) }} labelRowsPerPage="Contactos por página" labelDisplayedRows={({ from, to, count }) => from + '–' + to + ' de ' + count} getItemAriaLabel={type => ({ first: 'Primera página', last: 'Última página', next: 'Página siguiente', previous: 'Página anterior' })[type]} />
+      <TablePagination component="div" count={Number(data.totalCount)} page={page} rowsPerPage={pageSize} rowsPerPageOptions={[10, 25, 50, 100]} onPageChange={(_, p) => setPage(p)} onRowsPerPageChange={e => { setPageSize(Number(e.target.value)); setPage(0) }} labelRowsPerPage="Contactos por página" labelDisplayedRows={({ from, to, count }) => `Mostrando ${from}–${to} de ${count}`} getItemAriaLabel={type => ({ first: 'Primera página', last: 'Última página', next: 'Página siguiente', previous: 'Página anterior' })[type]} />
+      </div>
     </>}
-  </Box>
+  </Box></Box>
 }
