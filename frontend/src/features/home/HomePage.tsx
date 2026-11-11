@@ -50,9 +50,9 @@ function HomeEntries({ children }: { children: ReactNode }) {
   </Stack>
 }
 
-function HomeEntry({ title, subtitle, to, course }: { title: string; subtitle: string; to: string; course?: string }) {
+function HomeEntry({ title, subtitle, to, course, from }: { title: string; subtitle: string; to: string; course?: string; from?: { to: string; label: string } }) {
   return <Box component="li">
-    <Link component={RouterLink} to={to} underline="none" className={course ? 'home-entry home-entry--class' : 'home-entry'}>
+    <Link component={RouterLink} to={to} state={from ? { from } : undefined} underline="none" className={course ? 'home-entry home-entry--class' : 'home-entry'}>
       <span className="home-entry-title">{title}</span>{' '}
       <span className="home-entry-meta">{subtitle}</span>{' '}
       {course ? <span className="home-entry-course">{course}</span> : <ChevronRight className="home-entry-arrow" />}
@@ -149,6 +149,7 @@ export function HomePage() {
         : recent.isError ? <LoadError message="No pudimos cargar las oportunidades." retry={() => void recent.refetch()} />
           : recent.data.items.length ? <HomeEntries>
             {recent.data.items.map(item => <HomeEntry key={item.id} title={item.tituloVisible} to={`/oportunidades/${item.id}`}
+              from={{ to: '/inicio', label: 'Volver al inicio' }}
               subtitle={[item.contactoNombre, item.empresaRazonSocial, item.etapaNombre].filter(Boolean).join(' · ')} />)}
           </HomeEntries> : <Typography color="text.secondary">No hay oportunidades abiertas.</Typography>}
     </HomePanel>

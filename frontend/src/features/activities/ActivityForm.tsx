@@ -96,10 +96,10 @@ export function ActivityDialog({ context, activity, open, onClose, onDone }: { c
 }
 
 /** Botón + editor listos para montar en las fichas de empresa, contacto y oportunidad. */
-export function RegisterActivityButton({ context, onRegistered, openOnMount = false, showIcon = false }: { context: ActivityContext; onRegistered?: () => void; openOnMount?: boolean; showIcon?: boolean }) {
+export function RegisterActivityButton({ context, onRegistered, openOnMount = false, showIcon = false, variant = 'outlined' }: { context: ActivityContext; onRegistered?: () => void; openOnMount?: boolean; showIcon?: boolean; variant?: 'outlined' | 'contained' }) {
   const [open, setOpen] = useState(openOnMount)
   return <>
-    <Button variant="outlined" startIcon={showIcon ? <AddTaskOutlined /> : undefined} onClick={() => setOpen(true)}>Registrar actividad</Button>
+    <Button variant={variant} startIcon={showIcon ? <AddTaskOutlined /> : undefined} onClick={() => setOpen(true)}>Registrar actividad</Button>
     <ActivityDialog context={context} open={open} onClose={() => setOpen(false)} onDone={() => { setOpen(false); onRegistered?.() }} />
   </>
 }

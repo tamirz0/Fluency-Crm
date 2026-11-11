@@ -70,6 +70,9 @@
 .commercial-dialog .MuiDialogActions-root > .MuiButton-text:not(.Mui-disabled) { color: var(--dialog-accent); }
 .commercial-dialog .MuiDialogActions-root > .MuiButton-contained:not(.Mui-disabled) { background: #4d8eff; color: #00285d; }
 .commercial-dialog .MuiDialogActions-root > .MuiButton-contained:not(.Mui-disabled):hover { background: #72a5ff; }
+.commercial-dialog--danger .commercial-dialog-icon { color: #ffb4ab; background: #36252e; border-color: #67424c; }
+.commercial-dialog--danger .MuiDialogActions-root > .MuiButton-containedError:not(.Mui-disabled) { background: #ffb4ab; color: #561e25; }
+.commercial-dialog--danger .MuiDialogActions-root > .MuiButton-containedError:not(.Mui-disabled):hover { background: #ffccc5; }
 
 @media (max-width: 480px) {
   .commercial-dialog.MuiPaper-root { width: calc(100% - 32px); margin: 16px; max-height: calc(100% - 32px); }

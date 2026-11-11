@@ -184,7 +184,10 @@ describe('consultas comerciales', () => {
   })
 
   it('muestra detalle, enlaces e historial de etapas de solo lectura; un 404 representa oportunidad inexistente', async () => {
-    const detail = { ...listed, responsableActivo: true, idContacto: 14, contactoNombre: 'Lucía Pérez' }
+    const detail = { ...listed, responsableActivo: true, idContacto: 14, contactoNombre: 'Lucía Pérez', objetivoAprendizaje: 'Inglés para reuniones' }
+    const stages = ['Consulta', 'Evaluación', 'Propuesta'].map((nombre, index) => ({
+      id: index + 1, nombre, orden: index + 1, idEmbudo: 1, estado: 'ABIERTA', activo: true,
+    }))
     const history = page([
       { tipo: 'TRANSICION', idOrigen: 2, fechaHora: '2026-11-06T12:00:00Z', idUsuario: 7, usuarioNombre: 'María Gómez', idOportunidad: 91, etapaAnterior: 'Consulta', etapaNueva: 'Propuesta', observacion: 'Envió presupuesto' },
       { tipo: 'ACTIVIDAD', idOrigen: 5, fechaHora: '2026-11-05T15:00:00Z', fechaRegistro: '2026-11-06T09:00:00Z', idUsuario: 8, usuarioNombre: 'Ana Ventas', idOportunidad: 91, tipoActividad: 'Llamada', descripcion: 'Llamó para pedir presupuesto', resultado: 'Enviar propuesta', accionesPermitidas: { editar: false, darDeBaja: false } },
@@ -196,15 +199,25 @@ describe('consultas comerciales', () => {
       requests.push(url)
       if (url.pathname.endsWith('/oportunidades/92')) return new Response('No existe', { status: 404, headers: { 'Content-Type': 'text/plain' } })
       if (url.pathname.endsWith('/oportunidades/91/historial-comercial')) return jsonResponse(history)
+      if (url.pathname.endsWith('/oportunidades/91/historial-etapas')) return jsonResponse(page([{ idNuevaEtapa: 1 }, { idNuevaEtapa: 3 }]))
+      if (url.pathname.endsWith('/embudos/1/etapas')) return jsonResponse(stages)
       if (url.pathname.endsWith('/oportunidades/91')) return jsonResponse(detail)
       return jsonResponse([])
     })
     renderAuthenticated('/oportunidades/91')
     expect(await screen.findByRole('heading', { name: 'Renovación anual' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Volver a oportunidades' }).getAttribute('href')).toBe('/oportunidades')
     expect(screen.getByRole('link', { name: 'Acme Idiomas' }).getAttribute('href')).toBe('/empresas/4')
     expect(screen.getByRole('link', { name: 'Lucía Pérez' }).getAttribute('href')).toBe('/contactos/14')
     expect(screen.getByText('Capacitación')).toBeTruthy()
     expect(screen.getByText('31/12/2026')).toBeTruthy()
+    expect(screen.getByRole('region', { name: 'Enfoque académico' }).textContent).toContain('Inglés para reuniones')
+    const stageList = within(screen.getByRole('region', { name: 'Etapas del embudo' }))
+    const visited = await stageList.findByText('Recorrida')
+    expect(visited.closest('li')?.textContent).toContain('Consulta')
+    expect(stageList.getByText('Evaluación').closest('li')?.textContent).toBe('Evaluación')
+    expect(stageList.getByText('Propuesta').closest('li')?.getAttribute('aria-current')).toBe('step')
+    expect(stageList.getByRole('progressbar', { name: 'Avance del embudo' }).getAttribute('aria-valuenow')).toBe('75')
     const timeline = within(await screen.findByRole('list', { name: 'Historial comercial' }))
     expect(timeline.getByText('Cambio de etapa: Alta de la oportunidad → Consulta')).toBeTruthy()
     expect(timeline.getByText('Cambio de etapa: Consulta → Propuesta')).toBeTruthy()

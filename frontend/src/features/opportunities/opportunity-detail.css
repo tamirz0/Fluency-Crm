@@ -1,0 +1,131 @@
+.opportunity-fiche .profile-stats {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 185px), 1fr));
+  gap: 12px 20px;
+  margin: 0 clamp(16px, 3cqi, 24px);
+  padding: 16px 0 20px;
+  border: 0;
+  border-top: 1px solid var(--border);
+  background: transparent;
+}
+
+.opportunity-fiche .profile-stats > div,
+.opportunity-fiche .profile-stats > div:first-child {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  min-width: 0;
+}
+
+.opportunity-fiche .profile-stats dt {
+  color: var(--fiche-outline);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.opportunity-fiche .profile-stats dd {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 0;
+  color: var(--text-main);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.opportunity-fiche .profile-stats dd > svg {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  padding: 5px;
+  border-radius: 6px;
+}
+
+.opportunity-summary-funnel { color: #adc6ff; background: rgb(120 170 255 / 15%); }
+.opportunity-summary-service { color: #ffc77d; background: rgb(255 199 125 / 14%); }
+.opportunity-summary .company-fiche-owner .company-fiche-contact-avatar {
+  color: #d8bdff;
+  background: rgb(179 132 255 / 15%);
+}
+
+.opportunity-fiche .profile-stats .opportunity-fiche-won {
+  color: var(--fiche-green);
+  font-size: 18px;
+}
+
+.opportunity-fiche-stages {
+  margin-bottom: 24px;
+}
+
+.opportunity-fiche .company-fiche-card-heading h2 { margin: 0; }
+
+.opportunity-stage-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 128px), 1fr));
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.opportunity-stage-list > li {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  border-bottom: 2px solid #32394c;
+  background: var(--field);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.opportunity-stage-list strong { font-size: 13px; font-weight: 600; }
+.opportunity-stage-list span { display: flex; align-items: center; gap: 4px; font-size: 11px; }
+.opportunity-stage-list svg { font-size: 14px; }
+.opportunity-stage-list [data-visited="true"] { border-bottom-color: var(--fiche-green); }
+.opportunity-stage-list [data-visited="true"] span { color: var(--fiche-green); }
+.opportunity-stage-list [aria-current="step"] {
+  --stage-accent: var(--accent-text);
+  border-color: color-mix(in srgb, var(--stage-accent) 45%, transparent);
+  border-bottom-color: var(--stage-accent);
+  background: color-mix(in srgb, var(--stage-accent) 12%, var(--surface));
+  color: var(--stage-accent);
+}
+.opportunity-stage-list [aria-current="step"][data-state="GANADA"] { --stage-accent: var(--fiche-green); }
+.opportunity-stage-list [aria-current="step"][data-state="PERDIDA"] { --stage-accent: #ffb4ab; }
+.opportunity-stage-list [aria-current="step"] span { color: inherit; }
+.opportunity-fiche .opportunity-stage-progress {
+  --progress-color: var(--fiche-primary);
+  height: 5px;
+  margin-top: 14px;
+  border-radius: 999px;
+  background: #32394c;
+}
+.opportunity-fiche .opportunity-stage-progress[data-state="GANADA"] { --progress-color: var(--fiche-green); }
+.opportunity-fiche .opportunity-stage-progress[data-state="PERDIDA"] { --progress-color: #ffb4ab; }
+.opportunity-fiche .opportunity-stage-progress .MuiLinearProgress-bar {
+  background: linear-gradient(90deg, var(--progress-color), color-mix(in srgb, var(--progress-color) 65%, white));
+}
+.opportunity-fiche-stages .MuiAlert-root { margin-top: 12px; }
+
+@container (min-width: 640px) {
+  .opportunity-fiche .company-fiche-grid { grid-template-columns: minmax(238px, 2fr) minmax(0, 3fr); }
+}
+.opportunity-summary {
+  --summary-accent: #78aaff;
+  border-color: color-mix(in srgb, var(--summary-accent) 24%, var(--surface));
+  border-top: 3px solid var(--summary-accent);
+  background: radial-gradient(ellipse at top left, color-mix(in srgb, var(--summary-accent) 15%, var(--surface)), var(--surface) 72%);
+}
+
+.opportunity-summary[data-state="GANADA"] { --summary-accent: var(--fiche-green); }
+.opportunity-summary[data-state="PERDIDA"] { --summary-accent: #ffb4ab; }
+.opportunity-summary .company-fiche-avatar {
+  color: var(--summary-accent);
+  border-color: color-mix(in srgb, var(--summary-accent) 35%, var(--surface));
+  background: color-mix(in srgb, var(--summary-accent) 14%, var(--surface));
+}
+

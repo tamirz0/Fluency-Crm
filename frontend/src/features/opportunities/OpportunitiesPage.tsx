@@ -17,11 +17,13 @@ const columns = ['Título', 'Embudo', 'Etapa', 'Empresa', 'Contacto', 'Responsab
 const nowrapColumns = ['Valor', 'Cierre estimado']
 
 function Rows({ items, onOpen, onRemoved }: { items: Oportunidad[]; onOpen: (id: number | string) => void; onRemoved: (id: number | string) => void }) {
+  const { search } = useLocation()
+  const state = { from: { to: `/oportunidades${search}`, label: 'Volver a oportunidades' } }
   return <TableContainer className="data-table-wrap"><Table aria-label="Oportunidades" size="small">
     <caption className="visually-hidden">Listado de oportunidades</caption>
     <TableHead><TableRow>{columns.map((column) => <TableCell key={column} align={column === 'Acciones' ? 'right' : undefined} className={nowrapColumns.includes(column) ? 'nowrap' : undefined}>{column}</TableCell>)}</TableRow></TableHead>
     <TableBody>{items.map((item) => <TableRow key={item.id} className="company-clickable-row" onClick={() => onOpen(item.id)}>
-      <TableCell className="company-name-cell"><Link component={RouterLink} to={`/oportunidades/${item.id}`} aria-label={`Abrir ficha de ${item.tituloVisible}`} underline="hover" onClick={(event) => event.stopPropagation()}>{item.tituloVisible}</Link></TableCell>
+      <TableCell className="company-name-cell"><Link component={RouterLink} to={`/oportunidades/${item.id}`} state={state} aria-label={`Abrir ficha de ${item.tituloVisible}`} underline="hover" onClick={(event) => event.stopPropagation()}>{item.tituloVisible}</Link></TableCell>
       <TableCell>{item.embudoNombre}{item.embudoActivo ? '' : ' (inactivo)'}</TableCell>
       <TableCell><Chip className={`company-status company-stage-chip ${opportunityStateClass(item.estado)}`} label={`${item.etapaNombre} · ${stateLabels[item.estado] ?? item.estado}`} size="small" /></TableCell>
       <TableCell><CompanyLink item={item} /></TableCell>
@@ -43,9 +45,11 @@ function ContactLink({ item }: { item: Oportunidad }) {
 }
 
 function Cards({ items, onOpen, onRemoved }: { items: Oportunidad[]; onOpen: (id: number | string) => void; onRemoved: (id: number | string) => void }) {
+  const { search } = useLocation()
+  const state = { from: { to: `/oportunidades${search}`, label: 'Volver a oportunidades' } }
   return <ul className="company-record-list" aria-label="Oportunidades">
     {items.map((item) => <li className="company-record company-clickable-record" key={item.id} onClick={() => onOpen(item.id)}>
-      <div className="company-record-heading"><h2><Link component={RouterLink} to={`/oportunidades/${item.id}`} aria-label={`Abrir ficha de ${item.tituloVisible}`} underline="hover" onClick={(event) => event.stopPropagation()}>{item.tituloVisible}</Link></h2><Chip className={`company-status company-stage-chip ${opportunityStateClass(item.estado)}`} label={`${item.etapaNombre} · ${stateLabels[item.estado] ?? item.estado}`} size="small" /><OpportunityActions opportunity={item} onRemoved={() => onRemoved(item.id)} /></div>
+      <div className="company-record-heading"><h2><Link component={RouterLink} to={`/oportunidades/${item.id}`} state={state} aria-label={`Abrir ficha de ${item.tituloVisible}`} underline="hover" onClick={(event) => event.stopPropagation()}>{item.tituloVisible}</Link></h2><Chip className={`company-status company-stage-chip ${opportunityStateClass(item.estado)}`} label={`${item.etapaNombre} · ${stateLabels[item.estado] ?? item.estado}`} size="small" /><OpportunityActions opportunity={item} onRemoved={() => onRemoved(item.id)} /></div>
       <dl className="company-record-fields">
         <div><dt>Embudo</dt><dd>{item.embudoNombre}{item.embudoActivo ? '' : ' (inactivo)'}</dd></div>
         <div><dt>Responsable</dt><dd>{item.responsableNombre}{item.responsableActivo ? '' : ' (inactivo)'}</dd></div>
@@ -69,6 +73,9 @@ function OpportunityListSkeleton() {
 export function OpportunitiesPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const openOpportunity = (id: number | string) => navigate(`/oportunidades/${id}`, {
+    state: { from: { to: `/oportunidades${location.search}`, label: 'Volver a oportunidades' } },
+  })
   const queryClient = useQueryClient()
   const [opportunityRemoved, setOpportunityRemoved] = useState(false)
   const [search, setSearch] = useState('')
@@ -127,7 +134,7 @@ export function OpportunitiesPage() {
       <div className="company-table-panel">
       {data.items.length === 0
         ? <section className="company-feedback" aria-labelledby="opportunities-empty-title"><SearchOff className="company-empty-icon" /><Typography component="h2" id="opportunities-empty-title" className="company-feedback-title">{filtered || page ? 'No hay oportunidades para estos filtros o página' : 'Todavía no hay oportunidades'}</Typography><Typography color="text.secondary">{filtered ? 'Probá con otra búsqueda o limpiá los filtros.' : 'Las oportunidades registradas van a aparecer en este listado.'}</Typography></section>
-        : <><div className="company-list-desktop"><Rows items={data.items} onOpen={(id) => navigate(`/oportunidades/${id}`)} onRemoved={onRemoved} /></div><div className="company-list-mobile"><Cards items={data.items} onOpen={(id) => navigate(`/oportunidades/${id}`)} onRemoved={onRemoved} /></div></>}
+        : <><div className="company-list-desktop"><Rows items={data.items} onOpen={openOpportunity} onRemoved={onRemoved} /></div><div className="company-list-mobile"><Cards items={data.items} onOpen={openOpportunity} onRemoved={onRemoved} /></div></>}
       <TablePagination component="div" count={Number(data.totalCount)} page={page} rowsPerPage={pageSize} rowsPerPageOptions={[10, 25, 50, 100]} onPageChange={(_, next) => setPage(next)} onRowsPerPageChange={(event) => { setPageSize(Number(event.target.value)); setPage(0) }} labelRowsPerPage="Oportunidades por página" labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`} getItemAriaLabel={(type) => ({ first: 'Primera página', last: 'Última página', next: 'Página siguiente', previous: 'Página anterior' })[type]} />
       </div>
     </>}

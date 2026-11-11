@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Controller, useForm, useWatch, type SubmitHandler } from 'react-hook-form'
-import { Link as RouterLink, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
 import { catalogQueryKeys, contactoQueryKeys, createOpportunity, empresaQueryKeys, getCatalogOptions, getCompany, getContact, getOpportunity, listContacts, listFunnels, listServices, listStages, opportunityQueryKeys, patchOpportunity, type CreateOportunidadRequest, type Oportunidad, type PatchOportunidadRequest } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
@@ -228,6 +228,8 @@ function initialValues(item: Oportunidad): EditValues {
 /** Edición de datos de una abierta: solo viaja lo que cambió, así las referencias históricas no se revalidan sin motivo. */
 function OpportunityEditEditor({ item }: { item: Oportunidad }) {
   const navigate = useNavigate()
+  const location = useLocation()
+  const backState = { from: location.state?.from }
   const queryClient = useQueryClient()
   const saving = useRef(false)
   const initial = useMemo(() => initialValues(item), [item])
@@ -253,7 +255,7 @@ function OpportunityEditEditor({ item }: { item: Oportunidad }) {
   }, onSuccess: (saved) => {
     queryClient.setQueryData(opportunityQueryKeys.detail(Number(saved.id)), saved)
     void queryClient.invalidateQueries({ queryKey: ['oportunidades'] })
-    navigate(back, { state: { confirmation: confirmationFor('Oportunidad', 'actualizada') } })
+    navigate(back, { state: { ...backState, confirmation: confirmationFor('Oportunidad', 'actualizada') } })
   }, onError: (error) => { saving.current = false; setError('root.serverError', { message: saveErrorMessage(error) }) } })
   const submit: SubmitHandler<EditValues> = (values) => { if (saving.current || mutation.isPending) return; saving.current = true; mutation.mutate(values) }
 
@@ -267,7 +269,7 @@ function OpportunityEditEditor({ item }: { item: Oportunidad }) {
   }
   const inactive = (name: string, active: boolean) => name + (active ? '' : ' (inactivo)')
 
-  return <RecordFormPage backLabel="Volver a la oportunidad" backTo={back} title="Editar oportunidad" description="Modificá los datos de la negociación. El responsable, la etapa y el cierre se gestionan con sus propias acciones." onSubmit={() => { if (!datePickerError) void handleSubmit(submit)() }} submitLabel="Guardar cambios" submitting={mutation.isPending} disabled={Boolean(datePickerError)} error={errors.root?.serverError?.message}>
+  return <RecordFormPage backLabel="Volver a la oportunidad" backTo={back} backState={backState} title="Editar oportunidad" description="Modificá los datos de la negociación. El responsable, la etapa y el cierre se gestionan con sus propias acciones." onSubmit={() => { if (!datePickerError) void handleSubmit(submit)() }} submitLabel="Guardar cambios" submitting={mutation.isPending} disabled={Boolean(datePickerError)} error={errors.root?.serverError?.message}>
     <FormSection title="Datos principales" description="El título permite encontrar rápidamente la oportunidad.">
       <TextField {...register('titulo')} label="Título" fullWidth error={Boolean(errors.titulo)} helperText={errors.titulo?.message ?? 'Opcional. Si lo dejás vacío se muestra el nombre de la empresa y/o el contacto.'} />
       <ReadOnlyValue label="Responsable" value={inactive(item.responsableNombre, item.responsableActivo)} description="Se cambia con la acción de reasignar." />

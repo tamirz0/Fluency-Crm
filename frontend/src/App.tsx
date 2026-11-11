@@ -41,7 +41,11 @@ function App() {
   const location = useLocation()
   const editingCompany = useMatch('/empresas/:idEmpresa/editar')
   const creatingCompany = useMatch('/empresas/nueva')
-  const background = editingCompany || creatingCompany ? location.state?.companyFormBackground as Location | undefined : undefined
+  const editingContact = useMatch('/contactos/:idContacto/editar')
+  const creatingContact = useMatch('/contactos/nuevo')
+  const background = editingCompany || creatingCompany
+    ? location.state?.companyFormBackground as Location | undefined
+    : editingContact || creatingContact ? location.state?.contactFormBackground as Location | undefined : undefined
   return <><Routes location={background ?? location}>
     <Route path="/" element={<LandingPage />} />
     <Route path="/login" element={<LoginPage />} />
@@ -67,9 +71,9 @@ function App() {
       <Route path="/empresas/:idEmpresa" element={<CompanyDetailPage />} />
       <Route path="/empresas/:idEmpresa/editar" element={<><CompanyDetailPage /><EditCompanyPage /></>} />
       <Route path="/contactos" element={<ContactsPage />} />
-      <Route path="/contactos/nuevo" element={<NewContactPage />} />
+      <Route path="/contactos/nuevo" element={<><ContactsPage /><NewContactPage /></>} />
       <Route path="/contactos/:idContacto" element={<ContactDetailPage />} />
-      <Route path="/contactos/:idContacto/editar" element={<EditContactPage />} />
+      <Route path="/contactos/:idContacto/editar" element={<><ContactDetailPage /><EditContactPage /></>} />
       <Route path="/oportunidades" element={<OpportunitiesPage />} />
       <Route path="/oportunidades/nueva" element={<NewOpportunityPage />} />
       <Route path="/oportunidades/:idOportunidad" element={<OpportunityDetailPage />} />
@@ -86,6 +90,8 @@ function App() {
     {background && <Routes><Route element={<ProtectedRoute />}><Route element={<RequireCommercial />}>
       <Route path="/empresas/nueva" element={<NewCompanyPage />} />
       <Route path="/empresas/:idEmpresa/editar" element={<EditCompanyPage />} />
+      <Route path="/contactos/nuevo" element={<NewContactPage />} />
+      <Route path="/contactos/:idContacto/editar" element={<EditContactPage />} />
     </Route></Route></Routes>}
   </>
 }
