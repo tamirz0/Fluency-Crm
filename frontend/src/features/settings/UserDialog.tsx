@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { changeUserPassword, createUser, patchUser, setUserActive, usuarioQueryKeys, type AuthUser } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
+import '../companies/companies.css'
 export type UserAction = 'create' | 'edit' | 'password' | 'active'
 function schema(mode: UserAction) {
   return z.object({ nombre: z.string(), apellido: z.string(), correo: z.string(), username: z.string(), roles: z.array(z.string()), password: z.string() }).superRefine((v, ctx) => {
@@ -45,7 +46,7 @@ export function UserDialog({ mode, user, roles, onClose, onSaved }: { mode: User
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'No pudimos guardar los cambios.') }
     finally { pending.current = false }
   }
-  return <Dialog open onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm" aria-labelledby="user-dialog-title">
+  return <Dialog open onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm" aria-labelledby="user-dialog-title" slotProps={{ paper: { className: 'record-dialog fluency-shell-type' } }}>
     <DialogTitle id="user-dialog-title">{title}</DialogTitle>
     <Box component="form" noValidate onSubmit={event => { void handleSubmit(save)(event) }}>
       <DialogContent sx={{ display: 'grid', gap: 2, pt: 1 }}>

@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createService, patchService, setServiceActive, getCatalogOptions, listServiceTypes, catalogQueryKeys, type Servicio, type ServicioRequest } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
+import '../companies/companies.css'
 
 export type ServiceAction = 'create' | 'edit' | 'active'
 const schema = z.object({
@@ -53,7 +54,7 @@ export function ServiceDialog({ mode, item, onClose, onSaved }: { mode: ServiceA
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'No pudimos guardar los cambios.') }
     finally { pending.current = false }
   }
-  return <Dialog open onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm" aria-labelledby="service-dialog-title">
+  return <Dialog open onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm" aria-labelledby="service-dialog-title" slotProps={{ paper: { className: 'record-dialog fluency-shell-type' } }}>
     <DialogTitle id="service-dialog-title">{title}</DialogTitle>
     <Box component="form" noValidate onSubmit={event => { if (mode === 'active') { event.preventDefault(); void save() } else void handleSubmit(save)(event) }}>
       <DialogContent sx={{ display: 'grid', gap: 2, pt: 1 }}>
@@ -65,13 +66,13 @@ export function ServiceDialog({ mode, item, onClose, onSaved }: { mode: ServiceA
           <TextField {...register('precioReferencia')} label="Precio de referencia" required slotProps={{ htmlInput: { inputMode: 'decimal' } }} disabled={isSubmitting || isLoading} error={!!errors.precioReferencia} helperText={errors.precioReferencia?.message ?? 'Importe total. Cero es válido; hasta dos decimales.'} />
           <TextField {...register('duracionHoras')} label="Duración en horas" disabled={isSubmitting || isLoading} error={!!errors.duracionHoras} helperText={errors.duracionHoras?.message} />
           {types.error && <Alert severity="error" action={<Button onClick={() => void types.refetch()}>Reintentar tipos</Button>}>{types.error.message}</Alert>}
-          <Controller name="idTipoServicio" control={control} render={({ field: input }) => <TextField {...input} select fullWidth required label="Tipo de servicio" disabled={isSubmitting || isLoading || types.isPending || !!types.error} error={!!errors.idTipoServicio} helperText={errors.idTipoServicio?.message ?? (types.isPending ? 'Cargando tipos…' : 'Los tipos nuevos se agregan en Catálogos.')}>
+          <Controller name="idTipoServicio" control={control} render={({ field: input }) => <TextField {...input} select slotProps={{ select: { MenuProps: { slotProps: { paper: { className: 'record-dialog-options fluency-shell-type' } } } } }} fullWidth required label="Tipo de servicio" disabled={isSubmitting || isLoading || types.isPending || !!types.error} error={!!errors.idTipoServicio} helperText={errors.idTipoServicio?.message ?? (types.isPending ? 'Cargando tipos…' : 'Los tipos nuevos se agregan en Catálogos.')}>
             {item && !types.data?.some(x => x.id === item.tipo.id) && <MenuItem value={String(item.tipo.id)}>{item.tipo.descripcion}</MenuItem>}
             {types.data?.filter(x => x.activo || String(x.id) === defaults.idTipoServicio).map(x => <MenuItem key={x.id} value={String(x.id)}>{x.descripcion}{x.activo ? '' : ' (Inactivo)'}</MenuItem>)}
           </TextField>} />
           {([{ field: 'idModalidad', label: 'Modalidad', query: modalities, reference: item?.modalidad }] as const).map(({ field, label, query, reference }) => <Box key={field}>
             {query.error && <Alert severity="error" action={<Button onClick={() => void query.refetch()}>Reintentar {label}</Button>}>{query.error.message}</Alert>}
-            <Controller name={field} control={control} render={({ field: input }) => <TextField {...input} select fullWidth required label={label} disabled={isSubmitting || isLoading || query.isPending || !!query.error} error={!!errors.idModalidad} helperText={errors.idModalidad?.message ?? (query.isPending ? 'Cargando opciones…' : 'Las modalidades nuevas se agregan en Catálogos.')}>
+            <Controller name={field} control={control} render={({ field: input }) => <TextField {...input} select slotProps={{ select: { MenuProps: { slotProps: { paper: { className: 'record-dialog-options fluency-shell-type' } } } } }} fullWidth required label={label} disabled={isSubmitting || isLoading || query.isPending || !!query.error} error={!!errors.idModalidad} helperText={errors.idModalidad?.message ?? (query.isPending ? 'Cargando opciones…' : 'Las modalidades nuevas se agregan en Catálogos.')}>
               {reference && !query.data?.some(x => x.id === reference.id) && <MenuItem value={String(reference.id)}>{reference.descripcion}{reference.activo ? '' : ' (Inactivo)'}</MenuItem>}
               {query.data?.map(x => <MenuItem key={x.id} value={String(x.id)}>{x.descripcion}</MenuItem>)}
             </TextField>} />
@@ -79,7 +80,7 @@ export function ServiceDialog({ mode, item, onClose, onSaved }: { mode: ServiceA
           <Controller name="conNivel" control={control} render={({ field: input }) => <FormControlLabel label={levelRequired ? 'Asociado a un nivel de inglés (obligatorio en las clases)' : 'Asociado a un nivel de inglés'} control={<Checkbox checked={showLevel} onChange={event => input.onChange(event.target.checked)} disabled={isSubmitting || isLoading || levelRequired} />} />} />
           {showLevel && <Box>
             {levels.error && <Alert severity="error" action={<Button onClick={() => void levels.refetch()}>Reintentar Nivel de inglés</Button>}>{levels.error.message}</Alert>}
-            <Controller name="idNivel" control={control} render={({ field: input }) => <TextField {...input} select fullWidth required label="Nivel de inglés" disabled={isSubmitting || isLoading || levels.isPending || !!levels.error} error={!!errors.idNivel} helperText={errors.idNivel?.message ?? (levels.isPending ? 'Cargando opciones…' : undefined)}>
+            <Controller name="idNivel" control={control} render={({ field: input }) => <TextField {...input} select slotProps={{ select: { MenuProps: { slotProps: { paper: { className: 'record-dialog-options fluency-shell-type' } } } } }} fullWidth required label="Nivel de inglés" disabled={isSubmitting || isLoading || levels.isPending || !!levels.error} error={!!errors.idNivel} helperText={errors.idNivel?.message ?? (levels.isPending ? 'Cargando opciones…' : undefined)}>
               <MenuItem value="">Elegir nivel</MenuItem>
               {item?.nivel && !levels.data?.some(x => x.id === item.nivel!.id) && <MenuItem value={String(item.nivel.id)}>{item.nivel.descripcion}{item.nivel.activo ? '' : ' (Inactivo)'}</MenuItem>}
               {levels.data?.map(x => <MenuItem key={x.id} value={String(x.id)}>{x.descripcion}</MenuItem>)}

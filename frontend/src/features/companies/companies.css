@@ -257,7 +257,9 @@
 .companies-page .MuiTablePagination-spacer { display: none; }
 
 .companies-list-surface,
-.company-actions-menu {
+.company-actions-menu,
+.record-dialog,
+.record-dialog-options {
   --company-bg: #0b0f17;
   --company-panel: #0e131f;
   --company-raised: #121826;
@@ -417,6 +419,28 @@
 .company-table-panel :is(.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows) { font-size: 12px; }
 .companies-list-page .company-feedback { max-width: none; padding-inline: 16px; align-items: center; text-align: center; }
 .companies-list-page .company-feedback-title { font-size: 18px !important; }
+
+.companies-list-page .record-actions-cell { width: 1%; }
+.companies-list-page .record-actions-cell .company-actions { display: inline-flex; }
+.companies-list-page .company-new-button.Mui-disabled { background: #1e293b; color: var(--text-muted); }
+
+.record-dialog.MuiPaper-root,
+.record-dialog-options.MuiPaper-root {
+  border: 1px solid var(--company-divider);
+  border-radius: 12px;
+  background: var(--company-panel);
+  color: var(--text-main);
+}
+.record-dialog .MuiDialogTitle-root { font-weight: 650; }
+.record-dialog .MuiDialogContent-root { min-width: 0; padding-top: 12px; }
+.record-dialog .MuiDialogActions-root { padding: 12px 24px; border-top: 1px solid var(--company-divider); background: #1d2026; }
+.record-dialog :is(.MuiInputBase-root, fieldset:not(.MuiOutlinedInput-notchedOutline)) { background: #151b2b; }
+.record-dialog .MuiInputBase-root { color: var(--text-main); font-family: inherit; }
+.record-dialog :is(.MuiInputLabel-root, .MuiFormLabel-root, .MuiFormHelperText-root) { font-family: inherit; }
+.record-dialog fieldset:not(.MuiOutlinedInput-notchedOutline) { min-width: 0; margin: 0; }
+.record-dialog .MuiOutlinedInput-notchedOutline { border-color: #536178; }
+.record-dialog .MuiButton-contained:not(.Mui-disabled) { background: #2563eb; color: #fff; }
+.record-dialog .MuiButton-contained:not(.Mui-disabled):hover { background: #1d4ed8; }
 
 @media (min-width: 900px) {
   .companies-list-page .company-skeleton-list { display: none; }

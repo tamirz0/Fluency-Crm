@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { createCatalogOption, patchCatalogOption, setCatalogOptionActive, type CatalogOption, type ConfigurableCatalog } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
+import '../companies/companies.css'
 
 export type CatalogAction = 'create' | 'edit' | 'active'
 const schema = z.object({ label: z.string().trim().min(1, 'El campo es obligatorio.').max(100, 'Máximo 100 caracteres.') })
@@ -29,7 +30,7 @@ export function CatalogDialog({ catalog, mode, item, onClose, onSaved }: { catal
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'No pudimos guardar los cambios.') }
     finally { pending.current = false }
   }
-  return <Dialog open onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm" aria-labelledby="catalog-dialog-title">
+  return <Dialog open onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm" aria-labelledby="catalog-dialog-title" slotProps={{ paper: { className: 'record-dialog fluency-shell-type' } }}>
     <DialogTitle id="catalog-dialog-title">{title}</DialogTitle>
     <Box component="form" noValidate onSubmit={event => { void handleSubmit(save)(event) }}>
       <DialogContent sx={{ display: 'grid', gap: 2, pt: 1 }}>

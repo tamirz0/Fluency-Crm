@@ -20,11 +20,11 @@ function AssignCourseDialog({ student, onClose }: { student: Alumno; onClose: ()
     mutationFn: () => addStudentsToCourse(Number(course), [Number(student.id)]),
     onSuccess: async () => { await client.invalidateQueries({ queryKey: studentQueryKeys.all }); await client.invalidateQueries({ queryKey: courseQueryKeys.all }); onClose() },
   })
-  return <Dialog open onClose={save.isPending ? undefined : onClose} fullWidth maxWidth="xs" aria-labelledby="assign-course-title">
+  return <Dialog open onClose={save.isPending ? undefined : onClose} fullWidth maxWidth="xs" aria-labelledby="assign-course-title" slotProps={{ paper: { className: 'record-dialog fluency-shell-type' } }}>
     <DialogTitle id="assign-course-title">Asignar curso</DialogTitle>
     <DialogContent sx={{ pt: 1 }}>
       {save.isError && <Alert severity="error" sx={{ mb: 2 }}>{save.error.message}</Alert>}
-      <TextField select fullWidth autoFocus label="Curso" value={course} onChange={event => setCourse(event.target.value)}
+      <TextField select slotProps={{ select: { MenuProps: { slotProps: { paper: { className: 'record-dialog-options fluency-shell-type' } } } } }} fullWidth autoFocus label="Curso" value={course} onChange={event => setCourse(event.target.value)}
         error={courses.isError} helperText={courses.isError ? courses.error.message : courses.data?.items.length === 0 ? `No hay cursos de nivel ${student.nivel.descripcion}. Creá uno desde Cursos.` : `Cursos de nivel ${student.nivel.descripcion}.`}>
         {courses.data?.items.map(item => <MenuItem key={item.id} value={String(item.id)}>{item.nombre} · {item.profesor.descripcion}</MenuItem>)}
       </TextField>

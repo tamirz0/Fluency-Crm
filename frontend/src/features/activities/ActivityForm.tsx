@@ -88,8 +88,8 @@ export function ActivityDialog({ context, activity, open, onClose, onDone }: { c
 }
 
 /** Botón + editor listos para montar en las fichas de empresa, contacto y oportunidad. */
-export function RegisterActivityButton({ context, onRegistered }: { context: ActivityContext; onRegistered?: () => void }) {
-  const [open, setOpen] = useState(false)
+export function RegisterActivityButton({ context, onRegistered, openOnMount = false }: { context: ActivityContext; onRegistered?: () => void; openOnMount?: boolean }) {
+  const [open, setOpen] = useState(openOnMount)
   return <>
     <Button variant="outlined" onClick={() => setOpen(true)}>Registrar actividad</Button>
     <ActivityDialog context={context} open={open} onClose={() => setOpen(false)} onDone={() => { setOpen(false); onRegistered?.() }} />
