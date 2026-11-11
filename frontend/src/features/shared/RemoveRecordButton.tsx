@@ -13,15 +13,14 @@ export function RemoveRecordDialog({ noun, name, remove, onRemoved, onClose }: R
   const mutation = useMutation({ mutationFn: remove, onSuccess: onRemoved })
   const close = () => { if (!mutation.isPending) onClose() }
   const message = mutation.error instanceof ApiRequestError ? mutation.error.message : 'No pudimos dar de baja el registro. Intentá de nuevo.'
-  const isOpportunity = noun === 'oportunidad'
   const title = <DialogTitle id={titleId}>Dar de baja {noun === 'empresa' ? 'la empresa' : noun === 'contacto' ? 'el contacto' : noun === 'actividad' ? 'la actividad' : 'la oportunidad'}</DialogTitle>
-  return <Dialog open onClose={close} aria-labelledby={titleId} fullWidth={isOpportunity}
-    slotProps={isOpportunity ? { paper: { className: 'commercial-dialog commercial-dialog--danger' } } : undefined}>
-      {isOpportunity ? <header className="commercial-dialog-header">
+  return <Dialog open onClose={close} aria-labelledby={titleId} fullWidth maxWidth="sm"
+    slotProps={{ paper: { className: 'commercial-dialog commercial-dialog--danger' } }}>
+      <header className="commercial-dialog-header">
         <span className="commercial-dialog-icon" aria-hidden="true"><ArchiveOutlined /></span>
         {title}
-      </header> : title}
-      <DialogContent className={isOpportunity ? 'commercial-dialog-content' : undefined}>
+      </header>
+      <DialogContent className="commercial-dialog-content">
         <DialogContentText>Vas a dar de baja «{name}». La baja es definitiva y no se puede restaurar. {noun === 'oportunidad' ? 'Funciona también si está cerrada; su historial de etapas y sus actividades se conservan.' : noun === 'actividad' ? 'No modifica la oportunidad ni los clientes asociados.' : 'Las oportunidades y actividades anteriores conservan su referencia.'}</DialogContentText>
         {mutation.isError && <Alert severity="error" sx={{ mt: 2 }}>{message}</Alert>}
       </DialogContent>

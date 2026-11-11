@@ -1,10 +1,11 @@
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField, Typography } from '@mui/material'
-import { Check, Close } from '@mui/icons-material'
+import { Check, Close, TaskAltOutlined } from '@mui/icons-material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { getCatalogOptions, loseOpportunity, opportunityQueryKeys, winOpportunity, type Oportunidad } from '../../api/client'
 import { saveErrorMessage } from '../shared/formUtils'
 import '../funnel/funnel.css'
+import '../shared/commercial-dialog.css'
 
 export type CloseResult = 'GANADA' | 'PERDIDA'
 
@@ -12,7 +13,7 @@ const maxValue = 9999999999.99
 const parseValue = (text: string) => Number(text.trim().replace(',', '.'))
 const validValue = (text: string) => /^\d+([.,]\d{1,2})?$/.test(text.trim()) && parseValue(text) <= maxValue
 const today = () => { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}` }
-const closeMenuProps = { slotProps: { paper: { className: 'funnel-close-options' } } }
+const closeMenuProps = { slotProps: { paper: { className: 'commercial-dialog-options' } } }
 
 /**
  * Cierra una abierta como ganada (fecha y valor final, cero válido) o perdida (fecha y motivo activo). Es el único camino a las
@@ -52,14 +53,19 @@ export function CloseOpportunityDialog({ item, initialResult, open, onClose, onD
     if (!result || !date || (result === 'GANADA' && !validValue(value)) || (result === 'PERDIDA' && !reason)) return
     mutation.mutate()
   }
-  return <Dialog open={open} onClose={close} fullWidth maxWidth="sm" aria-labelledby="close-opportunity-title" slotProps={{ paper: { className: 'funnel-close-dialog' } }}>
-    <DialogTitle id="close-opportunity-title">Cerrar oportunidad</DialogTitle>
-    <DialogContent className="funnel-dialog-content">
-      <div className="funnel-close-intro">
-        <Typography className="funnel-selected-title">{item.tituloVisible}</Typography>
+  return <Dialog open={open} onClose={close} fullWidth maxWidth="sm" aria-labelledby="close-opportunity-title" slotProps={{ paper: { className: 'commercial-dialog' } }}>
+    <header className="commercial-dialog-header">
+      <span className="commercial-dialog-icon" aria-hidden="true"><TaskAltOutlined /></span>
+      <div>
+        <DialogTitle id="close-opportunity-title">Cerrar oportunidad</DialogTitle>
+        <Typography className="commercial-dialog-context">{item.tituloVisible}</Typography>
+      </div>
+    </header>
+    <DialogContent className="commercial-dialog-content">
+      {initialResult && <div className="funnel-close-intro">
         {initialResult === 'GANADA' && <span className="funnel-result is-won"><Check />Ganada</span>}
         {initialResult === 'PERDIDA' && <span className="funnel-result is-lost"><Close />Perdida</span>}
-      </div>
+      </div>}
       {!initialResult && <TextField select fullWidth required label="Resultado" value={result} onChange={event => setResult(event.target.value as CloseResult)} disabled={mutation.isPending} slotProps={{ select: { MenuProps: closeMenuProps } }}>
           <MenuItem value="GANADA">Ganada</MenuItem>
           <MenuItem value="PERDIDA">Perdida</MenuItem>

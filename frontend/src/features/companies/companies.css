@@ -428,19 +428,42 @@
 .record-dialog-options.MuiPaper-root {
   border: 1px solid var(--company-divider);
   border-radius: 12px;
-  background: var(--company-panel);
+  background: #121827;
   color: var(--text-main);
+  color-scheme: dark;
+  font-family: Inter, system-ui, sans-serif;
 }
-.record-dialog .MuiDialogTitle-root { font-weight: 650; }
-.record-dialog .MuiDialogContent-root { min-width: 0; padding-top: 12px; }
-.record-dialog .MuiDialogActions-root { padding: 12px 24px; border-top: 1px solid var(--company-divider); background: #1d2026; }
-.record-dialog :is(.MuiInputBase-root, fieldset:not(.MuiOutlinedInput-notchedOutline)) { background: #151b2b; }
-.record-dialog .MuiInputBase-root { color: var(--text-main); font-family: inherit; }
-.record-dialog :is(.MuiInputLabel-root, .MuiFormLabel-root, .MuiFormHelperText-root) { font-family: inherit; }
+.record-dialog .MuiDialogTitle-root {
+  padding: 20px 24px 14px;
+  border-bottom: 1px solid var(--company-divider);
+  font: 700 20px/28px 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+.record-dialog :is(.MuiTypography-root, .MuiButton-root) { font-family: Inter, system-ui, sans-serif; }
+.record-dialog .MuiDialogContent-root { display: grid; gap: 16px; min-width: 0; padding: 18px 24px; }
+.record-dialog .MuiDialogActions-root { flex-wrap: wrap; gap: 8px; padding: 12px 24px; border-top: 1px solid var(--company-divider); background: #151b2b; }
+.record-dialog .MuiDialogActions-root > .MuiButton-root { margin: 0; min-height: 44px; padding-inline: 14px; border-radius: 8px; text-transform: none; }
+.record-dialog .MuiDialogActions-root > .MuiButton-text:not(.Mui-disabled) { color: #adc6ff; }
+.record-dialog .MuiDialogActions-root > .MuiButton-contained:not(.Mui-disabled) { background: #4d8eff; color: #00285d; }
+.record-dialog .MuiDialogActions-root > .MuiButton-contained:not(.Mui-disabled):hover { background: #72a5ff; }
+.record-dialog :is(.MuiInputBase-root, fieldset:not(.MuiOutlinedInput-notchedOutline)) { background: #0b1120; }
+.record-dialog .MuiInputBase-root { min-height: 46px; border-radius: 8px; color: var(--text-main); font-family: inherit; }
+.record-dialog .MuiInputLabel-root {
+  position: static;
+  transform: none;
+  max-width: 100%;
+  margin-bottom: 6px;
+  line-height: 20px;
+  font-weight: 500;
+}
+.record-dialog :is(.MuiFormLabel-root, .MuiFormHelperText-root) { font-family: inherit; }
 .record-dialog fieldset:not(.MuiOutlinedInput-notchedOutline) { min-width: 0; margin: 0; }
-.record-dialog .MuiOutlinedInput-notchedOutline { border-color: #536178; }
-.record-dialog .MuiButton-contained:not(.Mui-disabled) { background: #2563eb; color: #fff; }
-.record-dialog .MuiButton-contained:not(.Mui-disabled):hover { background: #1d4ed8; }
+.record-dialog .MuiOutlinedInput-root:not(.Mui-focused):not(.Mui-error):not(.Mui-disabled) .MuiOutlinedInput-notchedOutline { border-color: transparent; }
+.record-dialog .MuiOutlinedInput-root:not(.Mui-focused):not(.Mui-error):not(.Mui-disabled):hover .MuiOutlinedInput-notchedOutline { border-color: #536178; }
+.record-dialog .MuiOutlinedInput-notchedOutline legend { width: 0; padding: 0; }
+.record-dialog-options .MuiMenuItem-root { color: #dde2f8; font-family: Inter, system-ui, sans-serif; font-size: 14px; }
+.record-dialog-options .MuiMenuItem-root.Mui-selected { background: #263650; }
+.record-dialog-options .MuiMenuItem-root:hover,
+.record-dialog-options .MuiMenuItem-root.Mui-focusVisible { background: #20293e; }
 
 @media (min-width: 900px) {
   .companies-list-page .company-skeleton-list { display: none; }

@@ -3,7 +3,7 @@ main:has(> .funnel-page) {
   background: #0b0f17;
 }
 
-.funnel-page, .funnel-close-dialog.MuiPaper-root {
+.funnel-page {
   --funnel-panel: #0e131f;
   --funnel-card: #151b2b;
   --funnel-line: #2a3446;
@@ -41,10 +41,8 @@ main:has(> .funnel-page) {
 .funnel-filters > * { flex: 1 1 160px; min-width: 0; }
 .funnel-filters > .funnel-search { flex-basis: min(285px, 100%); }
 .funnel-filters > .MuiButton-root { flex: 0 0 auto; margin-inline-start: auto; }
-.funnel-filters .MuiOutlinedInput-root,
-.funnel-close-dialog .MuiOutlinedInput-root { font-family: inherit; background-color: var(--funnel-card); }
-.funnel-filters .MuiOutlinedInput-notchedOutline,
-.funnel-close-dialog .MuiOutlinedInput-notchedOutline { border-color: #536178; }
+.funnel-filters .MuiOutlinedInput-root { font-family: inherit; background-color: var(--funnel-card); }
+.funnel-filters .MuiOutlinedInput-notchedOutline { border-color: #536178; }
 .funnel-search .MuiSvgIcon-root { margin-inline-end: 9px; color: var(--funnel-muted); }
 .funnel-catalog-message { margin-bottom: 20px; }
 .funnel-empty-summary { margin: 0 0 18px; color: var(--funnel-muted); }
@@ -130,16 +128,17 @@ main:has(> .funnel-page) {
 .funnel-skeleton-column span { height: 70px; border-radius: 8px; background: var(--funnel-card); }
 .funnel-skeleton-column span:first-child { width: 65%; height: 18px; }
 
-.funnel-close-dialog.MuiPaper-root { border: 1px solid var(--funnel-line); border-radius: 12px; background: var(--funnel-panel); }
-.funnel-close-dialog .MuiDialogTitle-root, .funnel-close-dialog .MuiTypography-root,
-.funnel-close-dialog .MuiInputLabel-root, .funnel-close-dialog .MuiButton-root,
-.funnel-close-options.MuiPaper-root .MuiMenuItem-root { font-family: Inter, system-ui, sans-serif; }
-.funnel-close-dialog .MuiDialogTitle-root { padding-bottom: 8px; font-weight: 650; }
-.funnel-close-intro { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px; border: 1px solid var(--funnel-line); border-radius: 8px; background: var(--funnel-card); }
+.funnel-close-intro {
+  --funnel-won: #6ee7b7;
+  --funnel-lost: #fda4af;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px;
+  border: 1px solid #2f3445;
+  border-radius: 8px;
+  background: #191f2f;
+}
 .funnel-result { padding: 4px 8px; border-radius: 6px; font-size: .8rem; font-weight: 650; }
-.funnel-close-dialog .MuiDialogActions-root { padding: 12px 24px; border-top: 1px solid var(--funnel-line); background: #1d2026; }
-.funnel-close-options.MuiPaper-root { background: #151b2b; border: 1px solid #2a3446; }
-
-.funnel-dialog-content { display: grid; gap: 18px; padding-top: 10px !important; }
-.funnel-selected-title { color: var(--text-main); font-size: 1.05rem !important; font-weight: 650 !important; }
 .funnel-no-alternatives { color: #aabbc1; font-size: .92rem !important; }
