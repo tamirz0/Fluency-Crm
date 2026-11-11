@@ -235,7 +235,7 @@ describe('altas y ediciones', () => {
     return { actor, dialog: within(await screen.findByRole('dialog', { name: 'Nueva oportunidad' })) }
   }
 
-  it('alta rápida desde una empresa: con un solo servicio solo hay que confirmar y viaja solo embudo y empresa', async () => {
+  it('alta rápida desde una empresa: con un solo servicio basta confirmar y se envía un título inicial', async () => {
     const { actor, dialog } = await openQuick('/empresas/4')
     expect(await dialog.findByRole('combobox', { name: /Servicio/ })).toBeTruthy()
     await waitFor(() => expect((dialog.getByRole('button', { name: 'Crear oportunidad' }) as HTMLButtonElement).disabled).toBe(false))
@@ -243,7 +243,7 @@ describe('altas y ediciones', () => {
     await actor.click(dialog.getByRole('button', { name: 'Crear oportunidad' }))
     expect(await screen.findByText('Oportunidad creada')).toBeTruthy()
     expect(opportunityPosts()).toHaveLength(1)
-    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 1, idServicio: 2, idEmpresa: 4 })
+    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 1, idServicio: 2, idEmpresa: 4, titulo: 'Acme Idiomas' })
   })
 
   it('alta rápida desde un contacto envía también la empresa del contacto', async () => {
@@ -251,7 +251,7 @@ describe('altas y ediciones', () => {
     await waitFor(() => expect((dialog.getByRole('button', { name: 'Crear oportunidad' }) as HTMLButtonElement).disabled).toBe(false))
     await actor.click(dialog.getByRole('button', { name: 'Crear oportunidad' }))
     await screen.findByText('Oportunidad creada')
-    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 1, idServicio: 2, idEmpresa: 4, idContacto: 14 })
+    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 1, idServicio: 2, idEmpresa: 4, idContacto: 14, titulo: 'Pérez, Lucía' })
   })
 
   it('alta rápida: con varios servicios hay que elegir uno y el embudo se deriva de él', async () => {
@@ -266,7 +266,7 @@ describe('altas y ediciones', () => {
     await waitFor(() => expect((dialog.getByRole('button', { name: 'Crear oportunidad' }) as HTMLButtonElement).disabled).toBe(false))
     await actor.click(dialog.getByRole('button', { name: 'Crear oportunidad' }))
     await screen.findByText('Oportunidad creada')
-    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 3, idServicio: 5, idEmpresa: 4 })
+    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 3, idServicio: 5, idEmpresa: 4, titulo: 'Acme Idiomas' })
   })
 
   it('alta rápida: si el servicio lo admiten varios embudos activos pide elegir el embudo', async () => {
@@ -276,7 +276,7 @@ describe('altas y ediciones', () => {
     await actor.click(embudo); await actor.click(await screen.findByRole('option', { name: 'Embudo Cursos' }))
     await actor.click(dialog.getByRole('button', { name: 'Crear oportunidad' }))
     await screen.findByText('Oportunidad creada')
-    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 3, idServicio: 2, idEmpresa: 4 })
+    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 3, idServicio: 2, idEmpresa: 4, titulo: 'Acme Idiomas' })
   })
 
   it('alta rápida: muestra el rechazo del servidor sin cerrar el diálogo', async () => {

@@ -17,6 +17,7 @@ let listHandler: (request: Request) => Response | Promise<Response>
 let writeHandler: (request: Request) => Response | Promise<Response>
 let removeHandler: () => Response
 let permissions: string[]
+let activities: { fechaHora: string }[]
 let authenticated = true
 function renderApp(path = '/empresas') {
   window.history.pushState({}, '', path)
@@ -26,6 +27,7 @@ function requestCalls(method: string) { return vi.mocked(fetch).mock.calls.map((
 beforeEach(() => {
   sessionStorage.clear(); authenticated = true; company = { ...firstCompany }
   permissions = [...user.permisos]
+  activities = []
   removeHandler = () => { listHandler = () => json(page([])); return new Response(null, { status: 204 }) }
   states = [{ id: 1, descripcion: 'Potencial', activo: true }, { id: 2, descripcion: 'Cliente', activo: true }]
   listHandler = () => json(page([company]))
@@ -41,6 +43,13 @@ beforeEach(() => {
     if ((path === '/empresas' && request.method === 'POST') || (path === '/empresas/4' && request.method === 'PATCH')) return writeHandler(request)
     if (path === '/empresas/4' && request.method === 'DELETE') return removeHandler()
     if (path === '/empresas/4') return json(company)
+    if (path === '/empresas/4/historial-comercial') return json(page([{
+      tipo: 'TRANSICION', idOrigen: 1, fechaHora: '2026-11-05T15:30:00Z', usuarioNombre: 'María Gómez', etapaNueva: 'Primer contacto',
+    }]))
+    if (path === '/contactos' && url.searchParams.get('idEmpresa') === '4') return json(page([{
+      id: 15, nombre: 'Mariana', apellido: 'Ramos', cargo: 'Directora de RRHH', correo: 'mariana@example.invalid',
+    }]))
+    if (path === '/actividades' && url.searchParams.get('idEmpresa') === '4' && url.searchParams.get('pageSize') === '1') return json(page(activities))
     return json({ title: 'No existe la empresa.' }, 404)
   }))
 })
@@ -141,6 +150,19 @@ describe('empresas CP08 con sesión real', () => {
     expect(screen.getByText(new Date(company.fechaCreacion).toLocaleString('es-AR'))).toBeTruthy()
     expect(screen.getByText(/Primera línea\s+Segunda línea/)).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Editar empresa' })).toBeTruthy()
+  })
+  it('muestra los contactos vinculados y omite la última actividad si solo hubo cambios de etapa', async () => {
+    renderApp('/empresas/4')
+    const contact = await screen.findByRole('link', { name: 'Mariana Ramos' })
+    expect(contact.getAttribute('href')).toBe('/contactos/15')
+    expect(await screen.findByRole('heading', { name: /Cambio de etapa/ })).toBeTruthy()
+    expect(screen.queryByText('Última actividad registrada')).toBeNull()
+  })
+  it('muestra la fecha de la última actividad real aunque el historial tenga una transición posterior', async () => {
+    activities = [{ fechaHora: '2026-11-03T12:00:00Z' }]
+    renderApp('/empresas/4')
+    const latest = await screen.findByText('Última actividad registrada')
+    expect(latest.querySelector('time')?.dateTime).toBe(activities[0].fechaHora)
   })
   it('no consulta IDs inválidos y muestra 404 como registro inexistente', async () => {
     renderApp('/empresas/0'); expect(await screen.findByRole('heading', { name: 'No encontramos esa empresa' })).toBeTruthy(); expect(requestCalls('GET')).toHaveLength(0)
