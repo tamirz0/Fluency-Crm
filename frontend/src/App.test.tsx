@@ -145,7 +145,12 @@ it.each(['/empresas', '/empresas/nueva'])('habilita empresas compartidas desde %
     return normal(r, init)
   })
   mount(path)
-  await screen.findByRole('heading', { name: path.endsWith('/nueva') ? 'Nueva empresa' : 'Empresas' })
+  if (path.endsWith('/nueva')) {
+    await screen.findByRole('dialog', { name: 'Nueva empresa' })
+    expect(screen.queryByRole('link', { name: 'Empresas' })).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+  }
+  await screen.findByRole('heading', { name: 'Empresas' })
   expect(screen.getByRole('link', { name: 'Empresas' }).getAttribute('aria-current')).toBe('page')
   expect(vi.mocked(fetch).mock.calls.some(([r]) => new URL((r as Request).url).pathname.startsWith('/api/catalogos/'))).toBe(true)
 })
@@ -161,7 +166,12 @@ it.each(['/contactos', '/contactos/nuevo'])('habilita contactos compartidos desd
     return normal(r, init)
   })
   mount(path)
-  await screen.findByRole('heading', { name: path.endsWith('/nuevo') ? 'Nuevo contacto' : 'Contactos' })
+  if (path.endsWith('/nuevo')) {
+    await screen.findByRole('dialog', { name: 'Nuevo contacto' })
+    expect(screen.queryByRole('link', { name: 'Contactos' })).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+  }
+  await screen.findByRole('heading', { name: 'Contactos' })
   expect(screen.getByRole('link', { name: 'Contactos' }).getAttribute('aria-current')).toBe('page')
   expect(vi.mocked(fetch).mock.calls.some(([r]) => new URL((r as Request).url).pathname.startsWith('/api/catalogos/'))).toBe(true)
 })

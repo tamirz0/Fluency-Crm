@@ -9,7 +9,7 @@ import App from '../test/LegacyApp'
 import { AuthProvider } from '../test/LegacyAuthProvider'
 import { SESSION_KEY } from '../auth/session'
 
-const user = { id: 7, nombre: 'María', apellido: 'Gómez', correo: 'maria@example.com', username: 'maria', activo: true }
+const user = { id: 7, nombre: 'María', apellido: 'Gómez', correo: 'maria@example.com', username: 'maria', activo: true, permisos: ['GestionarClientes'] }
 const common = { estadoDescripcion: 'Cliente', estadoActivo: true, idEstado: 1, origenActivo: true, idResponsable: 7, responsableNombre: 'María Gómez', responsableActivo: true, fechaCreacion: '2026-10-31T12:00:00Z', activo: true, observaciones: null }
 const company = { ...common, id: 4, razonSocial: 'Acme Idiomas', cuit: null, industria: null, correo: null, telefono: null, direccion: null, idOrigen: null }
 const contact = { ...common, id: 14, nombre: 'Lucía', apellido: 'Pérez', documento: null, cargo: null, correo: 'lucia@example.com', telefono: null, idOrigen: null, idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas' }
@@ -29,7 +29,7 @@ function mockApi(resource: 'empresas' | 'contactos' | 'oportunidades', record: u
     const request = input as Request; const { pathname } = new URL(request.url)
     if (pathname === '/api/auth/csrf') return json({ requestToken: 'fixture-csrf' })
     if (pathname === `/api/${resource}/${(record as { id: number }).id}`) return request.method === 'DELETE' ? removal() : json(record)
-    if (pathname.startsWith('/api/catalogos/')) return json([])
+    if (pathname.startsWith('/api/catalogos/') || pathname === '/api/embudos/1/etapas') return json([])
     return json(emptyPage)
   })
 }
@@ -52,7 +52,8 @@ describe.each([
     mockApi(resource, record, () => new Response(null, { status: 204 }))
     const actor = userEvent.setup(); renderAuthenticated(path)
     await screen.findByRole('heading', { name: ficha })
-    await actor.click(screen.getByRole('button', { name: 'Dar de baja' }))
+    await actor.click(screen.getByRole('button', { name: `Opciones de ${ficha}` }))
+    await actor.click(await screen.findByRole('menuitem', { name: 'Dar de baja' }))
     const dialog = within(await screen.findByRole('dialog'))
     expect(dialog.getByText(/La baja es definitiva y no se puede restaurar/)).toBeTruthy()
     expect(vi.mocked(fetch).mock.calls.some(([input]) => (input as Request).method === 'DELETE')).toBe(false)
@@ -67,7 +68,8 @@ describe.each([
     mockApi(resource, record, () => json({ title: blocked, status: 409, code: 'BUSINESS_CONFLICT' }, 409))
     const actor = userEvent.setup(); renderAuthenticated(path)
     await screen.findByRole('heading', { name: ficha })
-    await actor.click(screen.getByRole('button', { name: 'Dar de baja' }))
+    await actor.click(screen.getByRole('button', { name: `Opciones de ${ficha}` }))
+    await actor.click(await screen.findByRole('menuitem', { name: 'Dar de baja' }))
     await actor.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Dar de baja definitivamente' }))
     expect((await screen.findByRole('alert')).textContent).toBe(blocked)
     await actor.click(screen.getByRole('button', { name: 'Cancelar' }))

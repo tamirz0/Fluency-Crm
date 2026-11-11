@@ -117,12 +117,12 @@ it('desde la ficha del alumno sin curso se le asigna uno de su nivel', async () 
   await waitFor(() => expect(screen.queryByRole('button', { name: 'Asignar curso' })).toBeNull())
 })
 
-it('el menú separa por tipo, con el inicio arriba y sin tipos vacíos', async () => {
+it('el menú agrupa Inicio en Comercial y ordena los tipos para el administrador', async () => {
   me = { ...teacher, roles: ['ADMINISTRADOR'], permisos: ['GestionarAcademia', 'ConsultarComercial', 'AdministrarUsuarios', 'AdministrarConfiguracion'] } as typeof teacher
   mount('/alumnos')
   const nav = await screen.findByRole('navigation', { name: 'Secciones de Fluency CRM' })
   const labels = Array.from(nav.querySelectorAll('button[aria-expanded], a')).map(item => item.getAttribute('aria-label') ?? item.textContent).filter(label => !label?.startsWith('Mi perfil'))
-  expect(labels).toEqual(['Inicio', 'Comercial', 'Empresas', 'Contactos', 'Oportunidades', 'Embudo', 'Academia', 'Alumnos', 'Cursos', 'Clases', 'Talleres', 'Profesores', 'Gestión', 'Usuarios', 'Catálogos', 'Servicios', 'Embudos y etapas'])
+  expect(labels).toEqual(['Comercial', 'Inicio', 'Empresas', 'Contactos', 'Oportunidades', 'Embudo', 'Academia', 'Alumnos', 'Cursos', 'Clases', 'Talleres', 'Profesores', 'Gestión', 'Usuarios', 'Catálogos', 'Servicios', 'Embudos y etapas'])
 })
 
 it('un profesor solo ve el tipo Academia', async () => {

@@ -65,7 +65,7 @@ describe('búsqueda de listados', () => {
     })
     renderAuthenticated('/contactos'); const actor = userEvent.setup()
     const table = within(await screen.findByRole('table', { name: 'Contactos' }))
-    expect(table.getAllByRole('columnheader').map((header) => header.textContent)).toEqual(['Nombre completo', 'Estado', 'Empresa', 'Cargo', 'Correo', 'Teléfono', 'Origen', 'Responsable'])
+    expect(table.getAllByRole('columnheader').map((header) => header.textContent)).toEqual(['Nombre completo', 'Estado', 'Empresa', 'Cargo', 'Correo', 'Teléfono', 'Origen', 'Responsable', 'Acciones'])
     const cells = Array.from(table.getByRole('row', { name: /Pérez, Lucía/ }).querySelectorAll('td'))
     expect(cells[4]?.textContent).toBe('lucia@example.com'); expect(cells[5]?.textContent).toBe('-'); expect(cells[7]?.textContent).toBe('María Gómez')
     expect(screen.getByText('2 contactos')).toBeTruthy()

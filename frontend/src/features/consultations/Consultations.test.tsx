@@ -77,18 +77,30 @@ describe('consultas comerciales', () => {
   })
 
   it('muestra el detalle del contacto, sus observaciones y el enlace correcto a empresa', async () => {
-    vi.mocked(fetch).mockImplementation(async input => new URL((input as Request).url).pathname.endsWith('/historial-comercial') ? jsonResponse(page([])) : jsonResponse(contact))
+    vi.mocked(fetch).mockImplementation(async input => {
+      const { pathname } = new URL((input as Request).url)
+      if (pathname === '/api/contactos/14') return jsonResponse(contact)
+      if (pathname === '/api/contactos/14/academico') return jsonResponse({ alumno: null })
+      if (pathname === '/api/contactos/14/historial-comercial' || pathname === '/api/actividades') return jsonResponse(page([]))
+      return jsonResponse({ title: 'Ruta inesperada' }, 404)
+    })
     renderAuthenticated('/contactos/14')
     expect(await screen.findByRole('heading', { name: 'Pérez, Lucía' })).toBeTruthy()
     expect(await screen.findByText('Todavía no hay actividades ni cambios de etapa.')).toBeTruthy()
-    expect(screen.getByText('30123456')).toBeTruthy()
-    expect(screen.getByText('Directora')).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Acme Idiomas' }).getAttribute('href')).toBe('/empresas/4')
-    expect(screen.getByText('María Gómez (inactivo)')).toBeTruthy()
-    expect(screen.getByText('Fecha de creación', { selector: 'dt' })).toBeTruthy()
-    expect(screen.getByText(/Primera línea\s+Segunda línea/)).toBeTruthy()
+    const info = within(screen.getByRole('region', { name: 'Información general' }))
+    expect(info.getByText('30123456')).toBeTruthy()
+    expect(info.getByText('Directora')).toBeTruthy()
+    expect(info.getByRole('link', { name: 'Acme Idiomas' }).getAttribute('href')).toBe('/empresas/4')
+    expect(info.getByText('María Gómez (inactivo)')).toBeTruthy()
+    expect(info.getByText('Fecha de creación', { selector: 'dt' })).toBeTruthy()
+    expect(info.getByText(/Primera línea\s+Segunda línea/)).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Volver a contactos' })).toBeTruthy()
-    expect(fetch).toHaveBeenCalledTimes(3)
+    expect(vi.mocked(fetch).mock.calls.map(([input]) => new URL((input as Request).url).pathname).sort()).toEqual([
+      '/api/actividades',
+      '/api/contactos/14',
+      '/api/contactos/14/academico',
+      '/api/contactos/14/historial-comercial',
+    ])
   })
 
   it('no consulta un id inválido y representa el 404 como contacto inexistente', async () => {
