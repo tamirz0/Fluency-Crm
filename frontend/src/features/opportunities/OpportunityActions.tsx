@@ -35,7 +35,7 @@ export function OpportunityActions({ opportunity, onRemoved, detail }: { opportu
       slotProps={{ paper: { className: 'company-actions-menu fluency-shell-type' }, list: { id: `${id}-menu`, 'aria-labelledby': id } }}>
       <ListSubheader disableSticky className="company-actions-heading">Opciones de oportunidad</ListSubheader>
       {!detail && <MenuItem component={RouterLink} to={path} state={{ from }} onClick={close}><ListItemIcon><VisibilityOutlined fontSize="small" /></ListItemIcon>Ver ficha completa</MenuItem>}
-      {!detail && actions?.editar && <MenuItem component={RouterLink} to={`${path}/editar`} state={{ from }} onClick={close}><ListItemIcon><EditOutlined fontSize="small" /></ListItemIcon>Editar datos de la oportunidad</MenuItem>}
+      {!detail && actions?.editar && <MenuItem component={RouterLink} to={`${path}/editar`} state={{ from, opportunityFormBackground: location }} onClick={close}><ListItemIcon><EditOutlined fontSize="small" /></ListItemIcon>Editar datos de la oportunidad</MenuItem>}
       {!detail && actions?.gestionarActividades && <MenuItem component={RouterLink} to={path}
         state={{ openActivity: true, from }} onClick={close}>
         <ListItemIcon><EventNote fontSize="small" /></ListItemIcon>Crear actividad

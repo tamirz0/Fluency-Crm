@@ -2,7 +2,7 @@ import { ArrowBack, CheckOutlined, EventOutlined, FilterAltOutlined, InfoOutline
 import { Alert, Box, Button, Chip, LinearProgress, Link, Skeleton, Typography } from '@mui/material'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
-import { Link as RouterLink, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useNavigate, useParams, type Location } from 'react-router-dom'
 import { ApiRequestError, getOpportunity, getOpportunityHistory, listStages, opportunityQueryKeys, type Oportunidad } from '../../api/client'
 import { displayValue, formatCommercialDate, initials, parsePositiveId } from '../shared/display'
 import { confirmationFor } from '../shared/formUtils'
@@ -84,7 +84,7 @@ function OpportunityStages({ opportunity }: { opportunity: Oportunidad }) {
   </section>
 }
 
-function OpportunityProfile({ opportunity, actions, from }: { opportunity: Oportunidad; actions: ReactNode; from: { to: string; label: string } }) {
+function OpportunityProfile({ opportunity, actions, from, location }: { opportunity: Oportunidad; actions: ReactNode; from: { to: string; label: string }; location: Location }) {
   const client = clientLabel(opportunity)
   const academicRows = [
     { label: 'Objetivo de aprendizaje', value: opportunity.objetivoAprendizaje?.trim() },
@@ -120,7 +120,7 @@ function OpportunityProfile({ opportunity, actions, from }: { opportunity: Oport
         <section className="company-fiche-card" aria-labelledby="opportunity-commercial-heading">
           <header className="company-fiche-card-heading">
             <h2 id="opportunity-commercial-heading"><InfoOutlined />Datos comerciales</h2>
-            {opportunity.accionesPermitidas.editar && <Button component={RouterLink} to={`/oportunidades/${opportunity.id}/editar`} state={{ from }} size="small">Modificar</Button>}
+            {opportunity.accionesPermitidas.editar && <Button component={RouterLink} to={`/oportunidades/${opportunity.id}/editar`} state={{ from, opportunityFormBackground: location }} size="small">Modificar</Button>}
           </header>
           <ProfileRows rows={[
             { label: 'Empresa', value: opportunity.idEmpresa ? <Link component={RouterLink} to={`/empresas/${opportunity.idEmpresa}`} underline="hover">{displayValue(opportunity.empresaRazonSocial)}</Link> : undefined },
@@ -176,7 +176,7 @@ export function OpportunityDetailPage() {
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
     {activityRegistered && <Alert severity="success" className="record-form-confirmation">Actividad registrada.</Alert>}
     {reassigned && <Alert severity="success" className="record-form-confirmation">Oportunidad reasignada. Podés consultarla, pero ya no editarla.</Alert>}
-    <OpportunityProfile opportunity={opportunity} from={back} actions={<>
+    <OpportunityProfile opportunity={opportunity} from={back} location={location} actions={<>
       {actions.gestionarActividades && <RegisterActivityButton
         context={{
           label: opportunity.tituloVisible, idOportunidad: Number(opportunity.id),

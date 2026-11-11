@@ -110,7 +110,7 @@ export function OpportunitiesPage() {
     void queryClient.invalidateQueries({ queryKey: ['oportunidades'] })
   }
   return <Box className="companies-list-surface"><Box className="companies-page companies-list-page fluency-shell-type records-page">
-    <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Oportunidades</Typography><Typography className="companies-page-description">Negociaciones compartidas por todo el equipo comercial.</Typography></div><Button component={RouterLink} to="/oportunidades/nueva" variant="contained" className="company-new-button" startIcon={<Add />}>Nueva oportunidad</Button></header>
+    <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Oportunidades</Typography><Typography className="companies-page-description">Negociaciones compartidas por todo el equipo comercial.</Typography></div><Button component={RouterLink} to="/oportunidades/nueva" state={{ opportunityFormBackground: location }} variant="contained" className="company-new-button" startIcon={<Add />}>Nueva oportunidad</Button></header>
     {opportunityRemoved ? <Alert severity="success" className="record-form-confirmation" onClose={() => setOpportunityRemoved(false)}>{confirmationFor('Oportunidad', 'dada de baja')}</Alert>
       : typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
     <Box component="form" onSubmit={(event) => { event.preventDefault(); setQ(search.trim()); setPage(0) }} className="record-filters">

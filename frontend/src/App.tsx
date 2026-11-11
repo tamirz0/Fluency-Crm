@@ -43,9 +43,12 @@ function App() {
   const creatingCompany = useMatch('/empresas/nueva')
   const editingContact = useMatch('/contactos/:idContacto/editar')
   const creatingContact = useMatch('/contactos/nuevo')
+  const editingOpportunity = useMatch('/oportunidades/:idOportunidad/editar')
+  const creatingOpportunity = useMatch('/oportunidades/nueva')
   const background = editingCompany || creatingCompany
     ? location.state?.companyFormBackground as Location | undefined
-    : editingContact || creatingContact ? location.state?.contactFormBackground as Location | undefined : undefined
+    : editingContact || creatingContact ? location.state?.contactFormBackground as Location | undefined
+      : editingOpportunity || creatingOpportunity ? location.state?.opportunityFormBackground as Location | undefined : undefined
   return <><Routes location={background ?? location}>
     <Route path="/" element={<LandingPage />} />
     <Route path="/login" element={<LoginPage />} />
@@ -75,9 +78,9 @@ function App() {
       <Route path="/contactos/:idContacto" element={<ContactDetailPage />} />
       <Route path="/contactos/:idContacto/editar" element={<><ContactDetailPage /><EditContactPage /></>} />
       <Route path="/oportunidades" element={<OpportunitiesPage />} />
-      <Route path="/oportunidades/nueva" element={<NewOpportunityPage />} />
+      <Route path="/oportunidades/nueva" element={<><OpportunitiesPage /><NewOpportunityPage /></>} />
       <Route path="/oportunidades/:idOportunidad" element={<OpportunityDetailPage />} />
-      <Route path="/oportunidades/:idOportunidad/editar" element={<EditOpportunityPage />} />
+      <Route path="/oportunidades/:idOportunidad/editar" element={<><OpportunityDetailPage /><EditOpportunityPage /></>} />
       <Route path="/embudo" element={<FunnelPage />} />
       <Route path="/configuracion/usuarios" element={<UsersPage />} />
       <Route path="/configuracion/catalogos" element={<CatalogsPage />} />
@@ -92,6 +95,8 @@ function App() {
       <Route path="/empresas/:idEmpresa/editar" element={<EditCompanyPage />} />
       <Route path="/contactos/nuevo" element={<NewContactPage />} />
       <Route path="/contactos/:idContacto/editar" element={<EditContactPage />} />
+      <Route path="/oportunidades/nueva" element={<NewOpportunityPage />} />
+      <Route path="/oportunidades/:idOportunidad/editar" element={<EditOpportunityPage />} />
     </Route></Route></Routes>}
   </>
 }

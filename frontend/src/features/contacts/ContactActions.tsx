@@ -34,7 +34,7 @@ export function ContactActions({ contact, onRemoved, inDetail = false }: { conta
       <ListSubheader disableSticky className="company-actions-heading">{inDetail ? 'Opciones del contacto' : 'Opciones de contacto'}</ListSubheader>
       {!inDetail && <MenuItem component={RouterLink} to={path} onClick={close}><ListItemIcon><VisibilityOutlined fontSize="small" /></ListItemIcon>Ver ficha completa</MenuItem>}
       {!inDetail && canManage && <MenuItem component={RouterLink} to={`${path}/editar`} state={{ contactFormBackground: location }} onClick={close}><ListItemIcon><EditOutlined fontSize="small" /></ListItemIcon>Editar datos del contacto</MenuItem>}
-      {!inDetail && canCreateOpportunity && <MenuItem component={RouterLink} to={opportunityPath} onClick={close}><ListItemIcon><TrendingUp fontSize="small" /></ListItemIcon>Crear oportunidad comercial</MenuItem>}
+      {!inDetail && canCreateOpportunity && <MenuItem component={RouterLink} to={opportunityPath} state={{ opportunityFormBackground: location }} onClick={close}><ListItemIcon><TrendingUp fontSize="small" /></ListItemIcon>Crear oportunidad comercial</MenuItem>}
       {!inDetail && canManage && <Divider />}
       {canManage && <MenuItem className="company-actions-remove" onClick={() => { close(); setRemoving(true) }}><ListItemIcon><ArchiveOutlined fontSize="small" /></ListItemIcon>Dar de baja</MenuItem>}
     </Menu>

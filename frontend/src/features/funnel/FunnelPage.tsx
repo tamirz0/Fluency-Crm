@@ -3,7 +3,7 @@ import { Add, Check, ChevronRight, Close, ExpandMore, PersonOutlined, Refresh, S
 import { Alert, Box, Button, IconButton, MenuItem, Snackbar, TextField, Typography } from '@mui/material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { getFunnel, listFunnels, moveOpportunity, opportunityQueryKeys, type Oportunidad } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { CompanyResponsibleSelect } from '../companies/CompanyResponsibleSelect'
@@ -99,6 +99,7 @@ const announcements = {
 
 /** Funnel por embudo: el servidor decide la cartera (la propia para un vendedor, todas para los superiores). */
 export function FunnelPage() {
+  const location = useLocation()
   const { user } = useAuth()
   const isSuperior = Boolean(user?.roles?.includes('ADMINISTRADOR') || user?.roles?.includes('RESPONSABLE_COMERCIAL'))
   const [params, setParams] = useSearchParams()
@@ -152,7 +153,7 @@ export function FunnelPage() {
         <Typography component="h1" className="companies-page-title">Embudo comercial</Typography>
         {funnel.isSuccess && <p className="funnel-summary">{visibleItems.length} {visibleItems.length === 1 ? 'oportunidad abierta' : 'oportunidades abiertas'} <span>·</span> {money(totals(visibleItems))}</p>}
       </div>
-      {canCreate && <Button className="funnel-primary" component={RouterLink} to="/oportunidades/nueva" startIcon={<Add />} variant="contained">Nueva oportunidad</Button>}
+      {canCreate && <Button className="funnel-primary" component={RouterLink} to="/oportunidades/nueva" state={{ opportunityFormBackground: location }} startIcon={<Add />} variant="contained">Nueva oportunidad</Button>}
     </header>
     {funnels.isPending ? <FunnelSkeleton /> : funnels.isError ? <section className="company-feedback" aria-labelledby="funnel-error-title"><Typography component="h2" id="funnel-error-title" className="company-feedback-title">No pudimos cargar los embudos</Typography><Typography color="text.secondary">Revisá la conexión e intentá de nuevo.</Typography><Button onClick={() => void funnels.refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button></section> : options.length === 0 ? <section className="company-feedback"><Typography component="h2" className="company-feedback-title">No hay embudos configurados</Typography><Typography color="text.secondary">Cuando se configure un embudo, sus oportunidades van a aparecer acá.</Typography></section> : <>
       <div className="funnel-filters">
