@@ -2,7 +2,7 @@ import { Refresh } from '@mui/icons-material'
 import { Alert, Box, Button, Chip, Link, MenuItem, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { getCatalogOptions, listFunnels, listOpportunities, opportunityQueryKeys, type Oportunidad, type OportunidadQuery } from '../../api/client'
 import { CompanyResponsibleSelect } from '../companies/CompanyResponsibleSelect'
 import { displayValue, formatCommercialDate } from '../shared/display'
@@ -67,7 +67,15 @@ export function OpportunitiesPage() {
   const location = useLocation()
   const [search, setSearch] = useState('')
   const [q, setQ] = useState('')
-  const [state, setState] = useState('')
+  const [params, setParams] = useSearchParams()
+  const requestedState = params.get('estado') ?? ''
+  const state = Object.hasOwn(stateLabels, requestedState) ? requestedState : ''
+  const setState = (value: string) => {
+    const next = new URLSearchParams(params)
+    if (value) next.set('estado', value)
+    else next.delete('estado')
+    setParams(next, { replace: true })
+  }
   const [origin, setOrigin] = useState('')
   const [funnel, setFunnel] = useState('')
   const [responsible, setResponsible] = useState('')

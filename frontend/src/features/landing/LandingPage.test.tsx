@@ -15,6 +15,7 @@ beforeEach(() => {
     const path = new URL(request.url).pathname
     if (path.endsWith('/csrf')) return json({ requestToken: 'csrf-test' })
     if (path.endsWith('/inicio/resumen')) return json({ alumnos: 0, oportunidadesAbiertas: 0, cerradasEsteMes: 0 })
+    if (path.endsWith('/oportunidades')) return json({ items: [], page: 1, pageSize: 5, totalCount: 0 })
     return authenticated ? json(session) : json({ detail: 'Sesión vencida' }, 401)
   }))
 })
@@ -38,5 +39,5 @@ it('una ruta desconocida vuelve a la landing', async () => {
 it('con sesión activa la raíz lleva al inicio', async () => {
   authenticated = true
   mount('/')
-  expect(await screen.findByRole('heading', { name: 'Hola, María' })).toBeTruthy()
+  expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeTruthy()
 })

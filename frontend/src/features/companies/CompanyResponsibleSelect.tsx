@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { Alert, Autocomplete, Box, Button, TextField } from '@mui/material'
 import { getUserOptions } from '../../api/client'
 
-export function CompanyResponsibleSelect({ value, onChange, current, helperText, disabled = false, role }: {
-  value: string; onChange: (value: string) => void; current?: { id: number | string; nombre: string; activo: boolean }; helperText?: string; disabled?: boolean; role?: string
+export function CompanyResponsibleSelect({ value, onChange, current, helperText, disabled = false, role, size }: {
+  value: string; onChange: (value: string) => void; current?: { id: number | string; nombre: string; activo: boolean }; helperText?: string; disabled?: boolean; role?: string; size?: 'small'
 }) {
   const [chosen, setChosen] = useState(current)
   const [search, setSearch] = useState('')
@@ -16,7 +16,7 @@ export function CompanyResponsibleSelect({ value, onChange, current, helperText,
   if (chosen && String(chosen.id) === value && !options.some(u => String(u.id) === value)) options.unshift({ ...chosen, id: Number(chosen.id) })
   const selected = options.find(u => String(u.id) === value) ?? null
   return <Box>
-    <Autocomplete options={options} value={selected} disabled={disabled} loading={users.isPending} filterOptions={x => x}
+    <Autocomplete size={size} options={options} value={selected} disabled={disabled} loading={users.isPending} filterOptions={x => x}
       getOptionLabel={u => u.nombre + (u.activo ? '' : ' (inactivo)')} isOptionEqualToValue={(a, b) => a.id === b.id}
       getOptionDisabled={u => !u.activo} onChange={(_, u) => { setChosen(u ?? undefined); onChange(u ? String(u.id) : '') }}
       onInputChange={(_, input, reason) => { if (reason === 'input' || reason === 'clear') { setPage(1); setSearch(input) } }}

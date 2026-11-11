@@ -255,3 +255,165 @@
 .record-count { color: var(--text-muted); margin-bottom: 8px !important; font-variant-numeric: tabular-nums; }
 .companies-page .MuiTablePagination-toolbar { flex-wrap: wrap; justify-content: flex-end; padding-inline: 0; }
 .companies-page .MuiTablePagination-spacer { display: none; }
+
+.companies-list-surface {
+  --company-bg: #0d1322;
+  --company-panel: #151b2b;
+  --company-inset: #080e1d;
+  --company-divider: #2f3445;
+  --text-main: #dde2f8;
+  --text-muted: #a5aec3;
+  --accent-text: #adc6ff;
+  min-height: calc(100svh - 64px);
+  background: var(--company-bg);
+}
+
+.companies-list-page {
+  width: min(100%, 1360px);
+  padding: 32px clamp(16px, 2.4vw, 32px) 48px;
+}
+
+.companies-list-page .companies-page-title { font-size: clamp(26px, 3vw, 32px) !important; letter-spacing: -.02em !important; }
+.companies-list-page .companies-page-description { margin-top: 6px !important; font-size: 14px !important; }
+.companies-list-page .company-new-button.MuiButton-root {
+  min-height: 40px;
+  padding-inline: 16px;
+  background: #4d8eff;
+  color: #08162e;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 650;
+  text-transform: none;
+}
+.companies-list-page .company-new-button.MuiButton-root:hover { background: #80adff; }
+
+.companies-list-page .record-filters {
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding: 9px 10px;
+  border: 1px solid #353941;
+  border-radius: 8px;
+  background: #1a1e29;
+}
+.companies-list-page .record-filters > .MuiTextField-root { flex-basis: 78px; min-width: min(100%, 78px); }
+.companies-list-page .record-filters > .MuiTextField-root:first-child { flex: 3 1 176px; min-width: min(100%, 176px); }
+.companies-list-page .record-filter-lookup { flex-basis: 120px; min-width: min(100%, 120px); }
+.companies-list-page .record-filters :is(.MuiInputBase-root, .MuiInputLabel-root, .MuiButton-root) { font: inherit; font-size: 13px; }
+.companies-list-page .record-filters .MuiInputLabel-shrink { font-size: 16px; }
+.companies-list-page .record-filters .MuiInputBase-root { min-height: 40px; background: transparent; }
+.companies-list-page .record-filters .MuiOutlinedInput-notchedOutline { border-color: #4a5364; }
+.companies-list-page .record-filters .Mui-focused .MuiOutlinedInput-notchedOutline { border-color: var(--accent-text); }
+.companies-list-page .record-filters > .MuiButton-root { min-height: 40px; min-width: 0; margin: 0; text-transform: none; color: var(--accent-text); }
+.companies-list-page .record-count { padding-inline: 4px; font-size: 12px; }
+
+.company-table-panel,
+.companies-list-page .companies-loading {
+  overflow: hidden;
+  border: 1px solid var(--company-divider);
+  border-radius: 12px;
+  background: var(--company-panel);
+}
+.companies-list-page .data-table-wrap { border: 0; border-radius: 0; }
+.companies-list-page .MuiTableCell-root {
+  padding: 13px 9px;
+  border-color: var(--company-divider);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.companies-list-page .MuiTableCell-root:first-child { padding-inline-start: 16px; min-width: 126px; }
+.companies-list-page .MuiTableCell-root:nth-child(2) { min-width: 108px; }
+.companies-list-page .MuiTableCell-root:nth-child(3) { min-width: 96px; }
+.companies-list-page .MuiTableCell-root:nth-child(4) { min-width: 69px; }
+.companies-list-page .MuiTableCell-root:last-child { padding-inline-end: 12px; }
+.companies-list-page .MuiTableCell-head {
+  background: var(--company-inset);
+  color: #c2c6d6;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.companies-list-page .company-name-cell.MuiTableCell-root { font-size: 14px !important; font-weight: 600 !important; }
+.company-cuit { display: block; margin-top: 3px; color: var(--text-muted); font: 11px ui-monospace, monospace; }
+.company-origin { display: inline-block; padding: 3px 7px; border-radius: 4px; background: #242a3a; color: #c2c6d6; font-size: 11px; font-weight: 600; }
+.companies-list-page .company-clickable-row:hover td { background: #191f2f; }
+.companies-list-page .company-clickable-row:focus-within td { outline: 0; background: #191f2f; }
+.companies-list-page .company-clickable-row:hover .company-name-cell a { color: var(--accent-text); }
+.company-actions .MuiIconButton-root { width: 36px; height: 40px; border-radius: 6px; color: #c2c6d6; }
+.company-actions .MuiIconButton-root:is(:hover, .Mui-focusVisible, [aria-expanded="true"]) { background: #242a3a; color: #adc6ff; }
+.company-actions-menu.MuiPaper-root {
+  width: min(320px, calc(100vw - 32px));
+  border: 1px solid #353941;
+  border-radius: 12px;
+  background: #1a1e29;
+  color: #dde2f8;
+}
+.company-actions-menu .MuiList-root { padding-block: 0 6px; }
+.company-actions-menu .company-actions-heading {
+  padding-block: 12px;
+  border-bottom: 1px solid #353941;
+  color: #a5aec3;
+  font: 500 11px/1.4 Inter, system-ui, sans-serif;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.company-actions-menu .MuiMenuItem-root { min-height: 44px; font-size: 14px; white-space: normal; }
+.company-actions-menu .MuiListItemIcon-root { min-width: 32px; color: #adc6ff; }
+.company-actions-menu .MuiDivider-root { border-color: #353941; }
+.company-actions-menu .company-actions-remove,
+.company-actions-menu .company-actions-remove .MuiListItemIcon-root { color: #ffb4ab; }
+.companies-list-page .company-status.MuiChip-root {
+  position: relative;
+  width: max-content;
+  max-width: 150px;
+  flex-shrink: 0;
+  height: auto;
+  min-height: 24px;
+  border-radius: 999px !important;
+  font: 600 11px/1.25 Inter, system-ui, sans-serif;
+}
+.companies-list-page .company-status::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.companies-list-page .company-status .MuiChip-label {
+  min-width: 0;
+  padding: 4px 8px 4px 19px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.companies-list-page .company-status--positive { color: #6ffbbe !important; background: #163734 !important; }
+.companies-list-page .company-status--inactive { color: #ffb4ab !important; background: #432932 !important; }
+.companies-list-page .company-status--prospect { color: #adc6ff !important; background: #203658 !important; }
+.company-table-panel .MuiTablePagination-root { background: var(--company-inset); color: #c2c6d6; }
+.company-table-panel .MuiTablePagination-toolbar { justify-content: flex-start; gap: 4px 8px; padding: 4px 16px; }
+.company-table-panel .MuiTablePagination-displayedRows { margin-inline-start: auto; }
+.company-table-panel .MuiTablePagination-select { font: inherit; font-size: 13px; }
+.company-table-panel .MuiTablePagination-actions,
+.company-table-panel .MuiTablePagination-input { margin-inline: 0; }
+.company-table-panel :is(.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows) { font-size: 12px; }
+.companies-list-page .company-feedback { max-width: none; padding-inline: 16px; align-items: center; text-align: center; }
+.companies-list-page .company-feedback-title { font-size: 18px !important; }
+
+@media (min-width: 900px) {
+  .companies-list-page .company-skeleton-list { display: none; }
+}
+
+@media (max-width: 899.95px) {
+  .companies-list-page .company-skeleton-table { display: none; }
+  .companies-list-page .company-record { padding: 16px; }
+  .companies-list-page .company-record-heading h2 { font-size: 16px; }
+  .companies-list-page .company-record-heading { align-items: center; }
+  .companies-list-page .company-record-heading h2 { margin-right: auto; }
+  .company-actions .MuiIconButton-root { width: 44px; height: 44px; }
+  .companies-list-page .company-record-fields { font-size: 13px; }
+}

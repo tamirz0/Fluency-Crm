@@ -224,7 +224,7 @@ describe('consultas comerciales', () => {
 
   it('protege las nuevas rutas y no consulta contactos con un id inválido', async () => {
     renderApp('/oportunidades')
-    expect(await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Ingresá a tu cuenta' })).toBeTruthy()
     expect(fetch).not.toHaveBeenCalled()
     renderAuthenticated('/contactos/no-es-id')
     expect(await screen.findByRole('heading', { name: 'No encontramos ese contacto' })).toBeTruthy()

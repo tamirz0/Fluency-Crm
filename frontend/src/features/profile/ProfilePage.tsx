@@ -3,8 +3,7 @@ import { Alert, Box, Button, Card, CardContent, Checkbox, Chip, CircularProgress
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getTeacherLevels, patchMyProfile, setTeacherLevels, type AuthUser } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
-
-const roleLabels: Record<string, string> = { ADMINISTRADOR: 'Administrador', RESPONSABLE_COMERCIAL: 'Responsable comercial', VENDEDOR: 'Vendedor', PROFESOR: 'Profesor' }
+import { roleLabels } from '../../app/navigation'
 
 /** El profesor marca los niveles de inglés con los que trabaja; solo puede abrir cursos de esos niveles. */
 function TeacherLevels() {

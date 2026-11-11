@@ -3,7 +3,7 @@ import { ChevronRight, ExpandMore, Refresh } from '@mui/icons-material'
 import { Alert, Box, Button, IconButton, MenuItem, Snackbar, TextField, Typography } from '@mui/material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { getFunnel, listFunnels, moveOpportunity, opportunityQueryKeys, type Oportunidad } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { CompanyResponsibleSelect } from '../companies/CompanyResponsibleSelect'
@@ -90,7 +90,8 @@ const announcements = {
 export function FunnelPage() {
   const { user } = useAuth()
   const isSuperior = Boolean(user?.roles?.includes('ADMINISTRADOR') || user?.roles?.includes('RESPONSABLE_COMERCIAL'))
-  const [selected, setSelected] = useState('')
+  const [params, setParams] = useSearchParams()
+  const selected = params.get('idEmbudo')
   const [responsible, setResponsible] = useState('')
   const [dragging, setDragging] = useState<Oportunidad | null>(null)
   const queryClient = useQueryClient()
@@ -99,7 +100,7 @@ export function FunnelPage() {
   const [collapsedStages, setCollapsedStages] = useState<Set<number | string>>(() => new Set())
   const funnels = useQuery({ queryKey: ['embudos', 'opciones'], queryFn: () => listFunnels({ pageSize: 100 }) })
   const options = funnels.data?.items ?? []
-  const funnelId = selected || String((options.find((item) => item.activo) ?? options[0])?.id ?? '')
+  const funnelId = String((options.find(item => String(item.id) === selected) ?? options.find(item => item.activo) ?? options[0])?.id ?? '')
   const owner = isSuperior && responsible ? Number(responsible) : undefined
   const funnel = useQuery({
     queryKey: opportunityQueryKeys.funnel(Number(funnelId), owner), queryFn: () => getFunnel(Number(funnelId), owner), enabled: funnelId !== '',
@@ -125,7 +126,7 @@ export function FunnelPage() {
     <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Embudo comercial</Typography><Typography className="companies-page-description">{isSuperior ? 'Oportunidades de todo el equipo organizadas por etapa.' : 'Tus oportunidades organizadas por etapa. Las del resto del equipo están en el listado de oportunidades.'}</Typography></div></header>
     {funnels.isPending ? <FunnelSkeleton /> : funnels.isError ? <section className="company-feedback" aria-labelledby="funnel-error-title"><Typography component="h2" id="funnel-error-title" className="company-feedback-title">No pudimos cargar los embudos</Typography><Typography color="text.secondary">Revisá la conexión e intentá de nuevo.</Typography><Button onClick={() => void funnels.refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button></section> : options.length === 0 ? <section className="company-feedback"><Typography component="h2" className="company-feedback-title">No hay embudos configurados</Typography><Typography color="text.secondary">Cuando se configure un embudo, sus oportunidades van a aparecer acá.</Typography></section> : <>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3, alignItems: 'start' }}>
-        <TextField select label="Embudo" value={funnelId} onChange={(event) => { setSelected(event.target.value); setCollapsedStages(new Set()) }} sx={{ minWidth: 240 }}>
+        <TextField select label="Embudo" value={funnelId} onChange={(event) => { setParams({ idEmbudo: event.target.value }, { replace: true }); setCollapsedStages(new Set()) }} sx={{ minWidth: 240 }}>
           {options.map((item) => <MenuItem key={item.id} value={String(item.id)}>{item.nombre}{item.activo ? '' : ' (inactivo)'}</MenuItem>)}
         </TextField>
         {isSuperior && <Box sx={{ minWidth: 240, flex: '1 1 240px', maxWidth: 360 }}><CompanyResponsibleSelect value={responsible} onChange={setResponsible} helperText="Sin selección: todos los responsables" /></Box>}

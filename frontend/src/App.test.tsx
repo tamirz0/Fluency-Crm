@@ -20,6 +20,7 @@ beforeEach(() => {
     if (path.endsWith('/csrf')) return json({ requestToken: 'csrf-test' })
     if (path.endsWith('/login')) { authenticated = true; return json(session) }
     if (path.endsWith('/inicio/resumen')) return json({ alumnos: 0, oportunidadesAbiertas: 0, cerradasEsteMes: 0 })
+    if (path.endsWith('/oportunidades')) return json({ items: [], page: 1, pageSize: 5, totalCount: 0 })
     if (path.startsWith('/api/catalogos/')) return json([])
     if (path === '/api/empresas' || path === '/api/usuarios/opciones') return json({ items: [], page: 1, pageSize: 25, totalCount: 0 })
     if (path.endsWith('/logout')) { authenticated = false; return new Response(null, { status: 204 }) }
@@ -35,90 +36,90 @@ function mount(path = '/inicio') {
 it('ignora y retira identidad local; valida campos obligatorios', async () => {
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(user))
   mount()
-  await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })
+  await screen.findByRole('heading', { name: 'Ingresá a tu cuenta' })
   expect(sessionStorage.getItem(SESSION_KEY)).toBeNull()
-  await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Ingresar a Fluency' }))
   expect(await screen.findByText('Ingresá tu usuario.')).toBeTruthy()
   expect(await screen.findByText('Ingresá tu contraseña.')).toBeTruthy()
 })
 it('login sin persistir credenciales y sin doble envío', async () => {
   mount('/login')
-  await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })
+  await screen.findByRole('heading', { name: 'Ingresá a tu cuenta' })
   await userEvent.type(screen.getByLabelText('Usuario'), ' maria ')
   await userEvent.type(screen.getByLabelText('Contraseña'), 'secreto')
-  const form = screen.getByRole('button', { name: 'Ingresar' }).closest('form')!
+  const form = screen.getByRole('button', { name: 'Ingresar a Fluency' }).closest('form')!
   fireEvent.submit(form); fireEvent.submit(form)
-  expect(await screen.findByRole('heading', { name: 'Hola, María' })).toBeTruthy()
+  expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeTruthy()
   expect(sessionStorage.length).toBe(0)
   expect(vi.mocked(fetch).mock.calls.filter(([r]) => (r as Request).url.endsWith('/login'))).toHaveLength(1)
 })
 it('recarga restaura desde /me; logout llama API y limpia caché', async () => {
   authenticated = true
   const client = mount('/login')
-  await screen.findByRole('heading', { name: 'Hola, María' })
+  await screen.findByRole('heading', { name: 'Inicio' })
   client.setQueryData(['privado'], 'dato')
   await userEvent.click(screen.getByRole('button', { name: /^Cuenta de/ }))
   await userEvent.click(screen.getByRole('menuitem', { name: 'Cerrar sesión' }))
-  await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })
+  await screen.findByRole('heading', { name: 'Ingresá a tu cuenta' })
   expect(authenticated).toBe(false)
   expect(client.getQueryData(['privado'])).toBeUndefined()
 })
 it('401 al recuperar foco limpia identidad y caché', async () => {
   authenticated = true
   const client = mount()
-  await screen.findByRole('heading', { name: 'Hola, María' })
+  await screen.findByRole('heading', { name: 'Inicio' })
   client.setQueryData(['privado'], 'dato')
   authenticated = false
   fireEvent(window, new Event('focus'))
-  await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })
+  await screen.findByRole('heading', { name: 'Ingresá a tu cuenta' })
   expect(client.getQueryData(['privado'])).toBeUndefined()
 })
 it('403 explica rechazo conservando sesión; 401 de otro request la elimina', async () => {
   authenticated = true
   mount()
-  await screen.findByRole('heading', { name: 'Hola, María' })
+  await screen.findByRole('heading', { name: 'Inicio' })
   vi.mocked(fetch).mockResolvedValueOnce(json({ detail: 'Sin permiso.' }, 403))
   await expect(api.GET('/auth/me')).rejects.toMatchObject({ status: 403 })
   expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Sin permiso.')
-  expect(screen.getByRole('heading', { name: 'Hola, María' })).toBeTruthy()
+  expect(screen.getByRole('heading', { name: 'Inicio' })).toBeTruthy()
   vi.mocked(fetch).mockResolvedValueOnce(json({}, 401))
   await expect(api.GET('/auth/me')).rejects.toMatchObject({ status: 401 })
-  await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })
+  await screen.findByRole('heading', { name: 'Ingresá a tu cuenta' })
 })
 it('credenciales inválidas conserva username y vacía password; red permite reintentar', async () => {
   mount('/login')
-  await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })
+  await screen.findByRole('heading', { name: 'Ingresá a tu cuenta' })
   await userEvent.type(screen.getByLabelText('Usuario'), 'maria')
   await userEvent.type(screen.getByLabelText('Contraseña'), 'incorrecta')
   vi.mocked(fetch).mockImplementation(async (r) => (r as Request).url.endsWith('/csrf') ? json({ requestToken: 't' }) : json({}, 401))
-  await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Ingresar a Fluency' }))
   await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Usuario o contraseña incorrectos.'))
   expect((screen.getByLabelText('Usuario') as HTMLInputElement).value).toBe('maria')
   expect((screen.getByLabelText('Contraseña') as HTMLInputElement).value).toBe('')
   await userEvent.type(screen.getByLabelText('Contraseña'), 'otra')
   vi.mocked(fetch).mockRejectedValue(new TypeError('network'))
-  await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Ingresar a Fluency' }))
   await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('No pudimos conectar'))
 })
 
 it('foco durante login no descarta la identidad que devuelve el servidor', async () => {
   mount('/login')
-  await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })
+  await screen.findByRole('heading', { name: 'Ingresá a tu cuenta' })
   await userEvent.type(screen.getByLabelText('Usuario'), 'maria')
   await userEvent.type(screen.getByLabelText('Contraseña'), 'secreto')
   const normal = vi.mocked(fetch).getMockImplementation()!
   let finish: (response: Response) => void = () => {}
   vi.mocked(fetch).mockImplementation(async (r, init) => (r as Request).url.endsWith('/login') ? new Promise<Response>(resolve => { finish = resolve }) : normal(r, init))
-  await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Ingresar a Fluency' }))
   await waitFor(() => expect(vi.mocked(fetch).mock.calls.some(([r]) => (r as Request).url.endsWith('/login'))).toBe(true))
   fireEvent(window, new Event('focus'))
   authenticated = true; finish(json(session))
-  expect(await screen.findByRole('heading', { name: 'Hola, María' })).toBeTruthy()
+  expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeTruthy()
 })
 it('logout 204 limpia identidad y caché aunque falle renovar CSRF', async () => {
   authenticated = true
   const client = mount()
-  await screen.findByRole('heading', { name: 'Hola, María' })
+  await screen.findByRole('heading', { name: 'Inicio' })
   client.setQueryData(['privado'], 'dato')
   let signedOut = false
   const normal = vi.mocked(fetch).getMockImplementation()!
@@ -129,7 +130,7 @@ it('logout 204 limpia identidad y caché aunque falle renovar CSRF', async () =>
   })
   await userEvent.click(screen.getByRole('button', { name: /^Cuenta de/ }))
   await userEvent.click(screen.getByRole('menuitem', { name: 'Cerrar sesión' }))
-  await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })
+  await screen.findByRole('heading', { name: 'Ingresá a tu cuenta' })
   expect(client.getQueryData(['privado'])).toBeUndefined()
 })
 
@@ -182,7 +183,7 @@ it.each([['/oportunidades', 'Oportunidades', 'Oportunidades'], ['/embudo', 'Embu
 it('al volver a la ventana el aviso de revalidación flota y no empuja el contenido', async () => {
   authenticated = true
   mount()
-  await screen.findByRole('heading', { name: 'Hola, María' })
+  await screen.findByRole('heading', { name: 'Inicio' })
   const normal = vi.mocked(fetch).getMockImplementation()!
   let finish: (response: Response) => void = () => {}
   vi.mocked(fetch).mockImplementation(async (r, init) => (r as Request).url.endsWith('/auth/me') ? new Promise<Response>(resolve => { finish = resolve }) : normal(r, init))
