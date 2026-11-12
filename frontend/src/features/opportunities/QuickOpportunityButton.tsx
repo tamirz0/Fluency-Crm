@@ -1,19 +1,27 @@
-import { Add, TrendingUpOutlined } from '@mui/icons-material'
+import { Add, PersonOutlineOutlined, TrendingUpOutlined } from '@mui/icons-material'
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField, Typography } from '@mui/material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../auth/useAuth'
 import { createOpportunity, listFunnels, listServices, opportunityQueryKeys, type CreateOportunidadRequest } from '../../api/client'
+import { CompanyResponsibleSelect } from '../companies/CompanyResponsibleSelect'
 import { confirmationFor, saveErrorMessage } from '../shared/formUtils'
+import { ReadOnlyValue } from '../shared/ReadOnlyValue'
 import '../shared/commercial-dialog.css'
 
 const selectSlots = { select: { MenuProps: { slotProps: { paper: { className: 'commercial-dialog-options' } } } } }
 
 /**
  * Alta rápida desde la ficha de una empresa o un contacto: solo se elige el servicio. El embudo se deriva de él (se pregunta únicamente
- * si lo admiten varios embudos activos) y el servidor completa etapa inicial, responsable y valor. El resto se edita desde la ficha.
+ * si lo admiten varios embudos activos) y el servidor completa etapa inicial y valor. El origen se hereda del cliente (si está activo) y
+ * el responsable es quien crea, salvo que un superior elija a otro. El resto se edita desde la ficha.
  */
-function QuickOpportunityDialog({ idEmpresa, idContacto, label, onClose }: { idEmpresa?: number; idContacto?: number; label: string; onClose: () => void }) {
+export function QuickOpportunityDialog({ idEmpresa, idContacto, idOrigen, label, onClose }: { idEmpresa?: number; idContacto?: number; idOrigen?: number | string | null; label: string; onClose: () => void }) {
+  const { user } = useAuth()
+  const isSuperior = Boolean(user?.roles?.includes('ADMINISTRADOR') || user?.roles?.includes('RESPONSABLE_COMERCIAL'))
+  const ownName = user ? `${user.nombre} ${user.apellido}`.trim() : ''
+  const [responsible, setResponsible] = useState(user ? String(user.id) : '')
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [pickedService, setPickedService] = useState('')
@@ -33,6 +41,8 @@ function QuickOpportunityDialog({ idEmpresa, idContacto, label, onClose }: { idE
       }
       if (idEmpresa !== undefined) payload.idEmpresa = idEmpresa
       if (idContacto !== undefined) payload.idContacto = idContacto
+      if (idOrigen != null) payload.idOrigen = Number(idOrigen)
+      if (isSuperior && responsible !== '' && responsible !== String(user?.id)) payload.idResponsable = Number(responsible)
       return createOpportunity(payload)
     },
     onSuccess: saved => {
@@ -63,6 +73,9 @@ function QuickOpportunityDialog({ idEmpresa, idContacto, label, onClose }: { idE
       {serviceFunnels.length > 1 && <TextField select fullWidth required label="Embudo" value={pickedFunnel} onChange={event => { setPickedFunnel(event.target.value); mutation.reset() }} disabled={mutation.isPending} slotProps={selectSlots}>
         {serviceFunnels.map(item => <MenuItem key={item.id} value={String(item.id)}>{item.nombre}</MenuItem>)}
       </TextField>}
+      {isSuperior
+        ? <CompanyResponsibleSelect value={responsible} onChange={value => { setResponsible(value); mutation.reset() }} disabled={mutation.isPending} optionsClassName="commercial-dialog-options" inputIcon={<PersonOutlineOutlined />} current={user ? { id: user.id, nombre: ownName, activo: true } : undefined} helperText="Por defecto, vos." />
+        : <ReadOnlyValue label="Responsable" value={ownName} description="Se asignará a tu usuario." icon={<PersonOutlineOutlined />} />}
       {mutation.isError && <Alert severity="error" role="alert">{saveErrorMessage(mutation.error)}</Alert>}
     </DialogContent>
     <DialogActions>
@@ -72,10 +85,10 @@ function QuickOpportunityDialog({ idEmpresa, idContacto, label, onClose }: { idE
   </Dialog>
 }
 
-export function QuickOpportunityButton({ idEmpresa, idContacto, label, primary = false }: { idEmpresa?: number; idContacto?: number; label: string; primary?: boolean }) {
+export function QuickOpportunityButton({ idEmpresa, idContacto, idOrigen, label, primary = false }: { idEmpresa?: number; idContacto?: number; idOrigen?: number | string | null; label: string; primary?: boolean }) {
   const [open, setOpen] = useState(false)
   return <>
     <Button variant={primary ? 'contained' : 'outlined'} startIcon={primary ? <Add /> : undefined} onClick={() => setOpen(true)}>Nueva oportunidad</Button>
-    {open && <QuickOpportunityDialog idEmpresa={idEmpresa} idContacto={idContacto} label={label} onClose={() => setOpen(false)} />}
+    {open && <QuickOpportunityDialog idEmpresa={idEmpresa} idContacto={idContacto} idOrigen={idOrigen} label={label} onClose={() => setOpen(false)} />}
   </>
 }

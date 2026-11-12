@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
 import { Link as RouterLink, useLocation, useNavigate, useParams, type Location } from 'react-router-dom'
 import { ApiRequestError, getOpportunity, getOpportunityHistory, listStages, opportunityQueryKeys, type Oportunidad } from '../../api/client'
-import { displayValue, formatCommercialDate, initials, parsePositiveId } from '../shared/display'
+import { backTarget, cameFrom, returnState, displayValue, formatCommercialDate, initials, parsePositiveId } from '../shared/display'
 import { confirmationFor } from '../shared/formUtils'
 import { ProfileRows, ProfileStats } from '../shared/RecordProfile'
 import { clientLabel, money, opportunityStateClass, stateLabels } from './opportunityData'
@@ -86,6 +86,7 @@ function OpportunityStages({ opportunity }: { opportunity: Oportunidad }) {
 
 function OpportunityProfile({ opportunity, actions, from, location }: { opportunity: Oportunidad; actions: ReactNode; from: { to: string; label: string }; location: Location }) {
   const client = clientLabel(opportunity)
+  const clientState = cameFrom(location, 'Volver a la oportunidad')
   const academicRows = [
     { label: 'Objetivo de aprendizaje', value: opportunity.objetivoAprendizaje?.trim() },
     { label: 'Participantes', value: opportunity.cantidadParticipantes?.toString() },
@@ -123,8 +124,8 @@ function OpportunityProfile({ opportunity, actions, from, location }: { opportun
             {opportunity.accionesPermitidas.editar && <Button component={RouterLink} to={`/oportunidades/${opportunity.id}/editar`} state={{ from, opportunityFormBackground: location }} size="small">Modificar</Button>}
           </header>
           <ProfileRows rows={[
-            { label: 'Empresa', value: opportunity.idEmpresa ? <Link component={RouterLink} to={`/empresas/${opportunity.idEmpresa}`} underline="hover">{displayValue(opportunity.empresaRazonSocial)}</Link> : undefined },
-            { label: 'Contacto', value: opportunity.idContacto ? <Link component={RouterLink} to={`/contactos/${opportunity.idContacto}`} underline="hover">{displayValue(opportunity.contactoNombre)}</Link> : undefined },
+            { label: 'Empresa', value: opportunity.idEmpresa ? <Link component={RouterLink} to={`/empresas/${opportunity.idEmpresa}`} state={clientState} underline="hover">{displayValue(opportunity.empresaRazonSocial)}</Link> : undefined },
+            { label: 'Contacto', value: opportunity.idContacto ? <Link component={RouterLink} to={`/contactos/${opportunity.idContacto}`} state={clientState} underline="hover">{displayValue(opportunity.contactoNombre)}</Link> : undefined },
             { label: 'Origen', value: opportunity.idOrigen ? inactive(opportunity.origenDescripcion ?? '', opportunity.origenActivo) : undefined },
             { label: 'Fecha de alta', value: <time dateTime={opportunity.fechaCreacion}>{dateTime(opportunity.fechaCreacion)}</time> },
             { label: 'Cierre estimado', value: formatCommercialDate(opportunity.fechaEstimadaCierre) },
@@ -157,12 +158,9 @@ export function OpportunityDetailPage() {
   const [activityRegistered, setActivityRegistered] = useState(false)
   const [closing, setClosing] = useState<CloseResult | '' | null>(null)
   const [reassigned, setReassigned] = useState(false)
-  const routeState = location.state as { from?: { to?: unknown; label?: unknown }; openActivity?: unknown } | null
-  const from = routeState?.from
-  const back = typeof from?.to === 'string' && typeof from.label === 'string'
-    ? { to: from.to, label: from.label }
-    : { to: '/oportunidades', label: 'Volver a oportunidades' }
-  const backLink = <Link component={RouterLink} to={back.to} className="company-back-link" underline="hover"><ArrowBack fontSize="small" />{back.label}</Link>
+  const routeState = location.state as { openActivity?: unknown } | null
+  const back = backTarget(location.state, { to: '/oportunidades', label: 'Volver a oportunidades' })
+  const backLink = <Link component={RouterLink} to={back.to} state={returnState(back)} className="company-back-link" underline="hover"><ArrowBack fontSize="small" />{back.label}</Link>
 
   if (idOportunidad === undefined || (query.isError && query.error instanceof ApiRequestError && query.error.status === 404))
     return <Box className="companies-page company-result-page records-page"><Link component={RouterLink} to="/inicio" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver al inicio</Link><section className="company-feedback" aria-labelledby="opportunity-not-found-title"><Typography id="opportunity-not-found-title" component="h1" className="company-feedback-title">No encontramos esa oportunidad</Typography><Typography color="text.secondary">El enlace puede estar vencido o la oportunidad ya no estar disponible.</Typography></section></Box>

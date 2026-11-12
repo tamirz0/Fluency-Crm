@@ -88,6 +88,9 @@ public sealed class UsuariosTests
         Assert.Equal(HttpStatusCode.Conflict, emailDuplicate.StatusCode);
         Assert.Contains("DUPLICATE_VALUE", await emailDuplicate.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/usuarios", Account("sinrol", []))).StatusCode);
+        (await client.PostAsJsonAsync("/usuarios", Account("profesor1", ["PROFESOR"]))).EnsureSuccessStatusCode();
+        Assert.Equal(0, (await client.GetFromJsonAsync<JsonElement>("/usuarios/opciones?q=profesor1")).GetProperty("totalCount").GetInt32());
+        Assert.Equal(1, (await client.GetFromJsonAsync<JsonElement>("/usuarios?q=profesor1")).GetProperty("totalCount").GetInt32());
         (await client.PutAsJsonAsync($"/usuarios/{factory.SellerId}/password", new { password = new string('é', 36) })).EnsureSuccessStatusCode();
         using var seller = factory.Client(); await SignIn(seller, factory, "seller", new string('é', 36));
         Assert.Equal(HttpStatusCode.Forbidden, (await seller.GetAsync("/usuarios")).StatusCode);

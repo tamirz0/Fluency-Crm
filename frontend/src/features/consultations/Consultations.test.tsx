@@ -17,16 +17,16 @@ const contact = {
   idResponsable: 7, responsableNombre: 'María Gómez', responsableActivo: false, fechaCreacion: '2026-10-31T12:00:00Z', activo: true,
 }
 const blankContact = { ...contact, id: 15, nombre: 'Ana', apellido: 'Álvarez', documento: null, cargo: null, correo: 'ana@example.com', telefono: null, estadoDescripcion: 'Inactivo', idOrigen: null, origenDescripcion: null, origenActivo: null, idEmpresa: null, empresaRazonSocial: null, observaciones: null }
-function renderApp(path = '/contactos') {
-  window.history.pushState({}, '', path)
+function renderApp(path = '/contactos', state: object = {}) {
+  window.history.pushState(state, '', path)
   const queryClient = createQueryClient()
   const Wrapper = ({ children }: { children: ReactNode }) => <AppProviders queryClient={queryClient}><BrowserRouter><AuthProvider>{children}</AuthProvider></BrowserRouter></AppProviders>
   return { queryClient, ...render(<App />, { wrapper: Wrapper }) }
 }
 
-function renderAuthenticated(path = '/contactos') {
+function renderAuthenticated(path = '/contactos', state: object = {}) {
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(user))
-  return renderApp(path)
+  return renderApp(path, state)
 }
 
 function jsonResponse(body: unknown, status = 200) {
@@ -66,6 +66,23 @@ describe('consultas comerciales', () => {
     expect(screen.getByRole('link', { name: 'Contactos' }).getAttribute('aria-current')).toBe('page')
   })
 
+  it('la empresa abierta desde el listado de contactos vuelve a contactos', async () => {
+    vi.mocked(fetch).mockImplementation(async input => {
+      const { pathname } = new URL((input as Request).url)
+      if (pathname.endsWith('/contactos')) return jsonResponse({ items: [contact], page: 1, pageSize: 25, totalCount: 1 })
+      if (pathname.endsWith('/empresas/4')) return jsonResponse({ id: 4, razonSocial: 'Acme Idiomas', activo: true })
+      if (pathname.includes('/catalogos/')) return jsonResponse([])
+      if (pathname.endsWith('/empresas') || pathname.endsWith('/usuarios/opciones')) return jsonResponse({ items: [], page: 1, pageSize: 25, totalCount: 0 })
+      return jsonResponse({ items: [], page: 1, pageSize: 25, totalCount: 0 })
+    })
+    renderAuthenticated()
+    const actor = userEvent.setup()
+    await actor.click(await within(await screen.findByRole('table', { name: 'Contactos' })).findByRole('link', { name: 'Acme Idiomas' }))
+    expect(window.location.pathname).toBe('/empresas/4')
+    await actor.click(await screen.findByRole('link', { name: 'Volver a contactos' }))
+    expect(window.location.pathname).toBe('/contactos')
+  })
+
   it('muestra vacío y permite reintentar un listado de contactos', async () => {
     let attempts = 0
     mockContactsApi(() => ++attempts === 1 ? jsonResponse({ title: 'Error' }, 503) : jsonResponse({ items: [], page: 1, pageSize: 25, totalCount: 0 }))
@@ -101,6 +118,20 @@ describe('consultas comerciales', () => {
       '/api/contactos/14/academico',
       '/api/contactos/14/historial-comercial',
     ])
+  })
+
+  it('la ficha del contacto vuelve a donde se vino (p. ej. la oportunidad) y no al listado', async () => {
+    vi.mocked(fetch).mockImplementation(async input => {
+      const { pathname } = new URL((input as Request).url)
+      if (pathname === '/api/contactos/14') return jsonResponse(contact)
+      if (pathname === '/api/contactos/14/academico') return jsonResponse({ alumno: null })
+      if (pathname === '/api/contactos/14/historial-comercial' || pathname === '/api/actividades') return jsonResponse(page([]))
+      return jsonResponse({ title: 'Ruta inesperada' }, 404)
+    })
+    renderAuthenticated('/contactos/14', { usr: { from: { to: '/oportunidades/9', label: 'Volver a la oportunidad' } }, key: 'test', idx: 1 })
+    const back = await screen.findByRole('link', { name: 'Volver a la oportunidad' })
+    expect(back.getAttribute('href')).toBe('/oportunidades/9')
+    expect(screen.queryByRole('link', { name: 'Volver a contactos' })).toBeNull()
   })
 
   it('no consulta un id inválido y representa el 404 como contacto inexistente', async () => {
@@ -248,6 +279,27 @@ describe('consultas comerciales', () => {
 
     renderAuthenticated('/oportunidades/92')
     expect(await screen.findByRole('heading', { name: 'No encontramos esa oportunidad' })).toBeTruthy()
+  })
+
+  it.each([['Acme Idiomas', '/empresas/4'], ['Lucía Pérez', '/contactos/14']])('desde el embudo, la ficha de %s vuelve a la oportunidad y ésta al embudo', async (linkName, href) => {
+    const detail = { ...listed, responsableActivo: true, idContacto: 14, contactoNombre: 'Lucía Pérez' }
+    const company = { id: 4, razonSocial: 'Acme Idiomas', activo: true, estadoActivo: true, origenActivo: true }
+    vi.mocked(fetch).mockImplementation(async input => {
+      const { pathname } = new URL((input as Request).url)
+      if (pathname.endsWith('/oportunidades/91')) return jsonResponse(detail)
+      if (pathname.endsWith('/contactos/14')) return jsonResponse(contact)
+      if (pathname.endsWith('/empresas/4')) return jsonResponse(company)
+      if (pathname.endsWith('/contactos/14/academico')) return jsonResponse({ alumno: null })
+      if (pathname.endsWith('/embudos/1/etapas')) return jsonResponse([])
+      return jsonResponse(page([]))
+    })
+    renderAuthenticated('/oportunidades/91', { usr: { from: { to: '/embudo', label: 'Volver al embudo' } }, key: 'embudo', idx: 1 })
+    const actor = userEvent.setup()
+    await actor.click(await screen.findByRole('link', { name: linkName }))
+    expect(window.location.pathname).toBe(href)
+    await actor.click(await screen.findByRole('link', { name: 'Volver a la oportunidad' }))
+    expect(window.location.pathname).toBe('/oportunidades/91')
+    expect(await screen.findByRole('link', { name: 'Volver al embudo' })).toBeTruthy()
   })
 
   it('protege las nuevas rutas y no consulta contactos con un id inválido', async () => {

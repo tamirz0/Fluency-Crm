@@ -30,10 +30,12 @@ function FunnelSkeleton() {
 const detailState = { from: { to: '/embudo', label: 'Volver al embudo' } }
 
 function CardContent({ opportunity, overlay = false }: { opportunity: Oportunidad; overlay?: boolean }) {
-  const client = [opportunity.empresaRazonSocial, opportunity.contactoNombre].filter(Boolean).join(' · ')
+  // Título propio o, si falta, el contacto ("Nombre Apellido") o la empresa; la empresa va debajo solo si tiene y no es ya el título.
+  const title = opportunity.titulo || opportunity.contactoNombre || opportunity.empresaRazonSocial || opportunity.tituloVisible
+  const client = opportunity.empresaRazonSocial && opportunity.empresaRazonSocial !== title ? opportunity.empresaRazonSocial : ''
   return <>
     <div className="funnel-opportunity-heading">
-      <h3>{overlay ? opportunity.tituloVisible : <RouterLink to={`/oportunidades/${opportunity.id}`} state={detailState}>{opportunity.tituloVisible}</RouterLink>}</h3>
+      <h3>{overlay ? title : <RouterLink to={`/oportunidades/${opportunity.id}`} state={detailState}>{title}</RouterLink>}</h3>
       <span className="funnel-opportunity-value">{money(opportunity.valor)}</span>
     </div>
     {client && <p className="funnel-opportunity-client">{client}</p>}
