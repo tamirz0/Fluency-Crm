@@ -31,7 +31,8 @@ public sealed class UsuarioService(FluencyLocalDbContext db, ActorActual actor)
                    OR ({!options} AND strpos(lower(correo), {q}) > 0)
                 """).AsNoTracking();
         }
-        if (options) users = users.Where(u => u.Activo);
+        // Los profesores nunca son responsables de oportunidades, contactos ni empresas: las opciones solo se usan para eso.
+        if (options) users = users.Where(u => u.Activo && !u.UsuarioRoles.Any(j => j.IdRolNavigation.Nombre == RolesYPermisos.Profesor));
         else if (query.Activo is { } active) users = users.Where(u => u.Activo == active);
         if (!string.IsNullOrWhiteSpace(query.Rol))
         {
