@@ -81,6 +81,15 @@
   border-radius: 12px;
   background: var(--company-panel);
 }
+.academy-detail-page .profile-section {
+  margin: 0 0 24px;
+  padding: 20px;
+  border: 1px solid var(--company-divider);
+  border-radius: 12px;
+  background: var(--company-panel);
+}
+.academy-detail-page .profile-section h2 { color: var(--text-main); font-size: 16px; font-weight: 600; line-height: 1.4; }
+.academy-detail-page .profile-section .MuiFormControlLabel-label { color: var(--text-main); font-size: 14px; }
 .academy-detail-page .profile-header { border: 0; border-radius: 0; background: var(--company-panel); }
 .academy-detail-page .profile-avatar { background: #2563eb33; color: #93c5fd; }
 .academy-detail-page .profile-stats { border: 0; border-top: 1px solid var(--company-divider); background: var(--company-raised); }
