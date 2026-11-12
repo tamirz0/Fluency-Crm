@@ -4,7 +4,8 @@ import { useId, useState } from 'react'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { deleteContact, type Contacto } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
-import { contactFullName } from '../shared/display'
+import { QuickOpportunityDialog } from '../opportunities/QuickOpportunityButton'
+import { contactFullName, contactNaturalName } from '../shared/display'
 import { RemoveRecordDialog } from '../shared/RemoveRecordButton'
 
 export function ContactActions({ contact, onRemoved, inDetail = false }: { contact: Contacto; onRemoved: () => void; inDetail?: boolean }) {
@@ -15,8 +16,8 @@ export function ContactActions({ contact, onRemoved, inDetail = false }: { conta
   const canCreateOpportunity = permissions?.includes('GestionarOportunidad')
   const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null)
   const [removing, setRemoving] = useState(false)
+  const [creating, setCreating] = useState(false)
   const path = `/contactos/${contact.id}`
-  const opportunityPath = `/oportunidades/nueva?idContacto=${contact.id}${contact.idEmpresa == null ? '' : `&idEmpresa=${contact.idEmpresa}`}`
   const name = contactFullName(contact)
   const close = () => setAnchor(null)
 
@@ -34,10 +35,13 @@ export function ContactActions({ contact, onRemoved, inDetail = false }: { conta
       <ListSubheader disableSticky className="company-actions-heading">{inDetail ? 'Opciones del contacto' : 'Opciones de contacto'}</ListSubheader>
       {!inDetail && <MenuItem component={RouterLink} to={path} onClick={close}><ListItemIcon><VisibilityOutlined fontSize="small" /></ListItemIcon>Ver ficha completa</MenuItem>}
       {!inDetail && canManage && <MenuItem component={RouterLink} to={`${path}/editar`} state={{ contactFormBackground: location }} onClick={close}><ListItemIcon><EditOutlined fontSize="small" /></ListItemIcon>Editar datos del contacto</MenuItem>}
-      {!inDetail && canCreateOpportunity && <MenuItem component={RouterLink} to={opportunityPath} state={{ opportunityFormBackground: location }} onClick={close}><ListItemIcon><TrendingUp fontSize="small" /></ListItemIcon>Crear oportunidad comercial</MenuItem>}
+      {!inDetail && canCreateOpportunity && <MenuItem onClick={() => { close(); setCreating(true) }}><ListItemIcon><TrendingUp fontSize="small" /></ListItemIcon>Crear oportunidad comercial</MenuItem>}
       {!inDetail && canManage && <Divider />}
       {canManage && <MenuItem className="company-actions-remove" onClick={() => { close(); setRemoving(true) }}><ListItemIcon><ArchiveOutlined fontSize="small" /></ListItemIcon>Dar de baja</MenuItem>}
     </Menu>
+    {canCreateOpportunity && creating && <QuickOpportunityDialog idContacto={Number(contact.id)} {...(contact.idEmpresa == null ? {} : { idEmpresa: Number(contact.idEmpresa) })}
+      idOrigen={contact.origenActivo === false ? null : contact.idOrigen} label={contactNaturalName(contact)}
+      onClose={() => { setCreating(false); document.getElementById(id)?.focus() }} />}
     {canManage && removing && <RemoveRecordDialog noun="contacto" name={name}
       remove={() => deleteContact(Number(contact.id))} onClose={() => {
         setRemoving(false)

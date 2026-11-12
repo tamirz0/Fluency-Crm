@@ -6,7 +6,7 @@ import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 import { contactoQueryKeys, getCatalogOptions, listContacts, type Contacto } from '../../api/client'
 import { CompanyResponsibleSelect } from '../companies/CompanyResponsibleSelect'
 import { CompanyStatus } from '../companies/CompanyStatus'
-import { contactFullName, displayValue } from '../shared/display'
+import { cameFrom, contactFullName, displayValue } from '../shared/display'
 import { confirmationFor } from '../shared/formUtils'
 import { ContactCompanySelect } from './ContactCompanySelect'
 import { ContactActions } from './ContactActions'
@@ -28,13 +28,14 @@ function ContactPhone({ contact }: { contact: Contacto }) {
 }
 
 function ContactRows({ contacts, onOpen, onRemoved }: { contacts: Contacto[]; onOpen: (id: string | number) => void; onRemoved: () => void }) {
+  const companyState = cameFrom(useLocation(), 'Volver a contactos')
   return <TableContainer className="data-table-wrap"><Table aria-label="Contactos" size="small">
     <caption className="visually-hidden">Listado de contactos</caption>
     <TableHead><TableRow>{columns.map((label) => <TableCell key={label} scope="col">{label}</TableCell>)}<TableCell scope="col"><span className="visually-hidden">Acciones</span></TableCell></TableRow></TableHead>
     <TableBody>{contacts.map((contact) => <TableRow key={contact.id} className="company-clickable-row" onClick={() => onOpen(contact.id)}>
       <TableCell className="company-name-cell"><Link component={RouterLink} to={`/contactos/${contact.id}`} aria-label={`Abrir ficha de ${contactFullName(contact)}`} underline="hover" onClick={(event) => event.stopPropagation()}>{contactFullName(contact)}</Link></TableCell>
       <TableCell><CompanyStatus value={contact.estadoDescripcion} /></TableCell>
-      <TableCell>{contact.idEmpresa ? <Link component={RouterLink} to={`/empresas/${contact.idEmpresa}`} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(contact.empresaRazonSocial)}</Link> : displayValue(contact.empresaRazonSocial)}</TableCell>
+      <TableCell>{contact.idEmpresa ? <Link component={RouterLink} to={`/empresas/${contact.idEmpresa}`} state={companyState} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(contact.empresaRazonSocial)}</Link> : displayValue(contact.empresaRazonSocial)}</TableCell>
       <TableCell>{displayValue(contact.cargo)}</TableCell>
       <TableCell><ContactEmail contact={contact} /></TableCell>
       <TableCell><ContactPhone contact={contact} /></TableCell>
@@ -46,11 +47,12 @@ function ContactRows({ contacts, onOpen, onRemoved }: { contacts: Contacto[]; on
 }
 
 function ContactCards({ contacts, onOpen, onRemoved }: { contacts: Contacto[]; onOpen: (id: string | number) => void; onRemoved: () => void }) {
+  const companyState = cameFrom(useLocation(), 'Volver a contactos')
   return <ul className="company-record-list" aria-label="Contactos">
     {contacts.map((contact) => <li className="company-record company-clickable-record" key={contact.id} onClick={() => onOpen(contact.id)}>
       <div className="company-record-heading"><h2><Link component={RouterLink} to={`/contactos/${contact.id}`} aria-label={`Abrir ficha de ${contactFullName(contact)}`} underline="hover" onClick={(event) => event.stopPropagation()}>{contactFullName(contact)}</Link></h2><CompanyStatus value={contact.estadoDescripcion} /><ContactActions contact={contact} onRemoved={onRemoved} /></div>
       <dl className="company-record-fields">
-        <div><dt>Empresa</dt><dd>{contact.idEmpresa ? <Link component={RouterLink} to={`/empresas/${contact.idEmpresa}`} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(contact.empresaRazonSocial)}</Link> : displayValue(contact.empresaRazonSocial)}</dd></div>
+        <div><dt>Empresa</dt><dd>{contact.idEmpresa ? <Link component={RouterLink} to={`/empresas/${contact.idEmpresa}`} state={companyState} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(contact.empresaRazonSocial)}</Link> : displayValue(contact.empresaRazonSocial)}</dd></div>
         <div><dt>Cargo</dt><dd>{displayValue(contact.cargo)}</dd></div>
         <div><dt>Correo</dt><dd><ContactEmail contact={contact} /></dd></div>
         <div><dt>Teléfono</dt><dd><ContactPhone contact={contact} /></dd></div>

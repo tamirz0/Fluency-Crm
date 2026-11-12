@@ -12,7 +12,7 @@ import { CommercialHistory } from '../activities/CommercialHistory'
 import { RegisterActivityButton } from '../activities/ActivityForm'
 import { QuickOpportunityButton } from '../opportunities/QuickOpportunityButton'
 import { ProfileRows } from '../shared/RecordProfile'
-import { initials } from '../shared/display'
+import { backTarget, cameFrom, initials, returnState } from '../shared/display'
 import './companies.css'
 import './company-detail.css'
 
@@ -31,6 +31,7 @@ function CompanyContactLinks({ company }: { company: Empresa }) {
 }
 
 function CompanyContacts({ id }: { id: number }) {
+  const contactState = cameFrom(useLocation(), 'Volver a la empresa')
   const [page, setPage] = useState(0)
   const filters = { idEmpresa: id, page: page + 1, pageSize: 5 }
   const query = useQuery({ queryKey: [...contactoQueryKeys.all, 'list', filters], queryFn: () => listContacts(filters) })
@@ -48,7 +49,7 @@ function CompanyContacts({ id }: { id: number }) {
               return <li key={contact.id}>
                 <span className="company-fiche-contact-avatar" aria-hidden="true">{initials(name)}</span>
                 <div>
-                  <Link component={RouterLink} to={`/contactos/${contact.id}`} underline="hover">{name}</Link>
+                  <Link component={RouterLink} to={`/contactos/${contact.id}`} state={contactState} underline="hover">{name}</Link>
                   {contact.cargo && <span className="company-fiche-contact-role">{contact.cargo}</span>}
                 </div>
                 {contact.correo && <IconButton component="a" href={`mailto:${contact.correo}`} aria-label={`Enviar correo a ${name}`}><MailOutlined fontSize="small" /></IconButton>}
@@ -78,6 +79,7 @@ export function CompanyDetailPage() {
   const canCreateOpportunity = permissions?.includes('GestionarOportunidad')
   const canManage = permissions?.includes('GestionarClientes')
   const location = useLocation()
+  const back = backTarget(location.state, { to: '/empresas', label: 'Volver a empresas' })
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [activityRegistered, setActivityRegistered] = useState(false)
@@ -95,19 +97,19 @@ export function CompanyDetailPage() {
   })
 
   if (idEmpresa === undefined || (query.isError && query.error instanceof ApiRequestError && query.error.status === 404)) {
-    return <Box className="companies-page company-result-page"><Link component={RouterLink} to="/empresas" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a empresas</Link><section className="company-feedback" aria-labelledby="company-not-found-title"><Typography id="company-not-found-title" component="h1" className="company-feedback-title">No encontramos esa empresa</Typography><Typography color="text.secondary">El enlace puede estar vencido o la empresa ya no está disponible.</Typography></section></Box>
+    return <Box className="companies-page company-result-page"><Link component={RouterLink} to={back.to} state={returnState(back)} className="company-back-link" underline="hover"><ArrowBack fontSize="small" />{back.label}</Link><section className="company-feedback" aria-labelledby="company-not-found-title"><Typography id="company-not-found-title" component="h1" className="company-feedback-title">No encontramos esa empresa</Typography><Typography color="text.secondary">El enlace puede estar vencido o la empresa ya no está disponible.</Typography></section></Box>
   }
 
   if (query.isPending) return <Box className="companies-page company-result-page"><DetailSkeleton /></Box>
 
   if (query.isError) return <Box className="companies-page company-result-page">
-    <Link component={RouterLink} to="/empresas" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a empresas</Link>
+    <Link component={RouterLink} to={back.to} state={returnState(back)} className="company-back-link" underline="hover"><ArrowBack fontSize="small" />{back.label}</Link>
     <section className="company-feedback" aria-labelledby="company-detail-error-title"><Typography id="company-detail-error-title" component="h1" className="company-feedback-title">No pudimos cargar los datos de la empresa</Typography><Typography color="text.secondary">Revisá la conexión e intentá de nuevo.</Typography><div className="company-feedback-actions"><Button onClick={() => void query.refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button><Button component={RouterLink} to="/empresas">Volver al listado</Button></div></section>
   </Box>
 
   const company = query.data
   return <Box className="companies-page company-result-page company-fiche">
-    <Link component={RouterLink} to="/empresas" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a empresas</Link>
+    <Link component={RouterLink} to={back.to} state={returnState(back)} className="company-back-link" underline="hover"><ArrowBack fontSize="small" />{back.label}</Link>
     {activityRegistered && <Alert severity="success" className="record-form-confirmation">Actividad registrada.</Alert>}
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
     {query.isFetching && query.isPlaceholderData && <Typography className="company-detail-loading" role="status">Actualizando ficha…</Typography>}
@@ -128,7 +130,7 @@ export function CompanyDetailPage() {
           </div>
           <div className="company-fiche-actions">
             <RegisterActivityButton context={{ label: company.razonSocial, idEmpresa }} onRegistered={() => setActivityRegistered(true)} showIcon />
-            {canCreateOpportunity && <QuickOpportunityButton idEmpresa={idEmpresa} label={company.razonSocial} primary />}
+            {canCreateOpportunity && <QuickOpportunityButton idEmpresa={idEmpresa} idOrigen={company.origenActivo === false ? null : company.idOrigen} label={company.razonSocial} primary />}
             <CompanyActions company={company} inDetail onRemoved={() => {
               navigate('/empresas', { state: { confirmation: confirmationFor('Empresa', 'dada de baja') } })
               void queryClient.invalidateQueries({ queryKey: empresaQueryKeys.all, refetchType: 'inactive' })

@@ -67,7 +67,10 @@ describe('empresas CP08 con sesión real', () => {
     expect(window.location.pathname).toBe('/empresas')
     expect(menu.getByRole('menuitem', { name: 'Ver ficha completa' }).getAttribute('href')).toBe('/empresas/4')
     expect(menu.getByRole('menuitem', { name: 'Editar datos de empresa' }).getAttribute('href')).toBe('/empresas/4/editar')
-    expect(menu.getByRole('menuitem', { name: 'Crear oportunidad comercial' }).getAttribute('href')).toBe('/oportunidades/nueva?idEmpresa=4')
+    // La alta comercial abre el modal simplificado sin salir del listado.
+    await userEvent.setup().click(menu.getByRole('menuitem', { name: 'Crear oportunidad comercial' }))
+    expect(await screen.findByRole('dialog', { name: 'Nueva oportunidad' })).toBeTruthy()
+    expect(window.location.pathname).toBe('/empresas')
     expect(menu.queryByRole('menuitem', { name: 'Asignar responsable' })).toBeNull()
   })
 

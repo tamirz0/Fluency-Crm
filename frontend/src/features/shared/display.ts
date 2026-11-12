@@ -12,6 +12,37 @@ export function contactFullName(contact: { nombre?: string | null; apellido?: st
   return [contact.apellido?.trim(), contact.nombre?.trim()].filter(Boolean).join(', ') || '-'
 }
 
+/** "Nombre Apellido", como se muestra en títulos de oportunidades. */
+export function contactNaturalName(contact: { nombre?: string | null; apellido?: string | null }): string {
+  return [contact.nombre?.trim(), contact.apellido?.trim()].filter(Boolean).join(' ') || '-'
+}
+
+/** Destino de un enlace "volver". `from` encadena el destino al que vuelve a su vez esa pantalla (navegación anidada). */
+export type BackTarget = { to: string; label: string; from?: BackTarget }
+
+function parseBack(value: unknown): BackTarget | undefined {
+  const raw = value as { to?: unknown; label?: unknown; from?: unknown } | null | undefined
+  if (typeof raw?.to !== 'string' || typeof raw.label !== 'string') return undefined
+  const from = parseBack(raw.from)
+  return from ? { to: raw.to, label: raw.label, from } : { to: raw.to, label: raw.label }
+}
+
+/** Destino del enlace "volver": el `from` recibido por navegación si es válido; si no, el del listado. */
+export function backTarget(state: unknown, fallback: BackTarget): BackTarget {
+  return parseBack((state as { from?: unknown } | null)?.from) ?? fallback
+}
+
+/** Estado para navegar a otra ficha desde esta pantalla: allí "volver" regresa aquí, y desde aquí a donde ya se volvía. */
+export function cameFrom(location: { pathname: string; search: string; state: unknown }, label: string): { from: BackTarget } {
+  const from = backTarget(location.state, { to: '', label: '' })
+  return { from: { to: location.pathname + location.search, label, ...(from.to ? { from } : {}) } }
+}
+
+/** Estado del enlace "volver": al regresar a la pantalla de origen se conserva su propio destino de vuelta. */
+export function returnState(back: BackTarget): { from: BackTarget } | undefined {
+  return back.from ? { from: back.from } : undefined
+}
+
 export function opportunityContactName(contact: { contactoApellido?: string | null; contactoNombre?: string | null }): string {
   return [contact.contactoApellido?.trim(), contact.contactoNombre?.trim()].filter(Boolean).join(', ') || '-'
 }

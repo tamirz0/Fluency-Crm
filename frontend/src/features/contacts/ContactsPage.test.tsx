@@ -57,8 +57,11 @@ describe('listado de contactos', () => {
     const menu = await openContactActions()
     expect(menu.getByRole('menuitem', { name: 'Ver ficha completa' }).getAttribute('href')).toBe('/contactos/14')
     expect(menu.getByRole('menuitem', { name: 'Editar datos del contacto' }).getAttribute('href')).toBe('/contactos/14/editar')
-    expect(menu.getByRole('menuitem', { name: 'Crear oportunidad comercial' }).getAttribute('href')).toBe('/oportunidades/nueva?idContacto=14&idEmpresa=4')
+    expect(menu.getByRole('menuitem', { name: 'Crear oportunidad comercial' })).toBeTruthy()
     expect(menu.getByRole('menuitem', { name: 'Dar de baja' })).toBeTruthy()
+    await userEvent.setup().click(menu.getByRole('menuitem', { name: 'Crear oportunidad comercial' }))
+    expect(await screen.findByRole('dialog', { name: 'Nueva oportunidad' })).toBeTruthy()
+    expect(window.location.pathname).toBe('/contactos')
   })
 
   it('limita el menú a ver la ficha cuando la sesión solo permite consultar', async () => {

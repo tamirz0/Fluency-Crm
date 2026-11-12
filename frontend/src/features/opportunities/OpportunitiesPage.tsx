@@ -37,11 +37,13 @@ function Rows({ items, onOpen, onRemoved }: { items: Oportunidad[]; onOpen: (id:
 }
 
 function CompanyLink({ item }: { item: Oportunidad }) {
-  return item.idEmpresa ? <Link component={RouterLink} to={`/empresas/${item.idEmpresa}`} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(item.empresaRazonSocial)}</Link> : <>-</>
+  const { search } = useLocation()
+  return item.idEmpresa ? <Link component={RouterLink} to={`/empresas/${item.idEmpresa}`} state={{ from: { to: `/oportunidades${search}`, label: 'Volver a oportunidades' } }} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(item.empresaRazonSocial)}</Link> : <>-</>
 }
 
 function ContactLink({ item }: { item: Oportunidad }) {
-  return item.idContacto ? <Link component={RouterLink} to={`/contactos/${item.idContacto}`} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(item.contactoNombre)}</Link> : <>-</>
+  const { search } = useLocation()
+  return item.idContacto ? <Link component={RouterLink} to={`/contactos/${item.idContacto}`} state={{ from: { to: `/oportunidades${search}`, label: 'Volver a oportunidades' } }} underline="hover" onClick={(event) => event.stopPropagation()}>{displayValue(item.contactoNombre)}</Link> : <>-</>
 }
 
 function Cards({ items, onOpen, onRemoved }: { items: Oportunidad[]; onOpen: (id: number | string) => void; onRemoved: (id: number | string) => void }) {
