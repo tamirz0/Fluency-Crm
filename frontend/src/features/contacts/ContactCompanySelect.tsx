@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Autocomplete, Box, Button, TextField } from '@mui/material'
+import { Alert, Autocomplete, Box, Button, InputAdornment, TextField } from '@mui/material'
+import type { ReactNode } from 'react'
 import { listCompanies } from '../../api/client'
 
 type CompanyOption = { id: number; razonSocial: string }
 
 /** Busca empresas en el servidor; `current` conserva la etiqueta de la empresa ya vinculada aunque no aparezca en la búsqueda. */
-export function ContactCompanySelect({ value, onChange, current, helperText, disabled = false }: {
-  value: string; onChange: (value: string) => void; current?: CompanyOption; helperText?: string; disabled?: boolean
+export function ContactCompanySelect({ value, onChange, current, helperText, disabled = false, size, optionsClassName, inputIcon }: {
+  value: string; onChange: (value: string) => void; current?: CompanyOption; helperText?: string; disabled?: boolean; size?: 'small'; optionsClassName?: string; inputIcon?: ReactNode
 }) {
   const [chosen, setChosen] = useState(current)
   const [search, setSearch] = useState('')
@@ -17,12 +18,16 @@ export function ContactCompanySelect({ value, onChange, current, helperText, dis
   const selected = options.find(o => String(o.id) === value) ?? null
   const total = Number(companies.data?.totalCount ?? 0)
   return <Box>
-    <Autocomplete options={options} value={selected} disabled={disabled} loading={companies.isPending} filterOptions={x => x}
+    <Autocomplete size={size} options={options} value={selected} disabled={disabled} loading={companies.isPending} filterOptions={x => x}
+      slotProps={{ paper: { className: optionsClassName } }}
       getOptionLabel={o => o.razonSocial} isOptionEqualToValue={(a, b) => a.id === b.id}
       onChange={(_, o) => { setChosen(o ?? undefined); onChange(o ? String(o.id) : '') }}
       onInputChange={(_, input, reason) => { if (reason === 'input' || reason === 'clear') setSearch(input) }}
       noOptionsText="Sin empresas disponibles" loadingText="Cargando empresas…" clearText="Quitar empresa"
-      renderInput={params => <TextField {...params} label="Empresa" helperText={helperText} />} />
+      renderInput={params => <TextField {...params} label="Empresa" helperText={helperText} slotProps={{ ...params.slotProps, input: {
+        ...params.slotProps.input,
+        startAdornment: <>{inputIcon && <InputAdornment position="start">{inputIcon}</InputAdornment>}{params.slotProps.input.startAdornment}</>,
+      }}} />} />
     {total > 25 && <p className="record-form-note">Se muestran 25 de {total} empresas. Escribí para acotar la búsqueda.</p>}
     {companies.isError && <Alert severity="warning" action={<Button onClick={() => void companies.refetch()}>Reintentar</Button>}>No pudimos cargar las empresas.</Alert>}
   </Box>

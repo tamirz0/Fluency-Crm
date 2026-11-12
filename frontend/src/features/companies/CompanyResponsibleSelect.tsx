@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Autocomplete, Box, Button, TextField } from '@mui/material'
+import { Alert, Autocomplete, Box, Button, InputAdornment, TextField } from '@mui/material'
+import type { ReactNode } from 'react'
 import { getUserOptions } from '../../api/client'
 
-export function CompanyResponsibleSelect({ value, onChange, current, helperText, disabled = false, role }: {
-  value: string; onChange: (value: string) => void; current?: { id: number | string; nombre: string; activo: boolean }; helperText?: string; disabled?: boolean; role?: string
+export function CompanyResponsibleSelect({ value, onChange, current, helperText, disabled = false, role, size, optionsClassName, inputIcon }: {
+  value: string; onChange: (value: string) => void; current?: { id: number | string; nombre: string; activo: boolean }; helperText?: string; disabled?: boolean; role?: string; size?: 'small'; optionsClassName?: string; inputIcon?: ReactNode
 }) {
   const [chosen, setChosen] = useState(current)
   const [search, setSearch] = useState('')
@@ -16,12 +17,15 @@ export function CompanyResponsibleSelect({ value, onChange, current, helperText,
   if (chosen && String(chosen.id) === value && !options.some(u => String(u.id) === value)) options.unshift({ ...chosen, id: Number(chosen.id) })
   const selected = options.find(u => String(u.id) === value) ?? null
   return <Box>
-    <Autocomplete options={options} value={selected} disabled={disabled} loading={users.isPending} filterOptions={x => x}
+    <Autocomplete size={size} options={options} value={selected} disabled={disabled} loading={users.isPending} filterOptions={x => x} slotProps={{ paper: { className: optionsClassName } }}
       getOptionLabel={u => u.nombre + (u.activo ? '' : ' (inactivo)')} isOptionEqualToValue={(a, b) => a.id === b.id}
       getOptionDisabled={u => !u.activo} onChange={(_, u) => { setChosen(u ?? undefined); onChange(u ? String(u.id) : '') }}
       onInputChange={(_, input, reason) => { if (reason === 'input' || reason === 'clear') { setPage(1); setSearch(input) } }}
       noOptionsText="Sin responsables disponibles" loadingText="Cargando responsables…"
-      renderInput={params => <TextField {...params} label="Responsable" helperText={helperText} />} />
+      renderInput={params => <TextField {...params} label="Responsable" helperText={helperText} slotProps={{ ...params.slotProps, input: {
+        ...params.slotProps.input,
+        startAdornment: <>{inputIcon && <InputAdornment position="start">{inputIcon}</InputAdornment>}{params.slotProps.input.startAdornment}</>,
+      }}} />} />
     {users.isError && <Alert severity="warning" action={<Button onClick={() => void users.refetch()}>Reintentar</Button>}>No pudimos cargar responsables.</Alert>}
     {(page > 1 || Number(users.data?.totalCount ?? 0) > 25) && <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <Button disabled={page === 1 || users.isFetching} onClick={() => setPage(p => p - 1)}>Responsables anteriores</Button>

@@ -8,6 +8,7 @@ import { getCatalogOptions, getRoles, getUserById, lessonQueryKeys, listLessons,
 import { UserDialog } from '../settings/UserDialog'
 import '../companies/companies.css'
 import '../contacts/records.css'
+import '../shared/academy-pages.css'
 
 /** Clases asignadas a un profesor, desde hoy y por los próximos tres meses (el límite del listado). */
 function TeacherLessons({ teacher }: { teacher: Profesor }) {
@@ -59,12 +60,12 @@ function TeacherAdmin({ teacher }: { teacher: Profesor }) {
 export function TeachersPage() {
   const [open, setOpen] = useState<string | null>(null)
   const { data, error, isPending, refetch } = useQuery({ queryKey: teacherQueryKeys.all, queryFn: () => listTeachers() })
-  return <Box className="companies-page records-page">
+  return <Box className="companies-list-surface"><Box className="companies-page companies-list-page fluency-shell-type records-page academy-menu-page academic-teachers-page">
     <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Profesores</Typography><Typography className="companies-page-description">Niveles con los que trabaja cada profesor y las clases que tiene asignadas. Las cuentas nuevas se crean desde Usuarios.</Typography></div></header>
     {error && <Alert severity="error" action={<Button color="inherit" size="small" startIcon={<Refresh />} onClick={() => void refetch()}>Reintentar</Button>}>No pudimos cargar los profesores. {error.message}</Alert>}
     {isPending && !error ? <div role="status" aria-label="Cargando profesores"><Skeleton height={64} /><Skeleton height={64} /></div> : data && (data.length === 0
-      ? <section className="company-feedback"><Typography component="h2" className="company-feedback-title">Todavía no hay profesores</Typography><Typography color="text.secondary">Creá una cuenta con el rol Profesor desde Usuarios.</Typography></section>
-      : data.map(teacher => <Accordion key={teacher.id} disableGutters expanded={open === String(teacher.id)} onChange={(_, expanded) => setOpen(expanded ? String(teacher.id) : null)} sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', mb: 1.5, '&::before': { display: 'none' } }}>
+      ? <div className="company-table-panel"><section className="company-feedback"><Typography component="h2" className="company-feedback-title">Todavía no hay profesores</Typography><Typography color="text.secondary">Creá una cuenta con el rol Profesor desde Usuarios.</Typography></section></div>
+      : <Box className="academic-teacher-list">{data.map(teacher => <Accordion key={teacher.id} className="academic-teacher-accordion" disableGutters expanded={open === String(teacher.id)} onChange={(_, expanded) => setOpen(expanded ? String(teacher.id) : null)}>
         <AccordionSummary expandIcon={<ExpandMore />} aria-label={`${teacher.apellido}, ${teacher.nombre}`}>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5, width: '100%' }}>
             <Typography component="h2" variant="h6" sx={{ mr: 1 }}>{teacher.apellido}, {teacher.nombre}{teacher.activo ? '' : ' (inactivo)'}</Typography>
@@ -73,6 +74,6 @@ export function TeachersPage() {
           </Box>
         </AccordionSummary>
         <AccordionDetails>{open === String(teacher.id) && <><TeacherAdmin teacher={teacher} /><Typography component="h3" variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Clases asignadas</Typography><TeacherLessons teacher={teacher} /></>}</AccordionDetails>
-      </Accordion>))}
-  </Box>
+      </Accordion>)}</Box>)}
+  </Box></Box>
 }

@@ -1,7 +1,8 @@
+import { CallOutlined, EditNoteOutlined, HistoryOutlined, PublishedWithChangesOutlined } from '@mui/icons-material'
 import { Alert, Box, Button, Link, Skeleton, TablePagination, Typography } from '@mui/material'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link as RouterLink } from 'react-router-dom'
+import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { deleteActivity, getActivity, getCommercialHistory, type CommercialHistoryKind, type HistorialComercialItem } from '../../api/client'
 import { displayValue } from '../shared/display'
 import { RemoveRecordButton } from '../shared/RemoveRecordButton'
@@ -17,18 +18,21 @@ function EditActivity({ id, onClose, onDone }: { id: number; onClose: () => void
   return <ActivityDialog context={{ label: query.data.oportunidadTitulo ?? query.data.contactoNombre ?? query.data.empresaRazonSocial ?? '' }} activity={query.data} open onClose={onClose} onDone={onDone} />
 }
 
-function HistoryEntry({ item, showOpportunity, onEdit, onChanged }: { item: HistorialComercialItem; showOpportunity: boolean; onEdit: (id: number) => void; onChanged: () => void }) {
-  const opportunity = showOpportunity && item.idOportunidad != null
-    ? <> · <Link component={RouterLink} to={`/oportunidades/${item.idOportunidad}`} underline="hover">{displayValue(item.oportunidadTitulo)}</Link></> : null
+function HistoryEntry({ item, from, showIcon, onEdit, onChanged }: { item: HistorialComercialItem; from?: { to: string; label: string }; showIcon: boolean; onEdit: (id: number) => void; onChanged: () => void }) {
+  const opportunity = from && item.idOportunidad != null
+    ? <> · <Link component={RouterLink} to={`/oportunidades/${item.idOportunidad}`} state={{ from }} underline="hover">{displayValue(item.oportunidadTitulo)}</Link></> : null
   if (item.tipo === 'TRANSICION') {
     return <li className="commercial-history-entry commercial-history-entry--transition">
+      {showIcon && <span className="commercial-history-icon" aria-hidden="true"><PublishedWithChangesOutlined /></span>}
       <Typography component="h3" className="commercial-history-title">Cambio de etapa: {item.etapaAnterior ?? 'Alta de la oportunidad'} → {item.etapaNueva}</Typography>
       <Typography className="commercial-history-meta">{dateTime(item.fechaHora)} · {item.usuarioNombre}{opportunity}</Typography>
       {item.observacion && <Typography className="commercial-history-text">{item.observacion}</Typography>}
     </li>
   }
   const actions = item.accionesPermitidas
+  const isCall = item.tipoActividad?.trim().toLocaleLowerCase('es') === 'llamada'
   return <li className="commercial-history-entry">
+    {showIcon && <span className={`commercial-history-icon${isCall ? ' commercial-history-icon--call' : ''}`} aria-hidden="true">{isCall ? <CallOutlined /> : <EditNoteOutlined />}</span>}
     <Typography component="h3" className="commercial-history-title">{displayValue(item.tipoActividad)}</Typography>
     <Typography className="commercial-history-meta">Ocurrió el {dateTime(item.fechaHora)} · registrada por {item.usuarioNombre} el {item.fechaRegistro ? dateTime(item.fechaRegistro) : '-'}{opportunity}</Typography>
     <Typography className="commercial-history-text">{item.descripcion}</Typography>
@@ -46,18 +50,21 @@ function HistoryEntry({ item, showOpportunity, onEdit, onChanged }: { item: Hist
  */
 export function CommercialHistory({ kind, id }: { kind: CommercialHistoryKind; id: number }) {
   const queryClient = useQueryClient()
+  const { pathname } = useLocation()
+  const from = kind === 'oportunidades' ? undefined : { to: pathname, label: kind === 'empresas' ? 'Volver a la empresa' : 'Volver al contacto' }
+  const showTimeline = true
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(10)
   const [editing, setEditing] = useState<number | null>(null)
   const query = useQuery({ queryKey: ['oportunidades', 'historial-comercial', kind, id, page + 1, pageSize], queryFn: () => getCommercialHistory(kind, id, page + 1, pageSize) })
   const refresh = () => { void queryClient.invalidateQueries({ queryKey: ['oportunidades'] }); void queryClient.invalidateQueries({ queryKey: ['actividades'] }) }
   return <section className="company-detail-section commercial-history" aria-labelledby={`commercial-history-heading-${kind}`}>
-    <Typography component="h2" id={`commercial-history-heading-${kind}`} className="company-section-heading">Historial comercial</Typography>
+    <Typography component="h2" id={`commercial-history-heading-${kind}`} className="company-section-heading">{showTimeline && <HistoryOutlined fontSize="small" />}Historial comercial</Typography>
     {query.isPending ? <Skeleton height={90} role="status" aria-label="Cargando historial comercial" /> : query.isError
       ? <Alert severity="warning" action={<Button onClick={() => void query.refetch()}>Reintentar</Button>}>No pudimos cargar el historial comercial.</Alert>
       : query.data.items.length === 0 ? <Typography color="text.secondary">Todavía no hay actividades ni cambios de etapa.</Typography> : <>
         <ul className="commercial-history-list" aria-label="Historial comercial">
-          {query.data.items.map(item => <HistoryEntry key={`${item.tipo}-${item.idOrigen}`} item={item} showOpportunity={kind !== 'oportunidades'} onEdit={setEditing} onChanged={refresh} />)}
+          {query.data.items.map(item => <HistoryEntry key={`${item.tipo}-${item.idOrigen}`} item={item} from={from} showIcon={showTimeline} onEdit={setEditing} onChanged={refresh} />)}
         </ul>
         <TablePagination component="div" count={Number(query.data.totalCount)} page={page} rowsPerPage={pageSize} rowsPerPageOptions={[10, 25, 50]} onPageChange={(_, next) => setPage(next)} onRowsPerPageChange={event => { setPageSize(Number(event.target.value)); setPage(0) }}
           labelRowsPerPage="Registros por página" labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`} getItemAriaLabel={type => ({ first: 'Primera página', last: 'Última página', next: 'Página siguiente', previous: 'Página anterior' })[type]} />

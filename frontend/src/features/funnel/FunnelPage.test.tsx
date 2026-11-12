@@ -9,11 +9,18 @@ import App from '../../test/LegacyApp'
 import { AuthProvider } from '../../test/LegacyAuthProvider'
 import { SESSION_KEY } from '../../auth/session'
 
-const dnd = vi.hoisted(() => ({ onDragEnd: null as null | ((event: unknown) => void) }))
+const dnd = vi.hoisted(() => ({
+  onDragStart: null as null | ((event: unknown) => void),
+  onDragEnd: null as null | ((event: unknown) => void),
+}))
 // jsdom no calcula geometría: se captura el manejador de DndContext y se simula el «soltar» con los datos que dnd-kit entrega.
 vi.mock('@dnd-kit/core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@dnd-kit/core')>()
-  return { ...actual, DndContext: (props: React.ComponentProps<typeof actual.DndContext>) => { dnd.onDragEnd = props.onDragEnd as typeof dnd.onDragEnd; return <actual.DndContext {...props} /> } }
+  return { ...actual, DndContext: (props: React.ComponentProps<typeof actual.DndContext>) => {
+    dnd.onDragStart = props.onDragStart as typeof dnd.onDragStart
+    dnd.onDragEnd = props.onDragEnd as typeof dnd.onDragEnd
+    return <actual.DndContext {...props} />
+  } }
 })
 
 const seller = { id: 7, nombre: 'María', apellido: 'Gómez', correo: 'maria@example.com', username: 'maria', activo: true, roles: ['VENDEDOR'], permisos: ['GestionarOportunidad'] }
@@ -30,7 +37,6 @@ const wonCard = { ...card, id: 92, titulo: null, tituloVisible: 'Acme Idiomas', 
 const funnelBody = (overrides: Record<string, unknown> = {}) => ({
   idEmbudo: 1, nombre: 'Embudo Inglés', activo: true, idServicio: 2, servicioNombre: 'Capacitación', servicioActivo: true,
   etapas: [
-    // El servidor ordena por `orden`: las finales (1 y 2) llegan primero y la pantalla debe mostrarlas al final.
     { id: 5, nombre: 'Ganada', orden: 1, estado: 'GANADA', oportunidades: [wonCard] },
     { id: 6, nombre: 'Perdida', orden: 2, estado: 'PERDIDA', oportunidades: [] },
     { id: 3, nombre: 'Propuesta', orden: 3, estado: 'ABIERTA', oportunidades: [card] },
@@ -71,7 +77,7 @@ beforeEach(() => {
 })
 
 describe('funnel por rol', () => {
-  it('muestra las columnas del servidor, también vacías y finales, con tarjetas resumidas', async () => {
+  it('muestra solo etapas abiertas, incluso vacías, y excluye las cerradas del total', async () => {
     const requests = mockApi()
     renderFunnel(seller)
     expect(await screen.findByRole('heading', { name: 'Propuesta' })).toBeTruthy()
@@ -81,13 +87,13 @@ describe('funnel por rol', () => {
     expect(requests[0]!.searchParams.has('idResponsable')).toBe(false)
 
     const headings = screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)
-    expect(headings).toEqual(['Propuesta', 'Negociación', 'Ganada', 'Perdida'])
-    expect(screen.getAllByText('Sin oportunidades').length).toBeGreaterThanOrEqual(2)
-    expect(screen.getByText('1 oportunidad · Ganada')).toBeTruthy()
-    expect(screen.getByText('Sin oportunidades · Perdida')).toBeTruthy()
+    expect(headings).toEqual(['Propuesta', 'Negociación'])
+    expect(screen.getByText('Sin oportunidades')).toBeTruthy()
+    expect(screen.getByText(/1 oportunidad abierta/)).toBeTruthy()
+    expect(screen.queryByRole('link', { name: 'Acme Idiomas' })).toBeNull()
     expect(screen.getByRole('link', { name: 'Renovación anual' }).getAttribute('href')).toBe('/oportunidades/91')
     // Empresa y contacto son texto: no llevan a otro perfil por error.
-    expect(screen.getByText('Lucía Pérez – Acme Idiomas', { selector: '.funnel-opportunity-client' })).toBeTruthy()
+    expect(screen.getByText('Acme Idiomas · Lucía Pérez', { selector: '.funnel-opportunity-client' })).toBeTruthy()
     expect(document.querySelector('a[href^="/empresas/"], a[href^="/contactos/"]')).toBeNull()
 
     expect(screen.queryByRole('button', { name: 'Cambiar etapa' })).toBeNull()
@@ -102,12 +108,33 @@ describe('funnel por rol', () => {
     vi.mocked(fetch).mockImplementation(async (input, init) => new URL((input as Request).url).pathname.endsWith('/oportunidades/91') ? jsonResponse(card) : funnelApi(input, init))
     renderFunnel(seller)
     await screen.findByRole('heading', { name: 'Propuesta' })
-    await userEvent.setup().click(screen.getByText('Lucía Pérez – Acme Idiomas'))
+    await userEvent.setup().click(screen.getByText('Acme Idiomas · Lucía Pérez'))
     // La ficha ofrece volver al embudo (y no a la empresa), aunque la oportunidad tenga empresa.
     const back = await screen.findByRole('link', { name: 'Volver al embudo' })
     expect(window.location.pathname).toBe('/oportunidades/91')
     expect(back.getAttribute('href')).toBe('/embudo')
     expect(screen.queryByRole('link', { name: 'Volver a la empresa' })).toBeNull()
+  })
+
+  it('combina búsqueda y origen y recalcula el resumen sobre las tarjetas visibles', async () => {
+    const stage = funnelBody().etapas[2]!
+    mockApi(undefined, () => jsonResponse(funnelBody({ etapas: [{
+      ...stage,
+      oportunidades: [
+        { ...card, origenDescripcion: 'Sitio web' },
+        { ...card, id: 93, tituloVisible: 'Capacitación inicial', origenDescripcion: 'Referido', valor: 320 },
+      ],
+    }] })))
+    renderFunnel(seller)
+    await screen.findByText(/2 oportunidades abiertas/)
+    const actor = userEvent.setup()
+    await actor.type(screen.getByRole('searchbox'), 'acme')
+    await actor.click(screen.getByRole('combobox', { name: 'Origen' }))
+    await actor.click(await screen.findByRole('option', { name: 'Referido' }))
+    expect(screen.getByText(/1 oportunidad abierta.*320,00/)).toBeTruthy()
+    expect(screen.queryByRole('link', { name: 'Renovación anual' })).toBeNull()
+    await actor.click(screen.getByRole('button', { name: 'Restablecer filtros' }))
+    expect(screen.getByText(/2 oportunidades abiertas.*470,00/)).toBeTruthy()
   })
 
   it('un superior filtra por responsable y el selector de embudo separa los procesos', async () => {
@@ -166,7 +193,11 @@ describe('funnel por rol', () => {
     return { posts, reads: () => funnelReads }
   }
 
-  const dropOn = (stage: { id: number; nombre: string; estado: string }, item = movable) => act(() => { screen.getByRole('link', { name: 'Renovación anual' }).focus(); dnd.onDragEnd!({ active: { data: { current: { opportunity: item } } }, over: { data: { current: { stage } } } }) })
+  const dragEvent = (opportunity = movable) => ({ active: { data: { current: { opportunity } } } })
+  const dropOn = (target: { stage?: { id: number; nombre: string; estado: string }; result?: 'GANADA' | 'PERDIDA' }, item = movable) => act(() => {
+    screen.getByRole('link', { name: 'Renovación anual' }).focus()
+    dnd.onDragEnd!({ ...dragEvent(item), over: { data: { current: target } } })
+  })
   const negotiation = { id: 4, nombre: 'Negociación', estado: 'ABIERTA' }
 
   it('soltar la tarjeta en otra etapa abierta mueve la oportunidad y recarga el funnel', async () => {
@@ -174,7 +205,7 @@ describe('funnel por rol', () => {
     renderFunnel(seller)
     await screen.findByRole('heading', { name: 'Propuesta' })
     const before = reads()
-    await dropOn(negotiation)
+    await dropOn({ stage: negotiation })
     expect(await screen.findByText('Etapa actualizada')).toBeTruthy()
     expect(posts).toHaveLength(1)
     expect(posts[0]!.url).toMatch(/\/oportunidades\/91\/mover$/)
@@ -182,15 +213,24 @@ describe('funnel por rol', () => {
     await waitFor(() => expect(reads()).toBeGreaterThan(before))
   })
 
-  it('soltar en una etapa final no mueve: abre el formulario de cierre con el resultado elegido', async () => {
+  it.each([
+    { result: 'GANADA', label: 'Ganada', field: /Valor final/ },
+    { result: 'PERDIDA', label: 'Perdida', field: /Motivo de pérdida/ },
+  ] as const)('muestra las zonas durante el arrastre y abre el cierre $result al soltar', async ({ result, label, field }) => {
     const { posts } = mockMove(() => jsonResponse(movable))
     renderFunnel(seller)
     await screen.findByRole('heading', { name: 'Propuesta' })
-    await dropOn({ id: 6, nombre: 'Perdida', estado: 'PERDIDA' })
+    expect(screen.queryByText('Marcar como ganada')).toBeNull()
+    const closable = { ...movable, accionesPermitidas: { ...movable.accionesPermitidas, cerrar: true } }
+    await act(() => dnd.onDragStart!(dragEvent(closable)))
+    expect(screen.getByText('Marcar como ganada')).toBeTruthy()
+    expect(screen.getByText('Marcar como perdida')).toBeTruthy()
+    await dropOn({ result }, closable)
     const closing = within(await screen.findByRole('dialog', { name: 'Cerrar oportunidad' }))
-    expect(closing.getByText('Perdida')).toBeTruthy()
+    expect(closing.getByText(label)).toBeTruthy()
     expect(closing.queryByRole('combobox', { name: /Resultado/ })).toBeNull()
-    expect(closing.getByRole('combobox', { name: /Motivo de pérdida/ })).toBeTruthy()
+    expect(closing.getByLabelText(field)).toBeTruthy()
+    expect(screen.queryByText('Marcar como ganada')).toBeNull()
     expect(posts).toHaveLength(0)
   })
 
@@ -198,9 +238,9 @@ describe('funnel por rol', () => {
     const { posts } = mockMove(() => jsonResponse({ title: 'Los datos cambiaron. Recargue e intente nuevamente.', code: 'CONCURRENT_CHANGE' }, 409))
     renderFunnel(seller)
     await screen.findByRole('heading', { name: 'Propuesta' })
-    await dropOn({ id: 3, nombre: 'Propuesta', estado: 'ABIERTA' })
+    await dropOn({ stage: { id: 3, nombre: 'Propuesta', estado: 'ABIERTA' } })
     expect(posts).toHaveLength(0)
-    await dropOn(negotiation)
+    await dropOn({ stage: negotiation })
     expect(await screen.findByText(/Los datos cambiaron/)).toBeTruthy()
     expect(posts).toHaveLength(1)
     expect(screen.queryByText('Etapa actualizada')).toBeNull()
@@ -214,10 +254,14 @@ describe('funnel por rol', () => {
     expect(screen.queryByRole('button', { name: 'Cambiar etapa' })).toBeNull()
   })
 
-  it('con permiso de mover, la tarjeta abierta es arrastrable y la de una etapa final no', async () => {
+  it('con permiso de mover pero sin permiso de cierre, no ofrece ni acepta un destino de cierre', async () => {
     mockMove(() => jsonResponse(movable))
     renderFunnel(seller)
     await screen.findByRole('heading', { name: 'Propuesta' })
     expect(document.querySelectorAll('[aria-roledescription="oportunidad arrastrable"]')).toHaveLength(1)
+    await act(() => dnd.onDragStart!(dragEvent()))
+    expect(screen.queryByText('Marcar como ganada')).toBeNull()
+    await dropOn({ result: 'GANADA' })
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 })

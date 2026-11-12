@@ -1,5 +1,5 @@
-import { Refresh } from '@mui/icons-material'
-import { Box, Button, Link, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material'
+import { Refresh, Search } from '@mui/icons-material'
+import { Box, Button, InputAdornment, Link, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
@@ -19,17 +19,17 @@ export function StudentsPage() {
   const [pageSize, setPageSize] = useState(25)
   const filters = { q, page: page + 1, pageSize }
   const { data, error, isPending, refetch } = useQuery({ queryKey: [...studentQueryKeys.all, 'list', filters], queryFn: () => listStudents(filters) })
-  return <Box className="companies-page records-page">
+  return <Box className="companies-list-surface"><Box className="companies-page companies-list-page fluency-shell-type records-page">
     <header className="companies-page-header"><div><Typography component="h1" className="companies-page-title">Alumnos</Typography><Typography className="companies-page-description">Personas que ya contrataron un servicio de nivel de inglés.</Typography></div></header>
-    <Box component="form" onSubmit={e => { e.preventDefault(); setQ(search.trim()); setPage(0) }} sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3, alignItems: 'start' }}>
-      <TextField label="Buscar alumnos" type="search" value={search} onChange={e => setSearch(e.target.value)} helperText="Nombre, documento o correo" />
+    <Box component="form" onSubmit={e => { e.preventDefault(); setQ(search.trim()); setPage(0) }} className="record-filters">
+      <TextField label="Buscar alumnos" type="search" size="small" slotProps={{ input: { startAdornment: <InputAdornment position="start"><Search fontSize="small" /></InputAdornment> } }} value={search} onChange={e => setSearch(e.target.value)} helperText="Nombre, documento o correo" />
       <Button type="submit" variant="outlined">Buscar</Button><Button type="button" onClick={() => { setSearch(''); setQ(''); setPage(0) }}>Limpiar</Button>
     </Box>
     {isPending ? <div className="companies-loading" role="status" aria-label="Cargando alumnos"><Skeleton height={48} /><Skeleton height={48} /><Skeleton height={48} /></div> : error ? <section className="company-feedback" aria-labelledby="students-error-title">
       <Typography id="students-error-title" component="h2" className="company-feedback-title">No pudimos cargar los alumnos</Typography><Typography color="text.secondary">{error.message}</Typography><Button onClick={() => void refetch()} startIcon={<Refresh />} variant="outlined">Reintentar</Button>
     </section> : <>
-      <Typography role="status" sx={{ mb: 2 }}>{data.totalCount} {data.totalCount === 1 ? 'alumno' : 'alumnos'}</Typography>
-      {data.items.length === 0 ? <section className="company-feedback" aria-labelledby="students-empty-title">
+      <Typography role="status" className="record-count">{data.totalCount} {data.totalCount === 1 ? 'alumno' : 'alumnos'}</Typography>
+      <div className="company-table-panel">{data.items.length === 0 ? <section className="company-feedback" aria-labelledby="students-empty-title">
         <Typography id="students-empty-title" component="h2" className="company-feedback-title">{q || page ? 'No hay alumnos para esta búsqueda' : 'Todavía no hay alumnos'}</Typography>
         <Typography color="text.secondary">Un contacto pasa a ser alumno cuando se gana una oportunidad de un servicio de tipo Clases (siempre asociado a un nivel de inglés). Si sos profesor, marcá tus niveles en Mi perfil.</Typography>
       </section> : <TableContainer className="data-table-wrap"><Table aria-label="Alumnos" size="small">
@@ -41,6 +41,7 @@ export function StudentsPage() {
         </TableRow>)}</TableBody>
       </Table></TableContainer>}
       <TablePagination component="div" count={Number(data.totalCount)} page={page} rowsPerPage={pageSize} rowsPerPageOptions={[10, 25, 50, 100]} onPageChange={(_, p) => setPage(p)} onRowsPerPageChange={e => { setPageSize(Number(e.target.value)); setPage(0) }} labelRowsPerPage="Alumnos por página" />
+      </div>
     </>}
-  </Box>
+  </Box></Box>
 }

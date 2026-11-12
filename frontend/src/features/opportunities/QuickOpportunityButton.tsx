@@ -1,9 +1,13 @@
+import { Add, TrendingUpOutlined } from '@mui/icons-material'
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField, Typography } from '@mui/material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createOpportunity, listFunnels, listServices, opportunityQueryKeys, type CreateOportunidadRequest } from '../../api/client'
 import { confirmationFor, saveErrorMessage } from '../shared/formUtils'
+import '../shared/commercial-dialog.css'
+
+const selectSlots = { select: { MenuProps: { slotProps: { paper: { className: 'commercial-dialog-options' } } } } }
 
 /**
  * Alta rápida desde la ficha de una empresa o un contacto: solo se elige el servicio. El embudo se deriva de él (se pregunta únicamente
@@ -22,7 +26,11 @@ function QuickOpportunityDialog({ idEmpresa, idContacto, label, onClose }: { idE
   const funnelId = serviceFunnels.length === 1 ? String(serviceFunnels[0].id) : pickedFunnel
   const mutation = useMutation({
     mutationFn: () => {
-      const payload: CreateOportunidadRequest = { idEmbudo: Number(funnelId), idServicio: Number(service) }
+      // Algunas bases locales todavía exigen un título explícito.
+      const payload: CreateOportunidadRequest = {
+        idEmbudo: Number(funnelId), idServicio: Number(service),
+        titulo: label.trim().slice(0, 100).trimEnd() || 'Nueva oportunidad',
+      }
       if (idEmpresa !== undefined) payload.idEmpresa = idEmpresa
       if (idContacto !== undefined) payload.idContacto = idContacto
       return createOpportunity(payload)
@@ -35,18 +43,24 @@ function QuickOpportunityDialog({ idEmpresa, idContacto, label, onClose }: { idE
   })
   const close = () => { if (!mutation.isPending) onClose() }
   const serviceName = (item: { nombre?: string | null; descripcion?: string | null }) => item.nombre ?? item.descripcion ?? ''
-  return <Dialog open onClose={close} fullWidth maxWidth="xs" aria-labelledby="quick-opportunity-title">
-    <DialogTitle id="quick-opportunity-title">Nueva oportunidad</DialogTitle>
-    <DialogContent sx={{ display: 'grid', gap: 2, pt: '8px !important' }}>
-      <Typography color="text.secondary">Para {label}. Elegí el servicio; el resto se completa solo y después podés editarlo.</Typography>
+  return <Dialog open onClose={close} fullWidth maxWidth="xs" aria-labelledby="quick-opportunity-title" slotProps={{ paper: { className: 'commercial-dialog' } }}>
+    <header className="commercial-dialog-header">
+      <span className="commercial-dialog-icon" aria-hidden="true"><TrendingUpOutlined /></span>
+      <div>
+        <DialogTitle id="quick-opportunity-title">Nueva oportunidad</DialogTitle>
+        <Typography className="commercial-dialog-context">{label}</Typography>
+      </div>
+    </header>
+    <DialogContent className="commercial-dialog-content">
+      <Typography className="commercial-dialog-context">Elegí el servicio. Podés editar los datos de la oportunidad después de crearla.</Typography>
       {servicesQuery.isError && <Alert severity="error" action={<Button color="inherit" size="small" onClick={() => void servicesQuery.refetch()}>Reintentar</Button>}>No pudimos cargar los servicios.</Alert>}
       {funnels.isError && <Alert severity="error" action={<Button color="inherit" size="small" onClick={() => void funnels.refetch()}>Reintentar</Button>}>No pudimos cargar los embudos.</Alert>}
       {servicesQuery.isSuccess && services.length === 0 && <Alert severity="warning">No hay servicios activos para crear oportunidades. Pedile a un administrador que configure uno.</Alert>}
       {funnels.isSuccess && serviceFunnels.length === 0 && <Alert severity="warning">Ningún embudo activo admite este servicio. Pedile a un administrador que lo configure.</Alert>}
-      <TextField select fullWidth required label="Servicio" value={service} onChange={event => { setPickedService(event.target.value); setPickedFunnel('') }} disabled={servicesQuery.isPending || services.length === 0}>
+      <TextField select fullWidth required label="Servicio" value={service} onChange={event => { setPickedService(event.target.value); setPickedFunnel(''); mutation.reset() }} disabled={mutation.isPending || servicesQuery.isPending || services.length === 0} slotProps={selectSlots}>
         {services.map(item => <MenuItem key={item.id} value={String(item.id)}>{serviceName(item)}</MenuItem>)}
       </TextField>
-      {serviceFunnels.length > 1 && <TextField select fullWidth required label="Embudo" value={pickedFunnel} onChange={event => setPickedFunnel(event.target.value)}>
+      {serviceFunnels.length > 1 && <TextField select fullWidth required label="Embudo" value={pickedFunnel} onChange={event => { setPickedFunnel(event.target.value); mutation.reset() }} disabled={mutation.isPending} slotProps={selectSlots}>
         {serviceFunnels.map(item => <MenuItem key={item.id} value={String(item.id)}>{item.nombre}</MenuItem>)}
       </TextField>}
       {mutation.isError && <Alert severity="error" role="alert">{saveErrorMessage(mutation.error)}</Alert>}
@@ -58,10 +72,10 @@ function QuickOpportunityDialog({ idEmpresa, idContacto, label, onClose }: { idE
   </Dialog>
 }
 
-export function QuickOpportunityButton({ idEmpresa, idContacto, label }: { idEmpresa?: number; idContacto?: number; label: string }) {
+export function QuickOpportunityButton({ idEmpresa, idContacto, label, primary = false }: { idEmpresa?: number; idContacto?: number; label: string; primary?: boolean }) {
   const [open, setOpen] = useState(false)
   return <>
-    <Button variant="outlined" onClick={() => setOpen(true)}>Nueva oportunidad</Button>
+    <Button variant={primary ? 'contained' : 'outlined'} startIcon={primary ? <Add /> : undefined} onClick={() => setOpen(true)}>Nueva oportunidad</Button>
     {open && <QuickOpportunityDialog idEmpresa={idEmpresa} idContacto={idContacto} label={label} onClose={() => setOpen(false)} />}
   </>
 }

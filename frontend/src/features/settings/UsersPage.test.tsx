@@ -42,22 +42,26 @@ it('crea una cuenta con roles y evita doble envío', async () => {
 })
 it('edita perfil y roles, cambia contraseña y desactiva/reactiva', async () => {
   mount()
-  await userEvent.click(await screen.findByRole('button', { name: 'Editar ana' }))
-  let dialog = within(screen.getByRole('dialog'))
+  await userEvent.click(await screen.findByRole('button', { name: 'Opciones de ana' }))
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Editar' }))
+  let dialog = within(await screen.findByRole('dialog'))
   await userEvent.clear(dialog.getByLabelText('Nombre', { exact: false })); await userEvent.type(dialog.getByLabelText('Nombre', { exact: false }), 'María')
   await userEvent.click(dialog.getByRole('button', { name: 'Guardar' }))
   expect(await screen.findByText('María Pérez')).toBeTruthy()
-  await userEvent.click(screen.getByRole('button', { name: 'Cambiar contraseña ana' }))
-  dialog = within(screen.getByRole('dialog'))
+  await userEvent.click(screen.getByRole('button', { name: 'Opciones de ana' }))
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Contraseña' }))
+  dialog = within(await screen.findByRole('dialog'))
   await userEvent.type(dialog.getByLabelText('Nueva contraseña', { exact: false }), 'NuevaFicticia123!')
   await userEvent.click(dialog.getByRole('button', { name: 'Guardar' }))
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
-  await userEvent.click(screen.getByRole('button', { name: 'Desactivar ana' }))
-  dialog = within(screen.getByRole('dialog')); await userEvent.click(dialog.getByRole('button', { name: 'Confirmar' }))
-  expect(await screen.findByRole('button', { name: 'Reactivar ana' })).toBeTruthy()
-  await userEvent.click(screen.getByRole('button', { name: 'Reactivar ana' }))
-  dialog = within(screen.getByRole('dialog')); await userEvent.click(dialog.getByRole('button', { name: 'Confirmar' }))
-  expect(await screen.findByRole('button', { name: 'Desactivar ana' })).toBeTruthy()
+  await userEvent.click(screen.getByRole('button', { name: 'Opciones de ana' }))
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Desactivar' }))
+  dialog = within(await screen.findByRole('dialog')); await userEvent.click(dialog.getByRole('button', { name: 'Confirmar' }))
+  expect(await screen.findByText('Inactivo')).toBeTruthy()
+  await userEvent.click(screen.getByRole('button', { name: 'Opciones de ana' }))
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Reactivar' }))
+  dialog = within(await screen.findByRole('dialog')); await userEvent.click(dialog.getByRole('button', { name: 'Confirmar' }))
+  expect(await screen.findByText('Activo')).toBeTruthy()
 })
 it('roles insuficientes no muestran administración ni consultan sus endpoints', async () => {
   isAdmin = false; mount()
@@ -66,7 +70,8 @@ it('roles insuficientes no muestran administración ni consultan sus endpoints',
   expect(vi.mocked(fetch).mock.calls.map(([r]) => (r as Request).url).some(url => url.endsWith('/roles') || url.includes('/usuarios?'))).toBe(false)
 })
 it('duplicado se presenta en formulario sin cerrar ni reenviar', async () => {
-  mount(); await userEvent.click(await screen.findByRole('button', { name: 'Editar ana' }))
+  mount(); await userEvent.click(await screen.findByRole('button', { name: 'Opciones de ana' }))
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Editar' }))
   vi.mocked(fetch).mockResolvedValueOnce(json({ title: 'El usuario o correo ya existe.', code: 'DUPLICATE_VALUE' }, 409))
   await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Guardar' }))
   expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'El usuario o correo ya existe.')
@@ -84,8 +89,9 @@ it('recuperar foco conserva formulario sin cambios de identidad', async () => {
 
 it('bloquea envío del diálogo mientras comprueba sesión y ante fallo de comprobación', async () => {
   mount()
-  await userEvent.click(await screen.findByRole('button', { name: 'Editar ana' }))
-  const save = within(screen.getByRole('dialog')).getByRole('button', { name: 'Guardar' }) as HTMLButtonElement
+  await userEvent.click(await screen.findByRole('button', { name: 'Opciones de ana' }))
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Editar' }))
+  const save = within(await screen.findByRole('dialog')).getByRole('button', { name: 'Guardar' }) as HTMLButtonElement
   const form = save.closest('form')!
   let fail: (reason: Error) => void = () => {}
   const normal = vi.mocked(fetch).getMockImplementation()!

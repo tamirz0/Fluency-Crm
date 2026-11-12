@@ -1,0 +1,246 @@
+main:has(> .home-page) {
+  min-height: calc(100svh - 64px);
+  background: #0b0f17;
+}
+
+.home-page {
+  --dashboard-panel: #0e131f;
+  --dashboard-border: #1e293b;
+  --dashboard-text: #e2e8f0;
+  --dashboard-muted: #94a3b8;
+  --dashboard-link: #60a5fa;
+  container-type: inline-size;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 32px;
+  color: var(--dashboard-text);
+}
+
+.home-overview,
+.home-panel-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.home-overview { margin-bottom: 24px; }
+
+.home-overview-intro h1 {
+  margin: 0;
+  color: #fff;
+  font-size: 20px;
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: -.025em;
+}
+
+.home-overview-intro p {
+  margin: 2px 0 0;
+  color: var(--dashboard-muted);
+  font-size: 12px;
+}
+
+.home-page .home-overview .MuiButton-root {
+  min-height: 32px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.home-page .home-overview .MuiButton-root:hover { background: #1d4ed8; }
+.home-overview .MuiButton-startIcon svg { font-size: 16px; }
+
+.home-page .MuiLink-root {
+  color: var(--dashboard-link);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.home-page .MuiLink-root:hover { color: #93c5fd; }
+
+.home-metrics {
+  display: grid;
+  gap: 16px;
+  margin: 0 0 24px;
+}
+
+.home-metric,
+.home-page .home-panel {
+  min-width: 0;
+  border: 1px solid var(--dashboard-border);
+  border-radius: 8px;
+  background: var(--dashboard-panel);
+  background-image: none;
+}
+
+.home-metric {
+  position: relative;
+  padding: 16px;
+  min-height: 104px;
+}
+
+.home-metric dt {
+  padding-right: 28px;
+  color: var(--dashboard-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.home-metric .home-metric-hint { margin: 4px 0 0; }
+.home-metric--blue { --metric-tone: #60a5fa; }
+.home-metric--mint { --metric-tone: #34d399; }
+.home-metric--neutral { --metric-tone: #94a3b8; }
+
+.home-metric-icon {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  color: var(--metric-tone);
+}
+
+.home-metric-icon svg { width: 18px; height: 18px; }
+
+.home-metric .home-metric-number {
+  margin: 10px 0 0;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-work {
+  display: grid;
+  align-items: start;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.home-page .home-panel { padding: 20px; }
+.home-panel-heading { margin-bottom: 14px; }
+
+.home-panel-heading h2 {
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.home-page .home-funnel-select {
+  width: min(100%, 280px);
+  margin: 2px 0 12px;
+}
+
+.home-funnel-select .MuiOutlinedInput-root {
+  background: #121826;
+  color: var(--dashboard-text);
+  font: 500 12px Inter, system-ui, sans-serif;
+}
+
+.home-funnel-select .MuiOutlinedInput-notchedOutline { border-color: #334155; }
+.home-funnel-select .MuiInputLabel-root { color: var(--dashboard-muted); }
+
+.home-chart { margin: 0; }
+.home-chart figcaption { color: var(--dashboard-muted); font-size: 12px; }
+
+.home-chart ul,
+.home-agenda {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.home-chart ul { margin: 16px 0 0; }
+.home-agenda { margin: 0; gap: 10px; }
+
+.home-chart li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 12px;
+  color: var(--dashboard-text);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.home-chart li strong {
+  color: var(--dashboard-muted);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-chart-track {
+  grid-column: 1 / -1;
+  height: 8px;
+  overflow: hidden;
+  background: var(--dashboard-border);
+  border-radius: 999px;
+}
+
+.home-chart-track > div { height: 100%; border-radius: inherit; }
+
+.home-page .home-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'title aside' 'meta aside';
+  align-items: center;
+  gap: 4px 12px;
+  padding: 11px 8px;
+  border-radius: 6px;
+  color: var(--dashboard-text);
+  overflow-wrap: anywhere;
+}
+
+.home-page .home-entry:hover { background: #1e293b55; }
+.home-entry-title { grid-area: title; }
+.home-entry-meta { grid-area: meta; color: var(--dashboard-muted); font-size: 11px; }
+.home-entry-arrow,
+.home-entry-course { grid-area: aside; }
+
+.home-entry .home-entry-arrow { color: var(--dashboard-muted); font-size: 16px; }
+
+.home-page .home-entry--class {
+  padding: 12px;
+  border: 1px solid #1e293b99;
+  background: #121826;
+}
+
+.home-entry-course {
+  max-width: 115px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: var(--dashboard-border);
+  color: #cbd5e1;
+  font-size: 10px;
+}
+
+.home-agenda-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px dashed var(--dashboard-border);
+  border-radius: 6px;
+}
+
+.home-agenda-empty svg { color: var(--dashboard-muted); flex: none; }
+
+@media (max-width: 599px) {
+  .home-page { padding: 22px 16px; }
+}
+
+@container (min-width: 510px) {
+  .home-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@container (min-width: 690px) {
+  .home-work--academy { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+}

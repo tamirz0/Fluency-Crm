@@ -15,6 +15,7 @@ beforeEach(() => {
     const path = new URL(request.url).pathname
     if (path.endsWith('/csrf')) return json({ requestToken: 'csrf-test' })
     if (path.endsWith('/inicio/resumen')) return json({ alumnos: 0, oportunidadesAbiertas: 0, cerradasEsteMes: 0 })
+    if (path.endsWith('/oportunidades')) return json({ items: [], page: 1, pageSize: 5, totalCount: 0 })
     return authenticated ? json(session) : json({ detail: 'Sesión vencida' }, 401)
   }))
 })
@@ -25,18 +26,21 @@ function mount(path: string) {
 
 it('la raíz es una landing pública con Contacto (mailto) e Ingresar (login)', async () => {
   mount('/')
-  expect(await screen.findByRole('heading', { level: 1, name: /Gestioná tu academia de inglés/ })).toBeTruthy()
-  const contact = screen.getAllByRole('link', { name: 'Contacto' })[0]
+  expect(await screen.findByRole('heading', { level: 1, name: 'El CRM para academias de inglés' })).toBeTruthy()
+  const contact = screen.getByRole('link', { name: 'Contacto' })
   expect(contact.getAttribute('href')).toMatch(/^mailto:/)
-  expect(screen.getAllByRole('link', { name: 'Ingresar' })[0].getAttribute('href')).toBe('/login')
-  expect(screen.getByRole('heading', { name: 'Antes de empezar' })).toBeTruthy()
+  expect(screen.getByRole('link', { name: 'Ingresar' }).getAttribute('href')).toBe('/login')
+  const demoLinks = screen.getAllByRole('link', { name: 'Solicitar una demo' })
+  expect(demoLinks.map(link => link.getAttribute('href'))).toEqual([contact.getAttribute('href'), contact.getAttribute('href')])
+  expect(screen.getByRole('figure', { name: /Embudo comercial Vista de ejemplo/ }).id).toBe('plataforma')
+  expect(screen.getByRole('heading', { name: 'Preguntas frecuentes' })).toBeTruthy()
 })
 it('una ruta desconocida vuelve a la landing', async () => {
   mount('/no-existe')
-  expect(await screen.findByRole('heading', { level: 1, name: /Gestioná tu academia/ })).toBeTruthy()
+  expect(await screen.findByRole('heading', { level: 1, name: 'El CRM para academias de inglés' })).toBeTruthy()
 })
 it('con sesión activa la raíz lleva al inicio', async () => {
   authenticated = true
   mount('/')
-  expect(await screen.findByRole('heading', { name: 'Hola, María' })).toBeTruthy()
+  expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeTruthy()
 })

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Alert, Box, Button } from '@mui/material'
+import { WifiOff } from '@mui/icons-material'
 import { useQueryClient } from '@tanstack/react-query'
 import { ApiRequestError, getSessionRequest, loginRequest, logoutRequest, type AuthUser, type LoginCredentials } from '../api/client'
 import { AuthContext } from './context'
@@ -76,12 +77,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally { identityChange.current = false }
   }, [forget])
   return <AuthContext.Provider value={{ user, isAuthenticated: user !== null, isLoading: isLoading || unavailable, refresh, login, logout }}>
-    {error && <Alert severity="error" onClose={() => setError('')}>{error}</Alert>}
+    {unavailable ? <Alert className="login-alert session-unavailable" severity="warning" icon={<WifiOff fontSize="small" />}
+      action={<Button color="inherit" onClick={() => void refresh()} disabled={isLoading}>Reintentar sesión</Button>}>
+      {error || 'No pudimos comprobar la sesión.'}
+    </Alert> : error && <Alert severity="error" onClose={() => setError('')}>{error}</Alert>}
     {/* Al revalidar con la ventana ya cargada (p. ej. al volver a la pestaña) el aviso flota y aparece recién tras un instante: en el flujo empujaba toda la página hacia abajo y de nuevo hacia arriba. */}
     {isLoading && <Box role="status" sx={initialized
       ? { position: 'fixed', top: 12, right: 12, zIndex: 2000, px: 2, py: 1, borderRadius: 1, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', boxShadow: 3, fontSize: 14, opacity: 0, animation: 'session-check-in 0s linear 500ms forwards', '@keyframes session-check-in': { to: { opacity: 1 } } }
       : { p: 3 }}>Comprobando sesión…</Box>}
-    {unavailable && <Button onClick={() => void refresh()}>Reintentar sesión</Button>}
     {initialized && <Box key={JSON.stringify(user)} inert={isLoading || unavailable || undefined}>{children}</Box>}
   </AuthContext.Provider>
 }

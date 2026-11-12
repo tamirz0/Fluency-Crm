@@ -20,13 +20,13 @@ export function WorkshopDialog({ date, onClose, onSaved }: { date: string; onClo
   const errors = { title: title.trim() ? '' : 'Ingresá el título.', service: service ? '' : 'Elegí el servicio de taller.', time: end > start ? '' : 'El fin debe ser posterior al inicio.' }
   const invalid = Object.values(errors).some(Boolean)
   const submit = () => { setTouched(true); if (!invalid && !save.isPending) save.mutate() }
-  return <Dialog open onClose={save.isPending ? undefined : onClose} fullWidth maxWidth="sm" aria-labelledby="workshop-dialog-title">
+  return <Dialog open onClose={save.isPending ? undefined : onClose} fullWidth maxWidth="sm" aria-labelledby="workshop-dialog-title" slotProps={{ paper: { className: 'record-dialog fluency-shell-type' } }}>
     <DialogTitle id="workshop-dialog-title">Nuevo taller · {dayjs(date).locale('es').format('dddd D [de] MMMM')}</DialogTitle>
     <Box component="form" noValidate onSubmit={event => { event.preventDefault(); submit() }}>
       <DialogContent sx={{ display: 'grid', gap: 2, pt: 1 }}>
         {save.isError && <Alert severity="error">{save.error.message}</Alert>}
         <TextField label="Título" value={title} onChange={e => setTitle(e.target.value)} required autoFocus error={touched && !!errors.title} helperText={touched ? errors.title : undefined} />
-        <TextField select label="Servicio de taller" value={service} onChange={e => setService(e.target.value)} required error={touched && !!errors.service}
+        <TextField select slotProps={{ select: { MenuProps: { slotProps: { paper: { className: 'record-dialog-options fluency-shell-type' } } } } }} label="Servicio de taller" value={service} onChange={e => setService(e.target.value)} required error={touched && !!errors.service}
           helperText={touched && errors.service ? errors.service : services.isError ? services.error.message : services.data?.length === 0 ? 'No hay servicios de taller. Creá uno de tipo Talleres en Servicios.' : 'Los anotados salen de quienes compraron este servicio.'}>
           {services.data?.map(s => <MenuItem key={s.id} value={String(s.id)}>{s.descripcion}</MenuItem>)}
         </TextField>

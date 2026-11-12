@@ -7,7 +7,7 @@ import { createQueryClient } from '../../app/queryClient'
 import App from '../../App'
 import { AuthProvider } from '../../auth/AuthContext'
 
-const user = { id: 7, nombre: 'María', apellido: 'Gómez', correo: 'maria@example.invalid', username: 'maria', activo: true, roles: ['VENDEDOR'], permisos: [] }
+const user = { id: 7, nombre: 'María', apellido: 'Gómez', correo: 'maria@example.invalid', username: 'maria', activo: true, roles: ['VENDEDOR'], permisos: ['ConsultarComercial', 'GestionarClientes', 'GestionarOportunidad'] }
 const firstCompany = { id: 4, razonSocial: 'Acme Idiomas', cuit: '30-12345678-9', industria: 'Educación', correo: 'contacto@acme.com', telefono: '1144445555', direccion: 'Calle 1', idEstado: 1, estadoDescripcion: 'Potencial', estadoActivo: true, idOrigen: 2, origenDescripcion: 'Referido', origenActivo: true, idResponsable: 8, responsableNombre: 'Otro Usuario', responsableActivo: true, fechaCreacion: '2026-10-31T12:00:00Z', activo: true, observaciones: 'Primera línea\nSegunda línea' }
 function json(body: unknown, status = 200) { return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }) }
 function page(items: unknown[], totalCount = items.length, page = 1) { return { items, totalCount, page, pageSize: 25 } }
@@ -15,6 +15,9 @@ let company = { ...firstCompany }
 let states: { id: number; descripcion: string; activo: boolean }[]
 let listHandler: (request: Request) => Response | Promise<Response>
 let writeHandler: (request: Request) => Response | Promise<Response>
+let removeHandler: () => Response
+let permissions: string[]
+let activities: { fechaHora: string }[]
 let authenticated = true
 function renderApp(path = '/empresas') {
   window.history.pushState({}, '', path)
@@ -23,27 +26,89 @@ function renderApp(path = '/empresas') {
 function requestCalls(method: string) { return vi.mocked(fetch).mock.calls.map(([input]) => input as Request).filter(r => r.method === method && new URL(r.url).pathname.includes('/empresas')) }
 beforeEach(() => {
   sessionStorage.clear(); authenticated = true; company = { ...firstCompany }
+  permissions = [...user.permisos]
+  activities = []
+  removeHandler = () => { listHandler = () => json(page([])); return new Response(null, { status: 204 }) }
   states = [{ id: 1, descripcion: 'Potencial', activo: true }, { id: 2, descripcion: 'Cliente', activo: true }]
   listHandler = () => json(page([company]))
   writeHandler = async request => { company = { ...company, ...await request.clone().json() }; return json(company, request.method === 'POST' ? 201 : 200) }
   vi.stubGlobal('fetch', vi.fn(async input => {
     const request = input as Request; const url = new URL(request.url); const path = url.pathname.replace('/api', '')
-    if (path === '/auth/me') return authenticated ? json({ usuario: user }) : json({ title: 'Sin sesión' }, 401)
+    if (path === '/auth/me') return authenticated ? json({ usuario: { ...user, permisos: permissions } }) : json({ title: 'Sin sesión' }, 401)
     if (path === '/auth/csrf') return json({ requestToken: 'fixture-csrf' })
     if (path === '/catalogos/estados-cliente/opciones') return json(states)
     if (path === '/catalogos/origenes-comerciales/opciones') return json([{ id: 2, descripcion: 'Referido', activo: true }])
     if (path === '/usuarios/opciones') return json(page([{ id: 8, nombre: 'Otro', apellido: 'Usuario', roles: ['RESPONSABLE_COMERCIAL'] }]))
     if (path === '/empresas' && request.method === 'GET') return listHandler(request)
     if ((path === '/empresas' && request.method === 'POST') || (path === '/empresas/4' && request.method === 'PATCH')) return writeHandler(request)
+    if (path === '/empresas/4' && request.method === 'DELETE') return removeHandler()
     if (path === '/empresas/4') return json(company)
+    if (path === '/empresas/4/historial-comercial') return json(page([{
+      tipo: 'TRANSICION', idOrigen: 1, fechaHora: '2026-11-05T15:30:00Z', usuarioNombre: 'María Gómez', etapaNueva: 'Primer contacto',
+    }]))
+    if (path === '/contactos' && url.searchParams.get('idEmpresa') === '4') return json(page([{
+      id: 15, nombre: 'Mariana', apellido: 'Ramos', cargo: 'Directora de RRHH', correo: 'mariana@example.invalid',
+    }]))
+    if (path === '/actividades' && url.searchParams.get('idEmpresa') === '4' && url.searchParams.get('pageSize') === '1') return json(page(activities))
     return json({ title: 'No existe la empresa.' }, 404)
   }))
 })
 
 describe('empresas CP08 con sesión real', () => {
+  async function openCompanyActions() {
+    const table = within(await screen.findByRole('table', { name: 'Empresas' }))
+    await userEvent.setup().click(table.getByRole('button', { name: 'Opciones de Acme Idiomas' }))
+    return within(await screen.findByRole('menu'))
+  }
+
+  it('muestra acciones autorizadas para una empresa ajena y conserva el contexto del alta comercial', async () => {
+    renderApp()
+    const menu = await openCompanyActions()
+    expect(window.location.pathname).toBe('/empresas')
+    expect(menu.getByRole('menuitem', { name: 'Ver ficha completa' }).getAttribute('href')).toBe('/empresas/4')
+    expect(menu.getByRole('menuitem', { name: 'Editar datos de empresa' }).getAttribute('href')).toBe('/empresas/4/editar')
+    expect(menu.getByRole('menuitem', { name: 'Crear oportunidad comercial' }).getAttribute('href')).toBe('/oportunidades/nueva?idEmpresa=4')
+    expect(menu.queryByRole('menuitem', { name: 'Asignar responsable' })).toBeNull()
+  })
+
+  it('oculta las acciones de escritura cuando la sesión solo permite consultar', async () => {
+    permissions = ['ConsultarComercial']
+    renderApp()
+    const menu = await openCompanyActions()
+    expect(menu.getAllByRole('menuitem').map(item => item.textContent)).toEqual(['Ver ficha completa'])
+  })
+
+  it('abre la edición como modal desde el listado y cancelar conserva la búsqueda', async () => {
+    renderApp()
+    const actor = userEvent.setup()
+    await actor.type(await screen.findByRole('searchbox', { name: 'Buscar empresas' }), 'Acme')
+    await actor.click((await openCompanyActions()).getByRole('menuitem', { name: 'Editar datos de empresa' }))
+    const dialog = within(await screen.findByRole('dialog', { name: 'Editar empresa' }))
+    expect((dialog.getByRole('textbox', { name: /Razón social/ }) as HTMLInputElement).value).toBe('Acme Idiomas')
+    await actor.click(dialog.getByRole('button', { name: 'Cancelar' }))
+    expect((await screen.findByRole('searchbox', { name: 'Buscar empresas' }) as HTMLInputElement).value).toBe('Acme')
+    expect(window.location.pathname).toBe('/empresas')
+  })
+
+  it('pide confirmación, conserva la empresa ante un conflicto y actualiza la lista cuando la baja se completa', async () => {
+    removeHandler = () => json({ title: 'Tiene contactos activos.' }, 409)
+    renderApp()
+    const actor = userEvent.setup()
+    await actor.click((await openCompanyActions()).getByRole('menuitem', { name: 'Dar de baja' }))
+    const dialog = within(await screen.findByRole('dialog', { name: 'Dar de baja la empresa' }))
+    expect(requestCalls('DELETE')).toHaveLength(0)
+    const confirm = dialog.getByRole('button', { name: 'Dar de baja definitivamente' })
+    await actor.click(confirm)
+    expect(await dialog.findByText('Tiene contactos activos.')).toBeTruthy()
+    removeHandler = () => { listHandler = () => json(page([])); return new Response(null, { status: 204 }) }
+    await actor.click(confirm)
+    expect(await screen.findByText('Empresa dada de baja')).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Todavía no hay empresas' })).toBeTruthy()
+  })
+
   it('protege listado y ficha sin sesión; no confía en sessionStorage', async () => {
     authenticated = false; sessionStorage.setItem('fluency.auth.user.v1', JSON.stringify(user)); renderApp('/empresas/4')
-    expect(await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Ingresá a tu cuenta' })).toBeTruthy()
     expect(requestCalls('GET')).toHaveLength(0)
   })
   it('conserva tabla, segunda columna Estado, enlaces, responsable y navegación por teclado', async () => {
@@ -98,6 +163,19 @@ describe('empresas CP08 con sesión real', () => {
     expect(screen.getByText(/Primera línea\s+Segunda línea/)).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Editar empresa' })).toBeTruthy()
   })
+  it('muestra los contactos vinculados y omite la última actividad si solo hubo cambios de etapa', async () => {
+    renderApp('/empresas/4')
+    const contact = await screen.findByRole('link', { name: 'Mariana Ramos' })
+    expect(contact.getAttribute('href')).toBe('/contactos/15')
+    expect(await screen.findByRole('heading', { name: /Cambio de etapa/ })).toBeTruthy()
+    expect(screen.queryByText('Última actividad registrada')).toBeNull()
+  })
+  it('muestra la fecha de la última actividad real aunque el historial tenga una transición posterior', async () => {
+    activities = [{ fechaHora: '2026-11-03T12:00:00Z' }]
+    renderApp('/empresas/4')
+    const latest = await screen.findByText('Última actividad registrada')
+    expect(latest.querySelector('time')?.dateTime).toBe(activities[0].fechaHora)
+  })
   it('no consulta IDs inválidos y muestra 404 como registro inexistente', async () => {
     renderApp('/empresas/0'); expect(await screen.findByRole('heading', { name: 'No encontramos esa empresa' })).toBeTruthy(); expect(requestCalls('GET')).toHaveLength(0)
   })
@@ -120,7 +198,13 @@ describe('empresas CP08 con sesión real', () => {
     expect(await screen.findByRole('heading', { name: 'Acme Idiomas' })).toBeTruthy()
   })
   it('crea con defaults omitidos o responsable diferente y previene doble envío', async () => {
-    renderApp('/empresas/nueva'); await screen.findByRole('heading', { name: 'Nueva empresa' }); const actor = userEvent.setup()
+    renderApp(); const actor = userEvent.setup()
+    await actor.type(await screen.findByRole('searchbox', { name: 'Buscar empresas' }), 'Acme')
+    await actor.click(screen.getByRole('link', { name: 'Nueva empresa' }))
+    const dialog = within(await screen.findByRole('dialog', { name: 'Nueva empresa' }))
+    await actor.click(dialog.getByRole('button', { name: 'Cancelar' }))
+    expect((await screen.findByRole('searchbox', { name: 'Buscar empresas' }) as HTMLInputElement).value).toBe('Acme')
+    await actor.click(screen.getByRole('link', { name: 'Nueva empresa' }))
     await screen.findByText('Predeterminado: Potencial.')
     await actor.type(screen.getByRole('textbox', { name: 'Razón social' }), '  Empresa nueva  ')
     await actor.click(screen.getByRole('combobox', { name: 'Responsable' })); await actor.click(await screen.findByRole('option', { name: 'Otro Usuario' }))

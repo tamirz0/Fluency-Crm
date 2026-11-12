@@ -1,9 +1,11 @@
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
+import { PersonAddAltOutlined, PersonOutlineOutlined } from '@mui/icons-material'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { opportunityQueryKeys, reassignOpportunity, type Oportunidad } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { CompanyResponsibleSelect } from '../companies/CompanyResponsibleSelect'
+import '../shared/commercial-dialog.css'
 import { saveErrorMessage } from '../shared/formUtils'
 
 /** Reasigna una abierta. El vendedor solo ofrece vendedores; el servidor vuelve a comprobar quién puede reasignar y a quién. */
@@ -23,14 +25,20 @@ export function ReassignDialog({ item, open, onClose, onDone }: { item: Oportuni
   })
   const close = () => { if (mutation.isPending) return; mutation.reset(); setResponsible(''); onClose() }
   const unchanged = responsible === String(item.idResponsable)
-  return <Dialog open={open} onClose={close} fullWidth maxWidth="sm" aria-labelledby="reassign-title">
-    <DialogTitle id="reassign-title">Reasignar oportunidad</DialogTitle>
-    <DialogContent>
-      <Typography sx={{ mb: 2 }}>{item.tituloVisible}: hoy a cargo de {item.responsableNombre}.</Typography>
+  return <Dialog open={open} onClose={close} fullWidth maxWidth="sm" aria-labelledby="reassign-title" slotProps={{ paper: { className: 'commercial-dialog' } }}>
+    <header className="commercial-dialog-header">
+      <span className="commercial-dialog-icon" aria-hidden="true"><PersonAddAltOutlined /></span>
+      <div>
+        <DialogTitle id="reassign-title">Reasignar oportunidad</DialogTitle>
+        <Typography className="commercial-dialog-context">{item.tituloVisible} · hoy a cargo de {item.responsableNombre}</Typography>
+      </div>
+    </header>
+    <DialogContent className="commercial-dialog-content">
       <CompanyResponsibleSelect value={responsible} onChange={setResponsible} role={isSuperior ? undefined : 'VENDEDOR'}
+        optionsClassName="commercial-dialog-options" inputIcon={<PersonOutlineOutlined />}
         helperText={isSuperior ? 'Elegí cualquier usuario activo.' : 'Solo podés reasignarla a un vendedor activo.'} />
-      <Typography color="text.secondary" sx={{ mt: 2 }}>Después de reasignarla vas a poder consultarla, pero ya no editarla.</Typography>
-      {mutation.isError && <Alert severity="error" role="alert" sx={{ mt: 2 }}>{saveErrorMessage(mutation.error)}</Alert>}
+      <Alert severity="info" variant="outlined">Después de reasignarla vas a poder consultarla, pero ya no editarla.</Alert>
+      {mutation.isError && <Alert severity="error" role="alert">{saveErrorMessage(mutation.error)}</Alert>}
     </DialogContent>
     <DialogActions>
       <Button onClick={close} disabled={mutation.isPending}>Cancelar</Button>

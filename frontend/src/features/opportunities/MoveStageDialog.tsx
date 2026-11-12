@@ -1,8 +1,10 @@
+import { SwapHoriz } from '@mui/icons-material'
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField, Typography } from '@mui/material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { listStages, moveOpportunity, opportunityQueryKeys, type Oportunidad } from '../../api/client'
 import { saveErrorMessage } from '../shared/formUtils'
+import '../shared/commercial-dialog.css'
 import type { CloseResult } from './CloseOpportunityDialog'
 
 /**
@@ -29,11 +31,17 @@ export function MoveStageDialog({ item, open, onClose, onDone, onCloseRequest }:
     },
   })
   const close = () => { if (mutation.isPending) return; mutation.reset(); setStage(''); setNote(''); onClose() }
-  return <Dialog open={open} onClose={close} fullWidth maxWidth="sm" aria-labelledby="move-stage-title">
-    <DialogTitle id="move-stage-title">Cambiar etapa</DialogTitle>
-    <DialogContent className="funnel-dialog-content">
-      <Typography className="funnel-selected-title">{item.tituloVisible}: hoy en {item.etapaNombre}.</Typography>
-      <TextField select fullWidth required label="Nueva etapa" value={stage} onChange={event => setStage(event.target.value)} disabled={stages.isPending || stages.isError || options.length === 0}>
+  return <Dialog open={open} onClose={close} fullWidth maxWidth="sm" aria-labelledby="move-stage-title" slotProps={{ paper: { className: 'commercial-dialog' } }}>
+    <header className="commercial-dialog-header">
+      <span className="commercial-dialog-icon" aria-hidden="true"><SwapHoriz /></span>
+      <div>
+        <DialogTitle id="move-stage-title">Cambiar etapa</DialogTitle>
+        <Typography className="commercial-dialog-context">{item.tituloVisible} · {item.etapaNombre}</Typography>
+      </div>
+    </header>
+    <DialogContent className="commercial-dialog-content">
+      <TextField select fullWidth required label="Nueva etapa" value={stage} onChange={event => setStage(event.target.value)} disabled={stages.isPending || stages.isError || options.length === 0}
+        slotProps={{ select: { MenuProps: { slotProps: { paper: { className: 'commercial-dialog-options' } } } } }}>
         {options.map(s => <MenuItem key={s.id} value={String(s.id)}>{s.nombre}</MenuItem>)}
       </TextField>
       {stages.isError && <Alert severity="warning" action={<Button color="inherit" size="small" onClick={() => void stages.refetch()}>Reintentar</Button>}>No pudimos cargar las etapas del embudo.</Alert>}

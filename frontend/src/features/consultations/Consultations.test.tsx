@@ -77,18 +77,30 @@ describe('consultas comerciales', () => {
   })
 
   it('muestra el detalle del contacto, sus observaciones y el enlace correcto a empresa', async () => {
-    vi.mocked(fetch).mockImplementation(async input => new URL((input as Request).url).pathname.endsWith('/historial-comercial') ? jsonResponse(page([])) : jsonResponse(contact))
+    vi.mocked(fetch).mockImplementation(async input => {
+      const { pathname } = new URL((input as Request).url)
+      if (pathname === '/api/contactos/14') return jsonResponse(contact)
+      if (pathname === '/api/contactos/14/academico') return jsonResponse({ alumno: null })
+      if (pathname === '/api/contactos/14/historial-comercial' || pathname === '/api/actividades') return jsonResponse(page([]))
+      return jsonResponse({ title: 'Ruta inesperada' }, 404)
+    })
     renderAuthenticated('/contactos/14')
     expect(await screen.findByRole('heading', { name: 'Pérez, Lucía' })).toBeTruthy()
     expect(await screen.findByText('Todavía no hay actividades ni cambios de etapa.')).toBeTruthy()
-    expect(screen.getByText('30123456')).toBeTruthy()
-    expect(screen.getByText('Directora')).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Acme Idiomas' }).getAttribute('href')).toBe('/empresas/4')
-    expect(screen.getByText('María Gómez (inactivo)')).toBeTruthy()
-    expect(screen.getByText('Fecha de creación', { selector: 'dt' })).toBeTruthy()
-    expect(screen.getByText(/Primera línea\s+Segunda línea/)).toBeTruthy()
+    const info = within(screen.getByRole('region', { name: 'Información general' }))
+    expect(info.getByText('30123456')).toBeTruthy()
+    expect(info.getByText('Directora')).toBeTruthy()
+    expect(info.getByRole('link', { name: 'Acme Idiomas' }).getAttribute('href')).toBe('/empresas/4')
+    expect(info.getByText('María Gómez (inactivo)')).toBeTruthy()
+    expect(info.getByText('Fecha de creación', { selector: 'dt' })).toBeTruthy()
+    expect(info.getByText(/Primera línea\s+Segunda línea/)).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Volver a contactos' })).toBeTruthy()
-    expect(fetch).toHaveBeenCalledTimes(3)
+    expect(vi.mocked(fetch).mock.calls.map(([input]) => new URL((input as Request).url).pathname).sort()).toEqual([
+      '/api/actividades',
+      '/api/contactos/14',
+      '/api/contactos/14/academico',
+      '/api/contactos/14/historial-comercial',
+    ])
   })
 
   it('no consulta un id inválido y representa el 404 como contacto inexistente', async () => {
@@ -184,9 +196,12 @@ describe('consultas comerciales', () => {
   })
 
   it('muestra detalle, enlaces e historial de etapas de solo lectura; un 404 representa oportunidad inexistente', async () => {
-    const detail = { ...listed, responsableActivo: true, idContacto: 14, contactoNombre: 'Lucía Pérez' }
+    const detail = { ...listed, responsableActivo: true, idContacto: 14, contactoNombre: 'Lucía Pérez', objetivoAprendizaje: 'Inglés para reuniones' }
+    const stages = ['Consulta', 'Evaluación', 'Propuesta'].map((nombre, index) => ({
+      id: index + 1, nombre, orden: index + 1, idEmbudo: 1, estado: 'ABIERTA', activo: true,
+    }))
     const history = page([
-      { tipo: 'TRANSICION', idOrigen: 2, fechaHora: '2026-11-06T12:00:00Z', idUsuario: 7, usuarioNombre: 'María Gómez', idOportunidad: 91, etapaAnterior: 'Consulta', etapaNueva: 'Propuesta', observacion: 'Envió presupuesto' },
+      { tipo: 'TRANSICION', idOrigen: 2, fechaHora: '2026-11-06T12:00:00Z', idUsuario: 7, usuarioNombre: 'María Gómez', idOportunidad: 91, etapaAnterior: 'Diagnóstico archivado', etapaNueva: 'Propuesta', observacion: 'Envió presupuesto' },
       { tipo: 'ACTIVIDAD', idOrigen: 5, fechaHora: '2026-11-05T15:00:00Z', fechaRegistro: '2026-11-06T09:00:00Z', idUsuario: 8, usuarioNombre: 'Ana Ventas', idOportunidad: 91, tipoActividad: 'Llamada', descripcion: 'Llamó para pedir presupuesto', resultado: 'Enviar propuesta', accionesPermitidas: { editar: false, darDeBaja: false } },
       { tipo: 'TRANSICION', idOrigen: 1, fechaHora: '2026-11-05T12:00:00Z', idUsuario: 8, usuarioNombre: 'Ana Ventas', idOportunidad: 91, etapaAnterior: null, etapaNueva: 'Consulta' },
     ])
@@ -196,18 +211,31 @@ describe('consultas comerciales', () => {
       requests.push(url)
       if (url.pathname.endsWith('/oportunidades/92')) return new Response('No existe', { status: 404, headers: { 'Content-Type': 'text/plain' } })
       if (url.pathname.endsWith('/oportunidades/91/historial-comercial')) return jsonResponse(history)
+      if (url.pathname.endsWith('/oportunidades/91/historial-etapas')) return jsonResponse(page([{ idNuevaEtapa: 1 }, { idNuevaEtapa: 3 }]))
+      if (url.pathname.endsWith('/embudos/1/etapas')) {
+        return url.searchParams.get('activo') === 'true' ? jsonResponse(stages) : jsonResponse({ title: 'Acceso denegado' }, 403)
+      }
       if (url.pathname.endsWith('/oportunidades/91')) return jsonResponse(detail)
       return jsonResponse([])
     })
     renderAuthenticated('/oportunidades/91')
     expect(await screen.findByRole('heading', { name: 'Renovación anual' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Volver a oportunidades' }).getAttribute('href')).toBe('/oportunidades')
     expect(screen.getByRole('link', { name: 'Acme Idiomas' }).getAttribute('href')).toBe('/empresas/4')
     expect(screen.getByRole('link', { name: 'Lucía Pérez' }).getAttribute('href')).toBe('/contactos/14')
     expect(screen.getByText('Capacitación')).toBeTruthy()
     expect(screen.getByText('31/12/2026')).toBeTruthy()
+    expect(screen.getByRole('region', { name: 'Enfoque académico' }).textContent).toContain('Inglés para reuniones')
+    const stageList = within(screen.getByRole('region', { name: 'Etapas del embudo' }))
+    const visited = await stageList.findByText('Recorrida')
+    expect(visited.closest('li')?.textContent).toContain('Consulta')
+    expect(stageList.getByText('Evaluación').closest('li')?.textContent).toBe('Evaluación')
+    expect(stageList.getByText('Propuesta').closest('li')?.getAttribute('aria-current')).toBe('step')
+    expect(stageList.queryByText('Diagnóstico archivado')).toBeNull()
+    expect(stageList.getByRole('progressbar', { name: 'Avance del embudo' }).getAttribute('aria-valuenow')).toBe('75')
     const timeline = within(await screen.findByRole('list', { name: 'Historial comercial' }))
     expect(timeline.getByText('Cambio de etapa: Alta de la oportunidad → Consulta')).toBeTruthy()
-    expect(timeline.getByText('Cambio de etapa: Consulta → Propuesta')).toBeTruthy()
+    expect(timeline.getByText('Cambio de etapa: Diagnóstico archivado → Propuesta')).toBeTruthy()
     expect(timeline.getByText('Envió presupuesto')).toBeTruthy()
     expect(timeline.getByText('Llamó para pedir presupuesto')).toBeTruthy()
     expect(timeline.getByText(/registrada por Ana Ventas el/)).toBeTruthy()
@@ -224,7 +252,7 @@ describe('consultas comerciales', () => {
 
   it('protege las nuevas rutas y no consulta contactos con un id inválido', async () => {
     renderApp('/oportunidades')
-    expect(await screen.findByRole('heading', { name: 'Ingresá a tu espacio educativo' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Ingresá a tu cuenta' })).toBeTruthy()
     expect(fetch).not.toHaveBeenCalled()
     renderAuthenticated('/contactos/no-es-id')
     expect(await screen.findByRole('heading', { name: 'No encontramos ese contacto' })).toBeTruthy()

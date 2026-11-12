@@ -36,7 +36,7 @@ export function StageEditor({ funnel, item, active = false, nextOrder, onClose }
       await client.invalidateQueries({ queryKey: ['etapas'] }); await client.invalidateQueries({ queryKey: ['embudos'] })
     } finally { pending.current = false }
   }
-  return <Dialog open onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm" aria-labelledby="stage-title">
+  return <Dialog open onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm" aria-labelledby="stage-title" slotProps={{ paper: { className: 'record-dialog fluency-shell-type' } }}>
     <DialogTitle id="stage-title">{active ? item?.activo ? 'Desactivar etapa abierta' : 'Reactivar etapa abierta' : item ? 'Editar etapa' : 'Nueva etapa abierta'}</DialogTitle>
     <Box component="form" noValidate onSubmit={e => { if (active) { e.preventDefault(); void handleSubmit(() => save())(e) } else void handleSubmit(save)(e) }}>
       <DialogContent sx={{ display: 'grid', gap: 2 }}>
@@ -49,7 +49,8 @@ export function StageEditor({ funnel, item, active = false, nextOrder, onClose }
           {item && !isFinal && <>
             <TextField label="Buscar embudos" value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} disabled={isSubmitting} />
             {funnels.error && <Alert severity="error" action={<Button onClick={() => void funnels.refetch()}>Reintentar embudos</Button>}>{funnels.error.message}</Alert>}
-            <Controller name="idEmbudo" control={control} render={({ field }) => <TextField {...field} onChange={e => { field.onChange(e); const selected = funnels.data?.items.find(f => String(f.id) === e.target.value); if (selected) setPickedFunnel(selected) }} select label="Embudo" disabled={isSubmitting || isLoading} helperText="Solo una etapa nunca utilizada puede cambiar de embudo.">
+            <Controller name="idEmbudo" control={control} render={({ field }) => <TextField {...field} onChange={e => { field.onChange(e); const selected = funnels.data?.items.find(f => String(f.id) === e.target.value); if (selected) setPickedFunnel(selected) }} select label="Embudo" disabled={isSubmitting || isLoading} helperText="Solo una etapa nunca utilizada puede cambiar de embudo."
+              slotProps={{ select: { MenuProps: { slotProps: { paper: { className: 'record-dialog-options fluency-shell-type' } } } } }}>
               {!funnels.data?.items.some(f => f.id === pickedFunnel.id) && <MenuItem value={String(pickedFunnel.id)}>{pickedFunnel.nombre}{pickedFunnel.activo ? '' : ' (Inactivo)'}</MenuItem>}
               {funnels.data?.items.map(f => <MenuItem key={f.id} value={String(f.id)}>{f.nombre}{f.activo ? '' : ' (Inactivo)'}</MenuItem>)}
             </TextField>} />

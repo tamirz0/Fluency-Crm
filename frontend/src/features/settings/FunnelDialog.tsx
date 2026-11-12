@@ -26,7 +26,7 @@ function ServicePicker({ typeId, typeName, item, value, onChange, disabled }: { 
     {services.error && <Alert severity="error" action={<Button onClick={() => void services.refetch()}>Reintentar servicios</Button>}>{services.error.message}</Alert>}
     <TextField select fullWidth label={`Servicios de ${typeName}`} value={value.map(String)} disabled={disabled || services.isPending || !!services.error}
       onChange={event => onChange((Array.isArray(event.target.value) ? event.target.value : [event.target.value]).map(Number))}
-      slotProps={{ select: { multiple: true } }} helperText={services.isPending ? 'Cargando servicios…' : options.length ? 'Solo estos servicios entrarán al embudo.' : `Todavía no hay servicios de ${typeName}.`}>
+      slotProps={{ select: { multiple: true, MenuProps: { slotProps: { paper: { className: 'record-dialog-options fluency-shell-type' } } } } }} helperText={services.isPending ? 'Cargando servicios…' : options.length ? 'Solo estos servicios entrarán al embudo.' : `Todavía no hay servicios de ${typeName}.`}>
       {options.map(o => <MenuItem key={o.id} value={String(o.id)}>{`${o.label}${o.activo ? '' : ' (Inactivo)'}`}</MenuItem>)}
     </TextField>
     {Number(services.data?.totalCount ?? 0) > 100 && <FormHelperText>Se muestran los primeros 100 servicios.</FormHelperText>}
@@ -72,7 +72,7 @@ export function FunnelDialog({ item, active = false, onClose }: { item?: Embudo;
     } finally { pending.current = false }
   }
   const busy = isSubmitting || isLoading
-  return <Dialog open onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm" aria-labelledby="funnel-title">
+  return <Dialog open onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm" aria-labelledby="funnel-title" slotProps={{ paper: { className: 'record-dialog fluency-shell-type' } }}>
     <DialogTitle id="funnel-title">{active ? item?.activo ? 'Desactivar embudo' : 'Reactivar embudo' : item ? 'Editar embudo' : 'Nuevo embudo'}</DialogTitle>
     <Box component="form" noValidate onSubmit={e => { if (active) { e.preventDefault(); void handleSubmit(() => save())(e) } else void handleSubmit(save)(e) }}>
       <DialogContent sx={{ display: 'grid', gap: 2 }}>

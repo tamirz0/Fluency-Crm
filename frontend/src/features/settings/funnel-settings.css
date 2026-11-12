@@ -1,0 +1,30 @@
+.companies-list-page .funnel-settings-name.MuiButton-root {
+  min-width: 0;
+  padding-inline: 0 6px;
+  color: var(--text-main);
+  font: inherit;
+  text-align: start;
+}
+
+.funnel-settings-name .MuiButton-endIcon {
+  color: var(--accent-text);
+  transition: transform 160ms ease;
+}
+
+.funnel-settings-name[aria-expanded="true"] .MuiButton-endIcon { transform: rotate(90deg); }
+.companies-list-page .funnel-settings-row.Mui-selected td { background: #1e293b; }
+.funnel-stage-panel-heading { background: var(--company-panel); }
+.funnel-stage-actions { white-space: nowrap; }
+.funnel-stage-actions .MuiIconButton-root { width: 40px; height: 40px; }
+.funnel-stage-actions .MuiIconButton-root:not(.MuiIconButton-colorError, .MuiIconButton-colorSuccess, .Mui-disabled) { color: #93c5fd; }
+
+.companies-list-page .funnel-stage-row-dragging td {
+  background: #20314e;
+  box-shadow: inset 0 -1px #60a5fa;
+}
+
+.funnel-stage-row-dragging { position: relative; z-index: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .funnel-settings-name .MuiButton-endIcon { transition: none; }
+}

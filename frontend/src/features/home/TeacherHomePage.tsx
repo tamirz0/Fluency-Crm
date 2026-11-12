@@ -26,7 +26,7 @@ export function TeacherHomePage() {
   const { user } = useAuth()
   const summary = useQuery({ queryKey: ['inicio', 'profesor'], queryFn: getTeacherSummary, refetchOnMount: 'always' })
   const data = summary.data
-  return <Box sx={{ p: { xs: 3, md: 5 }, maxWidth: 1440, mx: 'auto' }}>
+  return <Box className="companies-page">
     <Typography component="h1" className="companies-page-title">Hola, {user?.nombre}</Typography>
     <Typography sx={{ mt: 2 }}>{dayjs().locale('es').format('dddd D [de] MMMM')}. Esto es lo que tenés por delante.</Typography>
     {summary.isError && <Alert severity="warning" sx={{ mt: 3 }} action={<Button color="inherit" size="small" startIcon={<Refresh />} onClick={() => void summary.refetch()}>Reintentar</Button>}>
@@ -34,10 +34,10 @@ export function TeacherHomePage() {
     </Alert>}
     {data && data.cantidadNiveles === 0 && <Alert severity="info" sx={{ mt: 3 }}>Todavía no marcaste con qué niveles de inglés trabajás. <Link component={RouterLink} to="/perfil">Marcalos en Mi perfil</Link> para poder abrir cursos y ver a tus alumnos.</Alert>}
     <Box component="section" aria-label="Resumen" sx={{ mt: 3, display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
-      {([['Cursos a cargo', data?.cantidadCursos, '/cursos', 'Ver cursos'], ['Alumnos en tus cursos', data?.cantidadAlumnos, '/alumnos', 'Ver alumnos']] as const).map(([title, value, to, link]) => <Card key={title} variant="outlined"><CardContent>
+      {([['Cursos a cargo', data?.cantidadCursos, '/cursos', 'Ver cursos'], ['Alumnos en tus cursos', data?.cantidadAlumnos, '/alumnos', 'Ver alumnos']] as const).map(([title, value, to, link]) => <Card key={title} variant="outlined" sx={{ borderTop: 2, borderTopColor: 'primary.main' }}><CardContent>
         <Typography component="h2" variant="subtitle1" color="text.secondary">{title}</Typography>
         {summary.isPending ? <Skeleton variant="text" width={64} sx={{ fontSize: '2.5rem' }} aria-label={`Cargando ${title}`} />
-          : <Typography variant="h3" component="p" color={value === undefined ? 'text.disabled' : 'text.primary'} aria-label={`${title}: ${value ?? 'no disponible'}`}>{value ?? '—'}</Typography>}
+          : <Typography variant="h3" component="p" sx={{ fontVariantNumeric: 'tabular-nums', my: .5 }} color={value === undefined ? 'text.disabled' : 'text.primary'} aria-label={`${title}: ${value ?? 'no disponible'}`}>{value ?? '—'}</Typography>}
         <Link component={RouterLink} to={to} underline="hover">{link}</Link>
       </CardContent></Card>)}
     </Box>

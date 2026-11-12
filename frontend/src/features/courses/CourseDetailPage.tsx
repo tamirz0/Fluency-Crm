@@ -6,8 +6,10 @@ import { Link as RouterLink, useParams } from 'react-router-dom'
 import { addStudentsToCourse, ApiRequestError, courseQueryKeys, getCourse, listStudents, studentQueryKeys } from '../../api/client'
 import { parsePositiveId } from '../shared/display'
 import { ProfileHeader, ProfileStats } from '../shared/RecordProfile'
+import { AcademyDetailPage } from '../shared/AcademyDetailPage'
 import '../companies/companies.css'
 import '../contacts/records.css'
+import '../shared/academy-pages.css'
 
 function AddStudentsDialog({ courseId, levelId, onClose }: { courseId: number; levelId: number; onClose: () => void }) {
   const client = useQueryClient()
@@ -17,12 +19,12 @@ function AddStudentsDialog({ courseId, levelId, onClose }: { courseId: number; l
     mutationFn: () => addStudentsToCourse(courseId, selected.map(s => s.id)),
     onSuccess: async data => { client.setQueryData(courseQueryKeys.detail(courseId), data); await client.invalidateQueries({ queryKey: courseQueryKeys.all }); await client.invalidateQueries({ queryKey: studentQueryKeys.all }); onClose() },
   })
-  return <Dialog open onClose={save.isPending ? undefined : onClose} fullWidth maxWidth="sm" aria-labelledby="add-students-title">
+  return <Dialog open onClose={save.isPending ? undefined : onClose} fullWidth maxWidth="sm" aria-labelledby="add-students-title" slotProps={{ paper: { className: 'record-dialog fluency-shell-type' } }}>
     <DialogTitle id="add-students-title">Agregar alumnos</DialogTitle>
     <DialogContent sx={{ pt: 1 }}>
       {save.isError && <Alert severity="error" sx={{ mb: 2 }}>{save.error.message}</Alert>}
       {candidates.isError && <Alert severity="error" sx={{ mb: 2 }}>{candidates.error.message}</Alert>}
-      <Autocomplete multiple options={(candidates.data?.items ?? []).map(s => ({ id: Number(s.id), label: `${s.apellido}, ${s.nombre}` }))} value={selected} onChange={(_, value) => setSelected(value)}
+      <Autocomplete multiple slotProps={{ paper: { className: 'record-dialog-options fluency-shell-type' } }} options={(candidates.data?.items ?? []).map(s => ({ id: Number(s.id), label: `${s.apellido}, ${s.nombre}` }))} value={selected} onChange={(_, value) => setSelected(value)}
         isOptionEqualToValue={(a, b) => a.id === b.id} loading={candidates.isPending} noOptionsText="No hay alumnos de este nivel sin curso"
         renderInput={params => <TextField {...params} autoFocus label="Alumnos" helperText="Solo alumnos del nivel del curso que todavía no tienen curso." />} />
     </DialogContent>
@@ -38,11 +40,11 @@ export function CourseDetailPage() {
   const query = useQuery({ queryKey: courseQueryKeys.detail(id ?? 0), queryFn: () => getCourse(id as number), enabled: id !== undefined })
   const back = <Link component={RouterLink} to="/cursos" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a cursos</Link>
   if (id === undefined || (query.isError && query.error instanceof ApiRequestError && query.error.status === 404))
-    return <Box className="companies-page company-result-page records-page">{back}<section className="company-feedback"><Typography component="h1" className="company-feedback-title">No encontramos el curso</Typography></section></Box>
-  if (query.isPending) return <Box className="companies-page company-result-page records-page" role="status" aria-label="Cargando curso"><Skeleton width="54%" height={54} /><Skeleton /><Skeleton /></Box>
-  if (query.isError) return <Box className="companies-page company-result-page records-page">{back}<Alert severity="error">No pudimos cargar el curso. {query.error.message}</Alert></Box>
+    return <AcademyDetailPage>{back}<section className="company-feedback"><Typography component="h1" className="company-feedback-title">No encontramos el curso</Typography></section></AcademyDetailPage>
+  if (query.isPending) return <AcademyDetailPage><Box role="status" aria-label="Cargando curso"><Skeleton width="54%" height={54} /><Skeleton /><Skeleton /></Box></AcademyDetailPage>
+  if (query.isError) return <AcademyDetailPage>{back}<Alert severity="error">No pudimos cargar el curso. {query.error.message}</Alert></AcademyDetailPage>
   const { curso, alumnos } = query.data
-  return <Box className="companies-page company-result-page records-page">
+  return <AcademyDetailPage>
     {back}
     <article className="profile-sheet" aria-label={`Ficha del curso ${curso.nombre}`}>
       <ProfileHeader name={curso.nombre} subtitle={`Curso · ${curso.nivel.descripcion}`} actions={<Button variant="contained" onClick={() => setAdding(true)}>Agregar alumnos</Button>} />
@@ -58,5 +60,5 @@ export function CourseDetailPage() {
       : <TableContainer className="data-table-wrap"><Table size="small" aria-label="Alumnos del curso"><TableHead><TableRow><TableCell>Apellido y nombre</TableCell><TableCell>Documento</TableCell><TableCell>Correo</TableCell></TableRow></TableHead>
         <TableBody>{alumnos.map(a => <TableRow key={a.id}><TableCell><Link component={RouterLink} to={`/alumnos/${a.id}`} underline="hover">{a.apellido}, {a.nombre}</Link></TableCell><TableCell>{a.documento?.trim() || '-'}</TableCell><TableCell>{a.correo}</TableCell></TableRow>)}</TableBody></Table></TableContainer>}
     {adding && <AddStudentsDialog courseId={id} levelId={Number(curso.nivel.id)} onClose={() => setAdding(false)} />}
-  </Box>
+  </AcademyDetailPage>
 }

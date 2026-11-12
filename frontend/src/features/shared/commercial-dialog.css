@@ -1,0 +1,79 @@
+.commercial-dialog.MuiPaper-root,
+.commercial-dialog-options.MuiPaper-root {
+  color-scheme: dark;
+  --dialog-text: #dde2f8;
+  --dialog-muted: #c2c6d6;
+  --dialog-accent: #adc6ff;
+  --dialog-border: #2f3445;
+  --dialog-padding: clamp(16px, 4vw, 24px);
+  background: #121827;
+  border: 1px solid var(--dialog-border);
+  border-radius: 12px;
+  color: var(--dialog-text);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.commercial-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px var(--dialog-padding);
+  border-bottom: 1px solid var(--dialog-border);
+  overflow-wrap: anywhere;
+}
+
+.commercial-dialog-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #3a4863;
+  border-radius: 10px;
+  background: #20293e;
+  color: var(--dialog-accent);
+}
+
+.commercial-dialog .MuiDialogTitle-root {
+  padding: 0;
+  font: 700 20px/28px 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+.commercial-dialog .commercial-dialog-context { color: var(--dialog-muted); font: 400 13px/18px Inter, system-ui, sans-serif; }
+
+.commercial-dialog .commercial-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding: 20px var(--dialog-padding);
+}
+.commercial-dialog :is(.MuiInputBase-root, .MuiInputLabel-root, .MuiFormHelperText-root, .MuiButton-root),
+.commercial-dialog-options .MuiMenuItem-root { font-family: inherit; font-size: 14px; }
+.commercial-dialog .MuiFormHelperText-root { font-size: 12px; }
+.commercial-dialog :is(.MuiInputLabel-root, .MuiFormHelperText-root):not(.Mui-error):not(.Mui-disabled) { color: var(--dialog-muted); }
+.commercial-dialog .MuiOutlinedInput-root { border-radius: 8px; background: #191f2f; color: var(--dialog-text); }
+.commercial-dialog .MuiOutlinedInput-root:not(.Mui-error):not(.Mui-disabled) .MuiOutlinedInput-notchedOutline { border-color: #536178; }
+.commercial-dialog .MuiOutlinedInput-root.Mui-focused:not(.Mui-error) .MuiOutlinedInput-notchedOutline { border-color: var(--dialog-accent); }
+.commercial-dialog .MuiSelect-icon { color: var(--dialog-muted); }
+.commercial-dialog-options .MuiMenuItem-root.Mui-selected { background: #263650; }
+.commercial-dialog-options .MuiMenuItem-root:hover,
+.commercial-dialog-options .MuiMenuItem-root.Mui-focusVisible { background: #20293e; }
+
+.commercial-dialog .MuiDialogActions-root {
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px var(--dialog-padding);
+  border-top: 1px solid var(--dialog-border);
+  background: #151b2b;
+}
+.commercial-dialog .MuiDialogActions-root > .MuiButton-root { margin: 0; min-height: 44px; padding-inline: 14px; border-radius: 8px; text-transform: none; }
+.commercial-dialog .MuiDialogActions-root > .MuiButton-text:not(.Mui-disabled) { color: var(--dialog-accent); }
+.commercial-dialog .MuiDialogActions-root > .MuiButton-contained:not(.Mui-disabled) { background: #4d8eff; color: #00285d; }
+.commercial-dialog .MuiDialogActions-root > .MuiButton-contained:not(.Mui-disabled):hover { background: #72a5ff; }
+.commercial-dialog--danger .commercial-dialog-icon { color: #ffb4ab; background: #36252e; border-color: #67424c; }
+.commercial-dialog--danger .MuiDialogActions-root > .MuiButton-containedError:not(.Mui-disabled) { background: #ffb4ab; color: #561e25; }
+.commercial-dialog--danger .MuiDialogActions-root > .MuiButton-containedError:not(.Mui-disabled):hover { background: #ffccc5; }
+
+@media (max-width: 480px) {
+  .commercial-dialog.MuiPaper-root { width: calc(100% - 32px); margin: 16px; max-height: calc(100% - 32px); }
+}

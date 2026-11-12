@@ -9,4 +9,8 @@ export function stageToneClass(index: number): string {
 
 export const stateLabels: Record<string, string> = { ABIERTA: 'Abierta', GANADA: 'Ganada', PERDIDA: 'Perdida' }
 
+export function opportunityStateClass(state: string): string {
+  return state === 'GANADA' ? 'opportunity-state--won' : state === 'PERDIDA' ? 'opportunity-state--lost' : 'company-status--prospect'
+}
+
 export const money = (value: number | string) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(Number(value))

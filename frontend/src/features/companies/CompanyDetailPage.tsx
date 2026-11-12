@@ -1,18 +1,20 @@
-import { ArrowBack, Refresh } from '@mui/icons-material'
-import { Alert, Box, Button, Link, Skeleton, Typography } from '@mui/material'
+import { AccessTime, ArrowBack, BusinessOutlined, ContactsOutlined, InfoOutlined, MailOutlined, Refresh } from '@mui/icons-material'
+import { Alert, Box, Button, IconButton, Link, Skeleton, TablePagination, Typography } from '@mui/material'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link as RouterLink, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { ApiRequestError, deleteCompany, empresaQueryKeys, getCompany, type Empresa } from '../../api/client'
+import { ApiRequestError, contactoQueryKeys, empresaQueryKeys, getCompany, listActivities, listContacts, type Empresa } from '../../api/client'
+import { CompanyActions } from './CompanyActions'
 import { CompanyStatus } from './CompanyStatus'
 import { useAuth } from '../../auth/useAuth'
 import { confirmationFor } from '../shared/formUtils'
 import { CommercialHistory } from '../activities/CommercialHistory'
 import { RegisterActivityButton } from '../activities/ActivityForm'
-import { RemoveRecordButton } from '../shared/RemoveRecordButton'
 import { QuickOpportunityButton } from '../opportunities/QuickOpportunityButton'
-import { ProfileHeader, ProfileRows, ProfileStats } from '../shared/RecordProfile'
+import { ProfileRows } from '../shared/RecordProfile'
+import { initials } from '../shared/display'
 import './companies.css'
+import './company-detail.css'
 
 function parseCompanyId(value: string | undefined): number | undefined {
   if (!value || !/^[1-9]\d*$/.test(value)) return undefined
@@ -28,6 +30,40 @@ function CompanyContactLinks({ company }: { company: Empresa }) {
   </span>
 }
 
+function CompanyContacts({ id }: { id: number }) {
+  const [page, setPage] = useState(0)
+  const filters = { idEmpresa: id, page: page + 1, pageSize: 5 }
+  const query = useQuery({ queryKey: [...contactoQueryKeys.all, 'list', filters], queryFn: () => listContacts(filters) })
+  return <section className="company-fiche-card" aria-labelledby="company-contacts-heading">
+    <header className="company-fiche-card-heading">
+      <Typography component="h2" id="company-contacts-heading"><ContactsOutlined fontSize="small" />Contactos vinculados</Typography>
+    </header>
+    {query.isPending ? <Skeleton height={60} role="status" aria-label="Cargando contactos vinculados" /> : query.isError
+      ? <Alert severity="warning" action={<Button onClick={() => void query.refetch()}>Reintentar</Button>}>No pudimos cargar los contactos.</Alert>
+      : <>
+        {query.data.items.length === 0 ? <Typography color="text.secondary">{page === 0 ? 'Todavía no hay contactos vinculados.' : 'No hay contactos vinculados en esta página.'}</Typography> :
+          <ul className="company-fiche-contacts">
+            {query.data.items.map(contact => {
+              const name = `${contact.nombre} ${contact.apellido}`
+              return <li key={contact.id}>
+                <span className="company-fiche-contact-avatar" aria-hidden="true">{initials(name)}</span>
+                <div>
+                  <Link component={RouterLink} to={`/contactos/${contact.id}`} underline="hover">{name}</Link>
+                  {contact.cargo && <span className="company-fiche-contact-role">{contact.cargo}</span>}
+                </div>
+                {contact.correo && <IconButton component="a" href={`mailto:${contact.correo}`} aria-label={`Enviar correo a ${name}`}><MailOutlined fontSize="small" /></IconButton>}
+              </li>
+            })}
+          </ul>}
+        {(Number(query.data.totalCount) > filters.pageSize || page > 0) &&
+          <TablePagination component="div" count={Number(query.data.totalCount)} page={page} rowsPerPage={filters.pageSize} rowsPerPageOptions={[]}
+            onPageChange={(_, next) => setPage(next)}
+            labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`}
+            getItemAriaLabel={type => ({ first: 'Primera página', last: 'Última página', next: 'Página siguiente', previous: 'Página anterior' })[type]} />}
+      </>}
+  </section>
+}
+
 function DetailSkeleton() {
   return <div className="company-detail-skeleton" aria-label="Cargando detalle de la empresa" role="status">
     <Skeleton width={150} height={28} />
@@ -38,7 +74,9 @@ function DetailSkeleton() {
 
 export function CompanyDetailPage() {
   const { idEmpresa: routeId } = useParams()
-  const canCreateOpportunity = Boolean(useAuth().user?.permisos?.includes('GestionarOportunidad'))
+  const permissions = useAuth().user?.permisos
+  const canCreateOpportunity = permissions?.includes('GestionarOportunidad')
+  const canManage = permissions?.includes('GestionarClientes')
   const location = useLocation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -48,6 +86,12 @@ export function CompanyDetailPage() {
     queryKey: empresaQueryKeys.detail(idEmpresa ?? 0),
     queryFn: () => getCompany(idEmpresa as number),
     enabled: idEmpresa !== undefined,
+  })
+  const latestActivity = useQuery({
+    queryKey: ['actividades', 'ultima-por-empresa', idEmpresa],
+    queryFn: () => listActivities({ idEmpresa, page: 1, pageSize: 1 }),
+    enabled: query.isSuccess,
+    select: data => data.items[0],
   })
 
   if (idEmpresa === undefined || (query.isError && query.error instanceof ApiRequestError && query.error.status === 404)) {
@@ -62,30 +106,57 @@ export function CompanyDetailPage() {
   </Box>
 
   const company = query.data
-  const status = company.estadoDescripcion
-  return <Box className="companies-page company-result-page">
+  return <Box className="companies-page company-result-page company-fiche">
     <Link component={RouterLink} to="/empresas" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a empresas</Link>
     {activityRegistered && <Alert severity="success" className="record-form-confirmation">Actividad registrada.</Alert>}
     {typeof location.state === 'object' && location.state !== null && 'confirmation' in location.state && <Alert severity="success" className="record-form-confirmation">{String(location.state.confirmation)}</Alert>}
     {query.isFetching && query.isPlaceholderData && <Typography className="company-detail-loading" role="status">Actualizando ficha…</Typography>}
-    <article className="profile-sheet" aria-label={`Ficha de ${company.razonSocial}`}>
-      <ProfileHeader name={company.razonSocial} subtitle={[company.cuit?.trim() && `CUIT ${company.cuit.trim()}`, company.industria?.trim()].filter(Boolean).join(' · ')} status={<CompanyStatus value={status} />} actions={<>{canCreateOpportunity && <QuickOpportunityButton idEmpresa={Number(company.id)} label={company.razonSocial} />}<RegisterActivityButton context={{ label: company.razonSocial, idEmpresa: Number(company.id) }} onRegistered={() => setActivityRegistered(true)} /><Button component={RouterLink} to={`/empresas/${company.id}/editar`} variant="contained">Editar empresa</Button>
-        <RemoveRecordButton noun="empresa" name={company.razonSocial} remove={() => deleteCompany(Number(company.id))} onRemoved={() => {
-          navigate('/empresas', { state: { confirmation: confirmationFor('Empresa', 'dada de baja') } })
-          void queryClient.invalidateQueries({ queryKey: empresaQueryKeys.all, refetchType: 'inactive' })
-        }} /></>} />
-      <ProfileStats items={[
-        { label: 'Responsable', value: company.responsableNombre ? company.responsableNombre + (company.responsableActivo === false ? ' (inactivo)' : '') : undefined },
-        { label: 'Origen', value: company.origenDescripcion ? `${company.origenDescripcion}${company.origenActivo === false ? ' (inactivo)' : ''}` : undefined },
-        { label: 'Fecha de creación', value: company.fechaCreacion ? new Date(company.fechaCreacion).toLocaleString('es-AR') : undefined },
-      ]} />
-      <ProfileRows rows={[
-        { label: 'Contacto', value: (company.correo?.trim() || company.telefono?.trim()) && <CompanyContactLinks company={company} /> },
-        { label: 'Dirección', value: company.direccion?.trim() },
-        ...(company.estadoActivo === false ? [{ label: 'Disponibilidad del estado', value: 'Estado inactivo para nuevas asignaciones' }] : []),
-        { label: 'Observaciones', value: company.observaciones?.trim() },
-      ]} />
+    <article aria-label={`Ficha de ${company.razonSocial}`}>
+      <div className="company-fiche-summary">
+        <header className="company-fiche-header">
+          <span className="company-fiche-avatar" aria-hidden="true">{initials(company.razonSocial)}</span>
+          <div className="company-fiche-identity">
+            <div className="company-fiche-name">
+              <h1>{company.razonSocial}</h1>
+              <CompanyStatus value={company.estadoDescripcion} />
+            </div>
+            <div className="company-fiche-meta">
+              {company.industria?.trim() && <span><BusinessOutlined />{company.industria.trim()}</span>}
+              {company.cuit?.trim() && <span>CUIT {company.cuit.trim()}</span>}
+              {latestActivity.data && <span><AccessTime />Última actividad registrada <time dateTime={latestActivity.data.fechaHora}>{new Date(latestActivity.data.fechaHora).toLocaleString('es-AR')}</time></span>}
+            </div>
+          </div>
+          <div className="company-fiche-actions">
+            <RegisterActivityButton context={{ label: company.razonSocial, idEmpresa }} onRegistered={() => setActivityRegistered(true)} showIcon />
+            {canCreateOpportunity && <QuickOpportunityButton idEmpresa={idEmpresa} label={company.razonSocial} primary />}
+            <CompanyActions company={company} inDetail onRemoved={() => {
+              navigate('/empresas', { state: { confirmation: confirmationFor('Empresa', 'dada de baja') } })
+              void queryClient.invalidateQueries({ queryKey: empresaQueryKeys.all, refetchType: 'inactive' })
+            }} />
+          </div>
+        </header>
+      </div>
+      <div className="company-fiche-grid">
+        <div className="company-fiche-sidebar">
+          <section className="company-fiche-card" aria-labelledby="company-info-heading">
+            <header className="company-fiche-card-heading">
+              <Typography component="h2" id="company-info-heading"><InfoOutlined fontSize="small" />Información general</Typography>
+              {canManage && <Button component={RouterLink} to={`/empresas/${company.id}/editar`} state={{ companyFormBackground: location }} size="small" aria-label="Editar empresa">Modificar</Button>}
+            </header>
+            <ProfileRows rows={[
+              { label: 'Responsable comercial', value: company.responsableNombre && <span className="company-fiche-owner"><span className="company-fiche-contact-avatar" aria-hidden="true">{initials(company.responsableNombre)}</span>{company.responsableNombre}{company.responsableActivo === false && ' (inactivo)'}</span> },
+              { label: 'Contacto', value: <CompanyContactLinks company={company} /> },
+              { label: 'Origen', value: company.origenDescripcion ? `${company.origenDescripcion}${company.origenActivo === false ? ' (inactivo)' : ''}` : undefined },
+              { label: 'Dirección', value: company.direccion?.trim() },
+              { label: 'Fecha de creación', value: company.fechaCreacion && <time className="company-fiche-created" dateTime={company.fechaCreacion}>{new Date(company.fechaCreacion).toLocaleString('es-AR')}</time> },
+              ...(company.estadoActivo === false ? [{ label: 'Disponibilidad del estado', value: 'Estado inactivo para nuevas asignaciones' }] : []),
+              { label: 'Observaciones internas', value: company.observaciones?.trim() },
+            ]} />
+          </section>
+          <CompanyContacts key={idEmpresa} id={idEmpresa} />
+        </div>
+        <CommercialHistory key={idEmpresa} kind="empresas" id={idEmpresa} />
+      </div>
     </article>
-    <CommercialHistory kind="empresas" id={Number(company.id)} />
   </Box>
 }

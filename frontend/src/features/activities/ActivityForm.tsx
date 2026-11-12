@@ -1,8 +1,10 @@
+import { AddTaskOutlined, EditNoteOutlined } from '@mui/icons-material'
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField, Typography } from '@mui/material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { createActivity, getCatalogOptions, patchActivity, type Actividad, type CreateActividadRequest, type PatchActividadRequest } from '../../api/client'
 import { saveErrorMessage } from '../shared/formUtils'
+import '../shared/commercial-dialog.css'
 
 /** Asociaciones que la ficha ya conoce: el editor las envía sin pedir repetirlas. */
 export type ActivityContext = { idEmpresa?: number; idContacto?: number; idOportunidad?: number; label: string }
@@ -65,11 +67,17 @@ export function ActivityDialog({ context, activity, open, onClose, onDone }: { c
     if (!next.type && !next.date && !next.description) mutation.mutate()
   }
   const { type: typeError, date: dateError, description: descriptionError } = errors
-  return <Dialog open={open} onClose={close} fullWidth maxWidth="sm" aria-labelledby="activity-title">
-    <DialogTitle id="activity-title">{activity ? 'Editar actividad' : 'Registrar actividad'}</DialogTitle>
-    <DialogContent className="funnel-dialog-content">
-      <Typography className="funnel-selected-title">{context.label}</Typography>
-      <TextField select fullWidth required label="Tipo de actividad" value={type} onChange={event => setType(event.target.value)} error={Boolean(typeError)} helperText={typeError} disabled={types.isPending || types.isError}>
+  return <Dialog open={open} onClose={close} fullWidth maxWidth="sm" aria-labelledby="activity-title" slotProps={{ paper: { className: 'commercial-dialog' } }}>
+    <header className="commercial-dialog-header">
+      <span className="commercial-dialog-icon" aria-hidden="true">{activity ? <EditNoteOutlined /> : <AddTaskOutlined />}</span>
+      <div>
+        <DialogTitle id="activity-title">{activity ? 'Editar actividad' : 'Registrar actividad'}</DialogTitle>
+        {context.label && <Typography className="commercial-dialog-context">{context.label}</Typography>}
+      </div>
+    </header>
+    <DialogContent className="commercial-dialog-content">
+      <TextField select fullWidth required label="Tipo de actividad" value={type} onChange={event => setType(event.target.value)} error={Boolean(typeError)} helperText={typeError} disabled={types.isPending || types.isError}
+        slotProps={{ select: { MenuProps: { slotProps: { paper: { className: 'commercial-dialog-options' } } } } }}>
         {activity && !(types.data ?? []).some(option => Number(option.id) === Number(activity.idTipo)) && <MenuItem value={String(activity.idTipo)}>{activity.tipoNombre}{activity.tipoActivo ? '' : ' (inactivo)'}</MenuItem>}
         {(types.data ?? []).map(option => <MenuItem key={option.id} value={String(option.id)}>{option.nombre ?? option.descripcion}</MenuItem>)}
       </TextField>
@@ -88,10 +96,10 @@ export function ActivityDialog({ context, activity, open, onClose, onDone }: { c
 }
 
 /** Botón + editor listos para montar en las fichas de empresa, contacto y oportunidad. */
-export function RegisterActivityButton({ context, onRegistered }: { context: ActivityContext; onRegistered?: () => void }) {
-  const [open, setOpen] = useState(false)
+export function RegisterActivityButton({ context, onRegistered, openOnMount = false, showIcon = false, variant = 'outlined' }: { context: ActivityContext; onRegistered?: () => void; openOnMount?: boolean; showIcon?: boolean; variant?: 'outlined' | 'contained' }) {
+  const [open, setOpen] = useState(openOnMount)
   return <>
-    <Button variant="outlined" onClick={() => setOpen(true)}>Registrar actividad</Button>
+    <Button variant={variant} startIcon={showIcon ? <AddTaskOutlined /> : undefined} onClick={() => setOpen(true)}>Registrar actividad</Button>
     <ActivityDialog context={context} open={open} onClose={() => setOpen(false)} onDone={() => { setOpen(false); onRegistered?.() }} />
   </>
 }

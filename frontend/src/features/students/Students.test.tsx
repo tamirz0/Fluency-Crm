@@ -77,7 +77,8 @@ it('la parte comercial redirige al profesor y su perfil guarda los niveles marca
   mount('/empresas')
   expect(await screen.findByRole('heading', { name: 'Hola, Paula' })).toBeTruthy()
   expect(urls.some(u => u.includes('/empresas'))).toBe(false)
-  await userEvent.click(screen.getAllByRole('link', { name: /Mi perfil/ })[0])
+  await userEvent.click(screen.getByRole('button', { name: /^Cuenta de/ }))
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Mi perfil' }))
   const a2 = await screen.findByRole('checkbox', { name: 'A2' })
   expect((screen.getByRole('checkbox', { name: 'A1' }) as HTMLInputElement).checked).toBe(true)
   expect((a2 as HTMLInputElement).checked).toBe(false)
@@ -116,16 +117,16 @@ it('desde la ficha del alumno sin curso se le asigna uno de su nivel', async () 
   await waitFor(() => expect(screen.queryByRole('button', { name: 'Asignar curso' })).toBeNull())
 })
 
-it('el menú separa por tipo, con el inicio arriba y sin tipos vacíos', async () => {
+it('el menú agrupa Inicio en Comercial y ordena los tipos para el administrador', async () => {
   me = { ...teacher, roles: ['ADMINISTRADOR'], permisos: ['GestionarAcademia', 'ConsultarComercial', 'AdministrarUsuarios', 'AdministrarConfiguracion'] } as typeof teacher
   mount('/alumnos')
   const nav = await screen.findByRole('navigation', { name: 'Secciones de Fluency CRM' })
-  const labels = Array.from(nav.querySelectorAll('li[role="presentation"], a')).map(item => item.getAttribute('aria-label') ?? item.textContent).filter(label => !label?.startsWith('Mi perfil'))
-  expect(labels).toEqual(['Inicio', 'Comercial', 'Empresas', 'Contactos', 'Oportunidades', 'Embudo', 'Academia', 'Alumnos', 'Cursos', 'Clases', 'Talleres', 'Profesores', 'Gestión', 'Usuarios', 'Catálogos', 'Servicios', 'Embudos y etapas'])
+  const labels = Array.from(nav.querySelectorAll('button[aria-expanded], a')).map(item => item.getAttribute('aria-label') ?? item.textContent).filter(label => !label?.startsWith('Mi perfil'))
+  expect(labels).toEqual(['Comercial', 'Inicio', 'Empresas', 'Contactos', 'Oportunidades', 'Embudo', 'Academia', 'Alumnos', 'Cursos', 'Clases', 'Talleres', 'Profesores', 'Gestión', 'Usuarios', 'Catálogos', 'Servicios', 'Embudos y etapas'])
 })
 
 it('un profesor solo ve el tipo Academia', async () => {
   mount('/alumnos')
   const nav = await screen.findByRole('navigation', { name: 'Secciones de Fluency CRM' })
-  expect(Array.from(nav.querySelectorAll('li[role="presentation"], a')).map(item => item.getAttribute('aria-label') ?? item.textContent).filter(label => !label?.startsWith('Mi perfil'))).toEqual(['Inicio', 'Academia', 'Alumnos', 'Cursos', 'Clases', 'Talleres'])
+  expect(Array.from(nav.querySelectorAll('button[aria-expanded], a')).map(item => item.getAttribute('aria-label') ?? item.textContent).filter(label => !label?.startsWith('Mi perfil'))).toEqual(['Inicio', 'Academia', 'Alumnos', 'Cursos', 'Clases', 'Talleres'])
 })

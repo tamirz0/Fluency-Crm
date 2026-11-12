@@ -7,8 +7,10 @@ import { Link as RouterLink, useParams } from 'react-router-dom'
 import { ApiRequestError, getLesson, lessonQueryKeys, saveAttendance, saveGrades, type ClaseDetalle } from '../../api/client'
 import { ClassDialog } from './ClassDialog'
 import { parsePositiveId } from '../shared/display'
+import { AcademyDetailPage } from '../shared/AcademyDetailPage'
 import '../companies/companies.css'
 import '../contacts/records.css'
+import '../shared/academy-pages.css'
 
 type Presence = 'presente' | 'ausente' | null
 const toPresence = (value: boolean | null | undefined): Presence => value === true ? 'presente' : value === false ? 'ausente' : null
@@ -69,19 +71,21 @@ export function ClassDetailPage() {
   const query = useQuery({ queryKey: lessonQueryKeys.detail(id ?? 0), queryFn: () => getLesson(id as number), enabled: id !== undefined })
   const back = <Link component={RouterLink} to="/clases" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a clases</Link>
   if (id === undefined || (query.isError && query.error instanceof ApiRequestError && query.error.status === 404))
-    return <Box className="companies-page company-result-page records-page">{back}<section className="company-feedback"><Typography component="h1" className="company-feedback-title">No encontramos la clase</Typography></section></Box>
-  if (query.isPending) return <Box className="companies-page company-result-page records-page" role="status" aria-label="Cargando clase"><Skeleton width="54%" height={54} /><Skeleton /><Skeleton /></Box>
-  if (query.isError) return <Box className="companies-page company-result-page records-page">{back}<Alert severity="error">No pudimos cargar la clase. {query.error.message}</Alert></Box>
+    return <AcademyDetailPage>{back}<section className="company-feedback"><Typography component="h1" className="company-feedback-title">No encontramos la clase</Typography></section></AcademyDetailPage>
+  if (query.isPending) return <AcademyDetailPage><Box role="status" aria-label="Cargando clase"><Skeleton width="54%" height={54} /><Skeleton /><Skeleton /></Box></AcademyDetailPage>
+  if (query.isError) return <AcademyDetailPage>{back}<Alert severity="error">No pudimos cargar la clase. {query.error.message}</Alert></AcademyDetailPage>
   const { clase } = query.data
-  return <Box className="companies-page company-result-page records-page">
+  return <AcademyDetailPage>
     {back}
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
-    <Typography component="h1" className="companies-page-title">{clase.titulo}{clase.esExamen && <Chip color="warning" label="Examen" sx={{ ml: 2, verticalAlign: 'middle' }} />}</Typography>
-    <Button variant="outlined" onClick={() => setEditing(true)}>Editar clase</Button>
+    <Box className="academy-detail-heading" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
+      <div>
+        <Typography component="h1" className="companies-page-title">{clase.titulo}{clase.esExamen && <Chip color="warning" label="Examen" sx={{ ml: 2, verticalAlign: 'middle' }} />}</Typography>
+        <Typography className="companies-page-description">{dayjs(clase.fecha).locale('es').format('dddd D [de] MMMM [de] YYYY')} · {clase.horaInicio.slice(0, 5)} a {clase.horaFin.slice(0, 5)} · <Link component={RouterLink} to={`/cursos/${clase.curso.id}`} underline="hover">{clase.curso.descripcion}</Link> · {clase.profesor.descripcion}</Typography>
+      </div>
+      <Button variant="contained" onClick={() => setEditing(true)}>Editar clase</Button>
     </Box>
-    <Typography className="companies-page-description">{dayjs(clase.fecha).locale('es').format('dddd D [de] MMMM [de] YYYY')} · {clase.horaInicio.slice(0, 5)} a {clase.horaFin.slice(0, 5)} · <Link component={RouterLink} to={`/cursos/${clase.curso.id}`} underline="hover">{clase.curso.descripcion}</Link> · {clase.profesor.descripcion}</Typography>
     {clase.esExamen && <Typography sx={{ mt: 1 }}><strong>Temas:</strong> {clase.temasExamen?.trim() || 'Sin temas cargados.'}</Typography>}
     <Box sx={{ mt: 3 }}><Sheet lesson={query.data} /></Box>
     {editing && <ClassDialog lesson={clase} onClose={() => setEditing(false)} onSaved={() => setEditing(false)} />}
-  </Box>
+  </AcademyDetailPage>
 }

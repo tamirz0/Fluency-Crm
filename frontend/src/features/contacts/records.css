@@ -1,2 +1,6 @@
 .records-page { width: min(100%, 1440px); }
 .record-contact-links { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: 2px; overflow-wrap: anywhere; }
+.company-fiche .company-fiche-meta a { color: var(--text-main); }
+.company-fiche .company-fiche-meta a:hover { color: var(--accent-text); }
+.company-fiche .record-contact-links a { display: flex; align-items: center; gap: 8px; }
+.company-fiche .contact-attendance > [aria-label="Asistencia"] { margin-top: 0 !important; }

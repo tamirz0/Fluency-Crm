@@ -1,0 +1,21 @@
+@font-face {
+  font-family: Inter;
+  src: url('../assets/inter-latin.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+.fluency-shell-type,
+.fluency-shell-type .MuiTypography-root,
+.fluency-shell-type .MuiButtonBase-root {
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.fluency-unlam-logo {
+  display: block;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}

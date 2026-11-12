@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation, useMatch, type Location } from 'react-router-dom'
 import { AuthenticatedShell } from './app/AuthenticatedShell'
 import { ProtectedRoute } from './app/ProtectedRoute'
 import { RequireAcademy, RequireAdmin, RequireCommercial } from './app/RequirePermission'
@@ -38,7 +38,18 @@ function HomeEntry() {
   return canUseCommercial(user) ? <HomePage /> : <TeacherHomePage />
 }
 function App() {
-  return <Routes>
+  const location = useLocation()
+  const editingCompany = useMatch('/empresas/:idEmpresa/editar')
+  const creatingCompany = useMatch('/empresas/nueva')
+  const editingContact = useMatch('/contactos/:idContacto/editar')
+  const creatingContact = useMatch('/contactos/nuevo')
+  const editingOpportunity = useMatch('/oportunidades/:idOportunidad/editar')
+  const creatingOpportunity = useMatch('/oportunidades/nueva')
+  const background = editingCompany || creatingCompany
+    ? location.state?.companyFormBackground as Location | undefined
+    : editingContact || creatingContact ? location.state?.contactFormBackground as Location | undefined
+      : editingOpportunity || creatingOpportunity ? location.state?.opportunityFormBackground as Location | undefined : undefined
+  return <><Routes location={background ?? location}>
     <Route path="/" element={<LandingPage />} />
     <Route path="/login" element={<LoginPage />} />
     <Route element={<ProtectedRoute />}><Route element={<AuthenticatedShell />}>
@@ -59,17 +70,17 @@ function App() {
       </Route>
       <Route element={<RequireCommercial />}>
       <Route path="/empresas" element={<CompaniesPage />} />
-      <Route path="/empresas/nueva" element={<NewCompanyPage />} />
+      <Route path="/empresas/nueva" element={<><CompaniesPage /><NewCompanyPage /></>} />
       <Route path="/empresas/:idEmpresa" element={<CompanyDetailPage />} />
-      <Route path="/empresas/:idEmpresa/editar" element={<EditCompanyPage />} />
+      <Route path="/empresas/:idEmpresa/editar" element={<><CompanyDetailPage /><EditCompanyPage /></>} />
       <Route path="/contactos" element={<ContactsPage />} />
-      <Route path="/contactos/nuevo" element={<NewContactPage />} />
+      <Route path="/contactos/nuevo" element={<><ContactsPage /><NewContactPage /></>} />
       <Route path="/contactos/:idContacto" element={<ContactDetailPage />} />
-      <Route path="/contactos/:idContacto/editar" element={<EditContactPage />} />
+      <Route path="/contactos/:idContacto/editar" element={<><ContactDetailPage /><EditContactPage /></>} />
       <Route path="/oportunidades" element={<OpportunitiesPage />} />
-      <Route path="/oportunidades/nueva" element={<NewOpportunityPage />} />
+      <Route path="/oportunidades/nueva" element={<><OpportunitiesPage /><NewOpportunityPage /></>} />
       <Route path="/oportunidades/:idOportunidad" element={<OpportunityDetailPage />} />
-      <Route path="/oportunidades/:idOportunidad/editar" element={<EditOpportunityPage />} />
+      <Route path="/oportunidades/:idOportunidad/editar" element={<><OpportunityDetailPage /><EditOpportunityPage /></>} />
       <Route path="/embudo" element={<FunnelPage />} />
       <Route path="/configuracion/usuarios" element={<UsersPage />} />
       <Route path="/configuracion/catalogos" element={<CatalogsPage />} />
@@ -79,5 +90,14 @@ function App() {
     </Route></Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
+    {background && <Routes><Route element={<ProtectedRoute />}><Route element={<RequireCommercial />}>
+      <Route path="/empresas/nueva" element={<NewCompanyPage />} />
+      <Route path="/empresas/:idEmpresa/editar" element={<EditCompanyPage />} />
+      <Route path="/contactos/nuevo" element={<NewContactPage />} />
+      <Route path="/contactos/:idContacto/editar" element={<EditContactPage />} />
+      <Route path="/oportunidades/nueva" element={<NewOpportunityPage />} />
+      <Route path="/oportunidades/:idOportunidad/editar" element={<EditOpportunityPage />} />
+    </Route></Route></Routes>}
+  </>
 }
 export default App

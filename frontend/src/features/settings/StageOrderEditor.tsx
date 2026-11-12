@@ -1,13 +1,12 @@
 import { useLayoutEffect, useRef, useState, type PointerEvent } from 'react'
 import { Alert, Box, Button, Chip, IconButton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
-import { Check, DragIndicator, FiberManualRecord, LockOutlined } from '@mui/icons-material'
+import { Check, Close, DragIndicator, EditOutlined, FiberManualRecord, LockOutlined } from '@mui/icons-material'
 import { visuallyHidden } from '@mui/utils'
 import { useQueryClient } from '@tanstack/react-query'
 import { reorderStages, type Embudo, type EtapaConfiguracion } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 
 type StageId = EtapaConfiguracion['id']
-const blockSx = { border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden', bgcolor: 'background.default' }
 const byOrder = (a: EtapaConfiguracion, b: EtapaConfiguracion) => Number(a.orden) - Number(b.orden) || Number(a.id) - Number(b.id)
 
 export function StageOrderEditor({ funnel, stages, error, onError, onSaved, onEdit, onActive }: {
@@ -24,9 +23,26 @@ export function StageOrderEditor({ funnel, stages, error, onError, onSaved, onEd
   const rows = useRef<HTMLTableSectionElement>(null)
   const drag = useRef<{ id: StageId; pointerId: number; startY: number; moved: boolean; before: EtapaConfiguracion[] } | null>(null)
   const focusAfterMove = useRef<StageId | null>(null)
+  const previousTops = useRef<Map<HTMLTableRowElement, number> | null>(null)
+  const animations = useRef(new WeakMap<HTMLTableRowElement, Animation>())
+  const rememberPositions = () => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const openRows = rows.current?.querySelectorAll<HTMLTableRowElement>('tr[data-stage-id]') ?? []
+    previousTops.current = new Map(Array.from(openRows, row => [row, row.getBoundingClientRect().top]))
+  }
   useLayoutEffect(() => {
+    const positions = previousTops.current
+    previousTops.current = null
+    if (positions) for (const [row, top] of positions) {
+      animations.current.get(row)?.cancel()
+      const delta = top - row.getBoundingClientRect().top
+      if (delta && row.animate) animations.current.set(row, row.animate(
+        [{ transform: `translateY(${delta}px)` }, { transform: 'translateY(0)' }],
+        { duration: 220, easing: 'cubic-bezier(.2,.75,.25,1)' },
+      ))
+    }
     if (focusAfterMove.current === null) return
-    rows.current?.querySelector<HTMLButtonElement>(`button[data-stage-handle-id="${focusAfterMove.current}"]`)?.focus()
+    rows.current?.querySelector<HTMLButtonElement>(`button[data-stage-handle-id="${focusAfterMove.current}"]`)?.focus({ preventScroll: true })
     focusAfterMove.current = null
   }, [sequence])
   const dirty = sequence.some((s, i) => s.id !== initialOpen[i].id)
@@ -36,11 +52,16 @@ export function StageOrderEditor({ funnel, stages, error, onError, onSaved, onEd
     const from = sequence.findIndex(s => s.id === id), to = sequence.findIndex(s => s.id === target)
     if (from < 0 || to < 0) return
     const next = [...sequence], [stage] = next.splice(from, 1)
-    next.splice(to, 0, stage); focusAfterMove.current = id; setSequence(next)
+    next.splice(to, 0, stage)
+    rememberPositions()
+    focusAfterMove.current = id
+    setSequence(next)
     setAnnouncement(`${stage.nombre}, posición ${to + 1} de ${next.length} etapas abiertas activas.`)
   }
   const cancelDrag = () => {
     if (!drag.current) return
+    rememberPositions()
+    focusAfterMove.current = drag.current.id
     setSequence(drag.current.before); drag.current = null; setDraggingId(null)
     setAnnouncement('Arrastre cancelado.')
   }
@@ -58,7 +79,10 @@ export function StageOrderEditor({ funnel, stages, error, onError, onSaved, onEd
     current.moved = true
     const target = Array.from(rows.current?.querySelectorAll<HTMLTableRowElement>('tr[data-stage-id]') ?? []).find(row => {
       const rect = row.getBoundingClientRect()
-      return event.clientY >= rect.top && event.clientY < rect.bottom
+      // Drop targets follow the table order while the rows animate into place.
+      const transform = animations.current.get(row)?.playState === 'running' ? getComputedStyle(row).transform : 'none'
+      const offset = transform && transform !== 'none' ? new DOMMatrixReadOnly(transform).m42 : 0
+      return event.clientY >= rect.top - offset && event.clientY < rect.bottom - offset
     })
     if (target) {
       const stage = sequence.find(s => String(s.id) === target.dataset.stageId)
@@ -87,16 +111,16 @@ export function StageOrderEditor({ funnel, stages, error, onError, onSaved, onEd
   return <>
     <Box component="form" noValidate onSubmit={event => { event.preventDefault(); void save() }}>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      <Box sx={blockSx}>
-        <Stack direction={{ xs: 'column', md: 'row' }} sx={{ p: 2, gap: 1, justifyContent: 'space-between', bgcolor: 'background.paper' }}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}><FiberManualRecord sx={{ fontSize: 12, color: 'primary.main' }} /><Typography component="h3" variant="subtitle1">Etapas abiertas</Typography></Stack>
+      <Box className="company-table-panel">
+        <Stack className="funnel-stage-panel-heading" direction={{ xs: 'column', md: 'row' }} sx={{ p: 2, gap: 1, justifyContent: 'space-between' }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}><FiberManualRecord sx={{ fontSize: 12, color: 'primary.light' }} /><Typography component="h3" variant="subtitle1">Etapas abiertas</Typography></Stack>
           <Typography id="stage-drag-help" variant="body2" color="text.secondary">Arrastrá desde el asa o usá las flechas ↑ y ↓. Las inactivas se reactivan al final.</Typography>
         </Stack>
         <Box role="status" aria-live="polite" sx={visuallyHidden}>{announcement}</Box>
-        <TableContainer><Table aria-label="Etapas abiertas" size="small">
+        <TableContainer className="data-table-wrap"><Table aria-label="Etapas abiertas" size="small">
           <TableHead><TableRow><TableCell sx={{ width: 110 }}>Orden</TableCell><TableCell>Etapa</TableCell><TableCell>Estado</TableCell><TableCell>Disponibilidad</TableCell><TableCell align="right">Acciones</TableCell></TableRow></TableHead>
           <TableBody ref={rows} onPointerMove={movePointer} onPointerUp={finishDrag} onPointerCancel={cancelDrag} onLostPointerCapture={cancelDrag}>
-            {[...sequence, ...inactive].map((s, index) => <TableRow key={s.id} data-stage-id={s.activo ? String(s.id) : undefined} sx={{ bgcolor: draggingId === s.id ? 'action.selected' : undefined }}>
+            {[...sequence, ...inactive].map((s, index) => <TableRow key={s.id} data-stage-id={s.activo ? String(s.id) : undefined} className={draggingId === s.id ? 'funnel-stage-row-dragging' : undefined}>
               <TableCell><Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                 <IconButton type="button" size="small" data-stage-handle-id={String(s.id)} aria-label={`Mover ${s.nombre}`} aria-describedby="stage-drag-help" disabled={disabled || !s.activo} onPointerDown={event => startDrag(event, s)} onKeyDown={event => {
                   if (event.key === 'Escape') { cancelDrag(); return }
@@ -106,10 +130,13 @@ export function StageOrderEditor({ funnel, stages, error, onError, onSaved, onEd
                   const target = sequence[index + (event.key === 'ArrowUp' ? -1 : 1)]
                   if (target) move(s.id, target.id)
                 }} sx={{ touchAction: 'none', cursor: draggingId === s.id ? 'grabbing' : 'grab' }}><DragIndicator fontSize="small" /></IconButton>
-                <Box component="span" aria-label={`Posición visual de ${s.nombre}`} sx={{ px: .75, border: '1px solid', borderColor: 'divider', borderRadius: .5, color: s.activo ? 'primary.main' : 'text.secondary', bgcolor: 'action.selected', fontWeight: 700 }}>{index + 1}</Box>
+                <Box component="span" aria-label={`Posición visual de ${s.nombre}`} sx={{ px: .75, border: '1px solid', borderColor: 'divider', borderRadius: .5, color: s.activo ? 'primary.light' : 'text.secondary', bgcolor: 'action.selected', fontWeight: 700 }}>{index + 1}</Box>
               </Stack></TableCell>
-              <TableCell>{s.nombre}</TableCell><TableCell>Abierta</TableCell><TableCell><Chip size="small" variant="outlined" label={s.activo ? 'Activa' : 'Inactiva'} color={s.activo ? 'success' : 'default'} /></TableCell>
-              <TableCell align="right"><Button disabled={disabled || draggingId !== null} aria-label={`Editar ${s.nombre}`} onClick={() => onEdit(s)}>Editar</Button><Button disabled={disabled || draggingId !== null} aria-label={`${s.activo ? 'Desactivar' : 'Reactivar'} ${s.nombre}`} onClick={() => onActive(s)}>{s.activo ? 'Desactivar' : 'Reactivar'}</Button></TableCell>
+              <TableCell className="company-name-cell">{s.nombre}</TableCell><TableCell>Abierta</TableCell><TableCell><Chip size="small" label={s.activo ? 'Activa' : 'Inactiva'} className={s.activo ? 'company-status company-status--positive' : 'company-status company-status--inactive'} /></TableCell>
+              <TableCell align="right" className="funnel-stage-actions">
+                <IconButton disabled={disabled || draggingId !== null} aria-label={`Editar ${s.nombre}`} title="Editar" onClick={() => onEdit(s)}><EditOutlined fontSize="small" /></IconButton>
+                <IconButton disabled={disabled || draggingId !== null} aria-label={`${s.activo ? 'Desactivar' : 'Reactivar'} ${s.nombre}`} title={s.activo ? 'Desactivar' : 'Reactivar'} color={s.activo ? 'error' : 'success'} onClick={() => onActive(s)}>{s.activo ? <Close fontSize="small" /> : <Check fontSize="small" />}</IconButton>
+              </TableCell>
             </TableRow>)}
             {!sequence.length && !inactive.length && <TableRow><TableCell colSpan={5}>No hay etapas abiertas. Agregá una etapa según el proceso comercial.</TableCell></TableRow>}
           </TableBody>
@@ -117,14 +144,14 @@ export function StageOrderEditor({ funnel, stages, error, onError, onSaved, onEd
       </Box>
       <Button type="submit" variant="outlined" startIcon={<Check />} disabled={disabled || !dirty || draggingId !== null} sx={{ mt: 2, mb: 3 }}>{saving ? 'Guardando…' : 'Guardar orden'}</Button>
     </Box>
-    <Box sx={blockSx}>
-      <Stack direction="row" spacing={1} sx={{ p: 2, alignItems: 'center', bgcolor: 'background.paper' }}><LockOutlined color="warning" fontSize="small" /><Typography component="h3" variant="subtitle1">Etapas finales del sistema — bloqueadas</Typography></Stack>
+    <Box className="company-table-panel">
+      <Stack className="funnel-stage-panel-heading" direction="row" spacing={1} sx={{ p: 2, alignItems: 'center' }}><LockOutlined color="warning" fontSize="small" /><Typography component="h3" variant="subtitle1">Etapas finales del sistema</Typography></Stack>
       <Typography variant="body2" color="text.secondary" sx={{ px: 2, py: 1.5 }}>Ganada y Perdida son etapas del sistema. Se muestran en orden fijo y solo permiten editar nombre y descripción.</Typography>
-      <TableContainer><Table aria-label="Etapas finales del sistema" size="small">
+      <TableContainer className="data-table-wrap"><Table aria-label="Etapas finales del sistema" size="small">
         <TableHead><TableRow><TableCell>Etapa</TableCell><TableCell>Estado</TableCell><TableCell>Disponibilidad</TableCell><TableCell align="right">Acciones</TableCell></TableRow></TableHead>
         <TableBody>{finals.map(s => <TableRow key={s.id}>
-          <TableCell>{s.nombre}<Chip size="small" variant="outlined" color="warning" icon={<LockOutlined />} label="Sistema" sx={{ ml: 1 }} /></TableCell><TableCell>{s.estado === 'GANADA' ? 'Ganada' : 'Perdida'}</TableCell><TableCell><Chip size="small" variant="outlined" label={s.activo ? 'Activa' : 'Inactiva'} color={s.activo ? 'success' : 'default'} /></TableCell>
-          <TableCell align="right"><Button disabled={disabled || draggingId !== null} aria-label={`Editar ${s.nombre}`} onClick={() => onEdit(s)}>Editar</Button></TableCell>
+          <TableCell className="company-name-cell">{s.nombre}<Chip size="small" variant="outlined" color="warning" icon={<LockOutlined />} label="Sistema" sx={{ ml: 1 }} /></TableCell><TableCell>{s.estado === 'GANADA' ? 'Ganada' : 'Perdida'}</TableCell><TableCell><Chip size="small" label={s.activo ? 'Activa' : 'Inactiva'} className={s.activo ? 'company-status company-status--positive' : 'company-status company-status--inactive'} /></TableCell>
+          <TableCell align="right" className="funnel-stage-actions"><IconButton disabled={disabled || draggingId !== null} aria-label={`Editar ${s.nombre}`} title="Editar" onClick={() => onEdit(s)}><EditOutlined fontSize="small" /></IconButton></TableCell>
         </TableRow>)}</TableBody>
       </Table></TableContainer>
     </Box>

@@ -50,6 +50,7 @@ export function RecordQueryState({ noun, backLabel, backTo, loading, invalid = f
 export function RecordFormPage({
   backLabel,
   backTo,
+  backState,
   title,
   description,
   children,
@@ -61,6 +62,7 @@ export function RecordFormPage({
 }: {
   backLabel: string
   backTo: string
+  backState?: unknown
   title: string
   description: string
   children: ReactNode
@@ -71,12 +73,12 @@ export function RecordFormPage({
   error?: string
 }) {
   return <Box className="companies-page company-result-page record-form-page">
-    <Link component={RouterLink} to={backTo} className="company-back-link" underline="hover"><ArrowBack fontSize="small" />{backLabel}</Link>
+    <Link component={RouterLink} to={backTo} state={backState} className="company-back-link" underline="hover"><ArrowBack fontSize="small" />{backLabel}</Link>
     <header className="record-form-header"><Typography component="h1" className="companies-page-title">{title}</Typography><Typography className="companies-page-description">{description}</Typography></header>
     {error && <Alert severity="error" className="record-form-api-error" role="alert">{error}</Alert>}
     <Box component="form" className="record-form" noValidate onSubmit={(event) => { event.preventDefault(); onSubmit() }}>
       {children}
-      <div className="record-form-actions"><Button component={RouterLink} to={backTo} disabled={submitting}>Cancelar</Button><Button type="submit" variant="contained" disabled={submitting || disabled} startIcon={submitting ? <CircularProgress color="inherit" size={18} /> : <Save />}>{submitting ? 'Guardando…' : submitLabel}</Button></div>
+      <div className="record-form-actions"><Button component={RouterLink} to={backTo} state={backState} disabled={submitting}>Cancelar</Button><Button type="submit" variant="contained" disabled={submitting || disabled} startIcon={submitting ? <CircularProgress color="inherit" size={18} /> : <Save />}>{submitting ? 'Guardando…' : submitLabel}</Button></div>
     </Box>
   </Box>
 }

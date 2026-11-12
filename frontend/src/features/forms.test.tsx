@@ -12,7 +12,7 @@ import { SESSION_KEY } from '../auth/session'
 // Preparar el módulo antes de medir el formulario, sin depender del costo del import diferido.
 beforeAll(async () => { await import('./opportunities/OpportunityFormPage') })
 
-const user = { id: 7, nombre: 'María', apellido: 'Gómez', correo: 'maria@example.com', username: 'maria', activo: true }
+const user = { id: 7, nombre: 'María', apellido: 'Gómez', correo: 'maria@example.com', username: 'maria', activo: true, permisos: ['GestionarClientes'] }
 const company = { id: 4, razonSocial: 'Acme Idiomas', cuit: '30-123', industria: 'Educación', correo: 'acme@example.com', telefono: '1144', direccion: 'Calle 1', idEstado: 1, estadoDescripcion: 'Cliente', estadoActivo: true, idOrigen: 2, origenDescripcion: 'Referido', origenActivo: true, idResponsable: 7, responsableNombre: 'María Gómez', responsableActivo: true, fechaCreacion: '2026-10-31T12:00:00Z', activo: true, observaciones: 'Nota' }
 const contact = { id: 14, nombre: 'Lucía', apellido: 'Pérez', documento: '30123456', cargo: 'Directora', correo: 'lucia@example.com', telefono: '1144', idEstado: 1, estadoDescripcion: 'Cliente', estadoActivo: true, idOrigen: 2, origenDescripcion: 'Referido', origenActivo: true, idEmpresa: 4, empresaRazonSocial: 'Acme Idiomas', idResponsable: 7, responsableNombre: 'María Gómez', responsableActivo: true, fechaCreacion: '2026-10-31T12:00:00Z', activo: true, observaciones: null }
 const secondContact = { ...contact, id: 15, nombre: 'Ana', apellido: 'López', idEmpresa: 8, empresaRazonSocial: 'Otra empresa' }
@@ -166,7 +166,7 @@ describe('altas y ediciones', () => {
 
   const opportunityPosts = () => vi.mocked(fetch).mock.calls.filter(([input]) => requestUrl(input).endsWith('/oportunidades') && (input as Request).method === 'POST')
   const startOpportunity = async (path = '/oportunidades/nueva', services?: Parameters<typeof installCatalogApi>[0], sessionUser: object = user) => {
-    installCatalogApi(services); const actor = userEvent.setup(); renderAuthenticated(path, sessionUser); await screen.findByRole('heading', { name: 'Nueva oportunidad' }); return actor
+    installCatalogApi(services); const actor = userEvent.setup(); renderAuthenticated(path, sessionUser); await screen.findByRole('textbox', { name: 'Título' }); return actor
   }
   // Con un único servicio y un único embudo ambos se eligen solos: se espera a que queden cargados.
   const chooseFunnel = async () => { await waitFor(() => expect(screen.getByRole('combobox', { name: /^Embudo/ }).textContent).toContain('Embudo Inglés')) }
@@ -185,7 +185,7 @@ describe('altas y ediciones', () => {
     await actor.click(screen.getByRole('button', { name: 'Crear oportunidad' }))
     expect(await screen.findByRole('heading', { name: 'Nueva venta' })).toBeTruthy()
     expect(screen.getByText('Oportunidad creada')).toBeTruthy()
-    expect(document.querySelector('.profile-subtitle')?.textContent).toBe('Acme Idiomas')
+    expect(within(screen.getByRole('article', { name: 'Ficha de Nueva venta' })).getByText('Acme Idiomas', { selector: 'span' })).toBeTruthy()
     expect(opportunityPosts()).toHaveLength(1)
     expect(await requestBody(opportunityPosts()[0])).toEqual({ titulo: 'Nueva venta', idEmbudo: 1, idServicio: 2, idEmpresa: 4 })
   })
@@ -197,7 +197,7 @@ describe('altas y ediciones', () => {
     expect(screen.getByText(/Opcional\. Si lo dejás vacío se muestra el nombre de la empresa/)).toBeTruthy()
     await actor.click(screen.getByRole('button', { name: 'Crear oportunidad' }))
     expect(await screen.findByRole('heading', { name: 'Acme Idiomas' })).toBeTruthy()
-    expect(document.querySelector('.profile-subtitle')).toBeNull()
+    expect(within(screen.getByRole('article', { name: 'Ficha de Acme Idiomas' })).queryByText('Acme Idiomas', { selector: 'span' })).toBeNull()
     expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 1, idServicio: 2, idEmpresa: 4 })
   })
 
@@ -235,7 +235,7 @@ describe('altas y ediciones', () => {
     return { actor, dialog: within(await screen.findByRole('dialog', { name: 'Nueva oportunidad' })) }
   }
 
-  it('alta rápida desde una empresa: con un solo servicio solo hay que confirmar y viaja solo embudo y empresa', async () => {
+  it('alta rápida desde una empresa: con un solo servicio basta confirmar y se envía un título inicial', async () => {
     const { actor, dialog } = await openQuick('/empresas/4')
     expect(await dialog.findByRole('combobox', { name: /Servicio/ })).toBeTruthy()
     await waitFor(() => expect((dialog.getByRole('button', { name: 'Crear oportunidad' }) as HTMLButtonElement).disabled).toBe(false))
@@ -243,7 +243,7 @@ describe('altas y ediciones', () => {
     await actor.click(dialog.getByRole('button', { name: 'Crear oportunidad' }))
     expect(await screen.findByText('Oportunidad creada')).toBeTruthy()
     expect(opportunityPosts()).toHaveLength(1)
-    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 1, idServicio: 2, idEmpresa: 4 })
+    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 1, idServicio: 2, idEmpresa: 4, titulo: 'Acme Idiomas' })
   })
 
   it('alta rápida desde un contacto envía también la empresa del contacto', async () => {
@@ -251,7 +251,7 @@ describe('altas y ediciones', () => {
     await waitFor(() => expect((dialog.getByRole('button', { name: 'Crear oportunidad' }) as HTMLButtonElement).disabled).toBe(false))
     await actor.click(dialog.getByRole('button', { name: 'Crear oportunidad' }))
     await screen.findByText('Oportunidad creada')
-    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 1, idServicio: 2, idEmpresa: 4, idContacto: 14 })
+    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 1, idServicio: 2, idEmpresa: 4, idContacto: 14, titulo: 'Pérez, Lucía' })
   })
 
   it('alta rápida: con varios servicios hay que elegir uno y el embudo se deriva de él', async () => {
@@ -266,7 +266,7 @@ describe('altas y ediciones', () => {
     await waitFor(() => expect((dialog.getByRole('button', { name: 'Crear oportunidad' }) as HTMLButtonElement).disabled).toBe(false))
     await actor.click(dialog.getByRole('button', { name: 'Crear oportunidad' }))
     await screen.findByText('Oportunidad creada')
-    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 3, idServicio: 5, idEmpresa: 4 })
+    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 3, idServicio: 5, idEmpresa: 4, titulo: 'Acme Idiomas' })
   })
 
   it('alta rápida: si el servicio lo admiten varios embudos activos pide elegir el embudo', async () => {
@@ -276,7 +276,7 @@ describe('altas y ediciones', () => {
     await actor.click(embudo); await actor.click(await screen.findByRole('option', { name: 'Embudo Cursos' }))
     await actor.click(dialog.getByRole('button', { name: 'Crear oportunidad' }))
     await screen.findByText('Oportunidad creada')
-    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 3, idServicio: 2, idEmpresa: 4 })
+    expect(await requestBody(opportunityPosts()[0])).toEqual({ idEmbudo: 3, idServicio: 2, idEmpresa: 4, titulo: 'Acme Idiomas' })
   })
 
   it('alta rápida: muestra el rechazo del servidor sin cerrar el diálogo', async () => {
@@ -379,13 +379,13 @@ describe('altas y ediciones', () => {
 
   const opportunityPatches = () => vi.mocked(fetch).mock.calls.filter(([input]) => /\/oportunidades\/\d+$/.test(requestUrl(input)) && (input as Request).method === 'PATCH')
   const startEdit = async (options: Parameters<typeof installCatalogApi>[0] = {}) => {
-    installCatalogApi(options); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/22/editar'); await screen.findByRole('heading', { name: 'Editar oportunidad' }); return actor
+    installCatalogApi(options); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/22/editar'); await screen.findByRole('textbox', { name: 'Título' }); return actor
   }
 
   it('edita una oportunidad con PATCH diferencial, sin responsable ni etapa, y abre la ficha', async () => {
     const actor = await startEdit()
     expect((screen.getByRole('textbox', { name: 'Título' }) as HTMLInputElement).value).toBe('Renovación anual')
-    expect(screen.getByText('Se cambia con la acción de reasignar.')).toBeTruthy()
+    expect(screen.getByText('Responsable · solo lectura')).toBeTruthy()
     expect(screen.queryByRole('combobox', { name: /^(Embudo|Etapa|Responsable)/ })).toBeNull()
     await actor.clear(screen.getByRole('textbox', { name: 'Título' })); await actor.type(screen.getByRole('textbox', { name: 'Título' }), '  Renovación 2027  ')
     await actor.clear(screen.getByRole('textbox', { name: /^Valor/ })); await actor.type(screen.getByRole('textbox', { name: /^Valor/ }), '0')
@@ -420,15 +420,14 @@ describe('altas y ediciones', () => {
   it('ofrece editar solo si el servidor lo permite y explica cuando la edición no corresponde', async () => {
     const readOnly = { accionesPermitidas: { editar: false, reasignar: false, mover: false, cerrar: false, reabrir: false, darDeBaja: false, gestionarActividades: false } }
     installCatalogApi(); renderAuthenticated('/oportunidades/22')
-    expect(await screen.findByRole('link', { name: 'Editar' })).toBeTruthy()
-    expect((screen.getByRole('link', { name: 'Editar' }) as HTMLAnchorElement).getAttribute('href')).toBe('/oportunidades/22/editar')
-    expect(screen.getByRole('button', { name: 'Cambiar etapa' })).toBeTruthy()
+    expect((await screen.findByRole('link', { name: 'Modificar' })).getAttribute('href')).toBe('/oportunidades/22/editar')
     expect(screen.getByRole('button', { name: 'Registrar actividad' })).toBeTruthy()
+    await userEvent.click(screen.getByRole('button', { name: 'Opciones de Renovación anual' }))
+    expect(await screen.findByRole('menuitem', { name: 'Cambiar etapa' })).toBeTruthy()
     cleanup(); installCatalogApi({ detail: readOnly }); renderAuthenticated('/oportunidades/22')
     await screen.findByRole('heading', { name: 'Renovación anual' })
-    expect(screen.queryByRole('link', { name: 'Editar' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Reasignar' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Cambiar etapa' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Modificar' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Opciones de Renovación anual' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Registrar actividad' })).toBeNull()
     cleanup(); installCatalogApi({ detail: readOnly }); renderAuthenticated('/oportunidades/22/editar')
     expect(await screen.findByRole('heading', { name: 'No podés editar esta oportunidad' })).toBeTruthy()
@@ -440,8 +439,9 @@ describe('altas y ediciones', () => {
 
   it('reasigna desde la ficha enviando solo el destino, ofrece solo vendedores y retira la edición', async () => {
     installCatalogApi(); const actor = userEvent.setup(); renderAuthenticated('/oportunidades/22', { ...user, roles: ['VENDEDOR'], permisos: ['GestionarOportunidad'] })
-    expect(await screen.findByRole('link', { name: 'Editar' })).toBeTruthy()
-    await actor.click(screen.getByRole('button', { name: 'Reasignar' }))
+    expect(await screen.findByRole('link', { name: 'Modificar' })).toBeTruthy()
+    await actor.click(await screen.findByRole('button', { name: 'Opciones de Renovación anual' }))
+    await actor.click(await screen.findByRole('menuitem', { name: 'Reasignar' }))
     const dialog = within(await screen.findByRole('dialog', { name: 'Reasignar oportunidad' }))
     expect((dialog.getByRole('button', { name: 'Reasignar' }) as HTMLButtonElement).disabled).toBe(true)
     await actor.click(dialog.getByRole('combobox', { name: 'Responsable' })); await actor.click(await screen.findByRole('option', { name: 'Ana Ríos' }))
@@ -450,16 +450,17 @@ describe('altas y ediciones', () => {
     expect(await screen.findByText(/Oportunidad reasignada/)).toBeTruthy()
     expect(reassignPosts()).toHaveLength(1)
     expect(await requestBody(reassignPosts()[0])).toEqual({ idResponsable: 9 })
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Reasignar oportunidad' })).toBeNull())
     expect(screen.getByText('Ana Ríos')).toBeTruthy()
-    expect(screen.queryByRole('link', { name: 'Editar' })).toBeNull()
-    // El diálogo se cierra con una transición; después ya no queda ningún botón de reasignar.
-    await waitFor(() => expect(screen.queryByRole('button', { name: 'Reasignar' })).toBeNull())
+    expect(screen.queryByRole('link', { name: 'Modificar' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Opciones de Renovación anual' })).toBeNull()
   })
 
   it('un superior elige entre todos los usuarios y el rechazo del servidor se muestra sin cerrar el diálogo', async () => {
     installCatalogApi({ reassign: () => jsonResponse({ title: 'Solo el responsable o un superior puede reasignar esta oportunidad.', code: 'FORBIDDEN' }, 403) })
     const actor = userEvent.setup(); renderAuthenticated('/oportunidades/22', { ...user, roles: ['ADMINISTRADOR'], permisos: ['GestionarOportunidad'] })
-    await actor.click(await screen.findByRole('button', { name: 'Reasignar' }))
+    await actor.click(await screen.findByRole('button', { name: 'Opciones de Renovación anual' }))
+    await actor.click(await screen.findByRole('menuitem', { name: 'Reasignar' }))
     const dialog = within(await screen.findByRole('dialog', { name: 'Reasignar oportunidad' }))
     await actor.click(dialog.getByRole('combobox', { name: 'Responsable' })); await actor.click(await screen.findByRole('option', { name: 'Ana Ríos' }))
     expect(optionsRequests().every(url => !url.searchParams.has('rol'))).toBe(true)
