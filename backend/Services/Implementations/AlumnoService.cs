@@ -1,3 +1,4 @@
+using System.Data;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Models;
@@ -6,7 +7,10 @@ using Services.DTO;
 
 namespace Services.Implementations;
 
-/// <summary>Alumnos: contactos que ganaron un servicio con nivel. El Profesor solo ve los de sus niveles; el Administrador, todos.</summary>
+/// <summary>
+/// Alumnos: contactos que ganaron un servicio con nivel o que el Administrador dio de alta desde los contactos Cliente.
+/// El Profesor solo ve los de sus niveles; el Administrador, todos. Nivel y curso se editan dentro del alcance de cada uno.
+/// </summary>
 public sealed class AlumnoService(FluencyLocalDbContext db, ActorActual actor)
 {
     internal static readonly Expression<Func<Alumno, AlumnoResponse>> Projection = a => new AlumnoResponse
@@ -81,6 +85,99 @@ public sealed class AlumnoService(FluencyLocalDbContext db, ActorActual actor)
     {
         if (!await db.Contactos.AnyAsync(c => c.Id == idContacto && c.Activo, ct)) throw new AcademiaOperationException(404, "NOT_FOUND", "No existe el contacto.");
         return new() { Alumno = await AsistenciaPorContactoAsync(a => a.IdContacto == idContacto, ct) };
+    }
+
+    private static AcademiaOperationException Conflict(string message) => new(409, "BUSINESS_CONFLICT", message);
+    private static AcademiaOperationException Unavailable(string message) => new(400, "REFERENCE_UNAVAILABLE", message);
+
+    private async Task CheckActorAsync(CancellationToken ct)
+    {
+        if (!await db.Usuarios.AnyAsync(u => u.Id == actor.Id && u.Activo, ct))
+            throw new AcademiaOperationException(401, "UNAUTHENTICATED", "La sesión ya no está disponible.");
+    }
+
+    /// <summary>Contactos vigentes en estado Cliente que todavía no son alumnos. Solo el Administrador, que es quien da de alta.</summary>
+    public async Task<PageResponse<AlumnoCandidatoResponse>> CandidatesAsync(string? q, int page, int pageSize, CancellationToken ct)
+    {
+        if (!IsAdmin) throw new AcademiaOperationException(403, "FORBIDDEN", "Solo el Administrador puede dar de alta alumnos.");
+        var contacts = db.Contactos.AsNoTracking().Where(c => c.Activo && c.IdEstadoNavigation.Descripcion.ToLower() == "cliente" && !db.Alumnos.Any(a => a.IdContacto == c.Id));
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var like = $"%{q.Trim().Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_")}%";
+            contacts = contacts.Where(c => EF.Functions.ILike(c.Nombre + " " + c.Apellido, like) || EF.Functions.ILike(c.Apellido + " " + c.Nombre, like)
+                || (c.Documento != null && EF.Functions.ILike(c.Documento, like)) || EF.Functions.ILike(c.Correo, like));
+        }
+        var total = await contacts.CountAsync(ct);
+        var items = await contacts.OrderBy(c => c.Apellido).ThenBy(c => c.Nombre).ThenBy(c => c.Id).Skip((page - 1) * pageSize).Take(pageSize)
+            .Select(c => new AlumnoCandidatoResponse { Id = c.Id, Nombre = c.Nombre, Apellido = c.Apellido, Documento = c.Documento, Correo = c.Correo }).ToListAsync(ct);
+        return new(items, page, pageSize, total);
+    }
+
+    /// <summary>Alta manual de un alumno a partir de un contacto Cliente, con nivel y, opcionalmente, un curso de ese nivel.</summary>
+    public async Task<AlumnoResponse> CreateAsync(CreateAlumnoRequest request, CancellationToken ct)
+    {
+        if (!IsAdmin) throw new AcademiaOperationException(403, "FORBIDDEN", "Solo el Administrador puede dar de alta alumnos.");
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        await CheckActorAsync(ct);
+        var contact = await db.Contactos.Where(c => c.Id == request.IdContacto && c.Activo)
+            .Select(c => new { c.Id, Client = c.IdEstadoNavigation.Descripcion.ToLower() == "cliente" }).SingleOrDefaultAsync(ct)
+            ?? throw Unavailable("El contacto no está disponible.");
+        if (!contact.Client) throw Conflict("Solo los contactos en estado Cliente pueden ser alumnos.");
+        if (await db.Alumnos.AnyAsync(a => a.IdContacto == contact.Id, ct)) throw Conflict("El contacto ya es alumno.");
+        if (!await db.NivelesIngles.AnyAsync(n => n.Id == request.IdNivel && n.Activo, ct)) throw Unavailable("El nivel de inglés no está disponible.");
+        var student = new Alumno { IdContacto = contact.Id, IdNivel = request.IdNivel };
+        if (request.IdCurso is { } course) student.IdCurso = await CourseForAsync(course, request.IdNivel, ct);
+        db.Alumnos.Add(student);
+        await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
+        return await GetAsync(student.Id, ct);
+    }
+
+    /// <summary>Cambia el nivel. Si el curso actual es de otro nivel, el alumno queda sin curso para poder ascenderlo a uno nuevo.</summary>
+    public async Task<AlumnoResponse> ChangeLevelAsync(int id, CambiarNivelAlumnoRequest request, CancellationToken ct)
+    {
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        await CheckActorAsync(ct);
+        var student = await TrackedAsync(id, ct);
+        if (!await db.NivelesIngles.AnyAsync(n => n.Id == request.IdNivel && n.Activo, ct)) throw Unavailable("El nivel de inglés no está disponible.");
+        if (!IsAdmin && !await db.ProfesorNiveles.AnyAsync(p => p.IdUsuario == actor.Id && p.IdNivel == request.IdNivel, ct))
+            throw Conflict("No trabaja con ese nivel de inglés.");
+        if (student.IdNivel != request.IdNivel)
+        {
+            student.IdNivel = request.IdNivel;
+            if (student.IdCurso is { } current && !await db.Cursos.AnyAsync(c => c.Id == current && c.IdNivel == request.IdNivel, ct)) student.IdCurso = null;
+            await db.SaveChangesAsync(ct);
+        }
+        await transaction.CommitAsync(ct);
+        return await GetAsync(id, ct);
+    }
+
+    /// <summary>Asigna, cambia o quita el curso (idCurso nulo). El curso debe ser visible para el actor y del nivel del alumno.</summary>
+    public async Task<AlumnoResponse> ChangeCourseAsync(int id, CambiarCursoAlumnoRequest request, CancellationToken ct)
+    {
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        await CheckActorAsync(ct);
+        var student = await TrackedAsync(id, ct);
+        student.IdCurso = request.IdCurso is { } course ? await CourseForAsync(course, student.IdNivel, ct) : null;
+        await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
+        return await GetAsync(id, ct);
+    }
+
+    private async Task<Alumno> TrackedAsync(int id, CancellationToken ct)
+    {
+        var visible = await Visible().Where(a => a.Id == id).Select(a => (int?)a.Id).SingleOrDefaultAsync(ct)
+            ?? throw new AcademiaOperationException(404, "NOT_FOUND", "No existe el alumno.");
+        return await db.Alumnos.SingleAsync(a => a.Id == visible, ct);
+    }
+
+    private async Task<int> CourseForAsync(int courseId, int levelId, CancellationToken ct)
+    {
+        var me = actor.Id;
+        var course = await db.Cursos.Where(c => c.Id == courseId && c.Activo && (IsAdmin || c.IdProfesor == me)).Select(c => new { c.Id, c.IdNivel }).SingleOrDefaultAsync(ct)
+            ?? throw Unavailable("El curso no está disponible.");
+        if (course.IdNivel != levelId) throw Conflict("El curso debe ser del mismo nivel que el alumno.");
+        return course.Id;
     }
 
     public async Task<AlumnoResponse> GetAsync(int id, CancellationToken ct)

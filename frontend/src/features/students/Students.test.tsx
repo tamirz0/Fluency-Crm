@@ -22,9 +22,10 @@ let urls: string[] = []
 let levels = [1]
 let putBody: unknown
 let assigned: unknown
+let created: unknown
 
 beforeEach(() => {
-  urls = []; levels = [1]; putBody = undefined; assigned = undefined; me = teacher; student.curso = null
+  urls = []; levels = [1]; putBody = undefined; assigned = undefined; created = undefined; me = teacher; student.curso = null
   vi.stubGlobal('fetch', vi.fn(async (request: Request) => {
     const url = new URL(request.url)
     urls.push(`${request.method} ${url.pathname}${url.search}`)
@@ -35,7 +36,15 @@ beforeEach(() => {
       if (request.method === 'PUT') { putBody = await request.json(); levels = (putBody as { idNiveles: number[] }).idNiveles }
       return json({ disponibles: [{ id: 1, descripcion: 'A1' }, { id: 2, descripcion: 'A2' }], seleccionados: levels })
     }
-    if (request.method === 'POST' && url.pathname.endsWith('/cursos/3/alumnos')) { assigned = await request.json(); student.curso = { id: 3, descripcion: 'A2 mañana' }; return json({ curso: {}, alumnos: [] }) }
+    if (request.method === 'PUT' && url.pathname.endsWith('/alumnos/4/curso')) {
+      assigned = await request.json(); student.curso = (assigned as { idCurso: number | null }).idCurso ? { id: 3, descripcion: 'A2 mañana' } : null; return json(student)
+    }
+    if (request.method === 'PUT' && url.pathname.endsWith('/alumnos/4/nivel')) {
+      assigned = await request.json(); student.nivel = { id: (assigned as { idNivel: number }).idNivel, descripcion: 'A1' }; student.curso = null; return json(student)
+    }
+    if (request.method === 'POST' && url.pathname.endsWith('/alumnos')) { created = await request.json(); return json({ ...student, id: 4 }, 201) }
+    if (url.pathname.endsWith('/alumnos/candidatos')) return json({ items: [{ id: 11, nombre: 'Ana', apellido: 'Pérez', documento: '30111222', correo: 'ana@example.com' }], page: 1, pageSize: 25, totalCount: 1 })
+    if (url.pathname.endsWith('/niveles-ingles/opciones')) return json([{ id: 1, descripcion: 'A1', activo: true }, { id: 2, descripcion: 'A2', activo: true }])
     if (url.pathname.endsWith('/cursos')) return json({ items: [{ id: 3, nombre: 'A2 mañana', nivel: { id: 2, descripcion: 'A2' }, profesor: { id: 9, descripcion: 'Paula Docente' }, cantidadAlumnos: 1, cantidadClases: 0 }], page: 1, pageSize: 100, totalCount: 1 })
     if (url.pathname.endsWith('/alumnos/4/asistencia')) return json(attendance)
     if (url.pathname.endsWith('/contactos/11/academico')) return json({ alumno: attendance })
@@ -112,9 +121,52 @@ it('desde la ficha del alumno sin curso se le asigna uno de su nivel', async () 
   const dialog = within(await screen.findByRole('dialog'))
   await userEvent.click(dialog.getByLabelText('Curso', { exact: false }))
   await userEvent.click(await screen.findByRole('option', { name: 'A2 mañana · Paula Docente' }))
-  await userEvent.click(dialog.getByRole('button', { name: 'Asignar' }))
-  await waitFor(() => expect(assigned).toEqual({ idAlumnos: [4] }))
-  await waitFor(() => expect(screen.queryByRole('button', { name: 'Asignar curso' })).toBeNull())
+  await userEvent.click(dialog.getByRole('button', { name: 'Guardar' }))
+  await waitFor(() => expect(assigned).toEqual({ idCurso: 3 }))
+  expect(await screen.findByRole('button', { name: 'Cambiar curso' })).toBeTruthy()
+})
+
+it('desde la ficha se le cambia el curso a «sin curso»', async () => {
+  student.curso = { id: 3, descripcion: 'A2 mañana' }
+  mount('/alumnos/4')
+  await userEvent.click(await screen.findByRole('button', { name: 'Cambiar curso' }))
+  const dialog = within(await screen.findByRole('dialog'))
+  await userEvent.click(dialog.getByLabelText('Curso', { exact: false }))
+  await userEvent.click(await screen.findByRole('option', { name: 'Sin curso' }))
+  await userEvent.click(dialog.getByRole('button', { name: 'Guardar' }))
+  await waitFor(() => expect(assigned).toEqual({ idCurso: null }))
+  expect(await screen.findByRole('button', { name: 'Asignar curso' })).toBeTruthy()
+})
+
+it('el profesor cambia el nivel de un alumno entre sus niveles', async () => {
+  levels = [1, 2]
+  mount('/alumnos/4')
+  await userEvent.click(await screen.findByRole('button', { name: 'Cambiar nivel' }))
+  const dialog = within(await screen.findByRole('dialog'))
+  await userEvent.click(dialog.getByLabelText('Nivel de inglés', { exact: false }))
+  await userEvent.click(await screen.findByRole('option', { name: 'A1' }))
+  await userEvent.click(dialog.getByRole('button', { name: 'Guardar' }))
+  await waitFor(() => expect(assigned).toEqual({ idNivel: 1 }))
+})
+
+it('solo el administrador da de alta alumnos desde contactos Cliente', async () => {
+  mount('/alumnos')
+  await screen.findByRole('table', { name: 'Alumnos' })
+  expect(screen.queryByRole('button', { name: 'Nuevo alumno' })).toBeNull()
+})
+
+it('el administrador da de alta un alumno eligiendo un contacto Cliente y su nivel', async () => {
+  me = { ...teacher, roles: ['ADMINISTRADOR'], permisos: ['GestionarAcademia', 'ConsultarComercial'] } as typeof teacher
+  mount('/alumnos')
+  await userEvent.click(await screen.findByRole('button', { name: 'Nuevo alumno' }))
+  const dialog = within(await screen.findByRole('dialog', { name: 'Nuevo alumno' }))
+  await userEvent.click(dialog.getByRole('combobox', { name: /Contacto/ }))
+  await userEvent.click(await screen.findByRole('option', { name: 'Pérez, Ana' }))
+  await userEvent.click(dialog.getByLabelText('Nivel de inglés', { exact: false }))
+  await userEvent.click(await screen.findByRole('option', { name: 'A2' }))
+  await userEvent.click(dialog.getByRole('button', { name: 'Crear alumno' }))
+  await waitFor(() => expect(created).toEqual({ idContacto: 11, idNivel: 2 }))
+  expect(await screen.findByRole('article', { name: /Ficha de/ })).toBeTruthy()
 })
 
 it('el menú agrupa Inicio en Comercial y ordena los tipos para el administrador', async () => {

@@ -75,4 +75,35 @@ public sealed class CursosTests
         Assert.Equal(1, first.GetProperty("cantidadCursos").GetInt32());
         Assert.Equal(HttpStatusCode.Forbidden, (await t1.GetAsync("/profesores")).StatusCode);
     }
+
+    [Fact]
+    public async Task DeletingACourseLeavesItsStudentsWithoutCourseAndHidesIt()
+    {
+        await using var factory = new AuthApiFactory(); await factory.InitializeAsync();
+        using var admin = factory.Client(); await UsuariosTests.SignIn(admin, factory);
+        using var seller = factory.Client(); await UsuariosTests.SignIn(seller, factory, "seller");
+        using var t1 = await ProfesorAccesoTests.TeacherAsync(factory, admin, "profe1");
+        using var t2 = await ProfesorAccesoTests.TeacherAsync(factory, admin, "profe2");
+        var students = await AlumnosTests.SeedStudentsAsync(factory, admin, ("Ana", "Uno", 0), ("Beto", "Dos", 0));
+        int level;
+        await using (var db = await factory.OpenAsync())
+            level = await CommercialSchemaFixture.ScalarAsync<int>(db, "SELECT min(id) FROM nivel_ingles");
+        Assert.Equal(HttpStatusCode.OK, (await t1.PutAsJsonAsync("/profesores/yo/niveles", new { idNiveles = new[] { level } })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await t2.PutAsJsonAsync("/profesores/yo/niveles", new { idNiveles = new[] { level } })).StatusCode);
+        var course = (await Json(await t1.PostAsJsonAsync("/cursos", new { nombre = "A1 mañana", idNivel = level, idAlumnos = students }))).GetProperty("curso").GetProperty("id").GetInt32();
+
+        // Solo el dueño o el administrador; el vendedor no accede.
+        Assert.Equal(HttpStatusCode.NotFound, (await t2.DeleteAsync($"/cursos/{course}")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await seller.DeleteAsync($"/cursos/{course}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await admin.DeleteAsync("/cursos/999999")).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await t1.DeleteAsync($"/cursos/{course}")).StatusCode);
+
+        Assert.Equal(HttpStatusCode.NotFound, (await t1.GetAsync($"/cursos/{course}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await admin.DeleteAsync($"/cursos/{course}")).StatusCode);
+        Assert.Equal(0, (await Json(await admin.GetAsync("/cursos"))).GetProperty("totalCount").GetInt32());
+        // Siguen siendo alumnos, ahora sin curso y disponibles para otro.
+        var list = await Json(await admin.GetAsync("/alumnos?sinCurso=true"));
+        Assert.Equal(2, list.GetProperty("totalCount").GetInt32());
+        Assert.All(list.GetProperty("items").EnumerateArray(), item => Assert.Equal(JsonValueKind.Null, item.GetProperty("curso").ValueKind));
+    }
 }

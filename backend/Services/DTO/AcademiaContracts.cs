@@ -33,6 +33,39 @@ public sealed record AlumnoResponse
     public required DateTime FechaAlta { get; init; }
 }
 
+/// <summary>Contacto en estado Cliente que todavía no es alumno.</summary>
+public sealed record AlumnoCandidatoResponse
+{
+    public required int Id { get; init; }
+    public required string Nombre { get; init; }
+    public required string Apellido { get; init; }
+    public string? Documento { get; init; }
+    public required string Correo { get; init; }
+}
+
+public sealed record CreateAlumnoRequest
+{
+    [Range(1, int.MaxValue)]
+    public required int IdContacto { get; init; }
+    [Range(1, int.MaxValue)]
+    public required int IdNivel { get; init; }
+    [Range(1, int.MaxValue)]
+    public int? IdCurso { get; init; }
+}
+
+public sealed record CambiarNivelAlumnoRequest
+{
+    [Range(1, int.MaxValue)]
+    public required int IdNivel { get; init; }
+}
+
+public sealed record CambiarCursoAlumnoRequest
+{
+    /// <summary>Curso del mismo nivel del alumno; omitido o null lo deja sin curso.</summary>
+    [Range(1, int.MaxValue)]
+    public int? IdCurso { get; init; }
+}
+
 public sealed record CursoResponse
 {
     public required int Id { get; init; }

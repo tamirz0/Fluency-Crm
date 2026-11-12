@@ -377,6 +377,18 @@ export function listStudents(query: { q?: string; idNivel?: number; idCurso?: nu
   return getResponseData(() => api.GET('/alumnos', { params: { query } }))
 }
 export function getStudent(id: number) { return getResponseData(() => api.GET('/alumnos/{id}', { params: { path: { id } } })) }
+export type AlumnoCandidato = components['schemas']['AlumnoCandidatoResponse']
+export function listStudentCandidates(query: { q?: string; page?: number; pageSize?: number } = {}) {
+  return getResponseData(() => api.GET('/alumnos/candidatos', { params: { query } }))
+}
+export function createStudent(body: components['schemas']['CreateAlumnoRequest']) { return getResponseData(() => api.POST('/alumnos', { body })) }
+export function changeStudentLevel(id: number, idNivel: number) {
+  return getResponseData(() => api.PUT('/alumnos/{id}/nivel', { params: { path: { id } }, body: { idNivel } }))
+}
+/** Asigna o cambia el curso del alumno; `null` lo deja sin curso. */
+export function changeStudentCourse(id: number, idCurso: number | null) {
+  return getResponseData(() => api.PUT('/alumnos/{id}/curso', { params: { path: { id } }, body: { idCurso } }))
+}
 
 export type Curso = components['schemas']['CursoResponse']
 export type CursoDetalle = components['schemas']['CursoDetalleResponse']
@@ -394,6 +406,7 @@ export function listCourses(query: { idProfesor?: number; idNivel?: number; page
 }
 export function getCourse(id: number) { return getResponseData(() => api.GET('/cursos/{id}', { params: { path: { id } } })) }
 export function createCourse(body: CreateCursoRequest) { return getResponseData(() => api.POST('/cursos', { body })) }
+export async function deleteCourse(id: number): Promise<void> { await api.DELETE('/cursos/{id}', { params: { path: { id } } }) }
 export function addStudentsToCourse(id: number, idAlumnos: number[]) {
   return getResponseData(() => api.POST('/cursos/{id}/alumnos', { params: { path: { id } }, body: { idAlumnos } }))
 }

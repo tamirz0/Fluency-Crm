@@ -75,6 +75,20 @@ public sealed class CursoService(FluencyLocalDbContext db, ActorActual actor)
         return await GetAsync(course.Id, ct);
     }
 
+    /// <summary>Baja del curso: deja de verse, sus alumnos quedan sin curso (siguen siendo alumnos) y sus clases dejan de listarse.</summary>
+    public async Task DeleteAsync(int id, CancellationToken ct)
+    {
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        if (!await db.Usuarios.AnyAsync(u => u.Id == actor.Id && u.Activo, ct))
+            throw new AcademiaOperationException(401, "UNAUTHENTICATED", "La sesión ya no está disponible.");
+        var visibleId = await Visible().Where(c => c.Id == id).Select(c => (int?)c.Id).SingleOrDefaultAsync(ct) ?? throw NotFound();
+        var course = await db.Cursos.SingleAsync(c => c.Id == visibleId, ct);
+        course.Activo = false;
+        foreach (var student in await db.Alumnos.Where(a => a.IdCurso == id).ToListAsync(ct)) student.IdCurso = null;
+        await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
+    }
+
     public async Task<CursoDetalleResponse> AddStudentsAsync(int id, AgregarAlumnosRequest request, CancellationToken ct)
     {
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);

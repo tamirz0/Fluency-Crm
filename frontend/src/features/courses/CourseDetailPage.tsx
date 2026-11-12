@@ -2,10 +2,11 @@ import { ArrowBack } from '@mui/icons-material'
 import { Alert, Autocomplete, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Link, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link as RouterLink, useParams } from 'react-router-dom'
-import { addStudentsToCourse, ApiRequestError, courseQueryKeys, getCourse, listStudents, studentQueryKeys } from '../../api/client'
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom'
+import { addStudentsToCourse, ApiRequestError, courseQueryKeys, deleteCourse, getCourse, listStudents, studentQueryKeys } from '../../api/client'
 import { parsePositiveId } from '../shared/display'
 import { ProfileHeader, ProfileStats } from '../shared/RecordProfile'
+import { RemoveRecordButton } from '../shared/RemoveRecordButton'
 import { AcademyDetailPage } from '../shared/AcademyDetailPage'
 import '../companies/companies.css'
 import '../contacts/records.css'
@@ -37,6 +38,8 @@ export function CourseDetailPage() {
   const { idCurso: routeId } = useParams()
   const id = parsePositiveId(routeId)
   const [adding, setAdding] = useState(false)
+  const navigate = useNavigate()
+  const client = useQueryClient()
   const query = useQuery({ queryKey: courseQueryKeys.detail(id ?? 0), queryFn: () => getCourse(id as number), enabled: id !== undefined })
   const back = <Link component={RouterLink} to="/cursos" className="company-back-link" underline="hover"><ArrowBack fontSize="small" />Volver a cursos</Link>
   if (id === undefined || (query.isError && query.error instanceof ApiRequestError && query.error.status === 404))
@@ -47,7 +50,10 @@ export function CourseDetailPage() {
   return <AcademyDetailPage>
     {back}
     <article className="profile-sheet" aria-label={`Ficha del curso ${curso.nombre}`}>
-      <ProfileHeader name={curso.nombre} subtitle={`Curso · ${curso.nivel.descripcion}`} actions={<Button variant="contained" onClick={() => setAdding(true)}>Agregar alumnos</Button>} />
+      <ProfileHeader name={curso.nombre} subtitle={`Curso · ${curso.nivel.descripcion}`} actions={<><Button variant="contained" onClick={() => setAdding(true)}>Agregar alumnos</Button>
+        <RemoveRecordButton noun="curso" name={curso.nombre} remove={() => deleteCourse(id)} onRemoved={() => {
+          void client.invalidateQueries({ queryKey: courseQueryKeys.all }); void client.invalidateQueries({ queryKey: studentQueryKeys.all }); navigate('/cursos')
+        }} /></>} />
       <ProfileStats items={[
         { label: 'Nivel', value: curso.nivel.descripcion },
         { label: 'Profesor', value: curso.profesor.descripcion },

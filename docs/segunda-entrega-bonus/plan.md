@@ -34,9 +34,9 @@ El CRM funciona pero se ve genérico para una academia de inglés. Este bonus lo
 | Tema | Decisión |
 |---|---|
 | Alumno | No es un estado nuevo del catálogo: es la **existencia de una fila `alumno`** (derivado). Una empresa nunca es alumno; sí el contacto de la oportunidad ganada. |
-| Cuándo se crea | Al ganar, dentro de la transacción de `CloseAsync`, si la oportunidad tiene **contacto** y su servicio es de **tipo Clases** (siempre con nivel; desde el 09/11/2026 el taller se distingue por su tipo, no por un indicador). Si el contacto ya es alumno no se duplica ni se cambia. Reabrir no lo revierte (igual que Potencial → Cliente). |
+| Cuándo se crea | Al ganar, dentro de la transacción de `CloseAsync`, si la oportunidad tiene **contacto** y su servicio es de **tipo Clases** (siempre con nivel; desde el 09/11/2026 el taller se distingue por su tipo, no por un indicador). Si el contacto ya es alumno no se duplica ni se cambia. Reabrir no lo revierte (igual que Potencial → Cliente). Desde el 12/11/2026 el **Administrador** también da de alta alumnos desde «Nuevo alumno» (contacto Cliente que aún no es alumno, con nivel y curso opcional; `POST /alumnos`, candidatos en `GET /alumnos/candidatos`) y puede cambiar el nivel (`PUT /alumnos/{id}/nivel`; si el curso es de otro nivel queda sin curso). El Profesor edita nivel y curso solo dentro de sus niveles/cursos. |
 | Datos del alumno | Los personales se leen del contacto (FK única, sin duplicar columnas). El nivel se guarda en `alumno`. |
-| Curso | Nombre, nivel y profesor. El nivel debe estar entre los niveles del profesor y coincidir con el del alumno que se suma. Un alumno tiene **un solo curso** (`alumno.id_curso` nullable); si ya tiene otro: 409. «Solo se suman alumnos»: **no se incluye quitar** (limitación conocida; extra si sobra tiempo). |
+| Curso | Nombre, nivel y profesor. El nivel debe estar entre los niveles del profesor y coincidir con el del alumno que se suma. Un alumno tiene **un solo curso** (`alumno.id_curso` nullable); si ya tiene otro: 409. Desde el 12/11/2026 el curso del alumno se asigna, cambia o quita (`PUT /alumnos/{id}/curso`, mismo nivel) y el curso se puede dar de baja (`DELETE /cursos/{id}`: sus alumnos quedan sin curso y sus clases dejan de listarse). |
 | Clase | Título, fecha (el día clickeado), hora de inicio y fin (se muestra como subtítulo), curso, `es_examen` y `temas_examen` opcional. El Profesor solo crea en sus cursos; el Administrador elige profesor y luego uno de sus cursos. |
 | Asistencia y notas | Tabla `clase_alumno(id_clase, id_alumno, presente, nota)` con upsert. Sin fila = «sin registrar», cuenta como no asistió. Nota 0–10, decimales permitidos, opcional. |
 | «13/33» | Presentes / clases **del curso con fecha ≤ hoy**. Alumno sin curso: «sin curso». |
@@ -135,5 +135,5 @@ Rama de trabajo `segunda-entrega-profesores`. Commits `feat:`/`fix:`/`test:` sep
 | Landing «descentrada» otra vez | Contenedor propio, capturas multi-ancho, revisión visual del usuario. |
 | Esquema en producción | Script incremental más guía; lo ejecuta el usuario con backup. |
 | «Ganada» con servicio mal configurado | Servicio sin nivel o taller no crea alumno; prueba explícita. |
-| Sin «quitar de curso» ni «quitar inscripción» | Limitación conocida; extras si sobra tiempo. |
+| Sin «quitar inscripción» de taller | Limitación conocida; extra si sobra tiempo. «Quitar de curso» ya existe (12/11/2026). |
 | **Dato pendiente del usuario** | Correo para `VITE_CONTACT_EMAIL`. |
