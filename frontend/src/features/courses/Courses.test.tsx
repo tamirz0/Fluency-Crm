@@ -26,6 +26,7 @@ beforeEach(() => {
     const path = url.pathname.replace(/^\/api/, '')
     if (path.endsWith('/csrf')) return json({ requestToken: 'csrf-test' })
     if (path.endsWith('/auth/me')) return json({ usuario: me, expiresAt: '2026-12-22T07:00:00Z' })
+    if (request.method === 'DELETE') { calls.push({ url: `DELETE ${path}`, body: null }); return new Response(null, { status: 204 }) }
     if (request.method === 'POST') {
       const body = await request.clone().json(); calls.push({ url: `POST ${path}`, body })
       if (path === '/cursos') return json({ curso: { ...course, id: 4, nombre: body.nombre }, alumnos: [] }, 201)
@@ -56,6 +57,15 @@ it('muestra los cursos en grilla y al abrir uno su ficha con la cantidad y la li
   expect(await screen.findByRole('article', { name: 'Ficha del curso B1 mañana' })).toBeTruthy()
   expect(screen.getByRole('heading', { name: 'Alumnos (1)' })).toBeTruthy()
   expect(within(screen.getByRole('table', { name: 'Alumnos del curso' })).getByText('Pérez, Ana')).toBeTruthy()
+})
+
+it('da de baja un curso desde su ficha y vuelve al listado', async () => {
+  mount('/cursos/3')
+  await userEvent.click(await screen.findByRole('button', { name: 'Dar de baja' }))
+  expect(screen.getByText(/quedan sin curso/)).toBeTruthy()
+  await userEvent.click(screen.getByRole('button', { name: 'Dar de baja definitivamente' }))
+  await waitFor(() => expect(calls.map(c => c.url)).toContain('DELETE /cursos/3'))
+  expect(await screen.findByRole('heading', { name: 'Cursos' })).toBeTruthy()
 })
 
 it('suma alumnos del mismo nivel y sin curso desde la ficha', async () => {

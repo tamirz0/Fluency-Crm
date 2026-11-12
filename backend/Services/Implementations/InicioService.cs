@@ -22,8 +22,10 @@ public sealed class InicioService(FluencyLocalDbContext db)
         var students = await db.Alumnos.CountAsync(a => a.Activo && a.IdContactoNavigation.Activo, ct);
         var open = await db.Oportunidades.CountAsync(o => o.Activo && o.IdEtapaNavigation.IdEstadoNavigation.Codigo == "ABIERTA", ct);
         // FechaCierre guarda la fecha de negocio como medianoche UTC: rango [primer día, primer día del mes siguiente).
-        var closed = await db.Oportunidades.CountAsync(o => o.Activo && o.FechaCierre >= from && o.FechaCierre < to
-            && (o.IdEtapaNavigation.IdEstadoNavigation.Codigo == "GANADA" || o.IdEtapaNavigation.IdEstadoNavigation.Codigo == "PERDIDA"), ct);
-        return new(students, open, closed);
+        var closedThisMonth = db.Oportunidades.Where(o => o.Activo && o.FechaCierre >= from && o.FechaCierre < to
+            && (o.IdEtapaNavigation.IdEstadoNavigation.Codigo == "GANADA" || o.IdEtapaNavigation.IdEstadoNavigation.Codigo == "PERDIDA"));
+        var closed = await closedThisMonth.CountAsync(ct);
+        var wonValue = await closedThisMonth.Where(o => o.IdEtapaNavigation.IdEstadoNavigation.Codigo == "GANADA").SumAsync(o => (decimal?)o.Valor, ct) ?? 0m;
+        return new(students, open, closed, wonValue);
     }
 }

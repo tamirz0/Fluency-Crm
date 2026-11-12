@@ -39,7 +39,16 @@ public sealed class CursosController(CursoService cursos) : ControllerBase
         return CreatedAtAction(nameof(Get), new { id = result.Curso.Id }, result);
     }
 
-    /// <summary>Suma alumnos del mismo nivel y sin curso; todo o nada. No existe la operación inversa.</summary>
+    /// <summary>Baja del curso: sus alumnos quedan sin curso y sus clases dejan de listarse.</summary>
+    [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Delete(int id, CancellationToken ct)
+    {
+        await cursos.DeleteAsync(id, ct);
+        return NoContent();
+    }
+
+    /// <summary>Suma alumnos del mismo nivel y sin curso; todo o nada. Para quitar o cambiar el curso de un alumno, PUT /alumnos/{id}/curso.</summary>
     [HttpPost("{id:int}/alumnos")]
     [ProducesResponseType<CursoDetalleResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult<CursoDetalleResponse>> AddStudents(int id, [FromBody] AgregarAlumnosRequest request, CancellationToken ct)

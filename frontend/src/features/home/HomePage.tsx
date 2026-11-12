@@ -1,27 +1,19 @@
-import { CalendarMonth, CheckCircleOutlined, ChevronRight, FilterAltOutlined, MonetizationOnOutlined, Refresh, SchoolOutlined } from '@mui/icons-material'
-import { Alert, Box, Button, Divider, Link, MenuItem, Paper, Skeleton, Stack, TextField, Typography } from '@mui/material'
+import { CalendarMonth, CheckCircleOutlined, FilterAltOutlined, MonetizationOnOutlined, SchoolOutlined } from '@mui/icons-material'
+import { Box, Button, MenuItem, Skeleton, TextField, Typography } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import { getFunnel, getHomeSummary, lessonQueryKeys, listFunnels, listLessons, listOpportunities, opportunityQueryKeys, type Funnel, type OportunidadQuery } from '../../api/client'
 import { canUseAcademy } from '../../app/navigation'
+import { money } from '../opportunities/opportunityData'
 import { useAuth } from '../../auth/useAuth'
+import { HomeEntries, HomeEntry, HomeMetrics, HomePanel, LoadError, type HomeStat } from './homeParts'
 import './home.css'
 
 const previewSize = 3
 const recentFilters = { estado: 'ABIERTA', page: 1, pageSize: previewSize } satisfies OportunidadQuery
 const argentinaMonth = new Intl.DateTimeFormat('es-AR', { month: 'long', timeZone: 'America/Argentina/Buenos_Aires' })
-
-function HomePanel({ title, link, to, children }: { title: string; link: string; to: string; children: ReactNode }) {
-  return <Paper component="section" variant="outlined" className="home-panel">
-    <Box className="home-panel-heading">
-      <Typography component="h2" variant="h6">{title}</Typography>
-      <Link component={RouterLink} to={to} underline="hover">{link}</Link>
-    </Box>
-    {children}
-  </Paper>
-}
 
 const stageTones = ['#3b82f6', '#f59e0b', '#10b981', '#6366f1']
 
@@ -42,26 +34,6 @@ function StageChart({ stages }: { stages: Funnel['etapas'] }) {
       </ul>
     </> : <figcaption>No hay oportunidades abiertas en este embudo.</figcaption>}
   </figure>
-}
-
-function HomeEntries({ children }: { children: ReactNode }) {
-  return <Stack component="ul" divider={<Divider component="li" aria-hidden="true" />} sx={{ listStyle: 'none', m: 0, p: 0 }}>
-    {children}
-  </Stack>
-}
-
-function HomeEntry({ title, subtitle, to, course, from }: { title: string; subtitle: string; to: string; course?: string; from?: { to: string; label: string } }) {
-  return <Box component="li">
-    <Link component={RouterLink} to={to} state={from ? { from } : undefined} underline="none" className={course ? 'home-entry home-entry--class' : 'home-entry'}>
-      <span className="home-entry-title">{title}</span>{' '}
-      <span className="home-entry-meta">{subtitle}</span>{' '}
-      {course ? <span className="home-entry-course">{course}</span> : <ChevronRight className="home-entry-arrow" />}
-    </Link>
-  </Box>
-}
-
-function LoadError({ message, retry }: { message: string; retry: () => void }) {
-  return <Alert severity="warning" action={<Button color="inherit" size="small" startIcon={<Refresh />} onClick={retry}>Reintentar</Button>}>{message}</Alert>
 }
 
 export function HomePage() {
@@ -88,9 +60,12 @@ export function HomePage() {
   })
   const lessons = classes.data?.filter(lesson =>
     lesson.fecha > range.desde || lesson.horaInicio.slice(0, 8) >= now.format('HH:mm:ss')).slice(0, previewSize) ?? []
-  const stats = [
+  const closed = summary.data?.cerradasEsteMes
+  const closures = closed === undefined ? undefined
+    : `${closed} ${Number(closed) === 1 ? 'oportunidad' : 'oportunidades'} - ${money(summary.data?.valorGanadasEsteMes ?? 0)}`
+  const stats: HomeStat[] = [
     { label: 'Oportunidades abiertas', value: summary.data?.oportunidadesAbiertas, icon: <MonetizationOnOutlined />, tone: 'blue', link: { to: '/oportunidades?estado=ABIERTA', label: 'Ver activas' } },
-    { label: `Cierres de ${argentinaMonth.format(now.toDate())}`, value: summary.data?.cerradasEsteMes, icon: <CheckCircleOutlined />, tone: 'mint' },
+    { label: `Cierres de ${argentinaMonth.format(now.toDate())}`, value: closures, icon: <CheckCircleOutlined />, tone: 'mint', text: true },
     { label: 'Alumnos activos', value: summary.data?.alumnos, to: academy ? '/alumnos' : undefined, icon: <SchoolOutlined />, tone: 'neutral' },
   ]
 
@@ -103,23 +78,7 @@ export function HomePage() {
       <Button component={RouterLink} to="/embudo" variant="contained" startIcon={<FilterAltOutlined />}>Ir al embudo</Button>
     </header>
     {summary.isError && <LoadError message="No pudimos cargar las cifras del inicio." retry={() => void summary.refetch()} />}
-    <section aria-label="Resumen">
-      <dl className="home-metrics">
-        {stats.map(({ label, value, to, icon, tone, link }) => <div key={label} className={`home-metric home-metric--${tone}`}>
-          <Typography component="dt" variant="body2" color="text.secondary">
-            <span className="home-metric-icon" aria-hidden="true">{icon}</span>
-            {to ? <Link component={RouterLink} to={to} underline="hover">{label}</Link> : label}
-          </Typography>
-          <Typography component="dd" className="home-metric-number"
-            aria-label={summary.isPending ? `Cargando ${label}` : `${label}: ${summary.isError ? 'no disponible' : value ?? 'no disponible'}`}>
-            {summary.isPending ? <Skeleton width={32} /> : summary.isError ? '—' : value ?? '—'}
-          </Typography>
-          {link && <Typography component="dd" className="home-metric-hint" variant="body2" color="text.secondary">
-            <Link component={RouterLink} to={link.to} underline="hover">{link.label}</Link>
-          </Typography>}
-        </div>)}
-      </dl>
-    </section>
+    <HomeMetrics stats={stats} pending={summary.isPending} failed={summary.isError} />
 
     <div className={`home-work${showClasses ? ' home-work--academy' : ''}`}>
       <HomePanel title="Oportunidades por etapa" to={funnelId === undefined ? '/embudo' : `/embudo?idEmbudo=${funnelId}`} link="Ver embudo completo">

@@ -34,7 +34,8 @@ function mount() {
 
 it('muestra los datos de la sesión y los roles, que no se editan desde acá', async () => {
   mount()
-  expect(await screen.findByRole('heading', { name: 'Mi perfil' })).toBeTruthy()
+  expect(await screen.findByRole('heading', { name: 'María Gómez' })).toBeTruthy()
+  expect(screen.getByRole('article', { name: 'Mi perfil' })).toBeTruthy()
   for (const text of ['María Gómez', 'maria', 'maria@example.com', 'Administrador']) expect(screen.getByText(text)).toBeTruthy()
   expect(screen.queryByRole('textbox')).toBeNull()
   expect(screen.queryByText(/pedile a un administrador\.$/)).toBeNull()

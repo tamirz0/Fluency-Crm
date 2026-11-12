@@ -125,4 +125,82 @@ public sealed class AlumnosTests
         Assert.Equal(HttpStatusCode.Forbidden, (await seller.GetAsync("/alumnos")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await seller.GetAsync($"/alumnos/{ids[0]}")).StatusCode);
     }
+
+    private static async Task<int> NewContactAsync(AuthApiFactory factory, HttpClient admin, string name, string last, string state)
+    {
+        var id = (await Json(await admin.PostAsJsonAsync("/contactos", new { nombre = name, apellido = last, correo = $"{name}.{last}@example.invalid".ToLowerInvariant() }))).GetProperty("id").GetInt32();
+        await using var db = await factory.OpenAsync();
+        await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE contacto SET id_estado=(SELECT id FROM estado_cliente WHERE descripcion='{state}') WHERE id={id}");
+        return id;
+    }
+
+    [Fact]
+    public async Task TheAdministratorEnrollsClientContactsAndLevelAndCourseAreEditedWithinEachRolesScope()
+    {
+        await using var factory = new AuthApiFactory(); await factory.InitializeAsync();
+        using var admin = factory.Client(); await UsuariosTests.SignIn(admin, factory);
+        using var seller = factory.Client(); await UsuariosTests.SignIn(seller, factory, "seller");
+        using var t1 = await ProfesorAccesoTests.TeacherAsync(factory, admin, "profe1");
+        using var t2 = await ProfesorAccesoTests.TeacherAsync(factory, admin, "profe2");
+        int[] levels;
+        await using (var db = await factory.OpenAsync())
+            levels = await CommercialSchemaFixture.ScalarAsync<int[]>(db, "SELECT array_agg(id ORDER BY id) FROM nivel_ingles");
+        Assert.Equal(HttpStatusCode.OK, (await t1.PutAsJsonAsync("/profesores/yo/niveles", new { idNiveles = new[] { levels[0], levels[1] } })).StatusCode);
+        var ana = await NewContactAsync(factory, admin, "Ana", "Uno", "Cliente");
+        var potential = await NewContactAsync(factory, admin, "Beto", "Dos", "Potencial");
+        var carla = await NewContactAsync(factory, admin, "Carla", "Tres", "Cliente");
+
+        // Candidatos: solo contactos Cliente que no son alumnos, y solo para el administrador.
+        var candidates = await Json(await admin.GetAsync("/alumnos/candidatos"));
+        Assert.Equal(["Tres", "Uno"], candidates.GetProperty("items").EnumerateArray().Select(x => x.GetProperty("apellido").GetString()!).ToArray());
+        Assert.Equal(1, (await Json(await admin.GetAsync("/alumnos/candidatos?q=carla"))).GetProperty("totalCount").GetInt32());
+        Assert.Equal(HttpStatusCode.Forbidden, (await t1.GetAsync("/alumnos/candidatos")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await seller.GetAsync("/alumnos/candidatos")).StatusCode);
+
+        // Alta: Cliente vigente, sin alta previa, con nivel activo; el profesor y el vendedor no pueden.
+        Assert.Equal(HttpStatusCode.Forbidden, (await t1.PostAsJsonAsync("/alumnos", new { idContacto = ana, idNivel = levels[0] })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await seller.PostAsJsonAsync("/alumnos", new { idContacto = ana, idNivel = levels[0] })).StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, (await admin.PostAsJsonAsync("/alumnos", new { idContacto = potential, idNivel = levels[0] })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await admin.PostAsJsonAsync("/alumnos", new { idContacto = 999999, idNivel = levels[0] })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await admin.PostAsJsonAsync("/alumnos", new { idContacto = ana, idNivel = 999999 })).StatusCode);
+        var created = await admin.PostAsJsonAsync("/alumnos", new { idContacto = ana, idNivel = levels[0] });
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var anaStudent = (await Json(created)).GetProperty("id").GetInt32();
+        Assert.Equal(HttpStatusCode.Conflict, (await admin.PostAsJsonAsync("/alumnos", new { idContacto = ana, idNivel = levels[0] })).StatusCode);
+        Assert.Equal(1, (await Json(await admin.GetAsync("/alumnos/candidatos"))).GetProperty("totalCount").GetInt32());
+
+        // Con curso: debe ser del mismo nivel.
+        var course = (await Json(await t1.PostAsJsonAsync("/cursos", new { nombre = "A1 mañana", idNivel = levels[0] }))).GetProperty("curso").GetProperty("id").GetInt32();
+        Assert.Equal(HttpStatusCode.Conflict, (await admin.PostAsJsonAsync("/alumnos", new { idContacto = carla, idNivel = levels[1], idCurso = course })).StatusCode);
+        var withCourse = await admin.PostAsJsonAsync("/alumnos", new { idContacto = carla, idNivel = levels[0], idCurso = course });
+        Assert.Equal(HttpStatusCode.Created, withCourse.StatusCode);
+        var carlaStudent = (await Json(withCourse)).GetProperty("id").GetInt32();
+        Assert.Equal(course, (await Json(await admin.GetAsync($"/alumnos/{carlaStudent}"))).GetProperty("curso").GetProperty("id").GetInt32());
+
+        // Nivel: el profesor solo entre sus niveles; si el curso es de otro nivel el alumno queda sin curso.
+        var up = await t1.PutAsJsonAsync($"/alumnos/{anaStudent}/nivel", new { idNivel = levels[1] });
+        Assert.Equal(HttpStatusCode.OK, up.StatusCode);
+        Assert.Equal(levels[1], (await Json(up)).GetProperty("nivel").GetProperty("id").GetInt32());
+        Assert.Equal(HttpStatusCode.Conflict, (await t1.PutAsJsonAsync($"/alumnos/{anaStudent}/nivel", new { idNivel = levels[2] })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await admin.PutAsJsonAsync($"/alumnos/{anaStudent}/nivel", new { idNivel = 999999 })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await seller.PutAsJsonAsync($"/alumnos/{anaStudent}/nivel", new { idNivel = levels[0] })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await t2.PutAsJsonAsync($"/alumnos/{anaStudent}/nivel", new { idNivel = levels[0] })).StatusCode);
+        var promoted = await admin.PutAsJsonAsync($"/alumnos/{carlaStudent}/nivel", new { idNivel = levels[1] });
+        Assert.Equal(HttpStatusCode.OK, promoted.StatusCode);
+        Assert.Equal(JsonValueKind.Null, (await Json(promoted)).GetProperty("curso").ValueKind);
+
+        // Curso: cambiar a uno del nivel actual, quitar, y rechazar otro nivel, inexistente o ajeno.
+        var next = (await Json(await t1.PostAsJsonAsync("/cursos", new { nombre = "A2 tarde", idNivel = levels[1] }))).GetProperty("curso").GetProperty("id").GetInt32();
+        var assigned = await t1.PutAsJsonAsync($"/alumnos/{anaStudent}/curso", new { idCurso = next });
+        Assert.Equal(HttpStatusCode.OK, assigned.StatusCode);
+        Assert.Equal(next, (await Json(assigned)).GetProperty("curso").GetProperty("id").GetInt32());
+        Assert.Equal(HttpStatusCode.Conflict, (await t1.PutAsJsonAsync($"/alumnos/{anaStudent}/curso", new { idCurso = course })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await t1.PutAsJsonAsync($"/alumnos/{anaStudent}/curso", new { idCurso = 999999 })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await seller.PutAsJsonAsync($"/alumnos/{anaStudent}/curso", new { idCurso = next })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await t2.PutAsJsonAsync($"/alumnos/{anaStudent}/curso", new { idCurso = next })).StatusCode);
+        var removed = await admin.PutAsJsonAsync($"/alumnos/{anaStudent}/curso", new { idCurso = (int?)null });
+        Assert.Equal(HttpStatusCode.OK, removed.StatusCode);
+        Assert.Equal(JsonValueKind.Null, (await Json(removed)).GetProperty("curso").ValueKind);
+        Assert.Equal(0, (await Json(await admin.GetAsync($"/cursos/{next}"))).GetProperty("curso").GetProperty("cantidadAlumnos").GetInt32());
+    }
 }

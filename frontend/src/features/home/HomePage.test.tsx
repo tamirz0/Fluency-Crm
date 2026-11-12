@@ -19,7 +19,7 @@ beforeEach(() => {
   summaryCalls = 0
   isAdmin = false
   requested = []
-  summary = () => json({ alumnos: 12, oportunidadesAbiertas: 5, cerradasEsteMes: 0 })
+  summary = () => json({ alumnos: 12, oportunidadesAbiertas: 5, cerradasEsteMes: 0, valorGanadasEsteMes: 0 })
   vi.stubGlobal('fetch', vi.fn(async (request: Request) => {
     const url = new URL(request.url)
     const path = url.pathname
@@ -57,7 +57,7 @@ describe('inicio', () => {
     expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeTruthy()
     expect(await screen.findByLabelText('Alumnos activos: 12')).toBeTruthy()
     expect(screen.getByLabelText('Oportunidades abiertas: 5')).toBeTruthy()
-    expect(screen.getByLabelText(/^Cierres de .+: 0$/)).toBeTruthy()
+    expect(screen.getByLabelText(/^Cierres de .+: 0 oportunidades - \$\s0,00$/)).toBeTruthy()
     expect(screen.getByRole('link', { name: /Ir al embudo/ }).getAttribute('href')).toBe('/embudo')
     expect((await screen.findByRole('link', { name: /Inglés para equipos Ana Ruiz · Consulta/ })).getAttribute('href')).toBe('/oportunidades/8')
     const chart = (await screen.findByText('4 oportunidades abiertas en este embudo')).closest('figure')
@@ -76,6 +76,18 @@ describe('inicio', () => {
     expect((await screen.findByRole('link', { name: /Speaking.*09:00.*Inglés B1/ })).getAttribute('href')).toBe('/clases/9')
     expect(screen.getByRole('link', { name: 'Alumnos activos' }).getAttribute('href')).toBe('/alumnos')
     expect(screen.getByRole('link', { name: 'Ver calendario' }).getAttribute('href')).toBe('/clases')
+  })
+
+  it('muestra cuántas oportunidades se cerraron en el mes y el dinero generado', async () => {
+    summary = () => json({ alumnos: 12, oportunidadesAbiertas: 5, cerradasEsteMes: 3, valorGanadasEsteMes: 1250000.5 })
+    mount()
+    expect(await screen.findByLabelText(/^Cierres de .+: 3 oportunidades - \$\s1\.250\.000,50$/)).toBeTruthy()
+  })
+
+  it('usa el singular con una sola oportunidad cerrada', async () => {
+    summary = () => json({ alumnos: 12, oportunidadesAbiertas: 5, cerradasEsteMes: 1, valorGanadasEsteMes: 0 })
+    mount()
+    expect(await screen.findByLabelText(/^Cierres de .+: 1 oportunidad - \$\s0,00$/)).toBeTruthy()
   })
 
   it('ante un error no muestra ceros: avisa, deja las cifras no disponibles y permite reintentar', async () => {

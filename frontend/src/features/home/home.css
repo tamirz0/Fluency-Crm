@@ -117,6 +117,11 @@ main:has(> .home-page) {
   font-variant-numeric: tabular-nums;
 }
 
+.home-metric .home-metric-number--text {
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
 .home-work {
   display: grid;
   align-items: start;
@@ -243,4 +248,8 @@ main:has(> .home-page) {
 
 @container (min-width: 690px) {
   .home-work--academy { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+}
+
+@container (min-width: 900px) {
+  .home-work--teacher { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
