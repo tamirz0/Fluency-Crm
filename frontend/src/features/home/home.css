@@ -249,3 +249,7 @@ main:has(> .home-page) {
 @container (min-width: 690px) {
   .home-work--academy { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
 }
+
+@container (min-width: 900px) {
+  .home-work--teacher { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
