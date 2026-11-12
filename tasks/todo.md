@@ -59,8 +59,8 @@ Las tareas de API/persistencia son pasos internos de un incremento vertical; no 
 - [x] [T46 — Comprobar retiro del legado y coherencia de contratos](#t46)
 - [x] [T47 — Cerrar la verificación de seguridad acordada](#t47)
 - [x] [T48 — Ensayar la entrega completa en local](#t48)
-- [ ] [T48,5 — Ultimo refinamiento](#t48-5)
-- [ ] [T49 — Preparar la publicación académica sin ejecutarla](#t49)
+- [x] [T48,5 — Ultimo refinamiento](#t48-5)
+- [x] [T49 — Preparar la publicación académica sin ejecutarla](#t49)
 - [x] [T49.1 — Rediseño visual y experiencia de Fluency](#t49-1)
 
 ## Detalle
