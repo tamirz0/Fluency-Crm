@@ -6,6 +6,7 @@ import { useState, type ReactNode } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import { getFunnel, getHomeSummary, lessonQueryKeys, listFunnels, listLessons, listOpportunities, opportunityQueryKeys, type Funnel, type OportunidadQuery } from '../../api/client'
 import { canUseAcademy } from '../../app/navigation'
+import { money } from '../opportunities/opportunityData'
 import { useAuth } from '../../auth/useAuth'
 import './home.css'
 
@@ -88,9 +89,12 @@ export function HomePage() {
   })
   const lessons = classes.data?.filter(lesson =>
     lesson.fecha > range.desde || lesson.horaInicio.slice(0, 8) >= now.format('HH:mm:ss')).slice(0, previewSize) ?? []
+  const closed = summary.data?.cerradasEsteMes
+  const closures = closed === undefined ? undefined
+    : `${closed} ${Number(closed) === 1 ? 'oportunidad' : 'oportunidades'} - ${money(summary.data?.valorGanadasEsteMes ?? 0)}`
   const stats = [
     { label: 'Oportunidades abiertas', value: summary.data?.oportunidadesAbiertas, icon: <MonetizationOnOutlined />, tone: 'blue', link: { to: '/oportunidades?estado=ABIERTA', label: 'Ver activas' } },
-    { label: `Cierres de ${argentinaMonth.format(now.toDate())}`, value: summary.data?.cerradasEsteMes, icon: <CheckCircleOutlined />, tone: 'mint' },
+    { label: `Cierres de ${argentinaMonth.format(now.toDate())}`, value: closures, icon: <CheckCircleOutlined />, tone: 'mint', text: true },
     { label: 'Alumnos activos', value: summary.data?.alumnos, to: academy ? '/alumnos' : undefined, icon: <SchoolOutlined />, tone: 'neutral' },
   ]
 
@@ -105,12 +109,12 @@ export function HomePage() {
     {summary.isError && <LoadError message="No pudimos cargar las cifras del inicio." retry={() => void summary.refetch()} />}
     <section aria-label="Resumen">
       <dl className="home-metrics">
-        {stats.map(({ label, value, to, icon, tone, link }) => <div key={label} className={`home-metric home-metric--${tone}`}>
+        {stats.map(({ label, value, to, icon, tone, link, text }) => <div key={label} className={`home-metric home-metric--${tone}`}>
           <Typography component="dt" variant="body2" color="text.secondary">
             <span className="home-metric-icon" aria-hidden="true">{icon}</span>
             {to ? <Link component={RouterLink} to={to} underline="hover">{label}</Link> : label}
           </Typography>
-          <Typography component="dd" className="home-metric-number"
+          <Typography component="dd" className={`home-metric-number${text ? ' home-metric-number--text' : ''}`}
             aria-label={summary.isPending ? `Cargando ${label}` : `${label}: ${summary.isError ? 'no disponible' : value ?? 'no disponible'}`}>
             {summary.isPending ? <Skeleton width={32} /> : summary.isError ? '—' : value ?? '—'}
           </Typography>

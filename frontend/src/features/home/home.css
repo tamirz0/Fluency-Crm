@@ -117,6 +117,11 @@ main:has(> .home-page) {
   font-variant-numeric: tabular-nums;
 }
 
+.home-metric .home-metric-number--text {
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
 .home-work {
   display: grid;
   align-items: start;

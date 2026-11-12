@@ -28,6 +28,9 @@ public sealed class InicioTests
         return (body.GetProperty("alumnos").GetInt32(), body.GetProperty("oportunidadesAbiertas").GetInt32(), body.GetProperty("cerradasEsteMes").GetInt32());
     }
 
+    private static async Task<decimal> WonValue(HttpClient client)
+        => (await Json(await client.GetAsync("/inicio/resumen"))).GetProperty("valorGanadasEsteMes").GetDecimal();
+
     [Fact]
     public async Task SummaryCountsActiveClientContactsOpenOpportunitiesAndClosuresOfTheCurrentMonthWithoutSessionRejected()
     {
@@ -81,6 +84,8 @@ public sealed class InicioTests
         // Alumnos: solo el contacto que ganó un servicio con nivel; la empresa Cliente y el contacto dado de baja no cuentan.
         Assert.Equal((1, 3, 2), await Summary(seller));
         Assert.Equal((1, 3, 2), await Summary(admin));
+        // Dinero generado: solo la ganada del mes (valor 1); la perdida del mes, otros meses, la reabierta y la eliminada no suman.
+        Assert.Equal(1m, await WonValue(seller));
 
         await using (var db = await factory.OpenAsync())
             await CommercialSchemaFixture.ExecuteAsync(db, $"UPDATE contacto SET activo=false WHERE id={seed.ContactA}");
