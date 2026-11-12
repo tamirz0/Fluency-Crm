@@ -201,7 +201,7 @@ describe('consultas comerciales', () => {
       id: index + 1, nombre, orden: index + 1, idEmbudo: 1, estado: 'ABIERTA', activo: true,
     }))
     const history = page([
-      { tipo: 'TRANSICION', idOrigen: 2, fechaHora: '2026-11-06T12:00:00Z', idUsuario: 7, usuarioNombre: 'María Gómez', idOportunidad: 91, etapaAnterior: 'Consulta', etapaNueva: 'Propuesta', observacion: 'Envió presupuesto' },
+      { tipo: 'TRANSICION', idOrigen: 2, fechaHora: '2026-11-06T12:00:00Z', idUsuario: 7, usuarioNombre: 'María Gómez', idOportunidad: 91, etapaAnterior: 'Diagnóstico archivado', etapaNueva: 'Propuesta', observacion: 'Envió presupuesto' },
       { tipo: 'ACTIVIDAD', idOrigen: 5, fechaHora: '2026-11-05T15:00:00Z', fechaRegistro: '2026-11-06T09:00:00Z', idUsuario: 8, usuarioNombre: 'Ana Ventas', idOportunidad: 91, tipoActividad: 'Llamada', descripcion: 'Llamó para pedir presupuesto', resultado: 'Enviar propuesta', accionesPermitidas: { editar: false, darDeBaja: false } },
       { tipo: 'TRANSICION', idOrigen: 1, fechaHora: '2026-11-05T12:00:00Z', idUsuario: 8, usuarioNombre: 'Ana Ventas', idOportunidad: 91, etapaAnterior: null, etapaNueva: 'Consulta' },
     ])
@@ -212,7 +212,9 @@ describe('consultas comerciales', () => {
       if (url.pathname.endsWith('/oportunidades/92')) return new Response('No existe', { status: 404, headers: { 'Content-Type': 'text/plain' } })
       if (url.pathname.endsWith('/oportunidades/91/historial-comercial')) return jsonResponse(history)
       if (url.pathname.endsWith('/oportunidades/91/historial-etapas')) return jsonResponse(page([{ idNuevaEtapa: 1 }, { idNuevaEtapa: 3 }]))
-      if (url.pathname.endsWith('/embudos/1/etapas')) return jsonResponse(stages)
+      if (url.pathname.endsWith('/embudos/1/etapas')) {
+        return url.searchParams.get('activo') === 'true' ? jsonResponse(stages) : jsonResponse({ title: 'Acceso denegado' }, 403)
+      }
       if (url.pathname.endsWith('/oportunidades/91')) return jsonResponse(detail)
       return jsonResponse([])
     })
@@ -229,10 +231,11 @@ describe('consultas comerciales', () => {
     expect(visited.closest('li')?.textContent).toContain('Consulta')
     expect(stageList.getByText('Evaluación').closest('li')?.textContent).toBe('Evaluación')
     expect(stageList.getByText('Propuesta').closest('li')?.getAttribute('aria-current')).toBe('step')
+    expect(stageList.queryByText('Diagnóstico archivado')).toBeNull()
     expect(stageList.getByRole('progressbar', { name: 'Avance del embudo' }).getAttribute('aria-valuenow')).toBe('75')
     const timeline = within(await screen.findByRole('list', { name: 'Historial comercial' }))
     expect(timeline.getByText('Cambio de etapa: Alta de la oportunidad → Consulta')).toBeTruthy()
-    expect(timeline.getByText('Cambio de etapa: Consulta → Propuesta')).toBeTruthy()
+    expect(timeline.getByText('Cambio de etapa: Diagnóstico archivado → Propuesta')).toBeTruthy()
     expect(timeline.getByText('Envió presupuesto')).toBeTruthy()
     expect(timeline.getByText('Llamó para pedir presupuesto')).toBeTruthy()
     expect(timeline.getByText(/registrada por Ana Ventas el/)).toBeTruthy()

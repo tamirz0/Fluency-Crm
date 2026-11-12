@@ -29,8 +29,8 @@ function OpportunityStages({ opportunity }: { opportunity: Oportunidad }) {
   const funnelId = Number(opportunity.idEmbudo)
   const currentId = Number(opportunity.idEtapa)
   const stages = useQuery({
-    queryKey: ['embudos', funnelId, 'etapas', 'todos'],
-    queryFn: () => listStages(funnelId, 'todos'),
+    queryKey: ['embudos', funnelId, 'etapas', 'true'],
+    queryFn: () => listStages(funnelId),
   })
   const history = useQuery({
     queryKey: ['oportunidades', 'etapas-recorridas', id],
@@ -48,15 +48,15 @@ function OpportunityStages({ opportunity }: { opportunity: Oportunidad }) {
   })
   const visited = new Set(history.data)
   const rank = (state: string) => state === 'ABIERTA' ? 0 : state === 'GANADA' ? 1 : 2
-  const available = (stages.data ?? []).filter(stage => stage.activo || visited.has(Number(stage.id)) || Number(stage.id) === currentId)
-  if (!available.some(stage => Number(stage.id) === currentId)) {
+  const available = [...(stages.data ?? [])]
+  if (opportunity.etapaActiva && !available.some(stage => Number(stage.id) === currentId)) {
     available.push({
       id: currentId, idEmbudo: funnelId, nombre: opportunity.etapaNombre, descripcion: null,
       orden: 0, estado: opportunity.estado, activo: opportunity.etapaActiva,
     })
   }
   available.sort((a, b) => rank(a.estado) - rank(b.estado) || Number(a.orden) - Number(b.orden))
-  const openStages = available.filter(stage => stage.estado === 'ABIERTA' && (stage.activo || Number(stage.id) === currentId))
+  const openStages = available.filter(stage => stage.estado === 'ABIERTA')
   const position = openStages.findIndex(stage => Number(stage.id) === currentId) + 1
   const progress = opportunity.estado === 'ABIERTA' ? position / (openStages.length + 1) * 100 : 100
 
@@ -68,7 +68,7 @@ function OpportunityStages({ opportunity }: { opportunity: Oportunidad }) {
         const completed = visited.has(Number(stage.id))
         const marker = current ? 'Actual' : completed ? 'Recorrida' : null
         return <li key={stage.id} aria-current={current ? 'step' : undefined} data-visited={completed} data-state={stage.estado}>
-          <strong>{inactive(stage.nombre, stage.activo)}</strong>
+          <strong>{stage.nombre}</strong>
           {marker && <span>{current ? <RadioButtonChecked /> : <CheckOutlined />}{marker}</span>}
         </li>
       })}

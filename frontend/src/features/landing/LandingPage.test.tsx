@@ -26,15 +26,18 @@ function mount(path: string) {
 
 it('la raíz es una landing pública con Contacto (mailto) e Ingresar (login)', async () => {
   mount('/')
-  expect(await screen.findByRole('heading', { level: 1, name: /Gestioná tu academia de inglés/ })).toBeTruthy()
-  const contact = screen.getAllByRole('link', { name: 'Contacto' })[0]
+  expect(await screen.findByRole('heading', { level: 1, name: 'El CRM para academias de inglés' })).toBeTruthy()
+  const contact = screen.getByRole('link', { name: 'Contacto' })
   expect(contact.getAttribute('href')).toMatch(/^mailto:/)
-  expect(screen.getAllByRole('link', { name: 'Ingresar' })[0].getAttribute('href')).toBe('/login')
-  expect(screen.getByRole('heading', { name: 'Antes de empezar' })).toBeTruthy()
+  expect(screen.getByRole('link', { name: 'Ingresar' }).getAttribute('href')).toBe('/login')
+  const demoLinks = screen.getAllByRole('link', { name: 'Solicitar una demo' })
+  expect(demoLinks.map(link => link.getAttribute('href'))).toEqual([contact.getAttribute('href'), contact.getAttribute('href')])
+  expect(screen.getByRole('figure', { name: /Embudo comercial Vista de ejemplo/ }).id).toBe('plataforma')
+  expect(screen.getByRole('heading', { name: 'Preguntas frecuentes' })).toBeTruthy()
 })
 it('una ruta desconocida vuelve a la landing', async () => {
   mount('/no-existe')
-  expect(await screen.findByRole('heading', { level: 1, name: /Gestioná tu academia/ })).toBeTruthy()
+  expect(await screen.findByRole('heading', { level: 1, name: 'El CRM para academias de inglés' })).toBeTruthy()
 })
 it('con sesión activa la raíz lleva al inicio', async () => {
   authenticated = true
